@@ -1,0 +1,36 @@
+[
+    PetTemplate(
+        name: "blob",
+        stomach_size: 20,
+        base_weight: 100,
+        images: PetImageSet(
+            normal: "images/pets/blob_normal.ase",
+            eat: Some("images/pets/blob_eat.ase"),
+            happy: Some("images/pets/blob_happy.ase"),
+            sad: Some("images/pets/blob_sad.ase")
+        )
+    ),
+    PetTemplate(
+        name: "pawn_white",
+        stomach_size: 40,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/pawn_white_normal.ase",
+            eat: Some("images/pets/pawn_white_eat.ase"),
+            happy: Some("images/pets/pawn_white_happy.ase"),
+            sad: Some("images/pets/pawn_white_sad.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "ckcs",
+        stomach_size: 80,
+        base_weight: 300,
+        images: PetImageSet(
+            normal: "images/pets/ckcs_normal.ase",
+            eat: Some("images/pets/ckcs_eat.ase"),
+            happy: Some("images/pets/ckcs_happy.ase"),
+            sad: Some("images/pets/ckcs_sad.ase"),
+        )
+    ),
+
+]

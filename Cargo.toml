@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["sdop-game", "sdop-pc", "sdop-web"]
+default-members = ["sdop-pc"]
+exclude = ["sdop-gba", "sdop-pico", "sdop-3ds"]
+
+[workspace.dependencies]

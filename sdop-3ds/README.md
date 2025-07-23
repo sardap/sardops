@@ -1,0 +1,1 @@
+lftp 192.168.2.22 -p 5000 -e "rm 3ds/sdop-3ds.3dsx; put /home/psarda/repos/sardops/target/armv6k-nintendo-3ds/release/sdop-3ds.3dsx; mv sdop-3ds.3dsx 3ds/sdop-3ds.3dsx; exit "
