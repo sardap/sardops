@@ -30,7 +30,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    container: psarda/sdop_builder:latest
     steps:
       - uses: actions/checkout@v3
       - name: Cache Docker images.
