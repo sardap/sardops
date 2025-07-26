@@ -11,10 +11,6 @@ on:
         required: true
         type: string
 
-env:
-  GAME_EXECUTABLE_NAME: sardips-run
-  GAME_OSX_APP_NAME: SarDips-run
-
 permissions:
   contents: write
 
@@ -46,8 +42,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.GAME_EXECUTABLE_NAME }}.dmg
-          asset_name: ./build
+          file_glob: true
+          file: ./build/*.zip
           release_name: ${{ env.VERSION }}
           tag: ${{ env.VERSION }}
           overwrite: true

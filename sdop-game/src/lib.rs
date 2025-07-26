@@ -3,10 +3,9 @@
 
 use core::time::Duration;
 
-use embedded_graphics::Drawable;
-
 use crate::{
-    display::{ConvertFn, DisplayData, DrawDisplay, GameDisplay},
+    display::{ConvertFn, DrawDisplay},
+    fps::FPSCounter,
     game_context::GameContext,
     input::Input,
     scene::{SceneManger, SceneTickArgs},
@@ -18,6 +17,7 @@ mod bit_array;
 mod date_utils;
 mod display;
 mod food;
+mod fps;
 mod game_context;
 mod geo;
 mod input;
@@ -41,6 +41,7 @@ pub struct Game {
     scene_manger: SceneManger,
     game_ctx: GameContext,
     time_scale: f32,
+    fps: FPSCounter,
 }
 
 impl Game {
@@ -52,6 +53,7 @@ impl Game {
             scene_manger: SceneManger::default(),
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
+            fps: FPSCounter::new(timestamp),
         }
     }
 
@@ -67,7 +69,6 @@ impl Game {
         self.time_scale = time_scale;
     }
 
-    // Make this more clear it's milliseconds
     pub fn tick(&mut self, timestamp: Timestamp) {
         let delta = timestamp - self.last_time;
 
@@ -106,6 +107,8 @@ impl Game {
         self.display.clear();
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
+        self.display.render_fps(&self.fps);
+        self.fps.update(timestamp);
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {

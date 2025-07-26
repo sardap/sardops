@@ -3,9 +3,11 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
 
+use crate::Timestamp;
+use crate::fps::FPSCounter;
 use crate::{
     assets::{Image, get_char_image},
-    bit_array::{BitArray, bytes_for_bits},
+    bit_array::bytes_for_bits,
     geo::Rect,
     sprite::Sprite,
 };
@@ -357,6 +359,12 @@ impl GameDisplay {
 
     pub fn invert(&mut self) {
         self.bits.invert();
+    }
+
+    pub fn render_fps(&mut self, fps: &FPSCounter) {
+        use fixedstr::{str_format, str16};
+        let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
+        self.render_text(Vec2::new(0., CENTER_Y), &str);
     }
 }
 
