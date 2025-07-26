@@ -10,11 +10,13 @@ glam = { version = "0.30.4", default-features = false, features = ["libm"] }
 fixedstr = { version = "0.5.9", default-features = false, features = [
     "no-alloc",
 ] }
-log = {version = "0.4.27", default-features = false}
-bincode = {version = "2.0.1", default-features = false, features = ["derive"]}
-strum = {version = "0.27", default-features = false}
-strum_macros = {version = "0.27", default-features = false}
-libm = {version = "0.2", default-features = false}
+log = { version = "0.4.27", default-features = false }
+bincode = { version = "2.0.1", default-features = false, features = ["derive"] }
+strum = { version = "0.27", default-features = false }
+strum_macros = { version = "0.27", default-features = false }
+libm = { version = "0.2", default-features = false }
+embedded-graphics = { version = "0.8.1", default-features = false }
+tinybmp = "0.6.0"
 
 [build-dependencies]
 asefile = "0.3.8"

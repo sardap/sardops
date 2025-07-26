@@ -1,40 +1,38 @@
 #![no_std]
 #![no_main]
 
+use core::time::Duration;
+
+use hal::block::ImageDef;
 use panic_halt as _;
 use rp235x_hal as hal;
-use hal::block::ImageDef;
-use embedded_hal::delay::DelayNs;
-use embedded_hal::pwm::SetDutyCycle;
-
 
 /// Tell the Boot ROM about our application
 #[link_section = ".start_block"]
 #[used]
 pub static IMAGE_DEF: ImageDef = hal::block::ImageDef::secure_exe();
 
-/// The minimum PWM value (i.e. LED brightness) we want
-const LOW: u16 = 0;
-
-/// The maximum PWM value (i.e. LED brightness) we want
-const HIGH: u16 = 25000;
-
-/// External high-speed crystal on the Raspberry Pi Pico 2 board is 12 MHz.
-/// Adjust if your board has a different frequency
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
+use embedded_graphics::prelude::*;
+use hal::fugit::RateExtU32;
+use hal::gpio::{FunctionI2C, Pin};
+use rp235x_hal::{timer::TimerDevice, Timer};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+
+fn timestamp<D: TimerDevice>(timer: &Timer<D>) -> sdop_game::Timestamp {
+    let ticks = timer.get_counter().ticks();
+    let micros = ticks / 1; // 1 tick = 1 µs at 1 MHz
+
+    sdop_game::Timestamp::from_duration(Duration::from_micros(micros as u64))
+}
 
 #[hal::entry]
-fn main() -> ! {    
-    // Grab our singleton objects
+fn main() -> ! {
     let mut pac = hal::pac::Peripherals::take().unwrap();
 
-    // Set up the watchdog driver - needed by the clock setup code
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
 
-    // Configure the clocks
-    //
-    // The default is to generate a 125 MHz system clock
     let clocks = hal::clocks::init_clocks_and_plls(
         XTAL_FREQ_HZ,
         pac.XOSC,
@@ -47,10 +45,8 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
-    // The single-cycle I/O block controls our GPIO pins
     let sio = hal::Sio::new(pac.SIO);
 
-    // Set the pins up according to their function on this particular board
     let pins = hal::gpio::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
@@ -60,37 +56,37 @@ fn main() -> ! {
 
     let mut timer = hal::Timer::new_timer0(pac.TIMER0, &mut pac.RESETS, &clocks);
 
-    // Init PWMs
-    let mut pwm_slices = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS);
+    // The logic for the I2C & OLED starts here
 
-    // Configure PWM4
-    let pwm = &mut pwm_slices.pwm4;
-    pwm.set_ph_correct();
-    pwm.enable();
+    let sda_pin: Pin<_, FunctionI2C, _> = pins.gpio18.reconfigure();
+    let scl_pin: Pin<_, FunctionI2C, _> = pins.gpio19.reconfigure();
 
-    // Output channel B on PWM4 to GPIO 25
-    let channel = &mut pwm.channel_b;
-    channel.output_to(pins.gpio25);
+    let i2c = hal::I2C::i2c1(
+        pac.I2C1,
+        sda_pin,
+        scl_pin,
+        400.kHz(),
+        &mut pac.RESETS,
+        &clocks.system_clock,
+    );
 
-    let game = sdop_game::Game::new(sdop_game::Timestamp::default());
-    // Infinite loop, fading LED up and down
+    let interface = I2CDisplayInterface::new(i2c);
+
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate90)
+        .into_buffered_graphics_mode();
+
+    display.init().unwrap();
+
+    let mut game = sdop_game::Game::new(timestamp(&timer));
+
     loop {
-        // Ramp brightness up
-        for i in LOW..=HIGH {
-            timer.delay_us(8);
-            let _ = channel.set_duty_cycle(i);
-        }
+        game.tick(timestamp(&timer));
+        game.refresh_display(timestamp(&timer));
 
-        // Ramp brightness down
-        for i in (LOW..=HIGH).rev() {
-            timer.delay_us(8);
-            let _ = channel.set_duty_cycle(i);
-        }
-
-        timer.delay_ms(500);
+        game.drawable(|c| c).draw(&mut display).unwrap();
+        display.flush().unwrap();
     }
 }
-
 
 // Program metadata for `picotool info`.
 // This isn't needed, but it's recomended to have these minimal entries.
@@ -103,6 +99,3 @@ pub static PICOTOOL_ENTRIES: [hal::binary_info::EntryAddr; 5] = [
     hal::binary_info::rp_cargo_homepage_url!(),
     hal::binary_info::rp_program_build_attribute!(),
 ];
-
-
-// End of file

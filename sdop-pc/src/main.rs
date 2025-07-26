@@ -2,9 +2,9 @@ extern crate sdl2;
 
 use log::info;
 use sdl2::event::Event;
+use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdop_game::ButtonStates;
 use sdop_game::Timestamp;
@@ -45,12 +45,6 @@ pub fn main() {
         .unwrap();
 
     let mut canvas = window.into_canvas().build().unwrap();
-    let texture_creator = canvas.texture_creator();
-
-    // Create a texture for the display buffer
-    let mut texture = texture_creator
-        .create_texture_target(PixelFormatEnum::RGB24, BASE_WIDTH, BASE_HEIGHT)
-        .unwrap();
 
     let mut game = sdop_game::Game::new(timestamp());
     let mut time_scale = 1.0f32;
@@ -141,25 +135,10 @@ pub fn main() {
         game.update_input_states(input);
 
         game.tick(loop_timestamp);
-
-        let display = game.display(loop_timestamp);
-
-        let mut pixel_data = vec![0u8; (BASE_WIDTH * BASE_HEIGHT * 3) as usize]; // RGB24 format
-        for bit_index in 0..display.bit_count() {
-            if display.get_bit(bit_index) {
-                let x = bit_index % BASE_WIDTH as usize;
-                let y = bit_index / BASE_WIDTH as usize;
-
-                let pixel_index = (y * BASE_WIDTH as usize + x) * 3;
-                if pixel_index + 2 < pixel_data.len() {
-                    pixel_data[pixel_index] = 255; // R
-                    pixel_data[pixel_index + 1] = 255; // G
-                    pixel_data[pixel_index + 2] = 255; // B
-                }
-            }
-        }
-        texture
-            .update(None, &pixel_data, (BASE_WIDTH * 3) as usize)
+        game.refresh_display(loop_timestamp);
+        let texture_creator = canvas.texture_creator();
+        let texture = texture_creator
+            .load_texture_bytes(game.get_display_bmp())
             .unwrap();
         canvas
             .copy(

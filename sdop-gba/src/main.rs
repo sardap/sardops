@@ -60,27 +60,35 @@ fn entry(mut _gba: agb::Gba) -> ! {
 
         agb::println!("time elapsed {}", elapsed_time);
 
-        let display = game.display(Timestamp::from_millis(elapsed_time as u64));
-        for (byte_index, byte_value) in display.raw().iter().enumerate() {
-            let start_x = (byte_index % (BASE_WIDTH as usize / 8)) * 8;
-            let y = byte_index / (BASE_WIDTH as usize / 8);
+        game.refresh_display(Timestamp::from_millis(elapsed_time as u64));
+        const SCALE: usize = 1;
+        for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
+            let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
+            let y = byte_index / (sdop_game::WIDTH as usize / 8);
             for bit_index in 0..8 {
                 let x = start_x + bit_index;
-                let screen_x = x as i32 + OFFSET_X;
-                let screen_y = y as i32 + OFFSET_Y;
 
-                // Only draw if within screen bounds and game area
+                let rotated_x = x;
+                let rotated_y = sdop_game::HEIGHT - 1 - y;
+
+                let screen_x = (rotated_x * SCALE) as i32 + OFFSET_X as i32;
+                let screen_y = (rotated_y * SCALE) as i32 + OFFSET_Y as i32;
+
                 if screen_x >= 0
-                    && screen_x < SCREEN_WIDTH
+                    && screen_x + 2 < SCREEN_WIDTH as i32
                     && screen_y >= 0
-                    && screen_y < SCREEN_HEIGHT
+                    && screen_y + 2 < SCREEN_HEIGHT as i32
                 {
-                    if (byte_value >> bit_index) & 1 == 1 {
-                        // Draw white pixel (0xFFFF) for set bits
-                        gfx.draw_point(screen_x, screen_y, 0xFFFF);
-                    } else {
-                        // Draw black pixel (0x0000) for unset bits
-                        gfx.draw_point(screen_x, screen_y, 0x0000);
+                    let screen_x = screen_x;
+                    let screen_y = screen_y;
+
+                    let is_set = (byte_value >> (7 - bit_index)) & 1 == 1;
+                    let value = if is_set { 0xFFFF } else { 0x0000 };
+
+                    for dy in 0..SCALE {
+                        for dx in 0..SCALE {
+                            gfx.draw_point(screen_x, screen_y, value);
+                        }
                     }
                 }
             }

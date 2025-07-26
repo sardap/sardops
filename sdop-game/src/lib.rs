@@ -1,8 +1,12 @@
+#![feature(generic_const_exprs)]
 #![no_std]
 
 use core::time::Duration;
 
+use embedded_graphics::Drawable;
+
 use crate::{
+    display::{ConvertFn, DisplayData, DrawDisplay, GameDisplay},
     game_context::GameContext,
     input::Input,
     scene::{SceneManger, SceneTickArgs},
@@ -89,7 +93,7 @@ impl Game {
         self.last_time = timestamp
     }
 
-    pub fn display(&mut self, timestamp: Timestamp) -> &display::DisplayArray {
+    pub fn refresh_display(&mut self, timestamp: Timestamp) {
         let delta = timestamp - self.last_time;
 
         let mut scene_args = SceneTickArgs {
@@ -102,7 +106,18 @@ impl Game {
         self.display.clear();
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
-        self.display.array()
+    }
+
+    pub fn get_display_image_data(&self) -> &[u8] {
+        self.display.image_data()
+    }
+
+    pub fn get_display_bmp(&self) -> &[u8] {
+        self.display.bmp()
+    }
+
+    pub fn drawable<'a, C>(&'a self, convert: ConvertFn<C>) -> DrawDisplay<'a, C> {
+        DrawDisplay::new(self.get_display_image_data(), convert)
     }
 
     pub fn get_save(&self, timestamp: Timestamp) -> SaveFile {

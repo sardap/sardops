@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ubuntu-latest-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2025-07-23
+          components: rustfmt, clippy
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      # - name: Run clippy
+      #   run: cargo clippy --workspace --all-targets --all-features -- -Dwarnings
+      - name: Check format
+        run: cargo fmt --all -- --check
+  build:
+    runs-on: ubuntu-latest
+    # container: psarda/sdop_builder:latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
+      - name: Build all
+        run: sudo chown -R 1000:1000 .
+      - name: Build all
+        run: docker run -v "$(pwd):/app" psarda/sdop_builder:latest make build_all

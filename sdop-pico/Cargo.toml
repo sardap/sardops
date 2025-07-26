@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdop-game = { path = "../sdop-game" }
 cortex-m = "0.7.6"
 cortex-m-rt = "0.7.0"
 
@@ -17,4 +16,6 @@ rp235x-hal = { git = "https://github.com/rp-rs/rp-hal", version = "0.2.0", featu
 ] }
 panic-halt = "0.2.0"
 rp-binary-info = "0.1.0"
-
+ssd1306 = "0.9.0"
+embedded-graphics = "0.8.1"
+sdop-game = { path = "../sdop-game" }
