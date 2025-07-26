@@ -38,7 +38,7 @@ jobs:
       - name: Build all
         run: sudo chown -R 1000:1000 .
       - name: Build all
-        run: docker run -v "$(pwd):/app" psarda/sdop_builder:latest make build_gba
+        run: docker run -v "$(pwd):/app" psarda/sdop_builder:latest make build_all
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
         with:
