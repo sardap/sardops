@@ -1,3 +1,6 @@
+use embedded_graphics::pixelcolor::Rgb888;
+use embedded_graphics::prelude::*;
+use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
 
 use crate::{
@@ -16,12 +19,12 @@ pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
 pub const DISPLAY_SIZE: usize = WIDTH as usize * HEIGHT as usize;
 
-pub type DisplayArray = BitArray<DISPLAY_BYTES>;
+pub type DisplayData = Bitmap<WIDTH, HEIGHT>;
 
 const DISPLAY_BYTES: usize = bytes_for_bits(DISPLAY_SIZE);
 
 pub struct GameDisplay {
-    bits: DisplayArray,
+    bits: DisplayData,
 }
 
 impl Default for GameDisplay {
@@ -74,8 +77,12 @@ impl Default for ComplexRenderOption {
 }
 
 impl GameDisplay {
-    pub fn array(&self) -> &DisplayArray {
-        &self.bits
+    pub fn image_data(&self) -> &[u8] {
+        &self.bits.image_data()
+    }
+
+    pub fn bmp(&self) -> &[u8] {
+        &self.bits.raw()
     }
 
     pub fn clear(&mut self) {
@@ -88,8 +95,7 @@ impl GameDisplay {
         }
         let x = x as usize;
         let y = y as usize;
-        let bit_index = y * WIDTH + x;
-        self.bits.set_bit(bit_index, value);
+        self.bits.set_pixel(x, y, value);
     }
 
     pub fn render_image_complex<T: Image>(
@@ -350,8 +356,212 @@ impl GameDisplay {
     }
 
     pub fn invert(&mut self) {
-        for i in self.bits.raw_mut().iter_mut() {
-            *i = !*i;
+        self.bits.invert();
+    }
+}
+
+const BMP_HEADER_SIZE: usize = 14;
+const DIB_HEADER_SIZE: usize = 40;
+const PALETTE_SIZE: usize = 8;
+const BMP_OFFSET: usize = BMP_HEADER_SIZE + DIB_HEADER_SIZE + PALETTE_SIZE;
+
+const fn padded_row_bytes(width: usize) -> usize {
+    ((width + 31) / 32) * 4
+}
+
+pub const fn bmp_file_size(width: usize, height: usize) -> usize {
+    BMP_OFFSET + padded_row_bytes(width) * height
+}
+
+const fn write_u32_le(buf: &mut [u8], offset: usize, val: u32) {
+    buf[offset] = val as u8;
+    buf[offset + 1] = (val >> 8) as u8;
+    buf[offset + 2] = (val >> 16) as u8;
+    buf[offset + 3] = (val >> 24) as u8;
+}
+
+const fn write_u16_le(buf: &mut [u8], offset: usize, val: u16) {
+    buf[offset] = val as u8;
+    buf[offset + 1] = (val >> 8) as u8;
+}
+
+pub struct Bitmap<const W: usize, const H: usize>
+where
+    [u8; bmp_file_size(W, H)]:,
+{
+    data: [u8; bmp_file_size(W, H)],
+}
+
+impl<const W: usize, const H: usize> Bitmap<W, H>
+where
+    [u8; bmp_file_size(W, H)]:,
+{
+    pub fn new() -> Self {
+        let mut bmp = [0; bmp_file_size(W, H)];
+
+        // BMP Header
+        bmp[0] = b'B';
+        bmp[1] = b'M';
+        write_u32_le(&mut bmp, 2, bmp_file_size(W, H) as u32);
+        write_u32_le(&mut bmp, 6, 0); // Reserved
+        write_u32_le(&mut bmp, 10, BMP_OFFSET as u32);
+
+        // DIB Header
+        write_u32_le(&mut bmp, 14, DIB_HEADER_SIZE as u32);
+        write_u32_le(&mut bmp, 18, W as u32);
+        write_u32_le(&mut bmp, 22, H as u32);
+        write_u16_le(&mut bmp, 26, 1); // planes
+        write_u16_le(&mut bmp, 28, 1); // bits per pixel
+        write_u32_le(&mut bmp, 30, 0); // compression
+        let image_size = (padded_row_bytes(W) * H) as u32;
+        write_u32_le(&mut bmp, 34, image_size);
+        write_u32_le(&mut bmp, 38, 2835); // X pixels per meter (72 DPI)
+        write_u32_le(&mut bmp, 42, 2835); // Y pixels per meter
+        write_u32_le(&mut bmp, 46, 2); // colors used
+        write_u32_le(&mut bmp, 50, 0); // important colors
+
+        // Palette: Black and White
+        bmp[54..58].copy_from_slice(&[0x00, 0x00, 0x00, 0x00]); // black (BGRA)
+        bmp[58..62].copy_from_slice(&[0xFF, 0xFF, 0xFF, 0x00]); // white (BGRA)
+
+        Self { data: bmp }
+    }
+
+    pub fn raw<'a>(&'a self) -> &'a [u8] {
+        &self.data
+    }
+
+    pub fn image_data<'a>(&'a self) -> &'a [u8] {
+        &self.data[BMP_OFFSET..]
+    }
+
+    pub fn clear(&mut self) {
+        self.data[BMP_OFFSET..].iter_mut().for_each(|i| *i = 0);
+    }
+
+    pub fn invert(&mut self) {
+        self.data[BMP_OFFSET..].iter_mut().for_each(|i| *i = !*i);
+    }
+
+    pub fn set_pixel(&mut self, x: usize, y: usize, value: bool) {
+        if x >= W || y >= H {
+            return;
         }
+
+        // BMP stores rows bottom-up
+        let flipped_y = H - 1 - y;
+
+        // Compute row and bit position
+        let row_stride = padded_row_bytes(W);
+        let byte_index = BMP_OFFSET + flipped_y * row_stride + (x / 8);
+        let bit_index = 7 - (x % 8);
+
+        if value {
+            self.data[byte_index] |= 1 << bit_index;
+        } else {
+            self.data[byte_index] &= !(1 << bit_index);
+        }
+    }
+}
+
+impl<const W: usize, const H: usize> Default for Bitmap<W, H>
+where
+    [u8; bmp_file_size(W, H)]:,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub type ConvertFn<C> = fn(BinaryColor) -> C;
+
+pub struct PixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    image_data: &'a [u8],
+    index: usize,
+    convert: fn(BinaryColor) -> C,
+}
+
+impl<'a, C> PixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    pub fn new(image_data: &'a [u8], convert: fn(BinaryColor) -> C) -> Self {
+        Self {
+            image_data,
+            index: 0,
+            convert,
+        }
+    }
+}
+
+impl<'a, C> Iterator for PixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    type Item = C;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let total_pixels = WIDTH * HEIGHT;
+        if self.index >= total_pixels {
+            return None;
+        }
+
+        let screen_index = self.index;
+
+        // Invert the mapping: given screen_index, recover (screen_x, screen_y)
+        let screen_y = screen_index / WIDTH;
+        let screen_x = screen_index % WIDTH;
+
+        // Invert the y-rotation
+        let rotated_y = HEIGHT - 1 - screen_y;
+        let rotated_x = screen_x;
+
+        let y = rotated_y;
+        let x = rotated_x;
+
+        let byte_index = (y * WIDTH + x) / 8;
+        let bit_index = x % 8;
+
+        let color = if (self.image_data[byte_index] >> (7 - bit_index)) & 1 == 1 {
+            BinaryColor::On
+        } else {
+            BinaryColor::Off
+        };
+
+        self.index += 1;
+        Some((self.convert)(color))
+    }
+}
+
+pub struct DrawDisplay<'a, C> {
+    image_data: &'a [u8],
+    convert: fn(BinaryColor) -> C,
+}
+
+impl<'a, C> DrawDisplay<'a, C> {
+    pub fn new(image_data: &'a [u8], convert: fn(BinaryColor) -> C) -> Self {
+        Self {
+            image_data,
+            convert,
+        }
+    }
+}
+
+impl<'a, C> Drawable for DrawDisplay<'a, C>
+where
+    C: PixelColor + 'static,
+{
+    type Color = C;
+    type Output = ();
+
+    fn draw<D>(&self, target: &mut D) -> Result<Self::Output, D::Error>
+    where
+        D: DrawTarget<Color = C>,
+    {
+        let area = Rectangle::new(Point::new(0, 0), Size::new(WIDTH as u32, HEIGHT as u32));
+        target.fill_contiguous(&area, PixelIterator::new(self.image_data, self.convert))
     }
 }

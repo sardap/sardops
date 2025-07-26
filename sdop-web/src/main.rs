@@ -3,11 +3,8 @@ use base64::prelude::BASE64_STANDARD;
 use chrono::DateTime;
 use chrono::Utc;
 use log::Level;
-use log::info;
 use notan::draw::*;
-use notan::math::Rect;
 use notan::prelude::*;
-use sdop_game::Button;
 use sdop_game::Game;
 use sdop_game::Timestamp;
 use std::time::Duration;
@@ -47,6 +44,7 @@ fn main() -> Result<(), String> {
 fn setup(gfx: &mut Graphics) -> State {
     let mut game = Game::new(timestamp());
 
+    #[cfg(target_arch = "wasm32")]
     if let Some(cookie) = wasm_cookies::get(COOKIE_NAME) {
         if let Ok(encoded) = cookie {
             if let Ok(base64_decoded) = BASE64_STANDARD.decode(encoded) {
@@ -101,6 +99,7 @@ fn update(app: &mut App, state: &mut State) {
 
     state.game.tick(timestamp);
 
+    #[cfg(target_arch = "wasm32")]
     if chrono::Utc::now() - state.last_save > chrono::Duration::seconds(1) {
         let save = state.game.get_save(timestamp);
         let encoded_save = bincode::encode_to_vec(save, bincode::config::standard()).unwrap();
@@ -121,8 +120,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     draw.clear(Color::BLACK);
 
     let mut pixel_data = [0u8; sdop_game::WIDTH * sdop_game::HEIGHT * 4];
-    let display = state.game.display(timestamp());
-    for (byte_index, byte_value) in display.iter().enumerate() {
+    state.game.refresh_display(timestamp());
+    for (byte_index, byte_value) in state.game.get_display_image_data().iter().enumerate() {
         let start_x = (byte_index % (sdop_game::WIDTH / 8)) * 8;
         let y = byte_index / (sdop_game::WIDTH / 8);
 
