@@ -67,8 +67,10 @@ impl Ord for Timestamp {
 pub trait DurationExt {
     fn as_mins(&self) -> f32;
 
+    #[allow(dead_code)]
     fn as_hours(&self) -> f32;
 
+    #[allow(dead_code)]
     fn as_days(&self) -> f32;
 
     #[allow(dead_code)]

@@ -8,7 +8,7 @@ use agb::{
     display::{bitmap3::Bitmap3, busy_wait_for_vblank},
     input::{Button, ButtonController},
 };
-use sdop_game::Timestamp;
+use sdop_game::{SaveFile, Timestamp};
 
 const BASE_WIDTH: u32 = sdop_game::WIDTH as u32;
 const BASE_HEIGHT: u32 = sdop_game::HEIGHT as u32;

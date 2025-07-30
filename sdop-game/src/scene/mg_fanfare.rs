@@ -102,14 +102,14 @@ impl Scene for MgFanFareScene {
                 display.render_text_complex(
                     Vec2::new(10., 10.),
                     &total,
-                    ComplexRenderOption::default().with_white(),
+                    ComplexRenderOption::new().with_white(),
                 );
                 if self.show_earned {
                     let winnings = str_format!(str32, "+${}", self.money);
                     display.render_text_complex(
                         Vec2::new(10., 20.),
                         &winnings,
-                        ComplexRenderOption::default().with_white(),
+                        ComplexRenderOption::new().with_white(),
                     );
                 }
             }
@@ -118,7 +118,7 @@ impl Scene for MgFanFareScene {
                 display.render_text_complex(
                     Vec2::new(CENTER_X, 10.),
                     &winnings,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
             }
         }

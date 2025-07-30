@@ -7,7 +7,10 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdop_game::ButtonStates;
+use sdop_game::SaveFile;
 use sdop_game::Timestamp;
+use std::io::Read;
+use std::io::Write;
 use std::time::{Duration, Instant};
 
 const BASE_WIDTH: u32 = sdop_game::WIDTH as u32;
@@ -48,12 +51,10 @@ pub fn main() {
 
     let mut game = sdop_game::Game::new(timestamp());
     let mut time_scale = 1.0f32;
-    if let Ok(file) = std::fs::File::open(SAVE_FILE_NAME) {
-        use std::io::BufReader;
-        let buf_reader = BufReader::new(file);
-        if let Ok(save_file) = bincode::decode_from_reader(buf_reader, bincode::config::standard())
-        {
-            game.load_save(timestamp(), save_file);
+    if let Ok(mut file) = std::fs::File::open(SAVE_FILE_NAME) {
+        let mut bytes = vec![];
+        if file.read_to_end(&mut bytes).is_ok() {
+            let _ = SaveFile::load_from_bytes(&bytes, timestamp(), &mut game);
         }
     }
 
@@ -156,10 +157,11 @@ pub fn main() {
 
         let since_save = last_save_time.elapsed();
         if since_save > Duration::from_secs(1) {
-            let save = game.get_save(loop_timestamp);
-            let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-            bincode::encode_into_std_write(save, &mut fs, bincode::config::standard()).unwrap();
-            last_save_time = Instant::now();
+            if let Ok(bytes) = SaveFile::gen_save_bytes(timestamp(), &game) {
+                let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+                let _ = fs.write_all(&bytes);
+                last_save_time = Instant::now();
+            }
         }
 
         // Frame timing - only sleep if we have time left in the frame

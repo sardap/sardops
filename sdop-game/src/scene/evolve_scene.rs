@@ -20,7 +20,7 @@ impl Default for ExpandingCircle {
     fn default() -> Self {
         Self {
             size: 0,
-            speed: Duration::from_millis(50),
+            speed: Duration::from_millis(25),
             duration: Duration::ZERO,
         }
     }
@@ -61,7 +61,7 @@ enum State {
 pub struct EvolveScene {
     from_pet_render: PetRender,
     to_pet_render: PetRender,
-    circles: [Option<ExpandingCircle>; 7],
+    circles: [Option<ExpandingCircle>; 5],
     circle_spawn_timer: Duration,
     show_from: bool,
     flash_timer: Duration,

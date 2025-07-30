@@ -32,5 +32,27 @@
             sad: Some("images/pets/ckcs_sad.ase"),
         )
     ),
+    PetTemplate(
+        name: "computie",
+        stomach_size: 40,
+        base_weight: 1000,
+        images: PetImageSet(
+            normal: "images/pets/computie_normal.ase",
+            eat: Some("images/pets/computie_eat.ase"),
+            happy: Some("images/pets/computie_happy.ase"),
+            sad: Some("images/pets/computie_sad.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "ballotee",
+        stomach_size: 60,
+        base_weight: 300,
+        images: PetImageSet(
+            normal: "images/pets/ballotee_normal.ase",
+            eat: Some("images/pets/ballotee_eat.ase"),
+            happy: Some("images/pets/ballotee_happy.ase"),
+            sad: Some("images/pets/ballotee_sad.ase"),
+        )
+    ),
 
 ]

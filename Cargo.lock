@@ -2712,7 +2712,6 @@ dependencies = [
 name = "sdop-pc"
 version = "0.1.0"
 dependencies = [
- "bincode",
  "chrono",
  "env_logger",
  "log",

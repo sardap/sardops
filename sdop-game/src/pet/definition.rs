@@ -41,6 +41,10 @@ impl PetDefinition {
         }
     }
 
+    pub fn poop_time_multiplier(&self) -> f32 {
+        1.
+    }
+
     pub fn get_by_id(id: PetDefinitionId) -> &'static PetDefinition {
         let id = id as usize;
         if id >= PET_DEFINITIONS.len() {

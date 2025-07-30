@@ -3,24 +3,28 @@ use glam::Vec2;
 
 use crate::{
     Button, WIDTH, WrappingEnum,
-    anime::Anime,
+    anime::{Anime, tick_all_anime},
     assets::{self, IMAGE_STOMACH_MASK},
     date_utils::DurationExt,
     display::{CENTER_VEC, CENTER_X, CENTER_Y, GameDisplay, WIDTH_F32},
     geo::{Rect, vec2_direction, vec2_distance},
     pet::{definition::PetDefinition, render::PetRender},
+    poop::{MAX_POOPS, PoopRender, update_poop_renders},
     scene::{
         Scene, SceneEnum, SceneOutput, SceneTickArgs, evolve_scene::EvolveScene,
-        food_select::FoodSelectScene, game_select::GameSelectScene,
+        food_select::FoodSelectScene, game_select::GameSelectScene, pet_info::PetInfoScene,
+        poop_clear_scene::PoopClearScene,
     },
     wrapping_enum,
 };
 
 const WONDER_SPEED: f32 = 5.;
-const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
+pub const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
 
 wrapping_enum! {
     enum MenuOption {
+        Poop,
+        PetInfo,
         GameSelect,
         FoodSelect,
     }
@@ -28,6 +32,7 @@ wrapping_enum! {
 
 pub struct HomeScene {
     pet_render: PetRender,
+    poops: [Option<PoopRender>; MAX_POOPS],
     target: Vec2,
     food_anime: Anime,
     selected_option: MenuOption,
@@ -37,9 +42,10 @@ impl HomeScene {
     pub fn new() -> Self {
         Self {
             pet_render: PetRender::default(),
+            poops: [None; MAX_POOPS],
             target: Vec2::default(),
             food_anime: Anime::new(&assets::FRAMES_FOOD_SYMBOL),
-            selected_option: MenuOption::GameSelect,
+            selected_option: MenuOption::Poop,
         }
     }
 }
@@ -57,8 +63,11 @@ impl Scene for HomeScene {
         let rng = &mut args.game_ctx.rng;
         self.pet_render.set_def_id(pet.def_id);
 
+        update_poop_renders(&mut self.poops, &args.game_ctx.poops);
+
         self.food_anime.tick(args.delta);
         self.pet_render.tick(args.delta);
+        tick_all_anime(&mut self.poops, args.delta);
 
         let dist = vec2_distance(self.pet_render.pos, self.target);
         if dist.abs() < 5. {
@@ -78,17 +87,27 @@ impl Scene for HomeScene {
         }
 
         if args.input.pressed(Button::Left) {
-            self.selected_option = self.selected_option.next();
+            self.selected_option = self.selected_option.prev();
         }
         if args.input.pressed(Button::Right) {
-            self.selected_option = self.selected_option.prev();
+            self.selected_option = self.selected_option.next();
         }
 
         if args.input.pressed(Button::Middle) {
-            return SceneOutput::new(match self.selected_option {
-                MenuOption::GameSelect => SceneEnum::GameSelect(GameSelectScene::new()),
-                MenuOption::FoodSelect => SceneEnum::FoodSelect(FoodSelectScene::new()),
-            });
+            match self.selected_option {
+                MenuOption::Poop => {
+                    return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
+                }
+                MenuOption::PetInfo => {
+                    return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
+                }
+                MenuOption::GameSelect => {
+                    return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
+                }
+                MenuOption::FoodSelect => {
+                    return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
+                }
+            };
         }
 
         SceneOutput::default()
@@ -97,6 +116,8 @@ impl Scene for HomeScene {
     fn render(&self, display: &mut GameDisplay, args: &mut SceneTickArgs) {
         let pet = &args.game_ctx.pet;
         display.render_sprite(&self.pet_render);
+
+        display.render_sprites(&self.poops);
 
         let total_filled = pet.stomach_filled / pet.definition().stomach_size;
         display.render_stomach(
@@ -132,10 +153,26 @@ impl Scene for HomeScene {
         );
         // display.render_rect_solid(BOTTOM_BORDER_RECT, true);
 
-        const SYMBOL_BUFFER: f32 = 4.;
+        const SYMBOL_BUFFER: f32 = 2.;
         const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
-        const GAME_X_OFFSET: f32 = SYMBOL_BUFFER;
+        const POOP_X_OFFSET: f32 = SYMBOL_BUFFER;
+        display.render_image_top_left(
+            POOP_X_OFFSET as i32,
+            IMAGE_Y_START as i32,
+            &assets::IMAGE_POOP_SYMBOL,
+        );
+
+        const PET_INFO_X_OFFSET: f32 =
+            POOP_X_OFFSET + assets::IMAGE_GAME_SYMBOL.size.x as f32 + SYMBOL_BUFFER;
+        display.render_image_top_left(
+            PET_INFO_X_OFFSET as i32,
+            IMAGE_Y_START as i32,
+            &assets::IMAGE_INFO_SYMBOL,
+        );
+
+        const GAME_X_OFFSET: f32 =
+            PET_INFO_X_OFFSET + assets::IMAGE_GAME_SYMBOL.size.x as f32 + SYMBOL_BUFFER;
         display.render_image_top_left(
             GAME_X_OFFSET as i32,
             IMAGE_Y_START as i32,
@@ -153,6 +190,8 @@ impl Scene for HomeScene {
         let select_rect = Rect::new_top_left(
             Vec2::new(
                 match self.selected_option {
+                    MenuOption::Poop => POOP_X_OFFSET,
+                    MenuOption::PetInfo => PET_INFO_X_OFFSET,
                     MenuOption::GameSelect => GAME_X_OFFSET,
                     MenuOption::FoodSelect => FOOD_X_OFFSET,
                 } - SYMBOL_BUFFER / 2.,

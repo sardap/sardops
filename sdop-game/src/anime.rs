@@ -48,3 +48,15 @@ impl Anime {
         &self.frames[self.current_index].frame
     }
 }
+
+pub trait HasAnime {
+    fn anime(&mut self) -> &mut Anime;
+}
+
+pub fn tick_all_anime<T: HasAnime>(animes: &mut [Option<T>], delta: Duration) {
+    for i in animes {
+        if let Some(anime) = i {
+            anime.anime().tick(delta);
+        }
+    }
+}

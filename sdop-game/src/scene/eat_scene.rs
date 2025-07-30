@@ -133,7 +133,7 @@ impl Scene for EatScene {
         display.render_sprite(&self.pet_render);
         display.render_image_center(CENTER_X as i32 - 10, EAT_Y, &self.food_texture);
 
-        let total_filled = self.fill_factor / def.stomach_size;
+        let total_filled = (self.fill_factor / def.stomach_size).min(1.);
         display.render_stomach(
             Vec2::new(CENTER_X, IMAGE_STOMACH_MASK.size.y as f32 + 10.),
             total_filled,

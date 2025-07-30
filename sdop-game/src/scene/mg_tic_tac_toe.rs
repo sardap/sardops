@@ -270,12 +270,12 @@ impl Scene for MgTicTacToeScene {
             for i in 0..9 {
                 if (*win.win_board >> i) & 1 == 1 {
                     let options = if self.flash_state {
-                        ComplexRenderOption::default()
+                        ComplexRenderOption::new()
                             .with_black()
                             .with_center()
                             .with_white()
                     } else {
-                        ComplexRenderOption::default()
+                        ComplexRenderOption::new()
                             .with_flip()
                             .with_black()
                             .with_center()

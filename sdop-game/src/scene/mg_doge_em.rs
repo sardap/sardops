@@ -312,21 +312,21 @@ impl Scene for MgDogeEmScene {
                 display.render_text_complex(
                     FAILURE_RECT.pos - Vec2::new(0., 8.),
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "ELAPSED");
                 display.render_text_complex(
                     FAILURE_RECT.pos,
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "{:.2}", elapsed.as_secs_f32());
                 display.render_text_complex(
                     FAILURE_RECT.pos + Vec2::new(0., 9.),
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
             }
         }

@@ -1,4 +1,4 @@
-use crate::scene::SceneTickArgs;
+use crate::{poop::add_poop, scene::SceneTickArgs};
 
 pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
     let delta = args.delta.mul_f32(time_scale);
@@ -6,4 +6,7 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
 
     pet.tick_age(delta);
     pet.tick_hunger(delta);
+    if pet.should_poop(delta) {
+        add_poop(&mut args.game_ctx.poops, args.timestamp);
+    }
 }

@@ -99,7 +99,7 @@ impl Scene for FoodSelectScene {
         display.render_text_complex(
             Vec2::new(CENTER_X, 8.),
             "FOOD",
-            ComplexRenderOption::default().with_white().with_center(),
+            ComplexRenderOption::new().with_white().with_center(),
         );
 
         display.render_sprites(&self.foods);

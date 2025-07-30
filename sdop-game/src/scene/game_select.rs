@@ -91,7 +91,7 @@ impl Scene for GameSelectScene {
                 pos.x as i32,
                 pos.y as i32,
                 minigame.image(),
-                ComplexRenderOption::default().with_white().with_center(),
+                ComplexRenderOption::new().with_white().with_center(),
             );
         }
 
