@@ -96,7 +96,9 @@ impl Scene for HomeScene {
         if args.input.pressed(Button::Middle) {
             match self.selected_option {
                 MenuOption::Poop => {
-                    return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
+                    if args.game_ctx.poops.iter().any(|i| i.is_some()) {
+                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
+                    }
                 }
                 MenuOption::PetInfo => {
                     return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));

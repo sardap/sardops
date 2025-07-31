@@ -20,14 +20,6 @@ impl Timestamp {
     pub fn from_duration(duration: Duration) -> Self {
         Self(duration)
     }
-
-    pub fn percent(&self, other: &Self) -> f32 {
-        if self.0 > other.0 {
-            return other.0.as_secs_f32() / self.0.as_secs_f32();
-        }
-
-        return 1.;
-    }
 }
 
 impl Default for Timestamp {

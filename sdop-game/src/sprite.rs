@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub trait Sprite {
-    fn pos<'a>(&'a self) -> &'a Vec2;
+    fn pos(&self) -> &Vec2;
 
     fn image(&self) -> &impl Image;
 
@@ -36,7 +36,7 @@ impl BasicSprite {
 }
 
 impl Sprite for BasicSprite {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         &self.pos
     }
 

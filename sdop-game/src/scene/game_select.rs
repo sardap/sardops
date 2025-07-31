@@ -2,18 +2,19 @@ use glam::{Vec2, usize};
 
 use crate::{
     Button,
-    assets::{self, StaticImage},
+    assets::{self, Image, StaticImage},
     display::{ComplexRenderOption, GameDisplay},
     geo::Rect,
     scene::{
         Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_doge_em::MgDogeEmScene,
-        mg_tic_tac_toe::MgTicTacToeScene,
+        mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
     },
 };
 
 enum MiniGame {
     TicTacToe,
     DogeEm,
+    LinkFour,
 }
 
 impl MiniGame {
@@ -21,11 +22,12 @@ impl MiniGame {
         match self {
             MiniGame::TicTacToe => &assets::IMAGE_MG_TIC_TAC_TOE_ICON,
             MiniGame::DogeEm => &assets::IMAGE_MG_DOGE_ICON,
+            MiniGame::LinkFour => &assets::IMAGE_MG_LINK_FOUR_ICON,
         }
     }
 }
 
-const MINIGAMES: &[MiniGame] = &[MiniGame::TicTacToe, MiniGame::DogeEm];
+const MINIGAMES: &[MiniGame] = &[MiniGame::TicTacToe, MiniGame::DogeEm, MiniGame::LinkFour];
 
 pub struct GameSelectScene {
     active_minigames: &'static [MiniGame],
@@ -42,14 +44,14 @@ impl GameSelectScene {
 }
 
 pub fn get_pos(i: usize) -> Vec2 {
-    let x = match i % 3 {
-        0 => 10,
-        1 => 33,
-        2 => 44,
-        _ => unreachable!(),
-    } + 2;
-    let y = (libm::floorf(i as f32 / 3.) * 17.) + 30.;
-    Vec2::new(x as f32, y)
+    const X_OFFSET: f32 = 20.;
+    const Y_OFFSET: f32 = 30.;
+    const X_GAP: f32 = 4.;
+    const Y_GAP: f32 = 6.;
+    let x = X_OFFSET + ((i % 2) as f32 * (assets::IMAGE_MG_DOGE_ICON.size.x as f32 + X_GAP));
+    let y = Y_OFFSET
+        + (libm::floorf(i as f32 / 2.) * (assets::IMAGE_MG_DOGE_ICON.size.y as f32 + Y_GAP));
+    Vec2::new(x, y)
 }
 
 impl Scene for GameSelectScene {
@@ -78,6 +80,7 @@ impl Scene for GameSelectScene {
                 MiniGame::DogeEm => {
                     SceneEnum::MgDogeEm(MgDogeEmScene::new(args.game_ctx.pet.def_id))
                 }
+                MiniGame::LinkFour => SceneEnum::MgTicLinkFour(MgLinkFourScene::new()),
             });
         }
 
@@ -95,7 +98,11 @@ impl Scene for GameSelectScene {
             );
         }
 
-        let rect = Rect::new_center(get_pos(self.selected as usize), Vec2::new(24., 24.));
+        let rect = Rect::new_center(
+            get_pos(self.selected as usize),
+            assets::IMAGE_MG_DOGE_ICON.size_vec2(),
+        )
+        .grow(2.);
         display.render_rect_outline(rect, true);
     }
 }

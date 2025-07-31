@@ -276,7 +276,7 @@ impl TicTacToeGame {
         }
     }
 
-    pub fn board<'a>(&'a self) -> &'a Board {
+    pub fn board(&self) -> &Board {
         &self.board
     }
 
@@ -327,7 +327,7 @@ impl BestMoveSearch {
         }
     }
 
-    pub fn best_moves<'a>(&'a self) -> &'a PossibleMoves {
+    pub fn best_moves(&self) -> &PossibleMoves {
         &self.best_moves
     }
 

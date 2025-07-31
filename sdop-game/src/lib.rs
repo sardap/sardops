@@ -22,6 +22,7 @@ mod fps;
 mod game_context;
 mod geo;
 mod input;
+mod link_four;
 mod money;
 mod pet;
 mod poop;

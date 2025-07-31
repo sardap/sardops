@@ -156,12 +156,12 @@ pub fn main() {
         canvas.present();
 
         let since_save = last_save_time.elapsed();
-        if since_save > Duration::from_secs(1) {
-            if let Ok(bytes) = SaveFile::gen_save_bytes(timestamp(), &game) {
-                let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-                let _ = fs.write_all(&bytes);
-                last_save_time = Instant::now();
-            }
+        if since_save > Duration::from_secs(1)
+            && let Ok(bytes) = SaveFile::gen_save_bytes(timestamp(), &game)
+        {
+            let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+            let _ = fs.write_all(&bytes);
+            last_save_time = Instant::now();
         }
 
         // Frame timing - only sleep if we have time left in the frame

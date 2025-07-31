@@ -5,6 +5,7 @@ pub mod game_select;
 pub mod home_scene;
 pub mod mg_doge_em;
 pub mod mg_fanfare;
+pub mod mg_link_four;
 pub mod mg_tic_tac_toe;
 pub mod pet_info;
 pub mod poop_clear_scene;
@@ -24,6 +25,7 @@ pub enum SceneEnum {
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
+    MgTicLinkFour(mg_link_four::MgLinkFourScene),
 }
 
 impl Default for SceneEnum {
@@ -44,6 +46,7 @@ impl SceneEnum {
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
+            SceneEnum::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
             SceneEnum::Evovle(evovle_scene) => evovle_scene,
         }
     }

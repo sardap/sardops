@@ -54,5 +54,16 @@
             sad: Some("images/pets/ballotee_sad.ase"),
         )
     ),
+    PetTemplate(
+        name: "was gaurd",
+        stomach_size: 80,
+        base_weight: 400,
+        images: PetImageSet(
+            normal: "images/pets/was_gaurd_normal.ase",
+            eat: Some("images/pets/was_gaurd_eat.ase"),
+            happy: Some("images/pets/was_gaurd_happy.ase"),
+            sad: Some("images/pets/was_gaurd_sad.ase"),
+        )
+    ),
 
 ]
