@@ -4,11 +4,11 @@ use bincode::{Decode, Encode};
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
     anime::{Anime, HasAnime},
     assets,
     scene::home_scene::WONDER_RECT,
     sprite::Sprite,
+    Timestamp,
 };
 
 pub const MAX_POOPS: usize = 5;
@@ -33,7 +33,7 @@ pub struct PoopRender {
 
 impl PoopRender {
     pub fn from_poop(poop: &Poop) -> Self {
-        let mut rng = fastrand::Rng::with_seed(poop.spawned.0.as_millis() as u64);
+        let mut rng = fastrand::Rng::with_seed(poop.spawned.seed());
 
         Self {
             pos: WONDER_RECT

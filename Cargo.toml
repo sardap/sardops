@@ -1,15 +1,5 @@
 [workspace]
-members = [
-    "sdop-cli",
-    "sdop-game",
-    "sdop-pc",
-    "sdop-web",
-]
-exclude = [
-    "sdop-gba",
-    "sdop-pico",
-    "sdop-3ds",
-    "sdop-psp",
-]
+members = ["sdop-cli", "sdop-game", "sdop-pc", "sdop-web"]
+exclude = ["sdop-gba", "sdop-pico", "sdop-3ds", "sdop-psp"]
 default-members = ["sdop-pc"]
 resolver = "2"

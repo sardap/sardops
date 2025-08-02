@@ -12,7 +12,7 @@ pub mod poop_clear_scene;
 
 use core::time::Duration;
 
-use crate::{Timestamp, display::GameDisplay, game_context::GameContext, input::Input};
+use crate::{display::GameDisplay, game_context::GameContext, input::Input, Timestamp};
 
 pub enum SceneEnum {
     Home(home_scene::HomeScene),

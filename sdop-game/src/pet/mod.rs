@@ -4,13 +4,13 @@ use bincode::{Decode, Encode};
 use fastrand::Rng;
 
 use crate::{
-    Timestamp,
     date_utils::duration_from_hours,
     food::Food,
     pet::definition::{
-        PET_BLOB_ID, PET_CKCS_ID, PET_PAWN_WHITE_ID, PetDefinition, PetDefinitionId,
+        PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID, PET_PAWN_WHITE_ID,
     },
     poop::POOP_INTERVNAL,
+    Timestamp,
 };
 
 pub mod definition;
@@ -45,26 +45,32 @@ impl PetInstance {
         self.age += delta;
     }
 
-    pub fn tick_hunger(&mut self, delta: Duration) {
+    pub fn tick_hunger(&mut self, delta: Duration, sleep: bool) {
         const GRAMS_LOSS_PER_SECOND: f32 = 1.;
-        self.extra_weight =
-            (self.extra_weight - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32()).max(0.);
+        let sleep_modifer = if sleep { 0.4 } else { 1. };
+        self.extra_weight = (self.extra_weight
+            - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            .max(0.);
         const HUNGER_LOSS_PER_SECOND: f32 = 0.1;
-        self.stomach_filled =
-            (self.stomach_filled - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32()).max(0.);
+        self.stomach_filled = (self.stomach_filled
+            - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            .max(0.);
     }
 
-    pub fn should_poop(&mut self, delta: Duration) -> bool {
+    pub fn tick_poop(&mut self, delta: Duration) {
         if self.stomach_filled == 0. {
-            return false;
+            return;
         }
 
         self.since_poop += delta;
+    }
 
-        if self
-            .since_poop
-            .mul_f32(self.definition().poop_time_multiplier())
-            > POOP_INTERVNAL
+    pub fn should_poop(&mut self, sleeping: bool) -> bool {
+        if !sleeping
+            && self
+                .since_poop
+                .mul_f32(self.definition().poop_time_multiplier())
+                > POOP_INTERVNAL
         {
             self.since_poop = Duration::ZERO;
             return true;
@@ -95,7 +101,7 @@ impl PetInstance {
 impl Default for PetInstance {
     fn default() -> Self {
         Self {
-            def_id: crate::pet::definition::PET_WAS_GAURD_ID,
+            def_id: crate::pet::definition::PET_BALLOTEE_ID,
             born: Timestamp::default(),
             age: Duration::ZERO,
             stomach_filled: 0.,

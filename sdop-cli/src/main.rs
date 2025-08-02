@@ -24,10 +24,7 @@ fn main() -> color_eyre::Result<()> {
 }
 
 fn timestamp() -> Timestamp {
-    let now = chrono::Utc::now();
-    let duration = std::time::Duration::from_secs(now.timestamp() as u64)
-        + std::time::Duration::from_nanos(now.timestamp_subsec_nanos() as u64);
-    Timestamp::from_duration(duration)
+    Timestamp::new(chrono::Local::now().naive_local())
 }
 
 /// The main application which holds the state and logic of the application.

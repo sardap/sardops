@@ -11,10 +11,7 @@ use std::time::Duration;
 use wasm_cookies::*;
 
 pub fn timestamp() -> Timestamp {
-    let now = chrono::Utc::now();
-    let duration = Duration::from_secs(now.timestamp() as u64)
-        + Duration::from_nanos(now.timestamp_subsec_nanos() as u64);
-    Timestamp::from_duration(duration)
+    Timestamp::new(chrono::Local::now().naive_local())
 }
 
 const SCALE: u32 = 5;

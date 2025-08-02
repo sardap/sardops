@@ -1,9 +1,9 @@
 use crate::{
-    Timestamp,
     food::UnlockedFood,
     money::Money,
     pet::PetInstance,
-    poop::{MAX_POOPS, Poop},
+    poop::{Poop, MAX_POOPS},
+    Timestamp,
 };
 
 pub struct GameContext {
@@ -21,7 +21,7 @@ impl GameContext {
             poops: Default::default(),
             money: Money::default(),
             unlocked_food: UnlockedFood::default(),
-            rng: fastrand::Rng::with_seed(timestamp.0.as_millis() as u64),
+            rng: fastrand::Rng::with_seed(timestamp.seed()),
         }
     }
 }

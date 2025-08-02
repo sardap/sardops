@@ -1,7 +1,8 @@
 use glam::Vec2;
 
 use crate::{
-    assets::{self, Image, StaticImage},
+    anime::{Anime, HasAnime},
+    assets::{self, Frame, Image, StaticImage},
     geo::Rect,
 };
 
@@ -51,5 +52,45 @@ impl Default for BasicSprite {
             pos: Vec2::default(),
             image: &assets::IMAGE_ALPHABET_SPACE,
         }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct BasicAnimeSprite {
+    pub pos: Vec2,
+    pub anime: Anime,
+}
+
+impl BasicAnimeSprite {
+    pub fn new(pos: Vec2, frames: &'static [Frame]) -> Self {
+        Self {
+            pos,
+            anime: Anime::new(frames),
+        }
+    }
+}
+
+impl Default for BasicAnimeSprite {
+    fn default() -> Self {
+        Self {
+            pos: Vec2::default(),
+            anime: Default::default(),
+        }
+    }
+}
+
+impl HasAnime for BasicAnimeSprite {
+    fn anime(&mut self) -> &mut Anime {
+        &mut self.anime
+    }
+}
+
+impl Sprite for BasicAnimeSprite {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl Image {
+        self.anime.current_frame()
     }
 }

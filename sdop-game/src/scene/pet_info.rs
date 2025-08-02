@@ -1,12 +1,13 @@
-use fixedstr::{str_format, str32};
+use chrono::{Datelike, Timelike};
+use fixedstr::{str32, str_format};
 use glam::Vec2;
 
 use crate::{
     assets::{self, Image},
     date_utils::DurationExt,
-    display::{CENTER_X, GameDisplay},
+    display::{GameDisplay, CENTER_VEC, CENTER_X},
     pet::render::PetRender,
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 
@@ -49,6 +50,26 @@ impl Scene for PetInfoScene {
 
         const TEXT_X_OFFSET: f32 = 2.;
         let mut current_y = self.pet_render.pos.y + self.pet_render.image().size_vec2().y + 5.;
+
+        let str = fixedstr::str_format!(
+            fixedstr::str24,
+            "{}/{}/{}",
+            args.timestamp.inner().year(),
+            args.timestamp.inner().month(),
+            args.timestamp.inner().day()
+        );
+        display.render_text(Vec2::new(TEXT_X_OFFSET, current_y), &str);
+        let str = fixedstr::str_format!(
+            fixedstr::str24,
+            "{}:{}",
+            args.timestamp.inner().hour(),
+            args.timestamp.inner().minute()
+        );
+        display.render_text(
+            Vec2::new(TEXT_X_OFFSET, current_y) + Vec2::new(0., 10.),
+            &str,
+        );
+        current_y += 20.;
 
         {
             let str = str_format!(str32, "{}", pet.definition().name);

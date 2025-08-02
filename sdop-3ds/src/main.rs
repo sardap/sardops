@@ -23,10 +23,7 @@ fn draw_pixel(pixels: &mut [u8], x: usize, y: usize, r: u8, g: u8, b: u8) {
 }
 
 fn timestamp() -> Timestamp {
-    let now = chrono::Utc::now();
-    let duration = std::time::Duration::from_secs(now.timestamp() as u64)
-        + std::time::Duration::from_nanos(now.timestamp_subsec_nanos() as u64);
-    Timestamp::from_duration(duration)
+    Timestamp::new(chrono::Local::now().naive_local())
 }
 
 // Up -> Left Right -> Up Down -> Right

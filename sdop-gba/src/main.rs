@@ -4,6 +4,8 @@
 #![cfg_attr(test, reexport_test_harness_main = "test_main")]
 #![cfg_attr(test, test_runner(agb::test_runner::test_runner))]
 
+use core::time::Duration;
+
 use agb::{
     display::{bitmap3::Bitmap3, busy_wait_for_vblank},
     input::{Button, ButtonController},
@@ -18,7 +20,7 @@ const SCREEN_HEIGHT: i32 = 160;
 const OFFSET_X: i32 = (SCREEN_WIDTH - BASE_WIDTH as i32) / 2;
 const OFFSET_Y: i32 = (SCREEN_HEIGHT - BASE_HEIGHT as i32) / 2;
 
-const FRAME_TIME_MS: f32 = 16.667 * 2.0;
+const FRAME_TIME_MS: Duration = Duration::from_micros(16667 * 2);
 
 fn buttons_to_input(controller: &ButtonController) -> sdop_game::ButtonStates {
     [
@@ -42,9 +44,8 @@ fn buttons_to_input(controller: &ButtonController) -> sdop_game::ButtonStates {
 
 #[agb::entry]
 fn entry(mut _gba: agb::Gba) -> ! {
-    let mut game = sdop_game::Game::new(Timestamp::default());
-
-    let mut elapsed_time = 0f32;
+    let mut time = Timestamp::from_parts(1991, 12, 20, 10, 0, 0, 0).unwrap();
+    let mut game = sdop_game::Game::new(time);
 
     let mut button_controller = ButtonController::new();
     let mut gfx = unsafe { Bitmap3::new() };
@@ -52,15 +53,14 @@ fn entry(mut _gba: agb::Gba) -> ! {
     gfx.clear(0x7C00);
 
     loop {
-        elapsed_time += FRAME_TIME_MS;
-        button_controller.update();
+        time = time + FRAME_TIME_MS;
 
         game.update_input_states(buttons_to_input(&button_controller));
-        game.tick(Timestamp::from_millis(elapsed_time as u64));
+        game.tick(time);
 
-        agb::println!("time elapsed {}", elapsed_time);
+        agb::println!("time elapsed {:?}", time);
 
-        game.refresh_display(Timestamp::from_millis(elapsed_time as u64));
+        game.refresh_display(time);
         const SCALE: usize = 1;
         for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
             let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
