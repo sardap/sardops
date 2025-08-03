@@ -1,10 +1,10 @@
 use glam::Vec2;
 
 use crate::{
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    food::{self, FOOD_COUNT, Food},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, WIDTH_F32},
+    food::{self, Food, FOOD_COUNT},
     geo::Rect,
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
+    scene::{eat_scene::EatScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 

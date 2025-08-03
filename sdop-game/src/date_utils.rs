@@ -6,33 +6,6 @@ use core::{
 use bincode::{Decode, Encode};
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
-#[derive(Encode, Decode)]
-pub struct DateTime {
-    year: i32,
-    month: u32,
-    day: u32,
-    hour: u32,
-    miniute: u32,
-}
-
-impl DateTime {
-    pub fn create(year: i32, month: u32, day: u32, hour: u32, miniute: u32) -> Option<Self> {
-        if NaiveDate::from_ymd_opt(year, month, day).is_some()
-            && NaiveTime::from_hms_opt(hour, miniute, 0).is_some()
-        {
-            return Some(DateTime {
-                year,
-                month,
-                day,
-                hour,
-                miniute,
-            });
-        }
-
-        None
-    }
-}
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Timestamp(pub NaiveDateTime);
 

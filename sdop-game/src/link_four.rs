@@ -1,6 +1,6 @@
 use crate::{
     assets::{self, StaticImage},
-    bit_array::{BitArray, bytes_for_bits},
+    bit_array::{bytes_for_bits, BitArray},
 };
 
 const ROWS: usize = 6;
@@ -331,7 +331,11 @@ fn best_moves(board: &Game) -> PossibleMoves {
         }
     }
 
-    if result.is_empty() { moves } else { result }
+    if result.is_empty() {
+        moves
+    } else {
+        result
+    }
 }
 
 pub fn square_to_index(column: usize, row: usize) -> usize {

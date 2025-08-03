@@ -2,7 +2,7 @@ use bincode::{Decode, Encode};
 
 use crate::{
     assets::{self, StaticImage},
-    bit_array::{BitArray, bytes_for_bits},
+    bit_array::{bytes_for_bits, BitArray},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_foods.rs"));

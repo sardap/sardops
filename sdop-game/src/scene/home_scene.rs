@@ -9,6 +9,7 @@ use crate::{
     date_utils::DurationExt,
     display::{GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
     geo::{vec2_direction, vec2_distance, Rect},
+    items::Item,
     pet::{
         definition::{PetAnimationSet, PetDefinition},
         render::PetRender,
@@ -19,9 +20,9 @@ use crate::{
         pet_info::PetInfoScene, poop_clear_scene::PoopClearScene, Scene, SceneEnum, SceneOutput,
         SceneTickArgs,
     },
-    sprite::{BasicAnimeSprite, BasicSprite, Sprite},
+    sprite::{BasicAnimeSprite, Sprite},
     tv::{TvKind, TvRender},
-    Button, WrappingEnum, WIDTH,
+    Button, WIDTH,
 };
 
 const WONDER_SPEED: f32 = 5.;
@@ -184,10 +185,20 @@ impl Scene for HomeScene {
         match self.state {
             State::Wondering => {
                 if self.state_elapsed > Duration::from_secs(5) {
-                    self.change_state(State::WatchingTv {
-                        show_timer: Duration::ZERO,
-                        show_end: Duration::from_secs(30),
-                    });
+                    if args.game_ctx.inventory.has_item(Item::TvCRT) {
+                        self.tv.kind = TvKind::CRT;
+                        self.change_state(State::WatchingTv {
+                            show_timer: Duration::ZERO,
+                            show_end: Duration::from_secs(30),
+                        });
+                    }
+                    if args.game_ctx.inventory.has_item(Item::TvLCD) {
+                        self.tv.kind = TvKind::LCD;
+                        self.change_state(State::WatchingTv {
+                            show_timer: Duration::ZERO,
+                            show_end: Duration::from_secs(30),
+                        });
+                    }
                 }
 
                 self.pet_render.set_animation(PetAnimationSet::Normal);

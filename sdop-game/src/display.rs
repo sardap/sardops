@@ -1,10 +1,8 @@
-use core::fmt::Display;
-
 use embedded_graphics::prelude::*;
 use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
 use glam::Vec2;
 
-use crate::fonts::{get_char_image_8x8, Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
+use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
