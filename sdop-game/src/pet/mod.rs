@@ -101,7 +101,7 @@ impl PetInstance {
 impl Default for PetInstance {
     fn default() -> Self {
         Self {
-            def_id: crate::pet::definition::PET_BALLOTEE_ID,
+            def_id: crate::pet::definition::PET_CKCS_ID,
             born: Timestamp::default(),
             age: Duration::ZERO,
             stomach_filled: 0.,

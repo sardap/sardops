@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use glam::{U8Vec2, Vec2, usize};
+use glam::{usize, U8Vec2, Vec2};
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 
@@ -15,7 +15,7 @@ pub trait Image {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StaticImage {
     pub size: U8Vec2,
     pub texture: &'static [u8],
@@ -75,6 +75,7 @@ impl<const T: usize> Image for DynamicImage<T> {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Frame {
     pub frame: &'static StaticImage,
     pub duration: Duration,

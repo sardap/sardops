@@ -22,6 +22,7 @@ mod fps;
 mod game_context;
 mod geo;
 mod input;
+mod items;
 mod link_four;
 mod money;
 mod pet;
@@ -31,6 +32,7 @@ mod scene;
 mod sim;
 mod sprite;
 mod tic_tac_toe;
+mod tv;
 
 pub use crate::date_utils::Timestamp;
 pub use crate::display::{HEIGHT, WIDTH};

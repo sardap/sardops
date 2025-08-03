@@ -1,8 +1,10 @@
+use core::fmt::Display;
+
 use embedded_graphics::prelude::*;
-use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
+use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
 use glam::Vec2;
 
-use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font, get_char_image_8x8};
+use crate::fonts::{get_char_image_8x8, Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
@@ -28,10 +30,17 @@ impl Default for GameDisplay {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ColorMode {
+    None,
+    White,
+    Black,
+    Both,
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
-    write_black: bool,
-    write_white: bool,
+    color_mode: ColorMode,
     flip_colors: bool,
     pos_center: bool,
     font: &'static Font,
@@ -40,8 +49,7 @@ pub struct ComplexRenderOption {
 impl ComplexRenderOption {
     pub const fn new() -> Self {
         Self {
-            write_black: false,
-            write_white: false,
+            color_mode: ColorMode::None,
             flip_colors: false,
             pos_center: false,
             font: &FONT_MONOSPACE_8X8,
@@ -49,12 +57,20 @@ impl ComplexRenderOption {
     }
 
     pub const fn with_white(mut self) -> Self {
-        self.write_white = true;
+        if matches!(self.color_mode, ColorMode::Black) {
+            self.color_mode = ColorMode::Both;
+        } else {
+            self.color_mode = ColorMode::White;
+        }
         self
     }
 
     pub const fn with_black(mut self) -> Self {
-        self.write_black = true;
+        if matches!(self.color_mode, ColorMode::White) {
+            self.color_mode = ColorMode::Both;
+        } else {
+            self.color_mode = ColorMode::Black;
+        }
         self
     }
 
@@ -108,7 +124,7 @@ impl GameDisplay {
         image: &T,
         options: ComplexRenderOption,
     ) {
-        if !options.write_black && !options.write_white {
+        if options.color_mode == ColorMode::None {
             return;
         }
 
@@ -131,7 +147,9 @@ impl GameDisplay {
                     bit_set = !bit_set;
                 }
 
-                if (options.write_white && !bit_set) || (options.write_black && bit_set) {
+                if (!bit_set && matches!(options.color_mode, ColorMode::White))
+                    || (bit_set && matches!(options.color_mode, ColorMode::Black))
+                {
                     continue;
                 }
 
@@ -355,7 +373,7 @@ impl GameDisplay {
     }
 
     pub fn render_fps(&mut self, fps: &FPSCounter) {
-        use fixedstr::{str_format, str16};
+        use fixedstr::{str16, str_format};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
             Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 10.)),
@@ -368,6 +386,10 @@ impl GameDisplay {
                 .with_white()
                 .with_font(&FONT_VARIABLE_SMALL),
         );
+    }
+
+    pub fn render_complex(&mut self, complex: &impl ComplexRender) {
+        complex.render(self);
     }
 }
 
@@ -591,4 +613,8 @@ where
         let area = Rectangle::new(Point::new(0, 0), Size::new(WIDTH as u32, HEIGHT as u32));
         target.fill_contiguous(&area, PixelIterator::new(self.image_data, self.convert))
     }
+}
+
+pub trait ComplexRender {
+    fn render(&self, display: &mut GameDisplay);
 }

@@ -48,7 +48,7 @@ impl PetDefinition {
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
-        if timestamp.inner().hour() > 22 || timestamp.inner().hour() < 6 {
+        if timestamp.inner().hour() >= 22 || timestamp.inner().hour() < 6 {
             return true;
         }
 

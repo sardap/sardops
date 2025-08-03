@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use fixedstr::str32;
 use glam::Vec2;
 
@@ -18,6 +20,7 @@ use crate::{
         SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, BasicSprite, Sprite},
+    tv::{TvKind, TvRender},
     Button, WrappingEnum, WIDTH,
 };
 
@@ -60,12 +63,25 @@ fn change_option(options: &[MenuOption], current: MenuOption, change: i32) -> Me
     options[index]
 }
 
-fn get_options(sleeping: bool) -> &'static [MenuOption] {
-    if sleeping {
-        SLEEP_OPTIONS
-    } else {
-        AWAKE_OPTIONS
+fn get_options(state: State) -> &'static [MenuOption] {
+    match state {
+        State::Wondering
+        | State::WatchingTv {
+            show_timer: _,
+            show_end: _,
+        } => AWAKE_OPTIONS,
+        State::Sleeping => SLEEP_OPTIONS,
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum State {
+    Wondering,
+    Sleeping,
+    WatchingTv {
+        show_timer: Duration,
+        show_end: Duration,
+    },
 }
 
 pub struct HomeScene {
@@ -75,6 +91,9 @@ pub struct HomeScene {
     food_anime: Anime,
     selected_option: MenuOption,
     sleeping_z: BasicAnimeSprite,
+    tv: TvRender,
+    state: State,
+    state_elapsed: Duration,
 }
 
 impl HomeScene {
@@ -86,6 +105,30 @@ impl HomeScene {
             food_anime: Anime::new(&assets::FRAMES_FOOD_SYMBOL),
             selected_option: MenuOption::Poop,
             sleeping_z: BasicAnimeSprite::new(CENTER_VEC, &assets::FRAMES_SLEEPING_Z),
+            tv: TvRender::new(
+                TvKind::LCD,
+                Vec2::new(20., 40.),
+                &assets::FRAMES_TV_SHOW_SPORT,
+            ),
+            state: State::Wondering,
+            state_elapsed: Duration::ZERO,
+        }
+    }
+
+    fn change_state(&mut self, new_state: State) {
+        if self.state == new_state {
+            return;
+        }
+
+        self.state = new_state;
+
+        let options = get_options(self.state);
+        if options
+            .iter()
+            .position(|i| *i == self.selected_option)
+            .is_none()
+        {
+            self.selected_option = options[0];
         }
     }
 }
@@ -94,12 +137,8 @@ impl Scene for HomeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         self.pet_render.pos = Vec2::new(CENTER_X, CENTER_Y);
         self.target = self.pet_render.pos;
-        let sleeping = args
-            .game_ctx
-            .pet
-            .definition()
-            .should_be_sleeping(&args.timestamp);
-        self.selected_option = get_options(sleeping)[0];
+        self.selected_option = get_options(self.state)[0];
+        self.tv.random_show(&mut args.game_ctx.rng)
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -115,9 +154,23 @@ impl Scene for HomeScene {
         self.pet_render.tick(args.delta);
         tick_all_anime(&mut self.poops, args.delta);
 
-        let sleeping = pet.definition().should_be_sleeping(&args.timestamp);
+        let should_be_sleeping = pet.definition().should_be_sleeping(&args.timestamp);
+        if should_be_sleeping && !matches!(self.state, State::Sleeping) {
+            self.change_state(State::Sleeping);
+        } else if !should_be_sleeping && matches!(self.state, State::Sleeping) {
+            self.change_state(State::Wondering);
+        }
 
-        let options = get_options(sleeping);
+        if !matches!(self.state, State::Sleeping) {
+            if let Some(next_pet_id) = pet.should_evolve(rng) {
+                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
+                    pet.def_id,
+                    next_pet_id,
+                )));
+            }
+        }
+
+        let options = get_options(self.state);
 
         if args.input.pressed(Button::Left) {
             self.selected_option = change_option(options, self.selected_option, -1);
@@ -126,37 +179,71 @@ impl Scene for HomeScene {
             self.selected_option = change_option(options, self.selected_option, 1);
         }
 
-        if sleeping {
-            self.pet_render.set_animation(PetAnimationSet::Sleeping);
+        self.state_elapsed += args.delta;
 
-            self.sleeping_z.anime().tick(args.delta);
+        match self.state {
+            State::Wondering => {
+                if self.state_elapsed > Duration::from_secs(5) {
+                    self.change_state(State::WatchingTv {
+                        show_timer: Duration::ZERO,
+                        show_end: Duration::from_secs(30),
+                    });
+                }
 
-            self.pet_render.pos = CENTER_VEC;
-            self.sleeping_z.pos = Vec2::new(
-                self.pet_render.pos.x + (self.pet_render.image().size_vec2().x * 0.5),
-                self.pet_render.pos.y - (self.pet_render.image().size_vec2().y * 0.7),
-            );
-        } else {
-            self.pet_render.set_animation(PetAnimationSet::Normal);
+                self.pet_render.set_animation(PetAnimationSet::Normal);
 
-            let dist = vec2_distance(self.pet_render.pos, self.target);
-            if dist.abs() < 5. {
-                let rect = Rect::new_center(
-                    WONDER_RECT.pos,
-                    WONDER_RECT.size - PetDefinition::get_by_id(pet.def_id).images.width as f32,
-                );
-                self.target = rect.random_point_inside(rng);
+                let dist = vec2_distance(self.pet_render.pos, self.target);
+                if dist.abs() < 5. {
+                    let rect = Rect::new_center(
+                        WONDER_RECT.pos,
+                        WONDER_RECT.size - PetDefinition::get_by_id(pet.def_id).images.width as f32,
+                    );
+                    self.target = rect.random_point_inside(rng);
+                }
+
+                self.pet_render.pos += vec2_direction(self.pet_render.pos, self.target)
+                    * WONDER_SPEED
+                    * args.delta.as_secs_f32();
             }
+            State::Sleeping => {
+                self.pet_render.set_animation(PetAnimationSet::Sleeping);
 
-            self.pet_render.pos += vec2_direction(self.pet_render.pos, self.target)
-                * WONDER_SPEED
-                * args.delta.as_secs_f32();
+                self.sleeping_z.anime().tick(args.delta);
 
-            if let Some(next_pet_id) = pet.should_evolve(rng) {
-                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
-                    pet.def_id,
-                    next_pet_id,
-                )));
+                self.pet_render.pos = CENTER_VEC + Vec2::new(0., 10.);
+                self.sleeping_z.pos = Vec2::new(
+                    self.pet_render.pos.x + (self.pet_render.image().size_vec2().x * 0.5),
+                    self.pet_render.pos.y - (self.pet_render.image().size_vec2().y * 0.7),
+                );
+            }
+            State::WatchingTv {
+                mut show_timer,
+                show_end,
+            } => {
+                if self.state_elapsed > Duration::from_secs(600) {
+                    self.change_state(State::Wondering);
+                }
+
+                self.tv.anime().tick(args.delta);
+                show_timer += args.delta;
+
+                if show_timer > show_end {
+                    self.tv.random_show(&mut args.game_ctx.rng);
+                    show_timer = Duration::ZERO;
+                }
+
+                self.tv.pos = Vec2::new(
+                    self.tv.size().x * 0.5 + 1.,
+                    CENTER_Y - self.tv.size().y * 0.5,
+                );
+                self.pet_render.set_animation(PetAnimationSet::Normal);
+                self.pet_render.pos =
+                    self.tv.pos + self.pet_render.image().size().as_vec2() + Vec2::new(3., 3.);
+
+                self.state = State::WatchingTv {
+                    show_timer: show_timer,
+                    show_end: show_end,
+                }
             }
         }
 
@@ -224,12 +311,20 @@ impl Scene for HomeScene {
         const SYMBOL_BUFFER: f32 = 2.;
         const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
-        let sleeping = pet.definition().should_be_sleeping(&args.timestamp);
-        if sleeping {
-            display.render_sprite(&self.sleeping_z);
+        match self.state {
+            State::Wondering => {}
+            State::Sleeping => {
+                display.render_sprite(&self.sleeping_z);
+            }
+            State::WatchingTv {
+                show_timer,
+                show_end,
+            } => {
+                display.render_complex(&self.tv);
+            }
         }
 
-        let options = get_options(sleeping);
+        let options = get_options(self.state);
 
         const SIZE: Vec2 = Vec2::new(
             assets::IMAGE_POOP_SYMBOL.size.x as f32,
