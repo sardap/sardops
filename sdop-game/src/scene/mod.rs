@@ -5,11 +5,14 @@ pub mod game_select;
 pub mod home_scene;
 pub mod mg_doge_em;
 pub mod mg_fanfare;
+pub mod mg_link_four;
 pub mod mg_tic_tac_toe;
+pub mod pet_info;
+pub mod poop_clear_scene;
 
 use core::time::Duration;
 
-use crate::{Timestamp, display::GameDisplay, game_context::GameContext, input::Input};
+use crate::{display::GameDisplay, game_context::GameContext, input::Input, Timestamp};
 
 pub enum SceneEnum {
     Home(home_scene::HomeScene),
@@ -17,9 +20,12 @@ pub enum SceneEnum {
     GameSelect(game_select::GameSelectScene),
     FoodSelect(food_select::FoodSelectScene),
     Evovle(evolve_scene::EvolveScene),
+    PetInfo(pet_info::PetInfoScene),
+    PoopClear(poop_clear_scene::PoopClearScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
+    MgTicLinkFour(mg_link_four::MgLinkFourScene),
 }
 
 impl Default for SceneEnum {
@@ -35,9 +41,12 @@ impl SceneEnum {
             SceneEnum::Eat(eat_scene) => eat_scene,
             SceneEnum::GameSelect(game_select_scene) => game_select_scene,
             SceneEnum::FoodSelect(food_select_scene) => food_select_scene,
+            SceneEnum::PetInfo(pet_info) => pet_info,
+            SceneEnum::PoopClear(poop_clear_scene) => poop_clear_scene,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
+            SceneEnum::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
             SceneEnum::Evovle(evovle_scene) => evovle_scene,
         }
     }

@@ -3,15 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    Button, Timestamp,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X},
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
+    scene::{mg_fanfare::MgFanFareScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     tic_tac_toe::{
-        BestMoveSearch, BoardStatus, Side, Square, TIC_TAC_TOE_OPPONENT, TicTacToeGame,
-        TicTacToeOpponent,
+        BestMoveSearch, BoardStatus, Side, Square, TicTacToeGame, TicTacToeOpponent,
+        TIC_TAC_TOE_OPPONENT,
     },
+    Button, Timestamp,
 };
 
 enum State {
@@ -270,12 +270,12 @@ impl Scene for MgTicTacToeScene {
             for i in 0..9 {
                 if (*win.win_board >> i) & 1 == 1 {
                     let options = if self.flash_state {
-                        ComplexRenderOption::default()
+                        ComplexRenderOption::new()
                             .with_black()
                             .with_center()
                             .with_white()
                     } else {
-                        ComplexRenderOption::default()
+                        ComplexRenderOption::new()
                             .with_flip()
                             .with_black()
                             .with_center()

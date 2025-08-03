@@ -1,19 +1,19 @@
 use core::{ops::Range, time::Duration};
 
-use fixedstr::{str_format, str12, str16};
+use fixedstr::{str12, str16, str_format};
 use glam::Vec2;
 
 use crate::{
-    Button, Timestamp,
     assets::{self, Image, StaticImage},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
     geo::Rect,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
+    scene::{mg_fanfare::MgFanFareScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::{BasicSprite, Sprite},
+    Button, Timestamp,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -312,21 +312,21 @@ impl Scene for MgDogeEmScene {
                 display.render_text_complex(
                     FAILURE_RECT.pos - Vec2::new(0., 8.),
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "ELAPSED");
                 display.render_text_complex(
                     FAILURE_RECT.pos,
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "{:.2}", elapsed.as_secs_f32());
                 display.render_text_complex(
                     FAILURE_RECT.pos + Vec2::new(0., 9.),
                     &text,
-                    ComplexRenderOption::default().with_white().with_center(),
+                    ComplexRenderOption::new().with_white().with_center(),
                 );
             }
         }

@@ -39,6 +39,10 @@ impl<const N: usize> BitArray<N> {
         (self.data[byte_index] & (1 << bit_index)) != 0
     }
 
+    pub fn get_raw<'a>(&'a self) -> &'a [u8] {
+        &self.data
+    }
+
     pub fn is_empty(&self) -> bool {
         self.data.iter().all(|i| *i == 0)
     }

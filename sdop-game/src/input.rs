@@ -50,6 +50,12 @@ impl Input {
         self.states[button.index()]
     }
 
+    pub fn any_pressed(&self) -> bool {
+        return self.pressed(Button::Left)
+            || self.pressed(Button::Middle)
+            || self.pressed(Button::Right);
+    }
+
     pub fn pressed(&self, button: Button) -> bool {
         return self.states[button.index()] == ButtonState::Down
             && self.last_state[button.index()] == ButtonState::Up;

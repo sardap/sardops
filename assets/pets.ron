@@ -7,7 +7,8 @@
             normal: "images/pets/blob_normal.ase",
             eat: Some("images/pets/blob_eat.ase"),
             happy: Some("images/pets/blob_happy.ase"),
-            sad: Some("images/pets/blob_sad.ase")
+            sad: Some("images/pets/blob_sad.ase"),
+            sleep: Some("images/pets/blob_sleeping.ase"),
         )
     ),
     PetTemplate(
@@ -19,6 +20,7 @@
             eat: Some("images/pets/pawn_white_eat.ase"),
             happy: Some("images/pets/pawn_white_happy.ase"),
             sad: Some("images/pets/pawn_white_sad.ase"),
+            sleep: Some("images/pets/pawn_white_sleeping.ase"),
         )
     ),
     PetTemplate(
@@ -30,6 +32,43 @@
             eat: Some("images/pets/ckcs_eat.ase"),
             happy: Some("images/pets/ckcs_happy.ase"),
             sad: Some("images/pets/ckcs_sad.ase"),
+            sleep: Some("images/pets/ckcs_sleeping.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "computie",
+        stomach_size: 40,
+        base_weight: 1000,
+        images: PetImageSet(
+            normal: "images/pets/computie_normal.ase",
+            eat: Some("images/pets/computie_eat.ase"),
+            happy: Some("images/pets/computie_happy.ase"),
+            sad: Some("images/pets/computie_sad.ase"),
+            sleep: Some("images/pets/computie_sleeping.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "ballotee",
+        stomach_size: 60,
+        base_weight: 300,
+        images: PetImageSet(
+            normal: "images/pets/ballotee_normal.ase",
+            eat: Some("images/pets/ballotee_eat.ase"),
+            happy: Some("images/pets/ballotee_happy.ase"),
+            sad: Some("images/pets/ballotee_sad.ase"),
+            sleep: Some("images/pets/ballotee_sleeping.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "was gaurd",
+        stomach_size: 80,
+        base_weight: 400,
+        images: PetImageSet(
+            normal: "images/pets/was_gaurd_normal.ase",
+            eat: Some("images/pets/was_gaurd_eat.ase"),
+            happy: Some("images/pets/was_gaurd_happy.ase"),
+            sad: Some("images/pets/was_gaurd_sad.ase"),
+            sleep: Some("images/pets/was_gaurd_sleeping.ase"),
         )
     ),
 

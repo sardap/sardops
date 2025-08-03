@@ -1,10 +1,9 @@
 [package]
 name = "sdop-game"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-lz4_flex = { version = "0.11.5", default-features = false }
 fastrand = { version = "2.3.0", default-features = false }
 glam = { version = "0.30.4", default-features = false, features = ["libm"] }
 fixedstr = { version = "0.5.9", default-features = false, features = [
@@ -17,6 +16,10 @@ strum_macros = { version = "0.27", default-features = false }
 libm = { version = "0.2", default-features = false }
 embedded-graphics = { version = "0.8.1", default-features = false }
 tinybmp = "0.6.0"
+chrono = { version = "0.4.41", default-features = false }
+const_for = "0.1.5"
+casey = "0.4.2"
+paste = "1.0.15"
 
 [build-dependencies]
 asefile = "0.3.8"

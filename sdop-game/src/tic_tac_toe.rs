@@ -5,8 +5,8 @@ use core::{
 
 use crate::{
     assets::{self, StaticImage},
-    bit_array::{BitArray, bytes_for_bits},
-    pet::definition::{PET_BLOB_ID, PET_PAWN_WHITE_ID, PetDefinitionId},
+    bit_array::{bytes_for_bits, BitArray},
+    pet::definition::{PetDefinitionId, PET_BLOB_ID, PET_PAWN_WHITE_ID},
 };
 
 pub struct TicTacToeOpponent {
@@ -276,7 +276,7 @@ impl TicTacToeGame {
         }
     }
 
-    pub fn board<'a>(&'a self) -> &'a Board {
+    pub fn board(&self) -> &Board {
         &self.board
     }
 
@@ -327,7 +327,7 @@ impl BestMoveSearch {
         }
     }
 
-    pub fn best_moves<'a>(&'a self) -> &'a PossibleMoves {
+    pub fn best_moves(&self) -> &PossibleMoves {
         &self.best_moves
     }
 

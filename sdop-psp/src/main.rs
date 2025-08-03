@@ -42,10 +42,7 @@ fn get_timestamp() -> Timestamp {
             date.microseconds,
         )
         .unwrap();
-        let now = NaiveDateTime::new(naive_date, navie_time).and_utc();
-        let duration = Duration::from_secs(now.timestamp() as u64)
-            + Duration::from_nanos(now.timestamp_subsec_nanos() as u64);
-        return Timestamp::from_duration(duration);
+        return Timestamp::new(chrono::NaiveDateTime::new(naive_date, navie_time));
     }
 }
 

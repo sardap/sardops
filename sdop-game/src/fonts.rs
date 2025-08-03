@@ -1,0 +1,88 @@
+use crate::assets::{self, StaticImage};
+
+pub type CharToImageFunc = fn(char) -> &'static StaticImage;
+
+pub struct Font {
+    pub convert: CharToImageFunc,
+    pub between_spacing: i32,
+}
+
+pub const FONT_MONOSPACE_8X8: Font = Font {
+    convert: get_char_image_8x8,
+    between_spacing: 0,
+};
+
+pub const FONT_VARIABLE_SMALL: Font = Font {
+    convert: get_char_image_small_var,
+    between_spacing: 1,
+};
+
+pub fn get_char_image_8x8(val: char) -> &'static StaticImage {
+    match val.to_ascii_uppercase() {
+        ' ' => &assets::IMAGE_ALPHABET_SPACE,
+        '0' => &assets::IMAGE_ALPHABET_0,
+        '1' => &assets::IMAGE_ALPHABET_1,
+        '2' => &assets::IMAGE_ALPHABET_2,
+        '3' => &assets::IMAGE_ALPHABET_3,
+        '4' => &assets::IMAGE_ALPHABET_4,
+        '5' => &assets::IMAGE_ALPHABET_5,
+        '6' => &assets::IMAGE_ALPHABET_6,
+        '7' => &assets::IMAGE_ALPHABET_7,
+        '8' => &assets::IMAGE_ALPHABET_8,
+        '9' => &assets::IMAGE_ALPHABET_9,
+        'A' => &assets::IMAGE_ALPHABET_A,
+        'B' => &assets::IMAGE_ALPHABET_B,
+        'C' => &assets::IMAGE_ALPHABET_C,
+        'D' => &assets::IMAGE_ALPHABET_D,
+        'E' => &assets::IMAGE_ALPHABET_E,
+        'F' => &assets::IMAGE_ALPHABET_F,
+        'G' => &assets::IMAGE_ALPHABET_G,
+        'H' => &assets::IMAGE_ALPHABET_H,
+        'I' => &assets::IMAGE_ALPHABET_I,
+        'J' => &assets::IMAGE_ALPHABET_J,
+        'K' => &assets::IMAGE_ALPHABET_K,
+        'L' => &assets::IMAGE_ALPHABET_L,
+        'M' => &assets::IMAGE_ALPHABET_M,
+        'N' => &assets::IMAGE_ALPHABET_N,
+        'O' => &assets::IMAGE_ALPHABET_O,
+        'P' => &assets::IMAGE_ALPHABET_P,
+        'Q' => &assets::IMAGE_ALPHABET_Q,
+        'R' => &assets::IMAGE_ALPHABET_R,
+        'S' => &assets::IMAGE_ALPHABET_S,
+        'T' => &assets::IMAGE_ALPHABET_T,
+        'U' => &assets::IMAGE_ALPHABET_U,
+        'V' => &assets::IMAGE_ALPHABET_V,
+        'W' => &assets::IMAGE_ALPHABET_W,
+        'X' => &assets::IMAGE_ALPHABET_X,
+        'Y' => &assets::IMAGE_ALPHABET_Y,
+        'Z' => &assets::IMAGE_ALPHABET_Z,
+        '!' => &assets::IMAGE_ALPHABET_EXCLAMATION_MARK,
+        '"' => &assets::IMAGE_ALPHABET_QUOTE,
+        '#' => &assets::IMAGE_ALPHABET_HASHTAG,
+        '$' => &assets::IMAGE_ALPHABET_DOP_BUCKS,
+        '%' => &assets::IMAGE_ALPHABET_PERCENT,
+        '+' => &assets::IMAGE_ALPHABET_PLUS,
+        '/' => &assets::IMAGE_ALPHABET_DIVIDE,
+        ':' => &assets::IMAGE_ALPHABET_COLON,
+        '?' => &assets::IMAGE_ALPHABET_QUESTION_MARK,
+        '.' => &assets::IMAGE_ALPHABET_DOT,
+        _ => &assets::IMAGE_ALPHABET_0,
+    }
+}
+
+pub fn get_char_image_small_var(val: char) -> &'static StaticImage {
+    match val.to_ascii_uppercase() {
+        ' ' => &assets::IMAGE_ALPHABET_SPACE,
+        '0' => &assets::IMAGE_ALPHA_SMALL_0,
+        '1' => &assets::IMAGE_ALPHA_SMALL_1,
+        '2' => &assets::IMAGE_ALPHA_SMALL_2,
+        '3' => &assets::IMAGE_ALPHA_SMALL_3,
+        '4' => &assets::IMAGE_ALPHA_SMALL_4,
+        '5' => &assets::IMAGE_ALPHA_SMALL_5,
+        '6' => &assets::IMAGE_ALPHA_SMALL_6,
+        '7' => &assets::IMAGE_ALPHA_SMALL_7,
+        '8' => &assets::IMAGE_ALPHA_SMALL_8,
+        '9' => &assets::IMAGE_ALPHA_SMALL_9,
+        _ => &assets::IMAGE_ALPHA_SMALL_0,
+    }
+}

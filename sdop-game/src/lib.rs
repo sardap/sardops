@@ -1,4 +1,6 @@
 #![feature(generic_const_exprs)]
+#![feature(variant_count)]
+#![feature(const_trait_impl)]
 #![no_std]
 
 use core::time::Duration;
@@ -11,23 +13,30 @@ use crate::{
     scene::{SceneManger, SceneTickArgs},
     sim::tick_sim,
 };
+
 mod anime;
 mod assets;
 mod bit_array;
 mod date_utils;
 mod display;
+mod fonts;
 mod food;
 mod fps;
 mod game_context;
 mod geo;
 mod input;
+mod items;
+mod link_four;
 mod money;
 mod pet;
+mod poop;
 mod save;
 mod scene;
+mod shop;
 mod sim;
 mod sprite;
 mod tic_tac_toe;
+mod tv;
 
 pub use crate::date_utils::Timestamp;
 pub use crate::display::{HEIGHT, WIDTH};
@@ -71,6 +80,20 @@ impl Game {
 
     pub fn tick(&mut self, timestamp: Timestamp) {
         let delta = timestamp - self.last_time;
+
+        let items = shop::get_shop_items(timestamp);
+
+        for item in items {
+            if item.is_some() {
+                log::info!("{}", item as u8);
+            }
+        }
+
+        let rare = &items::RARE_ITEMS;
+
+        for item in rare {
+            log::info!("{}", *item as usize)
+        }
 
         let mut scene_args = SceneTickArgs {
             timestamp,

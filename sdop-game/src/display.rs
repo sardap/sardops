@@ -1,16 +1,10 @@
-use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
-use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
+use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
 use glam::Vec2;
 
-use crate::Timestamp;
+use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
-use crate::{
-    assets::{Image, get_char_image},
-    bit_array::bytes_for_bits,
-    geo::Rect,
-    sprite::Sprite,
-};
+use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
 pub const WIDTH_F32: f32 = WIDTH as f32;
@@ -19,11 +13,8 @@ pub const HEIGHT_F32: f32 = HEIGHT as f32;
 pub const CENTER_X: f32 = WIDTH_F32 / 2.;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
-pub const DISPLAY_SIZE: usize = WIDTH as usize * HEIGHT as usize;
 
 pub type DisplayData = Bitmap<WIDTH, HEIGHT>;
-
-const DISPLAY_BYTES: usize = bytes_for_bits(DISPLAY_SIZE);
 
 pub struct GameDisplay {
     bits: DisplayData,
@@ -37,44 +28,68 @@ impl Default for GameDisplay {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ColorMode {
+    None,
+    White,
+    Black,
+    Both,
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
-    write_black: bool,
-    write_white: bool,
+    color_mode: ColorMode,
     flip_colors: bool,
     pos_center: bool,
+    font: &'static Font,
 }
 
 impl ComplexRenderOption {
-    pub fn with_white(mut self) -> Self {
-        self.write_white = true;
+    pub const fn new() -> Self {
+        Self {
+            color_mode: ColorMode::None,
+            flip_colors: false,
+            pos_center: false,
+            font: &FONT_MONOSPACE_8X8,
+        }
+    }
+
+    pub const fn with_white(mut self) -> Self {
+        if matches!(self.color_mode, ColorMode::Black) {
+            self.color_mode = ColorMode::Both;
+        } else {
+            self.color_mode = ColorMode::White;
+        }
         self
     }
 
-    pub fn with_black(mut self) -> Self {
-        self.write_black = true;
+    pub const fn with_black(mut self) -> Self {
+        if matches!(self.color_mode, ColorMode::White) {
+            self.color_mode = ColorMode::Both;
+        } else {
+            self.color_mode = ColorMode::Black;
+        }
         self
     }
 
-    pub fn with_flip(mut self) -> Self {
+    pub const fn with_flip(mut self) -> Self {
         self.flip_colors = true;
         self
     }
 
-    pub fn with_center(mut self) -> Self {
+    pub const fn with_center(mut self) -> Self {
         self.pos_center = true;
         self
     }
-}
 
-impl Default for ComplexRenderOption {
-    fn default() -> Self {
-        Self {
-            write_black: false,
-            write_white: false,
-            flip_colors: false,
-            pos_center: false,
-        }
+    pub const fn with_center_value(mut self, value: bool) -> Self {
+        self.pos_center = value;
+        self
+    }
+
+    pub const fn with_font(mut self, font: &'static Font) -> Self {
+        self.font = font;
+        self
     }
 }
 
@@ -107,7 +122,7 @@ impl GameDisplay {
         image: &T,
         options: ComplexRenderOption,
     ) {
-        if !options.write_black && !options.write_white {
+        if options.color_mode == ColorMode::None {
             return;
         }
 
@@ -130,7 +145,9 @@ impl GameDisplay {
                     bit_set = !bit_set;
                 }
 
-                if (options.write_white && !bit_set) || (options.write_black && bit_set) {
+                if (!bit_set && matches!(options.color_mode, ColorMode::White))
+                    || (bit_set && matches!(options.color_mode, ColorMode::Black))
+                {
                     continue;
                 }
 
@@ -149,22 +166,12 @@ impl GameDisplay {
             x,
             y,
             image,
-            ComplexRenderOption::default().with_white().with_center(),
+            ComplexRenderOption::new().with_white().with_center(),
         )
     }
 
     pub fn render_image_top_left<T: Image>(&mut self, x: i32, y: i32, image: &T) {
-        self.render_image_complex(
-            x,
-            y,
-            image,
-            ComplexRenderOption {
-                write_black: false,
-                write_white: true,
-                flip_colors: false,
-                pos_center: false,
-            },
-        );
+        self.render_image_complex(x, y, image, ComplexRenderOption::new().with_white());
     }
 
     pub fn render_rect_solid(&mut self, rect: Rect, white: bool) {
@@ -292,12 +299,8 @@ impl GameDisplay {
     }
 
     pub fn render_text(&mut self, top_left: Vec2, text: &str) {
-        let mut x_offset = 0;
-        for ch in text.chars() {
-            let image = get_char_image(ch);
-            self.render_image_top_left(top_left.x as i32 + x_offset, top_left.y as i32, image);
-            x_offset += image.size.x as i32;
-        }
+        const DEFAULT_RENDER: ComplexRenderOption = ComplexRenderOption::new().with_white();
+        self.render_text_complex(top_left, text, DEFAULT_RENDER);
     }
 
     pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
@@ -308,22 +311,17 @@ impl GameDisplay {
             (pos.x, pos.y)
         };
 
-        let sub_complex_options = ComplexRenderOption {
-            write_black: options.write_black,
-            write_white: options.write_white,
-            flip_colors: options.flip_colors,
-            pos_center: false,
-        };
+        let sub_complex_options = options.clone().with_center_value(false);
         let mut x_offset = 0;
         for ch in text.chars() {
-            let image = get_char_image(ch);
+            let image = (options.font.convert)(ch);
             self.render_image_complex(
                 x_start as i32 + x_offset,
                 y_start as i32,
                 image,
                 sub_complex_options,
             );
-            x_offset += image.size.x as i32;
+            x_offset += image.size.x as i32 + options.font.between_spacing;
         }
     }
 
@@ -347,13 +345,13 @@ impl GameDisplay {
             pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
             pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
             &IMAGE_STOMACH,
-            ComplexRenderOption::default().with_white(),
+            ComplexRenderOption::new().with_white(),
         );
         self.render_image_complex(
             pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
             pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
             &IMAGE_STOMACH_MASK,
-            ComplexRenderOption::default().with_flip().with_black(),
+            ComplexRenderOption::new().with_flip().with_black(),
         );
     }
 
@@ -361,10 +359,35 @@ impl GameDisplay {
         self.bits.invert();
     }
 
+    pub fn invert_rect(&mut self, rect: Rect) {
+        let top_left = rect.pos_top_left();
+        for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
+            for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
+                if x > 0 && y > 0 {
+                    self.set_bit(x, y, !self.bits.get_bit(x as usize, y as usize));
+                }
+            }
+        }
+    }
+
     pub fn render_fps(&mut self, fps: &FPSCounter) {
-        use fixedstr::{str_format, str16};
+        use fixedstr::{str16, str_format};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
-        self.render_text(Vec2::new(0., CENTER_Y), &str);
+        self.render_rect_solid(
+            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 10.)),
+            false,
+        );
+        self.render_text_complex(
+            Vec2::new(0., 0.),
+            &str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_font(&FONT_VARIABLE_SMALL),
+        );
+    }
+
+    pub fn render_complex(&mut self, complex: &impl ComplexRender) {
+        complex.render(self);
     }
 }
 
@@ -449,6 +472,22 @@ where
 
     pub fn invert(&mut self) {
         self.data[BMP_OFFSET..].iter_mut().for_each(|i| *i = !*i);
+    }
+
+    pub fn get_bit(&self, x: usize, y: usize) -> bool {
+        if x >= W || y >= H {
+            return false;
+        }
+
+        // BMP stores rows bottom-up
+        let flipped_y = H - 1 - y;
+
+        // Compute row and bit position
+        let row_stride = padded_row_bytes(W);
+        let byte_index = BMP_OFFSET + flipped_y * row_stride + (x / 8);
+        let bit_index = 7 - (x % 8);
+
+        (self.data[byte_index] & (1 << bit_index)) != 0
     }
 
     pub fn set_pixel(&mut self, x: usize, y: usize, value: bool) {
@@ -572,4 +611,8 @@ where
         let area = Rectangle::new(Point::new(0, 0), Size::new(WIDTH as u32, HEIGHT as u32));
         target.fill_contiguous(&area, PixelIterator::new(self.image_data, self.convert))
     }
+}
+
+pub trait ComplexRender {
+    fn render(&self, display: &mut GameDisplay);
 }

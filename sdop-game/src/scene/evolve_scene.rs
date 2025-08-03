@@ -3,11 +3,12 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    Timestamp, assets,
-    display::{CENTER_VEC, GameDisplay},
+    assets,
+    display::{GameDisplay, CENTER_VEC},
     pet::{definition::PetDefinitionId, render::PetRender},
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
+    Timestamp,
 };
 
 struct ExpandingCircle {
@@ -20,7 +21,7 @@ impl Default for ExpandingCircle {
     fn default() -> Self {
         Self {
             size: 0,
-            speed: Duration::from_millis(50),
+            speed: Duration::from_millis(25),
             duration: Duration::ZERO,
         }
     }
@@ -61,7 +62,7 @@ enum State {
 pub struct EvolveScene {
     from_pet_render: PetRender,
     to_pet_render: PetRender,
-    circles: [Option<ExpandingCircle>; 7],
+    circles: [Option<ExpandingCircle>; 5],
     circle_spawn_timer: Duration,
     show_from: bool,
     flash_timer: Duration,

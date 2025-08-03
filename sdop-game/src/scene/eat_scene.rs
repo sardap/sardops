@@ -3,15 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
     assets::{DynamicImage, IMAGE_STOMACH_MASK},
-    display::{CENTER_VEC, CENTER_X, GameDisplay},
+    display::{GameDisplay, CENTER_VEC, CENTER_X},
     food::Food,
     pet::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    Timestamp,
 };
 
 #[derive(Clone, Copy)]
@@ -133,7 +133,7 @@ impl Scene for EatScene {
         display.render_sprite(&self.pet_render);
         display.render_image_center(CENTER_X as i32 - 10, EAT_Y, &self.food_texture);
 
-        let total_filled = self.fill_factor / def.stomach_size;
+        let total_filled = (self.fill_factor / def.stomach_size).min(1.);
         display.render_stomach(
             Vec2::new(CENTER_X, IMAGE_STOMACH_MASK.size.y as f32 + 10.),
             total_filled,

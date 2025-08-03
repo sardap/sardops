@@ -20,11 +20,14 @@ use hal::gpio::{FunctionI2C, Pin};
 use rp235x_hal::{timer::TimerDevice, Timer};
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-fn timestamp<D: TimerDevice>(timer: &Timer<D>) -> sdop_game::Timestamp {
+fn timestamp<D: TimerDevice>(
+    timestamp: sdop_game::Timestamp,
+    timer: &Timer<D>,
+) -> sdop_game::Timestamp {
     let ticks = timer.get_counter().ticks();
     let micros = ticks / 1; // 1 tick = 1 µs at 1 MHz
 
-    sdop_game::Timestamp::from_duration(Duration::from_micros(micros as u64))
+    timestamp + Duration::from_micros(micros as u64)
 }
 
 #[hal::entry]
@@ -77,11 +80,13 @@ fn main() -> ! {
 
     display.init().unwrap();
 
-    let mut game = sdop_game::Game::new(timestamp(&timer));
+    let start_timestamp = sdop_game::Timestamp::from_parts(1991, 12, 20, 10, 0, 0, 0).unwrap();
+
+    let mut game = sdop_game::Game::new(timestamp(start_timestamp, &timer));
 
     loop {
-        game.tick(timestamp(&timer));
-        game.refresh_display(timestamp(&timer));
+        game.tick(timestamp(start_timestamp, &timer));
+        game.refresh_display(timestamp(start_timestamp, &timer));
 
         game.drawable(|c| c).draw(&mut display).unwrap();
         display.flush().unwrap();

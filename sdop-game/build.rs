@@ -308,6 +308,8 @@ struct PetImageSet {
     happy: Option<String>,
     #[serde(default)]
     sad: Option<String>,
+    #[serde(default)]
+    sleep: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -372,6 +374,12 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
             let var_name = format!("{}_SAD", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
             pet_definitions.push_str(&format!(".with_sad(&assets::FRAMES_{})", var_name));
+        }
+
+        if let Some(path) = &template.images.sleep {
+            let var_name = format!("{}_SLEEP", pet_var_name);
+            write_image(&mut assets, &var_name, asset_path_base.join(&path));
+            pet_definitions.push_str(&format!(".with_sleep(&assets::FRAMES_{})", var_name));
         }
 
         pet_definitions.push_str(");");

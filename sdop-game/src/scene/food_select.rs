@@ -1,10 +1,10 @@
 use glam::Vec2;
 
 use crate::{
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    food::{self, FOOD_COUNT, Food},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, WIDTH_F32},
+    food::{self, Food, FOOD_COUNT},
     geo::Rect,
-    scene::{Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
+    scene::{eat_scene::EatScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 
@@ -99,7 +99,7 @@ impl Scene for FoodSelectScene {
         display.render_text_complex(
             Vec2::new(CENTER_X, 8.),
             "FOOD",
-            ComplexRenderOption::default().with_white().with_center(),
+            ComplexRenderOption::new().with_white().with_center(),
         );
 
         display.render_sprites(&self.foods);

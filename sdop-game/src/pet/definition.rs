@@ -1,7 +1,9 @@
+use chrono::Timelike;
+
 use crate::{
-    assets::Frame,
-    assets::{self},
+    assets::{self, Frame},
     food::Food,
+    Timestamp,
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_pets.rs"));
@@ -41,6 +43,18 @@ impl PetDefinition {
         }
     }
 
+    pub fn poop_time_multiplier(&self) -> f32 {
+        1.
+    }
+
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
+        if timestamp.inner().hour() >= 22 || timestamp.inner().hour() < 6 {
+            return true;
+        }
+
+        false
+    }
+
     pub fn get_by_id(id: PetDefinitionId) -> &'static PetDefinition {
         let id = id as usize;
         if id >= PET_DEFINITIONS.len() {
@@ -56,6 +70,7 @@ pub enum PetAnimationSet {
     Happy,
     Sad,
     Eat,
+    Sleeping,
 }
 
 impl Default for PetAnimationSet {
@@ -71,6 +86,7 @@ pub struct PetImageSet {
     pub happy: Option<&'static [Frame]>,
     pub sad: Option<&'static [Frame]>,
     pub eat: Option<&'static [Frame]>,
+    pub sleep: Option<&'static [Frame]>,
 }
 
 impl PetImageSet {
@@ -82,6 +98,7 @@ impl PetImageSet {
             happy: None,
             sad: None,
             eat: None,
+            sleep: None,
         }
     }
 
@@ -97,6 +114,11 @@ impl PetImageSet {
 
     pub const fn with_eat(mut self, eat: &'static [Frame]) -> Self {
         self.eat = Some(eat);
+        self
+    }
+
+    pub const fn with_sleep(mut self, sleep: &'static [Frame]) -> Self {
+        self.sleep = Some(sleep);
         self
     }
 
@@ -116,6 +138,11 @@ impl PetImageSet {
             PetAnimationSet::Eat => {
                 if let Some(eat) = self.eat {
                     return eat;
+                }
+            }
+            PetAnimationSet::Sleeping => {
+                if let Some(sleep) = self.sleep {
+                    return sleep;
                 }
             }
         }
