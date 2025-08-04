@@ -26,3 +26,6 @@ asefile = "0.3.8"
 ron = "0.10.1"
 serde = { version = "1.0.219", features = ["derive"] }
 image = "0.24.9"
+convert_case = "0.8.0"
+strum = { version = "0.27" }
+strum_macros = { version = "0.27" }

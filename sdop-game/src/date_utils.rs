@@ -3,7 +3,7 @@ use core::{
     time::Duration,
 };
 
-use bincode::{Decode, Encode};
+use bincode::Encode;
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -520,6 +520,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c50fcfdf972929aff202c16b80086aa3cfc6a3a820af714096c58c7c1d0582"
 
 [[package]]
+name = "convert_case"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2705,6 +2714,7 @@ dependencies = [
  "casey",
  "chrono",
  "const_for",
+ "convert_case",
  "embedded-graphics",
  "fastrand",
  "fixedstr",

@@ -17,8 +17,8 @@ use crate::{
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         evolve_scene::EvolveScene, food_select::FoodSelectScene, game_select::GameSelectScene,
-        pet_info::PetInfoScene, poop_clear_scene::PoopClearScene, Scene, SceneEnum, SceneOutput,
-        SceneTickArgs,
+        pet_info::PetInfoScene, poop_clear_scene::PoopClearScene, shop_scene::ShopScene, Scene,
+        SceneEnum, SceneOutput, SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, Sprite},
     tv::{TvKind, TvRender},
@@ -34,6 +34,7 @@ enum MenuOption {
     PetInfo,
     GameSelect,
     FoodSelect,
+    Shop,
 }
 
 const AWAKE_OPTIONS: &[MenuOption] = &[
@@ -41,6 +42,7 @@ const AWAKE_OPTIONS: &[MenuOption] = &[
     MenuOption::PetInfo,
     MenuOption::GameSelect,
     MenuOption::FoodSelect,
+    MenuOption::Shop,
 ];
 
 const SLEEP_OPTIONS: &[MenuOption] = &[MenuOption::PetInfo];
@@ -185,14 +187,14 @@ impl Scene for HomeScene {
         match self.state {
             State::Wondering => {
                 if self.state_elapsed > Duration::from_secs(5) {
-                    if args.game_ctx.inventory.has_item(Item::TvCRT) {
+                    if args.game_ctx.inventory.has_item(Item::TvCrt) {
                         self.tv.kind = TvKind::CRT;
                         self.change_state(State::WatchingTv {
                             show_timer: Duration::ZERO,
                             show_end: Duration::from_secs(30),
                         });
                     }
-                    if args.game_ctx.inventory.has_item(Item::TvLCD) {
+                    if args.game_ctx.inventory.has_item(Item::TvLcd) {
                         self.tv.kind = TvKind::LCD;
                         self.change_state(State::WatchingTv {
                             show_timer: Duration::ZERO,
@@ -274,6 +276,9 @@ impl Scene for HomeScene {
                 MenuOption::FoodSelect => {
                     return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
                 }
+                MenuOption::Shop => {
+                    return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
+                }
             };
         }
 
@@ -348,6 +353,7 @@ impl Scene for HomeScene {
                 MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
                 MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
                 MenuOption::FoodSelect => self.food_anime.current_frame(),
+                MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
             };
 
             let x = SYMBOL_BUFFER + (i as f32 * (SIZE.x + SYMBOL_BUFFER));

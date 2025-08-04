@@ -3,17 +3,7 @@ use const_for::const_for;
 use glam::usize;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
-use crate::money::Money;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, FromRepr)]
-#[repr(usize)]
-pub enum Item {
-    None = 0,
-    TvCRT = 1,
-    TvLCD = 2,
-    Camera = 3,
-    RecipeSandwich = 4,
-}
+include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<Item>();
 
@@ -25,28 +15,18 @@ pub enum ItemRarity {
 }
 
 impl Item {
-    pub const fn rarity(&self) -> ItemRarity {
-        match self {
-            Item::TvLCD => ItemRarity::Rare,
-            _ => ItemRarity::Common,
-        }
-    }
-
-    pub const fn cost(&self) -> Money {
-        match self {
-            Item::None => Money::MAX,
-            Item::TvCRT => 1000,
-            Item::TvLCD => 1000,
-            _ => 0,
-        }
-    }
-
     pub const fn is_none(&self) -> bool {
         matches!(self, Item::None)
     }
 
     pub const fn is_some(&self) -> bool {
         !self.is_none()
+    }
+}
+
+impl Default for Item {
+    fn default() -> Self {
+        Self::None
     }
 }
 

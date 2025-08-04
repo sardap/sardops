@@ -36,11 +36,18 @@ enum ColorMode {
     Both,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PostionMode {
+    TopLeft,
+    Center,
+    Bottomleft,
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
     color_mode: ColorMode,
+    pos_mode: PostionMode,
     flip_colors: bool,
-    pos_center: bool,
     font: &'static Font,
 }
 
@@ -48,8 +55,8 @@ impl ComplexRenderOption {
     pub const fn new() -> Self {
         Self {
             color_mode: ColorMode::None,
+            pos_mode: PostionMode::TopLeft,
             flip_colors: false,
-            pos_center: false,
             font: &FONT_MONOSPACE_8X8,
         }
     }
@@ -78,12 +85,17 @@ impl ComplexRenderOption {
     }
 
     pub const fn with_center(mut self) -> Self {
-        self.pos_center = true;
+        self.pos_mode = PostionMode::Center;
         self
     }
 
-    pub const fn with_center_value(mut self, value: bool) -> Self {
-        self.pos_center = value;
+    pub const fn with_bottom_left(mut self) -> Self {
+        self.pos_mode = PostionMode::Bottomleft;
+        self
+    }
+
+    pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
+        self.pos_mode = value;
         self
     }
 
@@ -129,10 +141,10 @@ impl GameDisplay {
         let image_size = image.size();
         let texture = image.texture();
 
-        let (x_plus, y_plus) = if options.pos_center {
-            (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2)
-        } else {
-            (x, y)
+        let (x_plus, y_plus) = match options.pos_mode {
+            PostionMode::TopLeft => (x, y),
+            PostionMode::Center => (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2),
+            PostionMode::Bottomleft => (x, y - image_size.y as i32),
         };
 
         for iy in 0..image_size.y {
@@ -304,20 +316,49 @@ impl GameDisplay {
     }
 
     pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
-        let (x_start, y_start) = if options.pos_center {
-            let width = (text.len() * 8) as f32;
-            (pos.x - width / 2., pos.y - 4.)
-        } else {
-            (pos.x, pos.y)
+        let mut max_height = {
+            let mut max = u8::MIN;
+            for ch in text.chars() {
+                let image = (options.font.convert)(ch);
+                if image.size.y > max {
+                    max = image.size.y;
+                }
+            }
+            max
+        } as f32;
+
+        let (x_start, y_start) = match options.pos_mode {
+            PostionMode::TopLeft => (pos.x, pos.y + max_height),
+            PostionMode::Center => {
+                let mut max_width = 0;
+                let mut width = 0;
+                for ch in text.chars() {
+                    if ch == '\n' {
+                        max_width = width.max(max_width);
+                        width = 0;
+                    }
+                    let image = (options.font.convert)(ch);
+                    width += image.size.x as i32 + options.font.between_spacing;
+                }
+                let width = width.max(max_width);
+                (pos.x - width as f32 / 2., pos.y + max_height / 2.)
+            }
+            PostionMode::Bottomleft => (pos.x, pos.y),
         };
 
-        let sub_complex_options = options.clone().with_center_value(false);
+        let sub_complex_options = options.clone().with_pos_mode(PostionMode::Bottomleft);
         let mut x_offset = 0;
+        let mut y_offset = 0;
         for ch in text.chars() {
+            if ch == '\n' {
+                x_offset = 0;
+                y_offset += max_height as i32;
+                continue;
+            }
             let image = (options.font.convert)(ch);
             self.render_image_complex(
                 x_start as i32 + x_offset,
-                y_start as i32,
+                y_start as i32 + y_offset,
                 image,
                 sub_complex_options,
             );

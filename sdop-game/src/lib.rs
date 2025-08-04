@@ -81,14 +81,6 @@ impl Game {
     pub fn tick(&mut self, timestamp: Timestamp) {
         let delta = timestamp - self.last_time;
 
-        let items = shop::get_shop_items(timestamp);
-
-        for item in items {
-            if item.is_some() {
-                log::info!("{}", item as u8);
-            }
-        }
-
         let rare = &items::RARE_ITEMS;
 
         for item in rare {

@@ -1,0 +1,23 @@
+[
+    ItemEntry(
+        name: "tv lcd",
+        cost: 1000,
+        rarity: Rare,
+        image: "tv_crt",
+        unique: true,
+    ),
+    ItemEntry(
+        name: "tv crt",
+        cost: 1000,
+        rarity: Rare,
+        image: "tv_lcd",
+        unique: true,
+    ),
+    ItemEntry(
+        name: "shop upgrade",
+        cost: 1000,
+        rarity: Rare,
+        image: "tv_lcd",
+        unique: false,
+    ),
+]

@@ -11,6 +11,7 @@ use crate::{
     money::Money,
     pet::PetInstance,
     poop::{Poop, MAX_POOPS},
+    shop::Shop,
     Game, Timestamp,
 };
 
@@ -20,6 +21,7 @@ pub struct SaveFile {
     poops: [Option<Poop>; MAX_POOPS],
     money: Money,
     inventory: Inventory,
+    shop: Shop,
     pub last_timestamp: Timestamp,
 }
 
@@ -32,6 +34,7 @@ impl SaveFile {
             poops: game_ctx.poops,
             money: game_ctx.money,
             inventory: game_ctx.inventory,
+            shop: game_ctx.shop,
             last_timestamp: timestamp,
         }
     }
@@ -41,6 +44,7 @@ impl SaveFile {
         game_ctx.money = self.money;
         game_ctx.poops = self.poops;
         game_ctx.inventory = self.inventory;
+        game_ctx.shop = self.shop;
     }
 
     pub const fn size() -> usize {

@@ -9,6 +9,7 @@ pub mod mg_link_four;
 pub mod mg_tic_tac_toe;
 pub mod pet_info;
 pub mod poop_clear_scene;
+pub mod shop_scene;
 
 use core::time::Duration;
 
@@ -22,6 +23,7 @@ pub enum SceneEnum {
     Evovle(evolve_scene::EvolveScene),
     PetInfo(pet_info::PetInfoScene),
     PoopClear(poop_clear_scene::PoopClearScene),
+    Shop(shop_scene::ShopScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -43,6 +45,7 @@ impl SceneEnum {
             SceneEnum::FoodSelect(food_select_scene) => food_select_scene,
             SceneEnum::PetInfo(pet_info) => pet_info,
             SceneEnum::PoopClear(poop_clear_scene) => poop_clear_scene,
+            SceneEnum::Shop(shop_scene) => shop_scene,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
