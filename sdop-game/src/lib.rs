@@ -1,9 +1,10 @@
+#![feature(duration_constructors_lite)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
 #![no_std]
 
-use core::time::Duration;
+use core::time::{self, Duration};
 
 use crate::{
     display::{ConvertFn, DrawDisplay},
@@ -62,7 +63,7 @@ impl Game {
             scene_manger: SceneManger::default(),
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
-            fps: FPSCounter::new(timestamp),
+            fps: FPSCounter::new(),
         }
     }
 
@@ -78,14 +79,10 @@ impl Game {
         self.time_scale = time_scale;
     }
 
-    pub fn tick(&mut self, timestamp: Timestamp) {
-        let delta = timestamp - self.last_time;
+    pub fn tick(&mut self, delta: Duration) {
+        let timestamp = self.last_time + delta;
 
-        let rare = &items::RARE_ITEMS;
-
-        for item in rare {
-            log::info!("{}", *item as usize)
-        }
+        self.game_ctx.speical_days.update(timestamp.inner().date());
 
         let mut scene_args = SceneTickArgs {
             timestamp,
@@ -109,11 +106,9 @@ impl Game {
         self.last_time = timestamp
     }
 
-    pub fn refresh_display(&mut self, timestamp: Timestamp) {
-        let delta = timestamp - self.last_time;
-
+    pub fn refresh_display(&mut self, delta: Duration) {
         let mut scene_args = SceneTickArgs {
-            timestamp,
+            timestamp: self.last_time,
             delta,
             input: &self.input,
             game_ctx: &mut self.game_ctx,
@@ -123,7 +118,7 @@ impl Game {
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
         self.display.render_fps(&self.fps);
-        self.fps.update(timestamp);
+        self.fps.update(delta);
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {

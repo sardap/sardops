@@ -118,6 +118,13 @@ impl HomeScene {
         }
     }
 
+    fn wonder_rect(&self) -> Rect {
+        Rect::new_center(
+            WONDER_RECT.pos,
+            WONDER_RECT.size - self.pet_render.anime.current_frame().size.x as f32,
+        )
+    }
+
     fn change_state(&mut self, new_state: State) {
         if self.state == new_state {
             return;
@@ -138,7 +145,9 @@ impl HomeScene {
 
 impl Scene for HomeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        self.pet_render.pos = Vec2::new(CENTER_X, CENTER_Y);
+        self.pet_render.pos = self
+            .wonder_rect()
+            .random_point_inside(&mut args.game_ctx.rng);
         self.target = self.pet_render.pos;
         self.selected_option = get_options(self.state)[0];
         self.tv.random_show(&mut args.game_ctx.rng)
@@ -203,15 +212,12 @@ impl Scene for HomeScene {
                     }
                 }
 
-                self.pet_render.set_animation(PetAnimationSet::Normal);
+                self.pet_render
+                    .set_animation(pet.mood(&args.game_ctx.poops).anime_set());
 
                 let dist = vec2_distance(self.pet_render.pos, self.target);
                 if dist.abs() < 5. {
-                    let rect = Rect::new_center(
-                        WONDER_RECT.pos,
-                        WONDER_RECT.size - PetDefinition::get_by_id(pet.def_id).images.width as f32,
-                    );
-                    self.target = rect.random_point_inside(rng);
+                    self.target = self.wonder_rect().random_point_inside(rng);
                 }
 
                 self.pet_render.pos += vec2_direction(self.pet_render.pos, self.target)

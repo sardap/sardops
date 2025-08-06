@@ -1,49 +1,49 @@
-use core::time::Duration;
+use core::{ops::DerefMut, time::Duration};
 
-use crate::Timestamp;
+const MAX_SAMPLES: usize = 100;
 
 pub struct FPSCounter {
-    last_time: Timestamp,
-    fps: f32,
-    avg_fps: f32,
-    frame_count: u32,
-    elapsed: Duration,
+    tick_index: usize,
+    tick_sum: i32,
+    tick_list: [i32; MAX_SAMPLES],
+    avg_tick: f32,
+    frames: u32,
+    frame_elapsed: Duration,
+    last_fps: u32,
 }
 
 impl FPSCounter {
-    pub fn new(timestamp: Timestamp) -> Self {
+    pub fn new() -> Self {
         Self {
-            last_time: timestamp,
-            fps: 0.0,
-            avg_fps: 0.0,
-            frame_count: 0,
-            elapsed: Duration::ZERO,
+            tick_index: 0,
+            tick_sum: 0,
+            tick_list: [0; MAX_SAMPLES],
+            avg_tick: 0.0,
+            frames: 0,
+            frame_elapsed: Duration::ZERO,
+            last_fps: 0,
         }
     }
 
-    pub fn update(&mut self, timestamp: Timestamp) {
-        let now = timestamp;
-        let delta = now - self.last_time;
-        self.last_time = now;
+    pub fn update(&mut self, delta: Duration) {
+        let new_tick = delta.as_millis() as i32;
+        self.tick_sum -= self.tick_list[self.tick_index];
+        self.tick_sum += new_tick;
+        self.tick_list[self.tick_index] = new_tick;
+        self.tick_index = (self.tick_index + 1) % self.tick_list.len();
 
-        let seconds = delta.as_secs_f32();
-        if seconds > 0.0 {
-            self.fps = 1.0 / seconds;
+        self.avg_tick = self.tick_sum as f32 / self.tick_list.len() as f32;
+
+        self.frames += 1;
+        self.frame_elapsed += delta;
+        if self.frame_elapsed > Duration::from_secs(1) {
+            self.last_fps = self.frames;
+            self.frames = 0;
+            self.frame_elapsed = Duration::ZERO;
         }
-
-        self.frame_count += 1;
-        self.elapsed += delta;
-        self.avg_fps = self.calculate_avg();
     }
 
     pub fn get_fps(&self) -> f32 {
-        self.fps
-    }
-
-    fn calculate_avg(&self) -> f32 {
-        if self.elapsed.as_secs_f64() <= 0.0 {
-            return 0.0;
-        }
-        self.frame_count as f32 / self.elapsed.as_secs_f32()
+        self.last_fps as f32
     }
 }

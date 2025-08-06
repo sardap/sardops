@@ -1,15 +1,17 @@
 use core::time::Duration;
 
-use bincode::{Decode, Encode};
+use bincode::{de, Decode, Encode};
 use fastrand::Rng;
 
 use crate::{
     date_utils::duration_from_hours,
     food::Food,
+    game_context::GameContext,
     pet::definition::{
-        PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID, PET_PAWN_WHITE_ID,
+        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
+        PET_PAWN_WHITE_ID,
     },
-    poop::POOP_INTERVNAL,
+    poop::{poop_count, Poop, POOP_INTERVNAL},
     Timestamp,
 };
 
@@ -17,13 +19,21 @@ pub mod definition;
 pub mod render;
 
 #[derive(Encode, Decode, Copy, Clone)]
+pub enum StomachMood {
+    Full { elapsed: Duration },
+    Starving { elapsed: Duration },
+}
+
+#[derive(Encode, Decode, Copy, Clone)]
 pub struct PetInstance {
     pub def_id: PetDefinitionId,
     pub born: Timestamp,
     pub age: Duration,
+    pub stomach_mood: StomachMood,
     pub stomach_filled: f32,
     pub extra_weight: f32,
     pub since_poop: Duration,
+    pub since_game: Duration,
 }
 
 impl PetInstance {
@@ -55,6 +65,27 @@ impl PetInstance {
         self.stomach_filled = (self.stomach_filled
             - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
             .max(0.);
+        if !sleep && self.stomach_filled <= 0. {
+            let elapsed = if let StomachMood::Starving { elapsed } = self.stomach_mood {
+                elapsed
+            } else {
+                Duration::ZERO
+            };
+
+            self.stomach_mood = StomachMood::Starving {
+                elapsed: elapsed + delta,
+            }
+        } else if self.stomach_filled > 10. {
+            let elapsed = if let StomachMood::Full { elapsed } = self.stomach_mood {
+                elapsed
+            } else {
+                Duration::ZERO
+            };
+
+            self.stomach_mood = StomachMood::Full {
+                elapsed: elapsed + delta,
+            }
+        }
     }
 
     pub fn tick_poop(&mut self, delta: Duration) {
@@ -63,6 +94,16 @@ impl PetInstance {
         }
 
         self.since_poop += delta;
+    }
+
+    pub fn tick_since_game(&mut self, delta: Duration, sleep: bool) {
+        if !sleep {
+            self.since_game += delta;
+        }
+    }
+
+    pub fn played_game(&mut self) {
+        self.since_game = Duration::ZERO;
     }
 
     pub fn should_poop(&mut self, sleeping: bool) -> bool {
@@ -96,6 +137,30 @@ impl PetInstance {
 
         return None;
     }
+
+    pub fn stomach_mood(&self) -> StomachMood {
+        return self.stomach_mood;
+    }
+
+    pub fn mood(&self, poops: &[Option<Poop>]) -> Mood {
+        let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
+
+        if is_starved || poop_count(poops) > 0 || self.since_game > Duration::from_hours(6) {
+            return Mood::Sad;
+        }
+
+        let tummy_full_time = if let StomachMood::Full { elapsed } = self.stomach_mood {
+            elapsed
+        } else {
+            Duration::ZERO
+        };
+
+        if tummy_full_time > Duration::from_secs(60) {
+            return Mood::Happy;
+        }
+
+        return Mood::Normal;
+    }
 }
 
 impl Default for PetInstance {
@@ -104,9 +169,13 @@ impl Default for PetInstance {
             def_id: crate::pet::definition::PET_CKCS_ID,
             born: Timestamp::default(),
             age: Duration::ZERO,
+            stomach_mood: StomachMood::Full {
+                elapsed: Duration::ZERO,
+            },
             stomach_filled: 0.,
             extra_weight: 0.,
             since_poop: Duration::ZERO,
+            since_game: Duration::ZERO,
         }
     }
 }
@@ -114,10 +183,22 @@ impl Default for PetInstance {
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Mood {
     Normal,
+    Sad,
+    Happy,
 }
 
 impl Default for Mood {
     fn default() -> Self {
         Mood::Normal
+    }
+}
+
+impl Mood {
+    pub fn anime_set(&self) -> PetAnimationSet {
+        match self {
+            Mood::Normal => PetAnimationSet::Normal,
+            Mood::Sad => PetAnimationSet::Sad,
+            Mood::Happy => PetAnimationSet::Happy,
+        }
     }
 }

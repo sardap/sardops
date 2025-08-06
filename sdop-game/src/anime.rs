@@ -48,6 +48,13 @@ impl Anime {
         self.current_index = index;
     }
 
+    pub fn set_random_frame(&mut self, rng: &mut fastrand::Rng) {
+        self.current_index = rng.usize(0..self.frames.len());
+        self.elapsed = Duration::from_millis(
+            rng.u64(0..self.frames[self.current_index].duration.as_millis() as u64) as u64,
+        )
+    }
+
     pub fn frames(&self) -> &'static [Frame] {
         self.frames
     }

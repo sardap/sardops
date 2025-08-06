@@ -10,6 +10,7 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
 
     pet.tick_hunger(delta, sleeping);
     pet.tick_poop(delta);
+    pet.tick_since_game(delta, sleeping);
     if pet.should_poop(sleeping) {
         add_poop(&mut args.game_ctx.poops, args.timestamp);
     }

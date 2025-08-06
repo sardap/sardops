@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 /// This example uses the CPU to render a simple bitmap image to the screen.
 use ctru::prelude::*;
 use ctru::services::gfx::{Flush, Screen, Swap};
-use sdop_game::{HEIGHT, SaveFile, Timestamp};
+use sdop_game::{SaveFile, Timestamp, HEIGHT};
 
 const TOP_SCREEN_WIDTH: usize = 800;
 const TOP_SCREEN_HEIGHT: usize = 240;
@@ -88,6 +88,7 @@ fn main() {
         }
     }
     let mut last_save_time = Instant::now();
+    let mut last_frame_time = Instant::now();
 
     while apt.main_loop() {
         hid.scan_input();
@@ -95,9 +96,11 @@ fn main() {
         let keys = hid.keys_down();
 
         game.update_input_states(buttons_to_input(&keys));
-        game.tick(timestamp());
 
-        game.refresh_display(timestamp());
+        let delta = last_frame_time.elapsed();
+        last_frame_time = Instant::now();
+        game.tick(delta);
+        game.refresh_display(delta);
         // Center the game display within the top screen
         const SCALE: usize = 3;
         for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {

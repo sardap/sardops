@@ -21,6 +21,8 @@ const COOKIE_NAME: &'static str = "sdop_save";
 struct State {
     game: Game,
     last_save: DateTime<Utc>,
+    last_update: DateTime<Utc>,
+    last_render: DateTime<Utc>,
 }
 
 #[notan_main]
@@ -57,6 +59,8 @@ fn setup(gfx: &mut Graphics) -> State {
     State {
         game,
         last_save: chrono::Utc::now(),
+        last_render: chrono::Utc::now(),
+        last_update: chrono::Utc::now(),
     }
 }
 
@@ -87,18 +91,19 @@ fn mouse_to_input(mouse: &Mouse) -> sdop_game::ButtonStates {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    let timestamp = timestamp();
+    let delta = chrono::Utc::now() - state.last_update;
+    state.last_update = chrono::Utc::now();
 
     state
         .game
         .update_input_states(buttons_to_input(&app.keyboard));
     // state.game.update_input_states(mouse_to_input(&app.mouse));
 
-    state.game.tick(timestamp);
+    state.game.tick(delta.to_std().unwrap());
 
     #[cfg(target_arch = "wasm32")]
     if chrono::Utc::now() - state.last_save > chrono::Duration::seconds(1) {
-        let save = state.game.get_save(timestamp);
+        let save = state.game.get_save(timestamp());
         let encoded_save = bincode::encode_to_vec(save, bincode::config::standard()).unwrap();
         let base64_encoded = BASE64_STANDARD.encode(encoded_save);
         wasm_cookies::set(
@@ -113,35 +118,16 @@ fn update(app: &mut App, state: &mut State) {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
+    let delta = chrono::Utc::now() - state.last_render;
+    state.last_render = chrono::Utc::now();
+
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 
-    let mut pixel_data = [0u8; sdop_game::WIDTH * sdop_game::HEIGHT * 4];
-    state.game.refresh_display(timestamp());
-    for (byte_index, byte_value) in state.game.get_display_image_data().iter().enumerate() {
-        let start_x = (byte_index % (sdop_game::WIDTH / 8)) * 8;
-        let y = byte_index / (sdop_game::WIDTH / 8);
-
-        for bit_index in 0..8 {
-            if (byte_value >> bit_index) & 1 == 1 {
-                let x = start_x + bit_index;
-                let index = (y * sdop_game::WIDTH + x) * 4;
-                if index + 3 < pixel_data.len() {
-                    pixel_data[index] = 255; // R
-                    pixel_data[index + 1] = 255; // G
-                    pixel_data[index + 2] = 255; // B
-                    pixel_data[index + 3] = 255; // A
-                }
-            }
-        }
-    }
+    state.game.refresh_display(delta.to_std().unwrap());
     let texture = gfx
         .create_texture()
-        .from_bytes(
-            &pixel_data,
-            sdop_game::WIDTH as u32,
-            sdop_game::HEIGHT as u32,
-        )
+        .from_image(&state.game.get_display_bmp())
         .build()
         .unwrap();
 

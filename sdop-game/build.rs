@@ -1,7 +1,9 @@
 use asefile::AsepriteFile;
+use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::GenericImageView;
 use serde::{Deserialize, Serialize};
+use solar_calendar_events::AnnualSolarEvent;
 use std::{
     env,
     fs::{self},
@@ -25,6 +27,7 @@ struct ContentOut {
     pet_definitions: String,
     food_definitions: String,
     item_definitions: String,
+    dates_definitions: String,
 }
 
 impl ContentOut {
@@ -33,6 +36,7 @@ impl ContentOut {
         self.pet_definitions.push_str(&other.pet_definitions);
         self.food_definitions.push_str(&other.food_definitions);
         self.item_definitions.push_str(&other.item_definitions);
+        self.dates_definitions.push_str(&other.dates_definitions);
     }
 }
 
@@ -569,6 +573,141 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         ..Default::default()
     }
 }
+pub struct SpecialDay {
+    kind: String,
+    month: u32,
+    day: u32,
+}
+
+fn get_date_of_n_day_in_month(
+    year: i32,
+    month: u32,
+    mut n: u32,
+    weekday: chrono::Weekday,
+) -> NaiveDate {
+    let mut date = NaiveDate::from_ymd_opt(year, month, 1).unwrap();
+
+    while date.month() == month {
+        if date.weekday() == weekday {
+            n -= 1;
+        }
+        if n <= 0 {
+            return date;
+        }
+        date = date.checked_add_days(chrono::Days::new(1)).unwrap();
+    }
+
+    panic!("Impossible {} {} {}", year, month, n)
+}
+
+fn generate_dates() -> ContentOut {
+    let mut dates_definitions = String::new();
+
+    // So lets start at 1970 and go until 2370
+    dates_definitions.push_str("pub const DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
+
+    for year in 2025..=2100 {
+        let mut dates = vec![];
+        let easter = computus::gregorian(year).unwrap();
+        let easter = NaiveDate::from_ymd_opt(year, easter.month, easter.day).unwrap();
+
+        dates.push(SpecialDay {
+            kind: "EasterSunday".to_owned(),
+            month: easter.month(),
+            day: easter.day(),
+        });
+
+        let good_friday = easter.checked_sub_days(Days::new(2)).unwrap();
+        dates.push(SpecialDay {
+            kind: "GoodFriday".to_owned(),
+            month: good_friday.month(),
+            day: good_friday.day(),
+        });
+
+        let monday = easter.checked_add_days(Days::new(1)).unwrap();
+
+        dates.push(SpecialDay {
+            kind: "EasterMonday".to_owned(),
+            month: monday.month(),
+            day: monday.day(),
+        });
+
+        let grand_final_eve = get_date_of_n_day_in_month(year, 9, 4, chrono::Weekday::Fri);
+
+        dates.push(SpecialDay {
+            kind: "GrandFinalEve".to_owned(),
+            month: grand_final_eve.month(),
+            day: grand_final_eve.day(),
+        });
+
+        let fathers_day = get_date_of_n_day_in_month(year, 9, 1, chrono::Weekday::Sun);
+        dates.push(SpecialDay {
+            kind: "FathersDay".to_owned(),
+            month: fathers_day.month(),
+            day: fathers_day.day(),
+        });
+
+        let mothers_day = get_date_of_n_day_in_month(year, 5, 2, chrono::Weekday::Sun);
+        dates.push(SpecialDay {
+            kind: "MothersDay".to_owned(),
+            month: mothers_day.month(),
+            day: mothers_day.day(),
+        });
+
+        let melbourne_cup = get_date_of_n_day_in_month(year, 11, 1, chrono::Weekday::Tue);
+        dates.push(SpecialDay {
+            kind: "MelbourneCup".to_owned(),
+            month: melbourne_cup.month(),
+            day: melbourne_cup.day(),
+        });
+
+        let solar = solar_calendar_events::AnnualSolarEvents::for_year(year).unwrap();
+        dates.push(SpecialDay {
+            kind: "SeptemberEquinox".to_owned(),
+            month: solar.september_equinox().date_time().month(),
+            day: solar.september_equinox().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "MarchEquinox".to_owned(),
+            month: solar.march_equinox().date_time().month(),
+            day: solar.march_equinox().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "WinterSolstice".to_owned(),
+            month: solar.june_solstice().date_time().month(),
+            day: solar.june_solstice().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "SummerSolstice".to_owned(),
+            month: solar.december_solstice().date_time().month(),
+            day: solar.december_solstice().date_time().day(),
+        });
+
+        dates.sort_by(|a, b| {
+            if a.month == b.month {
+                a.day.cmp(&b.day)
+            } else {
+                a.month.cmp(&b.month)
+            }
+        });
+
+        dates_definitions.push_str("&[");
+        for date in dates {
+            dates_definitions.push_str(&format!(
+                "SpecialDay::new(SpecialDayKind::{}, {}, {}),",
+                date.kind, date.month, date.day
+            ));
+        }
+        dates_definitions.push_str("],");
+    }
+
+    dates_definitions.push_str("];");
+
+    ContentOut {
+        dates_definitions: dates_definitions,
+        ..Default::default()
+    }
+}
 
 fn main() {
     let mut contents = ContentOut::default();
@@ -578,6 +717,7 @@ fn main() {
     contents.merge(generate_pet_definitions(PETS_RON_PATH));
     contents.merge(generate_food_definitions(FOODS_RON_PATH));
     contents.merge(generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH));
+    contents.merge(generate_dates());
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
@@ -612,6 +752,15 @@ fn main() {
     fs::write(&dist_items_path, contents.item_definitions).unwrap();
     Command::new("rustfmt")
         .arg(dist_items_path)
+        .spawn()
+        .expect("Unable to format")
+        .wait()
+        .unwrap();
+
+    let dist_dates_path = Path::new(&out_dir).join("dist_dates.rs");
+    fs::write(&dist_dates_path, contents.dates_definitions).unwrap();
+    Command::new("rustfmt")
+        .arg(dist_dates_path)
         .spawn()
         .expect("Unable to format")
         .wait()

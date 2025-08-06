@@ -15,15 +15,15 @@ const OPEN_TIMES: [[NaiveTime; 2]; 7] = [
     // Monday
     [
         NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
         NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
         NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
         NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
@@ -82,9 +82,14 @@ impl Scene for ShopScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         self.for_sale = args.game_ctx.shop.item_set(args.timestamp);
 
+        self.shop_keeper
+            .anime()
+            .set_random_frame(&mut args.game_ctx.rng);
+
         let opening_times = OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
         if args.timestamp.inner().time() < opening_times[0]
             || args.timestamp.inner().time() > opening_times[1]
+            || args.game_ctx.speical_days.is_non_trading_day()
         {
             self.state = State::Closed;
         }
@@ -104,6 +109,7 @@ impl Scene for ShopScene {
                 let opening_times = OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
                 if args.timestamp.inner().time() > opening_times[0]
                     && args.timestamp.inner().time() < opening_times[1]
+                    && !args.game_ctx.speical_days.is_non_trading_day()
                 {
                     self.state = State::ShopKeeper;
                 }
@@ -118,7 +124,9 @@ impl Scene for ShopScene {
             }
             State::Selected(selected) => {
                 let current = self.for_sale[selected];
-                if args.input.pressed(crate::Button::Middle) && args.game_ctx.money > current.cost()
+                if args.input.pressed(crate::Button::Middle)
+                    && args.game_ctx.money > current.cost()
+                    && !(current.unique() && args.game_ctx.inventory.has_item(current))
                 {
                     args.game_ctx.inventory.add_item(current, 1);
                     args.game_ctx.money -= current.cost();
@@ -157,45 +165,65 @@ impl Scene for ShopScene {
                 let y_offset = self.shop_keeper.pos.y
                     + assets::IMAGE_SHOP_SIGN_CLOSED_0.size.y as f32 / 2.
                     + 4.;
-                const X_OFFSET: f32 = 8.;
-                for (i, time) in OPEN_TIMES.iter().enumerate() {
-                    let day = chrono::Weekday::try_from(i as u8).unwrap();
-                    let open = time[0];
-                    let closed = time[1];
-                    let y = y_offset + i as f32 * 7.;
-                    let str = fixedstr::str_format!(fixedstr::str16, "{}", day,);
-                    display.render_text_complex(
-                        Vec2::new(X_OFFSET + 0., y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", open.hour(),);
-                    display.render_text_complex(
-                        Vec2::new(X_OFFSET + 20., y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
 
+                if let Some(day) = args.game_ctx.speical_days.non_trading_day() {
                     display.render_text_complex(
-                        Vec2::new(X_OFFSET + 31., y),
-                        "-",
+                        Vec2::new(CENTER_X, y_offset),
+                        "DUE TO",
                         ComplexRenderOption::new()
                             .with_white()
+                            .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
+                    display.render_text_complex(
+                        Vec2::new(CENTER_X, y_offset + 10.),
+                        day.name(),
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                } else {
+                    const X_OFFSET: f32 = 8.;
+                    for (i, time) in OPEN_TIMES.iter().enumerate() {
+                        let day = chrono::Weekday::try_from(i as u8).unwrap();
+                        let open = time[0];
+                        let closed = time[1];
+                        let y = y_offset + i as f32 * 7.;
+                        let str = fixedstr::str_format!(fixedstr::str16, "{}", day,);
+                        display.render_text_complex(
+                            Vec2::new(X_OFFSET + 0., y),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", open.hour(),);
+                        display.render_text_complex(
+                            Vec2::new(X_OFFSET + 20., y),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
 
-                    let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", closed.hour(),);
-                    display.render_text_complex(
-                        Vec2::new(X_OFFSET + 37., y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
+                        display.render_text_complex(
+                            Vec2::new(X_OFFSET + 31., y),
+                            "-",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+
+                        let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", closed.hour(),);
+                        display.render_text_complex(
+                            Vec2::new(X_OFFSET + 37., y),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                    }
                 }
             }
             State::ShopKeeper => {
@@ -244,12 +272,14 @@ impl Scene for ShopScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
                 y += Y_BUFFER;
-                let tomrrow = match args.timestamp.inner().date().checked_add_days(Days::new(1)) {
+                let mut tomrrow = match args.timestamp.inner().date().checked_add_days(Days::new(1))
+                {
                     Some(val) => val,
                     None => NaiveDate::MAX,
                 };
-                let tomrrow =
-                    NaiveDateTime::new(tomrrow, NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+                // Set time to open
+                let open_time = OPEN_TIMES[tomrrow.weekday() as usize][0];
+                let tomrrow = NaiveDateTime::new(tomrrow, open_time);
                 let mut midnight_in = tomrrow - *args.timestamp.inner();
                 let hours = midnight_in.num_hours();
                 midnight_in -= TimeDelta::hours(hours);

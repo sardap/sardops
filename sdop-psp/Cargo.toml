@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+chrono = { git = "https://github.com/sardap/chrono", default-features = false }
 sdop-game = { path = "../sdop-game" }
-psp = {version = "0.3.12", features = ["embedded-graphics"]}
-embedded-graphics = { version = "0.8.1", features = ["fixed_point"]}
+psp = { version = "0.3.12", features = ["embedded-graphics"] }
+embedded-graphics = { version = "0.8.1", features = ["fixed_point"] }
 tinybmp = "0.6.0"
 fixedstr = "0.5.9"
-chrono = {version = "0.4.41", default-features = false }

@@ -12,7 +12,11 @@ use crate::{
 };
 
 pub const MAX_POOPS: usize = 5;
-pub const POOP_INTERVNAL: Duration = Duration::from_secs(10);
+pub const POOP_INTERVNAL: Duration = Duration::from_mins(10);
+
+pub fn poop_count(poops: &[Option<Poop>]) -> usize {
+    return poops.iter().filter(|i| i.is_some()).count();
+}
 
 #[derive(Copy, Clone, Encode, Decode)]
 pub struct Poop {

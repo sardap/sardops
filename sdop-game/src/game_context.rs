@@ -1,4 +1,5 @@
 use crate::{
+    date_utils::SpecialDayUpdater,
     food::UnlockedFood,
     items::Inventory,
     money::Money,
@@ -16,6 +17,7 @@ pub struct GameContext {
     pub unlocked_food: UnlockedFood,
     pub shop: Shop,
     pub rng: fastrand::Rng,
+    pub speical_days: SpecialDayUpdater,
 }
 
 impl GameContext {
@@ -28,6 +30,7 @@ impl GameContext {
             unlocked_food: UnlockedFood::default(),
             shop: Shop::default(),
             rng: fastrand::Rng::with_seed(timestamp.seed()),
+            speical_days: SpecialDayUpdater::new(timestamp.inner().date()),
         }
     }
 }

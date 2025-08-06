@@ -56,6 +56,7 @@ impl Scene for MgFanFareScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.money += self.money;
+        args.game_ctx.pet.played_game();
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {

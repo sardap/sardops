@@ -53,14 +53,9 @@ fn entry(mut _gba: agb::Gba) -> ! {
     gfx.clear(0x7C00);
 
     loop {
-        time = time + FRAME_TIME_MS;
-
         game.update_input_states(buttons_to_input(&button_controller));
-        game.tick(time);
-
-        agb::println!("time elapsed {:?}", time);
-
-        game.refresh_display(time);
+        game.tick(FRAME_TIME_MS);
+        game.refresh_display(FRAME_TIME_MS);
         const SCALE: usize = 1;
         for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
             let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;

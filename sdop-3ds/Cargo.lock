@@ -205,6 +205,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrono"
+version = "0.4.41"
+source = "git+https://github.com/sardap/chrono#3620c2022d5bc65d816e3dc8d599fb2fea850fe9"
+dependencies = [
+ "iana-time-zone",
+ "js-sys",
+ "num-traits",
+ "wasm-bindgen",
+ "windows-link",
+]
+
+[[package]]
 name = "clang-sys"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -220,6 +232,15 @@ name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
+
+[[package]]
+name = "computus"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3031543635f9370bbf041833cc5dbb5d1b79b14487113f0b50ab3f3a535e804d"
+dependencies = [
+ "chrono 0.4.41 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "const_for"
@@ -876,7 +897,7 @@ name = "sdop-3ds"
 version = "0.1.0"
 dependencies = [
  "bincode",
- "chrono",
+ "chrono 0.4.41 (git+https://github.com/sardap/chrono)",
  "ctru-rs",
  "ctru-sys",
  "sdop-game",
@@ -889,7 +910,8 @@ dependencies = [
  "asefile",
  "bincode",
  "casey",
- "chrono",
+ "chrono 0.4.41 (git+https://github.com/sardap/chrono)",
+ "computus",
  "const_for",
  "convert_case",
  "embedded-graphics",
@@ -902,6 +924,7 @@ dependencies = [
  "paste",
  "ron",
  "serde",
+ "solar-calendar-events",
  "strum",
  "strum_macros",
  "tinybmp",
@@ -961,6 +984,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
+name = "solar-calendar-events"
+version = "0.2.1"
+source = "git+https://github.com/sardap/solar-calendar-events#b58c360603a0f7b2889294f230b21b8ab2bd79be"
+dependencies = [
+ "chrono 0.4.41 (git+https://github.com/sardap/chrono)",
+ "thiserror",
+]
+
+[[package]]
 name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -999,6 +1031,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "thiserror"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

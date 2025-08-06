@@ -68,7 +68,8 @@ pub fn main() {
 
     let mut input: ButtonStates = [sdop_game::ButtonState::Up; 3];
     'running: loop {
-        let loop_timestamp = timestamp();
+        let delta = last_frame_time.elapsed();
+        last_frame_time = Instant::now();
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
         for event in event_pump.poll_iter() {
@@ -132,8 +133,8 @@ pub fn main() {
         game.set_sim_time_scale(time_scale);
         game.update_input_states(input);
 
-        game.tick(loop_timestamp);
-        game.refresh_display(loop_timestamp);
+        game.tick(delta);
+        game.refresh_display(delta);
         let texture_creator = canvas.texture_creator();
         let texture = texture_creator
             .load_texture_bytes(game.get_display_bmp())
@@ -167,6 +168,5 @@ pub fn main() {
             let sleep_time = FRAME_TIME - frame_elapsed;
             std::thread::sleep(sleep_time);
         }
-        last_frame_time = Instant::now();
     }
 }

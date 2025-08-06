@@ -113,6 +113,7 @@ pub fn get_char_image_small_var(val: char) -> &'static StaticImage {
         '$' => &assets::IMAGE_ALPHA_SMALL_DOLLARSIGN,
         ':' => &assets::IMAGE_ALPHA_SMALL_COLON,
         '-' => &assets::IMAGE_ALPHA_SMALL_DASH,
+        '/' => &assets::IMAGE_ALPHA_SMALL_FORWARD_SLASH,
         _ => &assets::IMAGE_ALPHA_SMALL_0,
     }
 }
