@@ -76,7 +76,7 @@ fn psp_main() {
     let black_backdrop = Rectangle::new(Point::new(0, 0), Size::new(160, 80)).into_styled(style);
     black_backdrop.draw(&mut disp).unwrap();
 
-    let mut game = sdop_game::Game::new(get_timestamp());
+    let mut game = sdop_game::Game::blank(Some(get_timestamp()));
 
     let pad_data = &mut SceCtrlData::default();
 

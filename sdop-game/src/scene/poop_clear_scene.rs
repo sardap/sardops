@@ -8,7 +8,7 @@ use crate::{
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
-    scene::{home_scene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{home_scene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
 };
 
 const WIPE_SPEED: f32 = 20.;
@@ -87,7 +87,7 @@ impl Scene for PoopClearScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         match &self.state {
             State::PreWipe { elapsed: _elapsed } => {
                 display.render_sprites(&self.poops);

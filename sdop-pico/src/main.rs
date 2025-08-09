@@ -82,7 +82,7 @@ fn main() -> ! {
 
     let start_timestamp = sdop_game::Timestamp::from_parts(1991, 12, 20, 10, 0, 0, 0).unwrap();
 
-    let mut game = sdop_game::Game::new(timestamp(start_timestamp, &timer));
+    let mut game = sdop_game::Game::blank(None);
 
     loop {
         let ticks = timer.get_counter().ticks();

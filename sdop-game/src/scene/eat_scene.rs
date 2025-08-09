@@ -10,7 +10,7 @@ use crate::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     Timestamp,
 };
 
@@ -127,7 +127,7 @@ impl Scene for EatScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         const EAT_Y: i32 = 50;
         let def = PetDefinition::get_by_id(self.pet_def_id);
         display.render_sprite(&self.pet_render);

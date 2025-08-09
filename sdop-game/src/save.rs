@@ -61,7 +61,7 @@ impl SaveFile {
         Ok(())
     }
 
-    pub fn save_to_bytes(
+    fn save_to_bytes(
         bytes: &mut [u8],
         timestamp: Timestamp,
         game: &Game,
@@ -74,9 +74,16 @@ impl SaveFile {
     pub fn gen_save_bytes(
         timestamp: Timestamp,
         game: &Game,
-    ) -> Result<[u8; Self::size()], EncodeError> {
+    ) -> Option<Result<[u8; Self::size()], EncodeError>> {
+        if !game.game_ctx.should_save {
+            return None;
+        }
+
         let mut bytes = [0; Self::size()];
-        Self::save_to_bytes(&mut bytes, timestamp, game)?;
-        Ok(bytes)
+        match Self::save_to_bytes(&mut bytes, timestamp, game) {
+            Ok(it) => it,
+            Err(err) => return Some(Err(err)),
+        };
+        Some(Ok(bytes))
     }
 }

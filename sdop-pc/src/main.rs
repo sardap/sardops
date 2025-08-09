@@ -48,11 +48,22 @@ pub fn main() {
 
     let mut game = sdop_game::Game::new(timestamp());
     let mut time_scale = 1.0f32;
+    let mut loaded = false;
     if let Ok(mut file) = std::fs::File::open(SAVE_FILE_NAME) {
         let mut bytes = vec![];
         if file.read_to_end(&mut bytes).is_ok() {
-            let _ = SaveFile::load_from_bytes(&bytes, timestamp(), &mut game);
+            match SaveFile::load_from_bytes(&bytes, timestamp(), &mut game) {
+                Ok(_) => {
+                    loaded = true;
+                    log::info!("Loadded save!")
+                }
+                Err(err) => log::error!("Error Loading save {}", err),
+            }
         }
+    }
+
+    if !loaded {
+        game = sdop_game::Game::blank(Some(timestamp()));
     }
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -154,12 +165,19 @@ pub fn main() {
         canvas.present();
 
         let since_save = last_save_time.elapsed();
-        if since_save > Duration::from_secs(1)
-            && let Ok(bytes) = SaveFile::gen_save_bytes(timestamp(), &game)
-        {
-            let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-            let _ = fs.write_all(&bytes);
-            last_save_time = Instant::now();
+        if since_save > Duration::from_secs(1) {
+            if let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game) {
+                match save {
+                    Ok(bytes) => {
+                        let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+                        let _ = fs.write_all(&bytes);
+                        last_save_time = Instant::now();
+                    }
+                    Err(err) => {
+                        panic!("Error wirting save {}", err);
+                    }
+                }
+            }
         }
 
         // Frame timing - only sleep if we have time left in the frame

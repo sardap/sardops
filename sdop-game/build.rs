@@ -506,6 +506,9 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     image_fn_def.push_str("pub const fn image(&self) -> &'static crate::assets::StaticImage {\n");
     image_fn_def.push_str("return match self {\n");
     image_fn_def.push_str("Item::None => &crate::assets::IMAGE_POOP_0,\n");
+    let mut from_food_fn = String::new();
+    from_food_fn.push_str("pub const fn from_food(food_id: u32) -> Self {\n");
+    from_food_fn.push_str("return match food_id {\n");
 
     let mut item_count = 1;
     for template in templates {
@@ -530,7 +533,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         item_count += 1;
     }
 
-    for template in food_tempaltes {
+    for (i, template) in food_tempaltes.iter().enumerate() {
         let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
         rare_fn_def.push_str(&format!("Item::{} => ItemRarity::Common,\n", enum_name,));
@@ -547,6 +550,9 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
             "Item::{} => &crate::assets::IMAGE_FOOD_{},\n",
             enum_name, food_var_name
         ));
+
+        from_food_fn.push_str(&format!("{} => Self::{},\n", i + 1, enum_name));
+
         item_count += 1;
     }
 
@@ -556,6 +562,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     name_fn_def.push_str("}\n}\n");
     unique_fn_def.push_str("}\n}\n");
     image_fn_def.push_str("}\n}\n");
+    from_food_fn.push_str("_ => Self::None\n");
+    from_food_fn.push_str("}\n}\n");
 
     let mut items_definitions = String::new();
 
@@ -566,6 +574,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&name_fn_def);
     items_definitions.push_str(&unique_fn_def);
     items_definitions.push_str(&image_fn_def);
+    items_definitions.push_str(&from_food_fn);
     items_definitions.push_str("}");
 
     ContentOut {

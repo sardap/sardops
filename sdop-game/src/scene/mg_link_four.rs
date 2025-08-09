@@ -10,7 +10,7 @@ use crate::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{mg_fanfare::MgFanFareScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     Button, Timestamp,
 };
 
@@ -277,7 +277,7 @@ impl Scene for MgLinkFourScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         display.render_image_center(
             10,
             self.player_pet_render.pos.y as i32,

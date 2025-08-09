@@ -1,12 +1,13 @@
 use core::time::Duration;
 
-use bincode::{de, Decode, Encode};
+use bincode::{Decode, Encode};
 use fastrand::Rng;
 
 use crate::{
     date_utils::duration_from_hours,
+    death::DeathCause,
     food::Food,
-    game_context::GameContext,
+    game_consts::{DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVAL},
     pet::definition::{
         PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
         PET_PAWN_WHITE_ID,
@@ -16,7 +17,10 @@ use crate::{
 };
 
 pub mod definition;
+pub mod record;
 pub mod render;
+
+pub type PetName = fixedstr::str7;
 
 #[derive(Encode, Decode, Copy, Clone)]
 pub enum StomachMood {
@@ -24,9 +28,13 @@ pub enum StomachMood {
     Starving { elapsed: Duration },
 }
 
+pub type UniquePetId = u64;
+
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct PetInstance {
+    pub upid: UniquePetId,
     pub def_id: PetDefinitionId,
+    pub name: PetName,
     pub born: Timestamp,
     pub age: Duration,
     pub stomach_mood: StomachMood,
@@ -34,6 +42,8 @@ pub struct PetInstance {
     pub extra_weight: f32,
     pub since_poop: Duration,
     pub since_game: Duration,
+    pub since_death_check: Duration,
+    pub should_die: Option<DeathCause>,
 }
 
 impl PetInstance {
@@ -102,8 +112,29 @@ impl PetInstance {
         }
     }
 
+    pub fn tick_death(&mut self, delta: Duration, rng: &mut fastrand::Rng, sleep: bool) {
+        if sleep || self.should_die.is_some() {
+            return;
+        }
+
+        self.since_death_check += delta;
+
+        if self.since_death_check > DEATH_CHECK_INTERVAL {
+            // Random death
+            if rng.f32() < DEATH_BY_LIGHTING_STRIKE_ODDS {
+                self.should_die = Some(DeathCause::LightingStrike);
+                return;
+            }
+            self.since_death_check = Duration::ZERO;
+        }
+    }
+
     pub fn played_game(&mut self) {
         self.since_game = Duration::ZERO;
+    }
+
+    pub fn should_die(&self) -> Option<DeathCause> {
+        self.should_die
     }
 
     pub fn should_poop(&mut self, sleeping: bool) -> bool {
@@ -166,7 +197,9 @@ impl PetInstance {
 impl Default for PetInstance {
     fn default() -> Self {
         Self {
+            upid: 0,
             def_id: crate::pet::definition::PET_CKCS_ID,
+            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
             born: Timestamp::default(),
             age: Duration::ZERO,
             stomach_mood: StomachMood::Full {
@@ -176,6 +209,8 @@ impl Default for PetInstance {
             extra_weight: 0.,
             since_poop: Duration::ZERO,
             since_game: Duration::ZERO,
+            since_death_check: Duration::ZERO,
+            should_die: None,
         }
     }
 }

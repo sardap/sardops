@@ -10,15 +10,13 @@ use crate::{
     display::{GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
     geo::{vec2_direction, vec2_distance, Rect},
     items::Item,
-    pet::{
-        definition::{PetAnimationSet, PetDefinition},
-        render::PetRender,
-    },
+    pet::{definition::PetAnimationSet, render::PetRender},
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
-        evolve_scene::EvolveScene, food_select::FoodSelectScene, game_select::GameSelectScene,
-        pet_info::PetInfoScene, poop_clear_scene::PoopClearScene, shop_scene::ShopScene, Scene,
-        SceneEnum, SceneOutput, SceneTickArgs,
+        death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
+        game_select::GameSelectScene, pet_info_scene::PetInfoScene,
+        poop_clear_scene::PoopClearScene, shop_scene::ShopScene, RenderArgs, Scene, SceneEnum,
+        SceneOutput, SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, Sprite},
     tv::{TvKind, TvRender},
@@ -38,8 +36,8 @@ enum MenuOption {
 }
 
 const AWAKE_OPTIONS: &[MenuOption] = &[
-    MenuOption::Poop,
     MenuOption::PetInfo,
+    MenuOption::Poop,
     MenuOption::GameSelect,
     MenuOption::FoodSelect,
     MenuOption::Shop,
@@ -47,14 +45,8 @@ const AWAKE_OPTIONS: &[MenuOption] = &[
 
 const SLEEP_OPTIONS: &[MenuOption] = &[MenuOption::PetInfo];
 
-fn change_option(options: &[MenuOption], current: MenuOption, change: i32) -> MenuOption {
-    let index = options
-        .iter()
-        .position(|i| *i == current)
-        .unwrap_or_default();
-
-    let index = index as i32 + change;
-
+fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
+    let index = current as i32 + change;
     let index = if index >= options.len() as i32 {
         0usize
     } else if index < 0 {
@@ -63,7 +55,7 @@ fn change_option(options: &[MenuOption], current: MenuOption, change: i32) -> Me
         index as usize
     };
 
-    options[index]
+    index as usize
 }
 
 fn get_options(state: State) -> &'static [MenuOption] {
@@ -92,7 +84,7 @@ pub struct HomeScene {
     poops: [Option<PoopRender>; MAX_POOPS],
     target: Vec2,
     food_anime: Anime,
-    selected_option: MenuOption,
+    selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
     state: State,
@@ -106,7 +98,7 @@ impl HomeScene {
             poops: [None; MAX_POOPS],
             target: Vec2::default(),
             food_anime: Anime::new(&assets::FRAMES_FOOD_SYMBOL),
-            selected_option: MenuOption::Poop,
+            selected_index: 0,
             sleeping_z: BasicAnimeSprite::new(CENTER_VEC, &assets::FRAMES_SLEEPING_Z),
             tv: TvRender::new(
                 TvKind::LCD,
@@ -133,12 +125,8 @@ impl HomeScene {
         self.state = new_state;
 
         let options = get_options(self.state);
-        if options
-            .iter()
-            .position(|i| *i == self.selected_option)
-            .is_none()
-        {
-            self.selected_option = options[0];
+        if self.selected_index >= options.len() {
+            self.selected_index = 0;
         }
     }
 }
@@ -149,7 +137,7 @@ impl Scene for HomeScene {
             .wonder_rect()
             .random_point_inside(&mut args.game_ctx.rng);
         self.target = self.pet_render.pos;
-        self.selected_option = get_options(self.state)[0];
+        self.selected_index = 0;
         self.tv.random_show(&mut args.game_ctx.rng)
     }
 
@@ -180,15 +168,22 @@ impl Scene for HomeScene {
                     next_pet_id,
                 )));
             }
+
+            if let Some(cause_of_death) = pet.should_die() {
+                return SceneOutput::new(SceneEnum::Death(DeathScene::new(
+                    cause_of_death,
+                    args.game_ctx.pet.def_id,
+                )));
+            }
         }
 
         let options = get_options(self.state);
 
         if args.input.pressed(Button::Left) {
-            self.selected_option = change_option(options, self.selected_option, -1);
+            self.selected_index = change_option(options, self.selected_index, -1);
         }
         if args.input.pressed(Button::Right) {
-            self.selected_option = change_option(options, self.selected_option, 1);
+            self.selected_index = change_option(options, self.selected_index, 1);
         }
 
         self.state_elapsed += args.delta;
@@ -267,7 +262,7 @@ impl Scene for HomeScene {
         }
 
         if args.input.pressed(Button::Middle) {
-            match self.selected_option {
+            match get_options(self.state)[self.selected_index] {
                 MenuOption::Poop => {
                     if args.game_ctx.poops.iter().any(|i| i.is_some()) {
                         return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
@@ -291,7 +286,7 @@ impl Scene for HomeScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let pet = &args.game_ctx.pet;
         display.render_sprite(&self.pet_render);
 
@@ -353,28 +348,37 @@ impl Scene for HomeScene {
             assets::IMAGE_POOP_SYMBOL.size.y as f32,
         );
 
-        for (i, option) in options.iter().enumerate() {
-            let image = match option {
-                MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
-                MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
-                MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
-                MenuOption::FoodSelect => self.food_anime.current_frame(),
-                MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
-            };
+        if self.selected_index == 0 {
+            for i in 0..options.len() {
+                let image = match options[i] {
+                    MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
+                    MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
+                    MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
+                    MenuOption::FoodSelect => self.food_anime.current_frame(),
+                    MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
+                };
+                let x = SYMBOL_BUFFER + ((i + 1) as f32 * (SIZE.x + SYMBOL_BUFFER));
+                display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
+            }
+        } else {
+            for i in 0..options.len() {
+                let image = match options[i] {
+                    MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
+                    MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
+                    MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
+                    MenuOption::FoodSelect => self.food_anime.current_frame(),
+                    MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
+                };
 
-            let x = SYMBOL_BUFFER + (i as f32 * (SIZE.x + SYMBOL_BUFFER));
-            display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
+                let x_index = i as i32 - self.selected_index as i32 + 1;
+                let x = SYMBOL_BUFFER + (x_index as f32 * (SIZE.x + SYMBOL_BUFFER));
+                display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
+            }
         }
-
-        let selected_index = options
-            .iter()
-            .position(|i| *i == self.selected_option)
-            .unwrap_or_default();
 
         let select_rect = Rect::new_top_left(
             Vec2::new(
-                SYMBOL_BUFFER + (selected_index as f32 * (SIZE.x + SYMBOL_BUFFER))
-                    - (SYMBOL_BUFFER),
+                SYMBOL_BUFFER + (1 as f32 * (SIZE.x + SYMBOL_BUFFER)) - (SYMBOL_BUFFER),
                 IMAGE_Y_START - (SYMBOL_BUFFER),
             ),
             Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),

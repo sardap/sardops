@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
 use glam::Vec2;
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     assets,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
-    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
     sprite::BasicAnimeSprite,
 };
@@ -150,7 +150,7 @@ impl Scene for ShopScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         match self.state {
             State::Closed => {
                 display.render_image_complex(

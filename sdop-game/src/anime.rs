@@ -62,6 +62,10 @@ impl Anime {
     pub fn current_frame(&self) -> &'static StaticImage {
         &self.frames[self.current_index].frame
     }
+
+    pub fn current_frame_index(&self) -> usize {
+        self.current_index
+    }
 }
 
 pub trait HasAnime {

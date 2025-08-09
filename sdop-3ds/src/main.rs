@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 /// This example uses the CPU to render a simple bitmap image to the screen.
 use ctru::prelude::*;
 use ctru::services::gfx::{Flush, Screen, Swap};
-use sdop_game::{SaveFile, Timestamp, HEIGHT};
+use sdop_game::{HEIGHT, SaveFile, Timestamp};
 
 const TOP_SCREEN_WIDTH: usize = 800;
 const TOP_SCREEN_HEIGHT: usize = 240;
@@ -72,11 +72,17 @@ fn main() {
 
     let mut game = sdop_game::Game::new(timestamp());
 
+    let mut loaded = false;
     if let Ok(save_bytes) = std::fs::read(SAVE_FILE_NAME) {
         if let Ok((save, _)) = bincode::decode_from_slice(&save_bytes, bincode::config::standard())
         {
             game.load_save(timestamp(), save);
+            loaded = true;
         }
+    }
+
+    if !loaded {
+        game = sdop_game::Game::blank(Some(timestamp()));
     }
 
     {

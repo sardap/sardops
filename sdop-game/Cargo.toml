@@ -6,8 +6,9 @@ edition = "2021"
 [dependencies]
 fastrand = { version = "2.3.0", default-features = false }
 glam = { version = "0.30.4", default-features = false, features = ["libm"] }
-fixedstr = { version = "0.5.9", default-features = false, features = [
+fixedstr = { git = "https://github.com/sardap/fixedstr", default-features = false, features = [
     "no-alloc",
+    "bincode",
 ] }
 log = { version = "0.4.27", default-features = false }
 bincode = { version = "2.0.1", default-features = false, features = ["derive"] }

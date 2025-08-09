@@ -6,7 +6,7 @@ use crate::{
     geo::Rect,
     scene::{
         mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
-        Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     Button,
 };
@@ -87,7 +87,7 @@ impl Scene for GameSelectScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         for (i, minigame) in self.active_minigames.iter().enumerate() {
             let pos = get_pos(i);
             display.render_image_complex(

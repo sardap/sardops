@@ -3,6 +3,8 @@ use const_for::const_for;
 use glam::usize;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
+use crate::food::STARTING_FOOD;
+
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<Item>();
@@ -123,8 +125,14 @@ impl Inventory {
 
 impl Default for Inventory {
     fn default() -> Self {
-        Self {
+        let mut result = Self {
             contents: Default::default(),
+        };
+
+        for food in STARTING_FOOD {
+            result.add_item(Item::from_food(food.id), 1);
         }
+
+        result
     }
 }

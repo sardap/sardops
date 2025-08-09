@@ -10,7 +10,8 @@ use agb::{
     display::{bitmap3::Bitmap3, busy_wait_for_vblank},
     input::{Button, ButtonController},
 };
-use sdop_game::{SaveFile, Timestamp};
+use gba_clock::Clock;
+use time::{Date, Month, PrimitiveDateTime, Time};
 
 const BASE_WIDTH: u32 = sdop_game::WIDTH as u32;
 const BASE_HEIGHT: u32 = sdop_game::HEIGHT as u32;
@@ -20,7 +21,7 @@ const SCREEN_HEIGHT: i32 = 160;
 const OFFSET_X: i32 = (SCREEN_WIDTH - BASE_WIDTH as i32) / 2;
 const OFFSET_Y: i32 = (SCREEN_HEIGHT - BASE_HEIGHT as i32) / 2;
 
-const FRAME_TIME_MS: Duration = Duration::from_micros(16667 * 2);
+const FRAME_TIME_MS: Duration = Duration::from_nanos(16666666);
 
 fn buttons_to_input(controller: &ButtonController) -> sdop_game::ButtonStates {
     [
@@ -44,18 +45,37 @@ fn buttons_to_input(controller: &ButtonController) -> sdop_game::ButtonStates {
 
 #[agb::entry]
 fn entry(mut _gba: agb::Gba) -> ! {
-    let mut time = Timestamp::from_parts(1991, 12, 20, 10, 0, 0, 0).unwrap();
-    let mut game = sdop_game::Game::new(time);
+    let mut game = sdop_game::Game::blank(None);
+
+    let current_time = PrimitiveDateTime::new(
+        Date::from_calendar_date(2001, Month::March, 21).expect("invalid date"),
+        Time::from_hms(11, 30, 0).expect("invalid time"),
+    );
+    let clock = Clock::new(current_time).expect("could not communicate with the RTC");
 
     let mut button_controller = ButtonController::new();
-    let mut gfx = unsafe { Bitmap3::new() };
+    let mut bitmap_gfx = unsafe { Bitmap3::new() };
 
-    gfx.clear(0x7C00);
+    bitmap_gfx.clear(0x7C00);
 
+    let mut last_frame = clock.read_datetime().unwrap();
+    let mut frames = 0;
     loop {
+        let now = clock.read_datetime().unwrap();
+        let delta = core::time::Duration::from_nanos((now - last_frame).whole_nanoseconds() as u64);
+        if delta > Duration::from_secs(1) {
+            agb::println!("Tick {:?}", frames as f32 / 60.);
+            last_frame = now;
+            frames = 0;
+        }
+        frames += 1;
+
+        button_controller.update();
+
         game.update_input_states(buttons_to_input(&button_controller));
         game.tick(FRAME_TIME_MS);
         game.refresh_display(FRAME_TIME_MS);
+
         const SCALE: usize = 1;
         for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
             let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
@@ -82,7 +102,7 @@ fn entry(mut _gba: agb::Gba) -> ! {
 
                     for dy in 0..SCALE {
                         for dx in 0..SCALE {
-                            gfx.draw_point(screen_x, screen_y, value);
+                            bitmap_gfx.draw_point(screen_x, screen_y, value);
                         }
                     }
                 }

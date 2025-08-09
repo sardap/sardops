@@ -43,6 +43,7 @@ fn main() -> Result<(), String> {
 fn setup(gfx: &mut Graphics) -> State {
     let mut game = Game::new(timestamp());
 
+    let mut loaded = false;
     #[cfg(target_arch = "wasm32")]
     if let Some(cookie) = wasm_cookies::get(COOKIE_NAME) {
         if let Ok(encoded) = cookie {
@@ -51,9 +52,14 @@ fn setup(gfx: &mut Graphics) -> State {
                     bincode::decode_from_slice(&base64_decoded, bincode::config::standard())
                 {
                     game.load_save(timestamp(), save);
+                    loaded = true;
                 }
             }
         }
+    }
+
+    if !loaded {
+        game = Game::blank(Some(timestamp()));
     }
 
     State {
