@@ -306,38 +306,6 @@ fn nega_max(board: &Game, depth: i32) -> f32 {
     max
 }
 
-fn best_moves(board: &Game) -> PossibleMoves {
-    let mut result = PossibleMoves::default();
-    // if board is empty go middle
-    if board.bb.iter().all(|&bb| bb == 0) {
-        result.set_bit(COLUMNS / 2, true);
-        return result;
-    }
-
-    let mut max = f32::MIN;
-    let moves = board.possible_moves();
-    for col in 0..COLUMNS {
-        if !moves.get_bit(col) {
-            continue;
-        }
-        let new_board = board.make_move_new(col);
-        let score = -nega_max(&new_board, 5);
-        if score > max {
-            max = score;
-            result = PossibleMoves::default();
-            result.set_bit(col, true);
-        } else if score == max {
-            result.set_bit(col, true);
-        }
-    }
-
-    if result.is_empty() {
-        moves
-    } else {
-        result
-    }
-}
-
 pub fn square_to_index(column: usize, row: usize) -> usize {
     row * COLUMNS + column
 }
@@ -441,43 +409,5 @@ mod tests {
         }
 
         assert_eq!(board.possible_moves().into_iter().count(), COLUMNS - 1);
-    }
-
-    #[test]
-    fn test_best_moves() {
-        let mut board = Game::default();
-
-        let moves = best_moves(&board);
-
-        assert_eq!(moves.into_iter().next().unwrap(), 3);
-
-        // Red
-        board = board.make_move_new(3);
-        // Yellow
-        board = board.make_move_new(0);
-        // Red
-        board = board.make_move_new(3);
-        // Yellow
-        board = board.make_move_new(1);
-        // Red
-        board = board.make_move_new(3);
-        // Yellow
-
-        // Here yellow should be blocking red
-        let moves = best_moves(&board);
-
-        assert_eq!(moves.into_iter().next().unwrap(), 3);
-    }
-
-    #[test]
-    fn test_draws() {
-        let mut board = Game::default();
-
-        while board.status() == GameStatus::InProgress {
-            let moves = best_moves(&board);
-            board = board.make_move_new(moves.into_iter().next().unwrap());
-        }
-
-        assert_eq!(board.status(), GameStatus::Draw);
     }
 }

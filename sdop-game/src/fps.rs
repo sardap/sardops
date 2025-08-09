@@ -1,4 +1,4 @@
-use core::{ops::DerefMut, time::Duration};
+use core::time::Duration;
 
 const MAX_SAMPLES: usize = 100;
 

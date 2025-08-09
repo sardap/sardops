@@ -1,10 +1,8 @@
-use core::str::MatchIndices;
-
 use glam::Vec2;
 
 use crate::{
     anime::{Anime, HasAnime},
-    assets::{self, Frame, Image, StaticImage},
+    assets::{self, Frame, StaticImage},
     display::{ComplexRender, ComplexRenderOption},
 };
 

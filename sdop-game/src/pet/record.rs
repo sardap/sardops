@@ -34,3 +34,26 @@ impl PetRecord {
         }
     }
 }
+
+pub const PET_HISTORY_ENTRIES: usize = 20;
+#[derive(Clone, Copy, Encode, Decode)]
+pub struct PetHistory {
+    top: usize,
+    entires: [Option<PetRecord>; PET_HISTORY_ENTRIES],
+}
+
+impl PetHistory {
+    pub fn add(&mut self, entry: PetRecord) {
+        self.entires[self.top] = Some(entry);
+        self.top += 1;
+    }
+}
+
+impl Default for PetHistory {
+    fn default() -> Self {
+        Self {
+            top: 0,
+            entires: Default::default(),
+        }
+    }
+}

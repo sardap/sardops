@@ -5,11 +5,11 @@ use glam::Vec2;
 use crate::{
     assets,
     date_utils::{END_YEAR, START_YEAR},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_Y},
-    fonts::{self, FONT_VARIABLE_SMALL},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    Button, Timestamp,
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
+    Button,
 };
 
 enum State {

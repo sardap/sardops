@@ -6,7 +6,7 @@ use core::{
 use bincode::Encode;
 use const_for::const_for;
 
-use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
 include!(concat!(env!("OUT_DIR"), "/dist_dates.rs"));
 
@@ -293,6 +293,7 @@ impl SpecialDay {
         Self { kind, month, day }
     }
 
+    #[allow(dead_code)]
     pub const fn is_trading_day(&self) -> bool {
         self.kind.is_trading_day()
     }

@@ -1,5 +1,3 @@
-use core::{error::Error, time};
-
 use bincode::{
     error::{DecodeError, EncodeError},
     Decode, Encode,
@@ -9,7 +7,7 @@ use crate::{
     game_context::GameContext,
     items::Inventory,
     money::Money,
-    pet::PetInstance,
+    pet::{record::PetHistory, PetInstance},
     poop::{Poop, MAX_POOPS},
     shop::Shop,
     Game, Timestamp,
@@ -22,6 +20,7 @@ pub struct SaveFile {
     money: Money,
     inventory: Inventory,
     shop: Shop,
+    pet_records: PetHistory,
     pub last_timestamp: Timestamp,
 }
 
@@ -35,6 +34,7 @@ impl SaveFile {
             money: game_ctx.money,
             inventory: game_ctx.inventory,
             shop: game_ctx.shop,
+            pet_records: game_ctx.pet_records,
             last_timestamp: timestamp,
         }
     }
@@ -45,6 +45,7 @@ impl SaveFile {
         game_ctx.poops = self.poops;
         game_ctx.inventory = self.inventory;
         game_ctx.shop = self.shop;
+        game_ctx.pet_records = self.pet_records;
     }
 
     pub const fn size() -> usize {

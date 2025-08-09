@@ -10,7 +10,9 @@ use crate::{
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
+        record::PetRecord,
         render::PetRender,
+        PetInstance,
     },
     scene::{new_pet_scene::NewPetScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::BasicAnimeSprite,
@@ -107,6 +109,11 @@ impl Scene for DeathScene {
             },
             State::Tombstone => {
                 if args.input.any_pressed() {
+                    args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
+                        &args.game_ctx.pet,
+                        args.timestamp,
+                        self.cause,
+                    ));
                     return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(false)));
                 }
             }

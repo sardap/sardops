@@ -175,7 +175,6 @@ impl Scene for EnterTextScene {
                 }
             }
             State::SelectChar => {
-                const SYMBOL_BUFFER: f32 = 2.;
                 let x =
                     LETTER_START_X + (self.selected_index as f32 * (rect.size.x + LETTER_BUFFER_X));
                 display.render_text_complex(

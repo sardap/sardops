@@ -272,8 +272,7 @@ impl Scene for ShopScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
                 y += Y_BUFFER;
-                let mut tomrrow = match args.timestamp.inner().date().checked_add_days(Days::new(1))
-                {
+                let tomrrow = match args.timestamp.inner().date().checked_add_days(Days::new(1)) {
                     Some(val) => val,
                     None => NaiveDate::MAX,
                 };

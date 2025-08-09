@@ -2,7 +2,7 @@ use glam::Vec2;
 
 use crate::{
     assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, WIDTH_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, WIDTH_F32},
     food::{self, Food, FOOD_COUNT},
     geo::Rect,
     items::Item,

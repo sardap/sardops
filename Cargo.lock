@@ -2775,6 +2775,8 @@ dependencies = [
  "chrono 0.4.41 (git+https://github.com/sardap/chrono)",
  "console_log",
  "env_logger",
+ "euclid",
+ "flate2",
  "log",
  "notan",
  "sdop-game",

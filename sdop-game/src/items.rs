@@ -78,6 +78,7 @@ const fn all_items_gen() -> [Item; ITEM_COUNT] {
     result
 }
 
+#[allow(dead_code)]
 pub const ALL_ITEMS: [Item; ITEM_COUNT] = all_items_gen();
 
 pub const MAX_OWNED: i32 = 1000000;

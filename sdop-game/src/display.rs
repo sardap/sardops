@@ -37,7 +37,7 @@ enum ColorMode {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum PostionMode {
+pub enum PostionMode {
     TopLeft,
     Center,
     Bottomleft,
@@ -94,6 +94,7 @@ impl ComplexRenderOption {
         self
     }
 
+    #[allow(dead_code)]
     pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
         self.pos_mode = value;
         self
@@ -316,7 +317,7 @@ impl GameDisplay {
     }
 
     pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
-        let mut max_height = {
+        let max_height = {
             let mut max = u8::MIN;
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
@@ -400,6 +401,7 @@ impl GameDisplay {
         self.bits.invert();
     }
 
+    #[allow(dead_code)]
     pub fn invert_rect(&mut self, rect: Rect) {
         let top_left = rect.pos_top_left();
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {

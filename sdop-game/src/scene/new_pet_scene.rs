@@ -1,23 +1,16 @@
 use chrono::NaiveDateTime;
 use fixedstr::str_format;
-use glam::Vec2;
 
 use crate::{
-    assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y},
-    fonts,
-    geo::Rect,
-    pet::{
-        definition::{PET_BLOB, PET_BLOB_ID},
-        PetInstance, PetName,
-    },
+    display::GameDisplay,
+    pet::{definition::PET_BLOB_ID, PetInstance, PetName},
     scene::{
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
         home_scene::HomeScene,
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    Button, Timestamp,
+    Timestamp,
 };
 
 #[derive(Clone)]

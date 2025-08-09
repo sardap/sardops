@@ -137,7 +137,6 @@ impl Scene for PetInfoScene {
                     .with_white()
                     .with_font(&fonts::FONT_VARIABLE_SMALL),
             );
-            current_y += Y_BUFFER;
         }
     }
 }

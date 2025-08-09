@@ -334,8 +334,8 @@ impl Scene for HomeScene {
                 display.render_sprite(&self.sleeping_z);
             }
             State::WatchingTv {
-                show_timer,
-                show_end,
+                show_timer: _,
+                show_end: _,
             } => {
                 display.render_complex(&self.tv);
             }
