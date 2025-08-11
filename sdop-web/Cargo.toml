@@ -3,13 +3,16 @@ name = "sdop-web"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
 sdop-game = { path = "../sdop-game" }
 bincode = "2.0.1"
 env_logger = "0.11.8"
-chrono = "0.4.41"
+chrono = { git = "https://github.com/sardap/chrono" }
 notan = "0.13.0"
 wasm-cookies = "0.2.1"
 base64 = "0.22.1"
 log = "0.4.27"
 console_log = "1.0.0"
+flate2 = "1.1.2"
+euclid = "0.22.11"

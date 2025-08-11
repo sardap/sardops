@@ -1,9 +1,4 @@
-use bincode::{Decode, Encode};
-
-use crate::{
-    assets::{self, StaticImage},
-    bit_array::{bytes_for_bits, BitArray},
-};
+use crate::assets::{self, StaticImage};
 
 include!(concat!(env!("OUT_DIR"), "/dist_foods.rs"));
 
@@ -38,37 +33,4 @@ impl Food {
     }
 }
 
-const STARTING_FOOD: &[&'static Food] = &[&FOOD_BISCUIT, &FOOD_SANDWICH, &FOOD_SOUP];
-
-const FOOD_SAVE_MAX: usize = bytes_for_bits(100);
-
-#[derive(Clone, Copy, Encode, Decode)]
-pub struct UnlockedFood {
-    data: BitArray<FOOD_SAVE_MAX>,
-}
-
-impl Default for UnlockedFood {
-    fn default() -> Self {
-        let mut result = Self {
-            data: Default::default(),
-        };
-        for food in STARTING_FOOD {
-            result.unlock(food);
-        }
-        result
-    }
-}
-
-impl UnlockedFood {
-    pub fn unlock(&mut self, food: &Food) {
-        self.data.set_bit(food.id as usize, true);
-    }
-
-    pub fn is_unlocked_id(&self, id: u32) -> bool {
-        self.data.get_bit(id as usize)
-    }
-
-    pub fn is_unlocked(&self, food: &Food) -> bool {
-        self.data.get_bit(food.id as usize)
-    }
-}
+pub const STARTING_FOOD: &[&'static Food] = &[&FOOD_BISCUIT];

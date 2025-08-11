@@ -5,11 +5,10 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifier
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Layout, Rect},
-    style::{Color, Stylize},
+    style::Color,
     symbols::Marker,
-    text::Line,
     widgets::{
-        Block, Paragraph, Widget,
+        Widget,
         canvas::{Canvas, Rectangle},
     },
 };

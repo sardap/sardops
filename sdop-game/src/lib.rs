@@ -1,3 +1,4 @@
+#![feature(duration_constructors_lite)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
@@ -10,7 +11,7 @@ use crate::{
     fps::FPSCounter,
     game_context::GameContext,
     input::Input,
-    scene::{SceneManger, SceneTickArgs},
+    scene::{new_pet_scene::NewPetScene, RenderArgs, SceneEnum, SceneManger, SceneTickArgs},
     sim::tick_sim,
 };
 
@@ -18,10 +19,12 @@ mod anime;
 mod assets;
 mod bit_array;
 mod date_utils;
+mod death;
 mod display;
 mod fonts;
 mod food;
 mod fps;
+mod game_consts;
 mod game_context;
 mod geo;
 mod input;
@@ -62,8 +65,22 @@ impl Game {
             scene_manger: SceneManger::default(),
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
-            fps: FPSCounter::new(timestamp),
+            fps: FPSCounter::new(),
         }
+    }
+
+    pub fn blank(timestamp: Option<Timestamp>) -> Self {
+        let resolved_timestamp = match timestamp {
+            Some(timestamp) => timestamp,
+            None => Timestamp::default(),
+        };
+        let mut result = Self::new(resolved_timestamp);
+
+        result
+            .scene_manger
+            .set_next(SceneEnum::NewPet(NewPetScene::new(timestamp.is_none())));
+
+        result
     }
 
     pub fn update_input_states(&mut self, input_states: ButtonStates) {
@@ -78,21 +95,19 @@ impl Game {
         self.time_scale = time_scale;
     }
 
-    pub fn tick(&mut self, timestamp: Timestamp) {
-        let delta = timestamp - self.last_time;
+    pub fn tick(&mut self, delta: Duration) {
+        let timestamp = self.last_time + delta;
 
-        let items = shop::get_shop_items(timestamp);
+        self.game_ctx.speical_days.update(timestamp.inner().date());
 
-        for item in items {
-            if item.is_some() {
-                log::info!("{}", item as u8);
+        // Make random more random
+        if self.input.any_pressed() {
+            let count = self.game_ctx.rng.u128(0..10);
+            for _ in 0..count {
+                self.game_ctx.rng.bool();
             }
-        }
-
-        let rare = &items::RARE_ITEMS;
-
-        for item in rare {
-            log::info!("{}", *item as usize)
+        } else {
+            self.game_ctx.rng.bool();
         }
 
         let mut scene_args = SceneTickArgs {
@@ -100,30 +115,41 @@ impl Game {
             delta,
             input: &self.input,
             game_ctx: &mut self.game_ctx,
+            last_scene: None,
         };
 
         tick_sim(self.time_scale, &mut scene_args);
 
         self.scene_manger.tick(&mut scene_args);
 
+        let last_scene = self.scene_manger.take_last_scene();
+        scene_args.last_scene = last_scene;
+
         let scene = self.scene_manger.scene();
 
         let output = scene.tick(&mut scene_args);
+
+        // move last scene back before maybe replacing it
+        self.scene_manger.restore_last_scene(scene_args.last_scene);
 
         if let Some(next) = output.next_scene {
             self.scene_manger.set_next(next);
         }
 
-        self.last_time = timestamp
+        if matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_)) {
+            self.game_ctx.should_save = true;
+        }
+
+        if let Some(timestamp) = self.game_ctx.set_timestamp.take() {
+            self.last_time = timestamp;
+        } else {
+            self.last_time = timestamp
+        }
     }
 
-    pub fn refresh_display(&mut self, timestamp: Timestamp) {
-        let delta = timestamp - self.last_time;
-
-        let mut scene_args = SceneTickArgs {
-            timestamp,
-            delta,
-            input: &self.input,
+    pub fn refresh_display(&mut self, delta: Duration) {
+        let mut scene_args = RenderArgs {
+            timestamp: self.last_time,
             game_ctx: &mut self.game_ctx,
         };
 
@@ -131,7 +157,7 @@ impl Game {
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
         self.display.render_fps(&self.fps);
-        self.fps.update(timestamp);
+        self.fps.update(delta);
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {
@@ -146,8 +172,12 @@ impl Game {
         DrawDisplay::new(self.get_display_image_data(), convert)
     }
 
-    pub fn get_save(&self, timestamp: Timestamp) -> SaveFile {
-        SaveFile::generate(timestamp, &self.game_ctx)
+    pub fn get_save(&self, timestamp: Timestamp) -> Option<SaveFile> {
+        if !self.game_ctx.should_save {
+            return None;
+        }
+
+        Some(SaveFile::generate(timestamp, &self.game_ctx))
     }
 
     pub fn load_save(&mut self, timestamp: Timestamp, save: SaveFile) {
@@ -162,6 +192,7 @@ impl Game {
                 delta: STEP_SIZE,
                 input: &self.input,
                 game_ctx: &mut self.game_ctx,
+                last_scene: None,
             };
             tick_sim(1., &mut scene_args);
         }

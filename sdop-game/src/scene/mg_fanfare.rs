@@ -10,7 +10,7 @@ use crate::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     Timestamp,
 };
 
@@ -56,6 +56,7 @@ impl Scene for MgFanFareScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.money += self.money;
+        args.game_ctx.pet.played_game();
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
@@ -93,7 +94,7 @@ impl Scene for MgFanFareScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         display.render_sprite(&self.pet_render);
 
         match self.state {

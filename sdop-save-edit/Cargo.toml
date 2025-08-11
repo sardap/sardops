@@ -1,0 +1,10 @@
+[package]
+name = "sdop-save-edit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.43", features = ["derive"] }
+ron = "0.10.1"
+sdop-game = { path = "../sdop-game", features = ["serde"] }
+bincode = { workspace = true }

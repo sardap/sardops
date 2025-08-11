@@ -5,25 +5,47 @@ use fastrand::Rng;
 
 use crate::{
     date_utils::duration_from_hours,
+    death::DeathCause,
     food::Food,
+    game_consts::{DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVAL},
     pet::definition::{
-        PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID, PET_PAWN_WHITE_ID,
+        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
+        PET_PAWN_WHITE_ID,
     },
-    poop::POOP_INTERVNAL,
+    poop::{poop_count, Poop, POOP_INTERVNAL},
     Timestamp,
 };
 
 pub mod definition;
+pub mod record;
 pub mod render;
 
+pub type PetName = fixedstr::str7;
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+pub enum StomachMood {
+    Full { elapsed: Duration },
+    Starving { elapsed: Duration },
+}
+
+pub type UniquePetId = u64;
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct PetInstance {
+    pub upid: UniquePetId,
     pub def_id: PetDefinitionId,
+    pub name: PetName,
     pub born: Timestamp,
     pub age: Duration,
+    pub stomach_mood: StomachMood,
     pub stomach_filled: f32,
     pub extra_weight: f32,
     pub since_poop: Duration,
+    pub since_game: Duration,
+    pub since_death_check: Duration,
+    pub should_die: Option<DeathCause>,
 }
 
 impl PetInstance {
@@ -55,6 +77,27 @@ impl PetInstance {
         self.stomach_filled = (self.stomach_filled
             - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
             .max(0.);
+        if !sleep && self.stomach_filled <= 0. {
+            let elapsed = if let StomachMood::Starving { elapsed } = self.stomach_mood {
+                elapsed
+            } else {
+                Duration::ZERO
+            };
+
+            self.stomach_mood = StomachMood::Starving {
+                elapsed: elapsed + delta,
+            }
+        } else if self.stomach_filled > 10. {
+            let elapsed = if let StomachMood::Full { elapsed } = self.stomach_mood {
+                elapsed
+            } else {
+                Duration::ZERO
+            };
+
+            self.stomach_mood = StomachMood::Full {
+                elapsed: elapsed + delta,
+            }
+        }
     }
 
     pub fn tick_poop(&mut self, delta: Duration) {
@@ -63,6 +106,37 @@ impl PetInstance {
         }
 
         self.since_poop += delta;
+    }
+
+    pub fn tick_since_game(&mut self, delta: Duration, sleep: bool) {
+        if !sleep {
+            self.since_game += delta;
+        }
+    }
+
+    pub fn tick_death(&mut self, delta: Duration, rng: &mut fastrand::Rng, sleep: bool) {
+        if sleep || self.should_die.is_some() {
+            return;
+        }
+
+        self.since_death_check += delta;
+
+        if self.since_death_check > DEATH_CHECK_INTERVAL {
+            // Random death
+            if rng.f32() < DEATH_BY_LIGHTING_STRIKE_ODDS {
+                self.should_die = Some(DeathCause::LightingStrike);
+                return;
+            }
+            self.since_death_check = Duration::ZERO;
+        }
+    }
+
+    pub fn played_game(&mut self) {
+        self.since_game = Duration::ZERO;
+    }
+
+    pub fn should_die(&self) -> Option<DeathCause> {
+        self.should_die
     }
 
     pub fn should_poop(&mut self, sleeping: bool) -> bool {
@@ -96,17 +170,49 @@ impl PetInstance {
 
         return None;
     }
+
+    pub fn stomach_mood(&self) -> StomachMood {
+        return self.stomach_mood;
+    }
+
+    pub fn mood(&self, poops: &[Option<Poop>]) -> Mood {
+        let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
+
+        if is_starved || poop_count(poops) > 0 || self.since_game > Duration::from_hours(6) {
+            return Mood::Sad;
+        }
+
+        let tummy_full_time = if let StomachMood::Full { elapsed } = self.stomach_mood {
+            elapsed
+        } else {
+            Duration::ZERO
+        };
+
+        if tummy_full_time > Duration::from_secs(60) {
+            return Mood::Happy;
+        }
+
+        return Mood::Normal;
+    }
 }
 
 impl Default for PetInstance {
     fn default() -> Self {
         Self {
-            def_id: crate::pet::definition::PET_CKCS_ID,
+            upid: 0,
+            def_id: crate::pet::definition::PET_BLOB_ID,
+            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
             born: Timestamp::default(),
             age: Duration::ZERO,
+            stomach_mood: StomachMood::Full {
+                elapsed: Duration::ZERO,
+            },
             stomach_filled: 0.,
             extra_weight: 0.,
             since_poop: Duration::ZERO,
+            since_game: Duration::ZERO,
+            since_death_check: Duration::ZERO,
+            should_die: None,
         }
     }
 }
@@ -114,10 +220,22 @@ impl Default for PetInstance {
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Mood {
     Normal,
+    Sad,
+    Happy,
 }
 
 impl Default for Mood {
     fn default() -> Self {
         Mood::Normal
+    }
+}
+
+impl Mood {
+    pub fn anime_set(&self) -> PetAnimationSet {
+        match self {
+            Mood::Normal => PetAnimationSet::Normal,
+            Mood::Sad => PetAnimationSet::Sad,
+            Mood::Happy => PetAnimationSet::Happy,
+        }
     }
 }

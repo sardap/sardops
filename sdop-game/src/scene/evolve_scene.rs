@@ -6,7 +6,7 @@ use crate::{
     assets,
     display::{GameDisplay, CENTER_VEC},
     pet::{definition::PetDefinitionId, render::PetRender},
-    scene::{home_scene::HomeScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
     Timestamp,
 };
@@ -204,7 +204,7 @@ impl Scene for EvolveScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         if matches!(self.state, State::Flashing) || matches!(self.state, State::Circles) {
             display.render_sprite(if self.show_from {
                 &self.from_pet_render

@@ -82,11 +82,15 @@ fn main() -> ! {
 
     let start_timestamp = sdop_game::Timestamp::from_parts(1991, 12, 20, 10, 0, 0, 0).unwrap();
 
-    let mut game = sdop_game::Game::new(timestamp(start_timestamp, &timer));
+    let mut game = sdop_game::Game::blank(None);
 
     loop {
-        game.tick(timestamp(start_timestamp, &timer));
-        game.refresh_display(timestamp(start_timestamp, &timer));
+        let ticks = timer.get_counter().ticks();
+        let micros = ticks / 1; // 1 tick = 1 µs at 1 MHz
+        let delta = Duration::from_micros(micros as u64);
+
+        game.tick(delta);
+        game.refresh_display(delta);
 
         game.drawable(|c| c).draw(&mut display).unwrap();
         display.flush().unwrap();

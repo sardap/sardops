@@ -72,11 +72,17 @@ fn main() {
 
     let mut game = sdop_game::Game::new(timestamp());
 
+    let mut loaded = false;
     if let Ok(save_bytes) = std::fs::read(SAVE_FILE_NAME) {
         if let Ok((save, _)) = bincode::decode_from_slice(&save_bytes, bincode::config::standard())
         {
             game.load_save(timestamp(), save);
+            loaded = true;
         }
+    }
+
+    if !loaded {
+        game = sdop_game::Game::blank(Some(timestamp()));
     }
 
     {
@@ -88,6 +94,7 @@ fn main() {
         }
     }
     let mut last_save_time = Instant::now();
+    let mut last_frame_time = Instant::now();
 
     while apt.main_loop() {
         hid.scan_input();
@@ -95,9 +102,11 @@ fn main() {
         let keys = hid.keys_down();
 
         game.update_input_states(buttons_to_input(&keys));
-        game.tick(timestamp());
 
-        game.refresh_display(timestamp());
+        let delta = last_frame_time.elapsed();
+        last_frame_time = Instant::now();
+        game.tick(delta);
+        game.refresh_display(delta);
         // Center the game display within the top screen
         const SCALE: usize = 3;
         for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {

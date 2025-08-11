@@ -11,7 +11,7 @@ use crate::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{mg_fanfare::MgFanFareScene, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::{BasicSprite, Sprite},
     Button, Timestamp,
 };
@@ -282,7 +282,7 @@ impl Scene for MgDogeEmScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, args: &mut SceneTickArgs) {
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         display.render_sprite(&self.pet_render);
         display.render_sprites(&self.falling_garbage);
 

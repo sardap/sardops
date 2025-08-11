@@ -76,7 +76,7 @@ fn psp_main() {
     let black_backdrop = Rectangle::new(Point::new(0, 0), Size::new(160, 80)).into_styled(style);
     black_backdrop.draw(&mut disp).unwrap();
 
-    let mut game = sdop_game::Game::new(get_timestamp());
+    let mut game = sdop_game::Game::blank(Some(get_timestamp()));
 
     let pad_data = &mut SceCtrlData::default();
 
@@ -89,16 +89,18 @@ fn psp_main() {
         );
     }
 
+    let mut last_frame = get_timestamp();
     unsafe {
         loop {
             sys::sceDisplayWaitVblankStart();
             psp::sys::sceCtrlReadBufferPositive(pad_data, 1);
             // Convert the tick to an instance of `ScePspDateTime`
-            let tick_timestamp = get_timestamp();
+            let delta = get_timestamp() - last_frame;
+            last_frame = get_timestamp();
 
             game.update_input_states(buttons_to_input(pad_data));
-            game.tick(tick_timestamp);
-            game.refresh_display(tick_timestamp);
+            game.tick(delta);
+            game.refresh_display(delta);
 
             game.drawable(|c| match c {
                 BinaryColor::On => Rgb888::WHITE,

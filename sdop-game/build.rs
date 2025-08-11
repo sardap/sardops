@@ -1,6 +1,9 @@
 use asefile::AsepriteFile;
+use chrono::{Datelike, Days, NaiveDate};
+use convert_case::{Case, Casing};
 use image::GenericImageView;
 use serde::{Deserialize, Serialize};
+use solar_calendar_events::AnnualSolarEvent;
 use std::{
     env,
     fs::{self},
@@ -9,18 +12,22 @@ use std::{
     str::FromStr,
     vec,
 };
+use strum_macros::{Display, EnumString};
 
 const ASSETS_PATH: &'static str = "../assets";
 const IMAGES_MISC_PATH: &str = "../assets/images/misc";
 const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
 const PETS_RON_PATH: &str = "../assets/pets.ron";
 const FOODS_RON_PATH: &str = "../assets/foods.ron";
+const ITEMS_RON_PATH: &str = "../assets/items.ron";
 
 #[derive(Default)]
 struct ContentOut {
     assets: String,
     pet_definitions: String,
     food_definitions: String,
+    item_definitions: String,
+    dates_definitions: String,
 }
 
 impl ContentOut {
@@ -28,6 +35,8 @@ impl ContentOut {
         self.assets.push_str(&other.assets);
         self.pet_definitions.push_str(&other.pet_definitions);
         self.food_definitions.push_str(&other.food_definitions);
+        self.item_definitions.push_str(&other.item_definitions);
+        self.dates_definitions.push_str(&other.dates_definitions);
     }
 }
 
@@ -449,6 +458,280 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
     }
 }
 
+#[derive(Serialize, Deserialize, EnumString, Display)]
+enum RarityEnum {
+    Common,
+    Rare,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ItemEntry {
+    name: String,
+    cost: i32,
+    rarity: RarityEnum,
+    image: String,
+    unique: bool,
+    desc: String,
+}
+
+fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
+    let contents = std::fs::read_to_string(food_path).unwrap();
+    let food_tempaltes: Vec<FoodTemplate> = ron::from_str(&contents).unwrap();
+
+    let contents = std::fs::read_to_string(path).unwrap();
+    let templates: Vec<ItemEntry> = ron::from_str(&contents).unwrap();
+
+    let mut enum_def = String::new();
+    enum_def
+        .push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, FromRepr)]\n");
+    enum_def.push_str("#[repr(usize)]\n");
+    enum_def.push_str("pub enum Item \n{");
+    enum_def.push_str("None = 0,");
+    let mut rare_fn_def = String::new();
+    rare_fn_def.push_str("pub const fn rarity(&self) -> ItemRarity {\n");
+    rare_fn_def.push_str("return match self {\n");
+    rare_fn_def.push_str("Item::None => ItemRarity::Common,\n");
+    let mut cost_fn_def = String::new();
+    cost_fn_def.push_str("pub const fn cost(&self) -> crate::money::Money {\n");
+    cost_fn_def.push_str("return match self {\n");
+    cost_fn_def.push_str("Item::None => 0,\n");
+    let mut name_fn_def = String::new();
+    name_fn_def.push_str("pub const fn name(&self) -> &'static str {\n");
+    name_fn_def.push_str("return match self {\n");
+    name_fn_def.push_str("Item::None => \"none\",\n");
+    let mut unique_fn_def = String::new();
+    unique_fn_def.push_str("pub const fn unique(&self) -> bool {\n");
+    unique_fn_def.push_str("return match self {\n");
+    unique_fn_def.push_str("Item::None => false,\n");
+    let mut image_fn_def = String::new();
+    image_fn_def.push_str("pub const fn image(&self) -> &'static crate::assets::StaticImage {\n");
+    image_fn_def.push_str("return match self {\n");
+    image_fn_def.push_str("Item::None => &crate::assets::IMAGE_POOP_0,\n");
+    let mut from_food_fn = String::new();
+    from_food_fn.push_str("pub const fn from_food(food_id: u32) -> Self {\n");
+    from_food_fn.push_str("return match food_id {\n");
+    let mut desc_fn = String::new();
+    desc_fn.push_str("pub const fn desc(&self) -> &'static str {\n");
+    desc_fn.push_str("return match self {\n");
+    desc_fn.push_str("Item::None => \"?????\",\n");
+
+    let mut item_count = 1;
+    for template in templates {
+        let enum_name = template.name.to_case(Case::Pascal);
+        enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
+        rare_fn_def.push_str(&format!(
+            "Item::{} => ItemRarity::{},\n",
+            enum_name,
+            template.rarity.to_string()
+        ));
+        cost_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, template.cost));
+
+        name_fn_def.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.name));
+
+        desc_fn.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.desc));
+
+        unique_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, template.unique));
+
+        image_fn_def.push_str(&format!(
+            "Item::{} => &crate::assets::IMAGE_{},\n",
+            enum_name,
+            template.image.to_case(Case::UpperSnake)
+        ));
+        item_count += 1;
+    }
+
+    for (i, template) in food_tempaltes.iter().enumerate() {
+        let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
+        enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
+        rare_fn_def.push_str(&format!("Item::{} => ItemRarity::Common,\n", enum_name,));
+
+        let price = (template.fill_factor * 50.) as i32;
+        cost_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, price));
+
+        name_fn_def.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.name));
+
+        desc_fn.push_str(&format!(
+            "Item::{} => \"Allows to make {}\",\n",
+            enum_name, template.name
+        ));
+
+        unique_fn_def.push_str(&format!("Item::{} => true,\n", enum_name));
+
+        let food_var_name = template.name.replace(" ", "_").to_uppercase();
+        image_fn_def.push_str(&format!(
+            "Item::{} => &crate::assets::IMAGE_FOOD_{},\n",
+            enum_name, food_var_name
+        ));
+
+        from_food_fn.push_str(&format!("{} => Self::{},\n", i, enum_name));
+
+        item_count += 1;
+    }
+
+    enum_def.push_str("}\n");
+    rare_fn_def.push_str("}\n}\n");
+    cost_fn_def.push_str("}\n}\n");
+    name_fn_def.push_str("}\n}\n");
+    unique_fn_def.push_str("}\n}\n");
+    image_fn_def.push_str("}\n}\n");
+    from_food_fn.push_str("_ => Self::None\n");
+    from_food_fn.push_str("}\n}\n");
+    desc_fn.push_str("}\n}\n");
+
+    let mut items_definitions = String::new();
+
+    items_definitions.push_str(&enum_def);
+    items_definitions.push_str("impl Item {\n");
+    items_definitions.push_str(&rare_fn_def);
+    items_definitions.push_str(&cost_fn_def);
+    items_definitions.push_str(&name_fn_def);
+    items_definitions.push_str(&unique_fn_def);
+    items_definitions.push_str(&image_fn_def);
+    items_definitions.push_str(&from_food_fn);
+    items_definitions.push_str(&desc_fn);
+    items_definitions.push_str("}");
+
+    ContentOut {
+        item_definitions: items_definitions,
+        ..Default::default()
+    }
+}
+pub struct SpecialDay {
+    kind: String,
+    month: u32,
+    day: u32,
+}
+
+fn get_date_of_n_day_in_month(
+    year: i32,
+    month: u32,
+    mut n: u32,
+    weekday: chrono::Weekday,
+) -> NaiveDate {
+    let mut date = NaiveDate::from_ymd_opt(year, month, 1).unwrap();
+
+    while date.month() == month {
+        if date.weekday() == weekday {
+            n -= 1;
+        }
+        if n <= 0 {
+            return date;
+        }
+        date = date.checked_add_days(chrono::Days::new(1)).unwrap();
+    }
+
+    panic!("Impossible {} {} {}", year, month, n)
+}
+
+fn generate_dates() -> ContentOut {
+    let mut dates_definitions = String::new();
+
+    // So lets start at 1970 and go until 2370
+    dates_definitions.push_str("pub const DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
+
+    for year in 2025..=2100 {
+        let mut dates = vec![];
+        let easter = computus::gregorian(year).unwrap();
+        let easter = NaiveDate::from_ymd_opt(year, easter.month, easter.day).unwrap();
+
+        dates.push(SpecialDay {
+            kind: "EasterSunday".to_owned(),
+            month: easter.month(),
+            day: easter.day(),
+        });
+
+        let good_friday = easter.checked_sub_days(Days::new(2)).unwrap();
+        dates.push(SpecialDay {
+            kind: "GoodFriday".to_owned(),
+            month: good_friday.month(),
+            day: good_friday.day(),
+        });
+
+        let monday = easter.checked_add_days(Days::new(1)).unwrap();
+
+        dates.push(SpecialDay {
+            kind: "EasterMonday".to_owned(),
+            month: monday.month(),
+            day: monday.day(),
+        });
+
+        let grand_final_eve = get_date_of_n_day_in_month(year, 9, 4, chrono::Weekday::Fri);
+
+        dates.push(SpecialDay {
+            kind: "GrandFinalEve".to_owned(),
+            month: grand_final_eve.month(),
+            day: grand_final_eve.day(),
+        });
+
+        let fathers_day = get_date_of_n_day_in_month(year, 9, 1, chrono::Weekday::Sun);
+        dates.push(SpecialDay {
+            kind: "FathersDay".to_owned(),
+            month: fathers_day.month(),
+            day: fathers_day.day(),
+        });
+
+        let mothers_day = get_date_of_n_day_in_month(year, 5, 2, chrono::Weekday::Sun);
+        dates.push(SpecialDay {
+            kind: "MothersDay".to_owned(),
+            month: mothers_day.month(),
+            day: mothers_day.day(),
+        });
+
+        let melbourne_cup = get_date_of_n_day_in_month(year, 11, 1, chrono::Weekday::Tue);
+        dates.push(SpecialDay {
+            kind: "MelbourneCup".to_owned(),
+            month: melbourne_cup.month(),
+            day: melbourne_cup.day(),
+        });
+
+        let solar = solar_calendar_events::AnnualSolarEvents::for_year(year).unwrap();
+        dates.push(SpecialDay {
+            kind: "SeptemberEquinox".to_owned(),
+            month: solar.september_equinox().date_time().month(),
+            day: solar.september_equinox().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "MarchEquinox".to_owned(),
+            month: solar.march_equinox().date_time().month(),
+            day: solar.march_equinox().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "WinterSolstice".to_owned(),
+            month: solar.june_solstice().date_time().month(),
+            day: solar.june_solstice().date_time().day(),
+        });
+        dates.push(SpecialDay {
+            kind: "SummerSolstice".to_owned(),
+            month: solar.december_solstice().date_time().month(),
+            day: solar.december_solstice().date_time().day(),
+        });
+
+        dates.sort_by(|a, b| {
+            if a.month == b.month {
+                a.day.cmp(&b.day)
+            } else {
+                a.month.cmp(&b.month)
+            }
+        });
+
+        dates_definitions.push_str("&[");
+        for date in dates {
+            dates_definitions.push_str(&format!(
+                "SpecialDay::new(SpecialDayKind::{}, {}, {}),",
+                date.kind, date.month, date.day
+            ));
+        }
+        dates_definitions.push_str("],");
+    }
+
+    dates_definitions.push_str("];");
+
+    ContentOut {
+        dates_definitions: dates_definitions,
+        ..Default::default()
+    }
+}
+
 fn main() {
     let mut contents = ContentOut::default();
 
@@ -456,6 +739,8 @@ fn main() {
     contents.merge(generate_image_tilesets_code(IMAGES_TILESETS_PATH));
     contents.merge(generate_pet_definitions(PETS_RON_PATH));
     contents.merge(generate_food_definitions(FOODS_RON_PATH));
+    contents.merge(generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH));
+    contents.merge(generate_dates());
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
@@ -481,6 +766,24 @@ fn main() {
     fs::write(&dist_foods_path, contents.food_definitions).unwrap();
     Command::new("rustfmt")
         .arg(dist_foods_path)
+        .spawn()
+        .expect("Unable to format")
+        .wait()
+        .unwrap();
+
+    let dist_items_path = Path::new(&out_dir).join("dist_items.rs");
+    fs::write(&dist_items_path, contents.item_definitions).unwrap();
+    Command::new("rustfmt")
+        .arg(dist_items_path)
+        .spawn()
+        .expect("Unable to format")
+        .wait()
+        .unwrap();
+
+    let dist_dates_path = Path::new(&out_dir).join("dist_dates.rs");
+    fs::write(&dist_dates_path, contents.dates_definitions).unwrap();
+    Command::new("rustfmt")
+        .arg(dist_dates_path)
         .spawn()
         .expect("Unable to format")
         .wait()

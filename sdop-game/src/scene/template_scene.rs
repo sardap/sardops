@@ -21,5 +21,5 @@ impl Scene for TemplateScene {
         SceneOutput::default()
     }
 
-    fn render(&self, _display: &mut GameDisplay, _args: &mut SceneTickArgs) {}
+    fn render(&self, _display: &mut GameDisplay, _args: &mut RenderArgs) {}
 }
