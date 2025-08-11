@@ -1,3 +1,5 @@
+use core::f32;
+
 use embedded_graphics::prelude::*;
 use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
 use glam::Vec2;
@@ -49,6 +51,7 @@ pub struct ComplexRenderOption {
     pos_mode: PostionMode,
     flip_colors: bool,
     font: &'static Font,
+    font_wrapping_x: Option<i32>,
 }
 
 impl ComplexRenderOption {
@@ -58,6 +61,7 @@ impl ComplexRenderOption {
             pos_mode: PostionMode::TopLeft,
             flip_colors: false,
             font: &FONT_MONOSPACE_8X8,
+            font_wrapping_x: None,
         }
     }
 
@@ -102,6 +106,11 @@ impl ComplexRenderOption {
 
     pub const fn with_font(mut self, font: &'static Font) -> Self {
         self.font = font;
+        self
+    }
+
+    pub const fn with_font_wrapping_x(mut self, x: i32) -> Self {
+        self.font_wrapping_x = Some(x);
         self
     }
 }
@@ -328,13 +337,15 @@ impl GameDisplay {
             max
         } as f32;
 
+        let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
+
         let (x_start, y_start) = match options.pos_mode {
             PostionMode::TopLeft => (pos.x, pos.y + max_height),
             PostionMode::Center => {
                 let mut max_width = 0;
                 let mut width = 0;
                 for ch in text.chars() {
-                    if ch == '\n' {
+                    if ch == '\n' || width > wrapping_x {
                         max_width = width.max(max_width);
                         width = 0;
                     }
@@ -357,6 +368,10 @@ impl GameDisplay {
                 continue;
             }
             let image = (options.font.convert)(ch);
+            if image.size.x as i32 + x_offset > wrapping_x {
+                x_offset = 0;
+                y_offset += max_height as i32;
+            }
             self.render_image_complex(
                 x_start as i32 + x_offset,
                 y_start as i32 + y_offset,

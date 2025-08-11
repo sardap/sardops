@@ -10,6 +10,7 @@ use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
 include!(concat!(env!("OUT_DIR"), "/dist_dates.rs"));
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Timestamp(pub NaiveDateTime);
 

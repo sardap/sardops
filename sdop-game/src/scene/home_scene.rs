@@ -9,14 +9,14 @@ use crate::{
     date_utils::DurationExt,
     display::{GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
     geo::{vec2_direction, vec2_distance, Rect},
-    items::Item,
+    items::{Inventory, Item},
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
-        game_select::GameSelectScene, pet_info_scene::PetInfoScene,
-        poop_clear_scene::PoopClearScene, shop_scene::ShopScene, RenderArgs, Scene, SceneEnum,
-        SceneOutput, SceneTickArgs,
+        game_select::GameSelectScene, inventory_scene::InventoryScene,
+        pet_info_scene::PetInfoScene, poop_clear_scene::PoopClearScene, shop_scene::ShopScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, Sprite},
     tv::{TvKind, TvRender},
@@ -33,6 +33,7 @@ enum MenuOption {
     GameSelect,
     FoodSelect,
     Shop,
+    Inventory,
 }
 
 const AWAKE_OPTIONS: &[MenuOption] = &[
@@ -41,9 +42,10 @@ const AWAKE_OPTIONS: &[MenuOption] = &[
     MenuOption::GameSelect,
     MenuOption::FoodSelect,
     MenuOption::Shop,
+    MenuOption::Inventory,
 ];
 
-const SLEEP_OPTIONS: &[MenuOption] = &[MenuOption::PetInfo];
+const SLEEP_OPTIONS: &[MenuOption] = &[MenuOption::PetInfo, MenuOption::Inventory];
 
 fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
     let index = current as i32 + change;
@@ -280,6 +282,9 @@ impl Scene for HomeScene {
                 MenuOption::Shop => {
                     return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
                 }
+                MenuOption::Inventory => {
+                    return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
+                }
             };
         }
 
@@ -348,32 +353,22 @@ impl Scene for HomeScene {
             assets::IMAGE_POOP_SYMBOL.size.y as f32,
         );
 
-        if self.selected_index == 0 {
-            for i in 0..options.len() {
-                let image = match options[i] {
-                    MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
-                    MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
-                    MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
-                    MenuOption::FoodSelect => self.food_anime.current_frame(),
-                    MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
-                };
-                let x = SYMBOL_BUFFER + ((i + 1) as f32 * (SIZE.x + SYMBOL_BUFFER));
-                display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
-            }
-        } else {
-            for i in 0..options.len() {
-                let image = match options[i] {
-                    MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
-                    MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
-                    MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
-                    MenuOption::FoodSelect => self.food_anime.current_frame(),
-                    MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
-                };
-
+        for i in 0..options.len() {
+            let image = match options[i] {
+                MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
+                MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
+                MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
+                MenuOption::FoodSelect => self.food_anime.current_frame(),
+                MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
+                MenuOption::Inventory => &assets::IMAGE_SYMBOL_INVENTORY,
+            };
+            let x = if self.selected_index > 0 {
                 let x_index = i as i32 - self.selected_index as i32 + 1;
-                let x = SYMBOL_BUFFER + (x_index as f32 * (SIZE.x + SYMBOL_BUFFER));
-                display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
-            }
+                SYMBOL_BUFFER + (x_index as f32 * (SIZE.x + SYMBOL_BUFFER))
+            } else {
+                SYMBOL_BUFFER + ((i + 1) as f32 * (SIZE.x + SYMBOL_BUFFER))
+            };
+            display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
         }
 
         let select_rect = Rect::new_top_left(

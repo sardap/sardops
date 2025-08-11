@@ -6,6 +6,7 @@ pub mod evolve_scene;
 pub mod food_select;
 pub mod game_select;
 pub mod home_scene;
+pub mod inventory_scene;
 pub mod mg_doge_em;
 pub mod mg_fanfare;
 pub mod mg_link_four;
@@ -35,6 +36,7 @@ pub enum SceneEnum {
     PoopClear(poop_clear_scene::PoopClearScene),
     Shop(shop_scene::ShopScene),
     Death(death_scene::DeathScene),
+    Inventory(inventory_scene::InventoryScene),
     EnterText(enter_text_scene::EnterTextScene),
     EnterDate(enter_date_scene::EnterDateScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
@@ -61,6 +63,7 @@ impl SceneEnum {
             SceneEnum::PoopClear(poop_clear_scene) => poop_clear_scene,
             SceneEnum::Shop(shop_scene) => shop_scene,
             SceneEnum::Death(death) => death,
+            SceneEnum::Inventory(inventory) => inventory,
             SceneEnum::EnterText(enter_text) => enter_text,
             SceneEnum::EnterDate(enter_date) => enter_date,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,

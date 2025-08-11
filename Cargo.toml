@@ -1,5 +1,8 @@
 [workspace]
-members = ["sdop-cli", "sdop-game", "sdop-pc", "sdop-web"]
+members = ["sdop-cli", "sdop-game", "sdop-pc", "sdop-save-edit", "sdop-web"]
 exclude = ["sdop-gba", "sdop-pico", "sdop-3ds", "sdop-psp"]
 default-members = ["sdop-pc"]
 resolver = "2"
+
+[workspace.dependencies]
+bincode = { version = "2.0.1", default-features = false, features = ["derive"] }

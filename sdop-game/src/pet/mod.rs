@@ -22,6 +22,7 @@ pub mod render;
 
 pub type PetName = fixedstr::str7;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub enum StomachMood {
     Full { elapsed: Duration },
@@ -30,6 +31,7 @@ pub enum StomachMood {
 
 pub type UniquePetId = u64;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct PetInstance {
     pub upid: UniquePetId,
@@ -198,7 +200,7 @@ impl Default for PetInstance {
     fn default() -> Self {
         Self {
             upid: 0,
-            def_id: crate::pet::definition::PET_CKCS_ID,
+            def_id: crate::pet::definition::PET_BLOB_ID,
             name: fixedstr::str_format!(PetName, "AAAAAAAA"),
             born: Timestamp::default(),
             age: Duration::ZERO,

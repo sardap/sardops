@@ -12,7 +12,7 @@
         )
     ),
     PetTemplate(
-        name: "pawn_white",
+        name: "pawn white",
         stomach_size: 40,
         base_weight: 200,
         images: PetImageSet(
@@ -71,5 +71,16 @@
             sleep: Some("images/pets/was_gaurd_sleeping.ase"),
         )
     ),
-
+    PetTemplate(
+        name: "beerie",
+        stomach_size: 60,
+        base_weight: 300,
+        images: PetImageSet(
+            normal: "images/pets/beerie_normal.ase",
+            eat: Some("images/pets/beerie_eat.ase"),
+            happy: Some("images/pets/beerie_happy.ase"),
+            sad: Some("images/pets/beerie_sad.ase"),
+            sleep: Some("images/pets/beerie_sleeping.ase"),
+        )
+    ),
 ]

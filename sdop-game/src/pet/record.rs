@@ -6,6 +6,7 @@ use crate::{
     Timestamp,
 };
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct PetRecord {
     pub upid: UniquePetId,
@@ -36,6 +37,8 @@ impl PetRecord {
 }
 
 pub const PET_HISTORY_ENTRIES: usize = 20;
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct PetHistory {
     top: usize,

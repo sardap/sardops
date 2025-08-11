@@ -3,6 +3,10 @@ name = "sdop-game"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+serde = ["dep:serde", "fixedstr/serde", "chrono/serde"]
+
+
 [dependencies]
 fastrand = { version = "2.3.0", default-features = false }
 glam = { version = "0.30.4", default-features = false, features = ["libm"] }
@@ -11,7 +15,7 @@ fixedstr = { git = "https://github.com/sardap/fixedstr", default-features = fals
     "bincode",
 ] }
 log = { version = "0.4.27", default-features = false }
-bincode = { version = "2.0.1", default-features = false, features = ["derive"] }
+bincode = { workspace = true }
 strum = { version = "0.27", default-features = false }
 strum_macros = { version = "0.27", default-features = false }
 libm = { version = "0.2", default-features = false }
@@ -21,6 +25,9 @@ chrono = { git = "https://github.com/sardap/chrono", default-features = false }
 const_for = "0.1.5"
 casey = "0.4.2"
 paste = "1.0.15"
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+], optional = true }
 
 [build-dependencies]
 asefile = "0.3.8"

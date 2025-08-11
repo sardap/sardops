@@ -3,7 +3,7 @@ use const_for::const_for;
 use glam::usize;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
-use crate::food::STARTING_FOOD;
+use crate::{food::STARTING_FOOD, game_context::GameContext, link_four::Game};
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
@@ -23,6 +23,22 @@ impl Item {
 
     pub const fn is_some(&self) -> bool {
         !self.is_none()
+    }
+
+    pub fn is_usable(&self) -> bool {
+        ALL_USEABLE_ITEMS.iter().any(|i| *self == i.item)
+    }
+
+    pub fn use_item(&self, game_ctx: &mut GameContext) {
+        for usable in ALL_USEABLE_ITEMS {
+            if usable.item == *self {
+                usable.use_item(game_ctx);
+                if usable.consumed {
+                    game_ctx.inventory.add_item(*self, -1);
+                }
+                break;
+            }
+        }
     }
 }
 
@@ -83,6 +99,7 @@ pub const ALL_ITEMS: [Item; ITEM_COUNT] = all_items_gen();
 
 pub const MAX_OWNED: i32 = 1000000;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct InventoryEntry {
     pub owned: u32,
@@ -94,6 +111,7 @@ impl Default for InventoryEntry {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct Inventory {
     contents: [InventoryEntry; ITEM_COUNT],
@@ -105,7 +123,7 @@ impl Inventory {
     }
 
     pub fn has_item(&self, item: Item) -> bool {
-        self.item_count(item) > 0
+        item != Item::None && self.item_count(item) > 0
     }
 
     pub fn get_entry_mut(&mut self, item: Item) -> &mut InventoryEntry {
@@ -137,3 +155,31 @@ impl Default for Inventory {
         result
     }
 }
+
+pub type UseItemFn = fn(game_ctx: &mut GameContext);
+
+pub struct UsableItem {
+    item: Item,
+    function: UseItemFn,
+    consumed: bool,
+}
+
+impl UsableItem {
+    pub fn use_item(&self, game_ctx: &mut GameContext) {
+        if self.consumed {
+            game_ctx.inventory.add_item(self.item, -1);
+        }
+    }
+}
+
+const USE_SHOP_UPGRADE: UsableItem = UsableItem {
+    item: Item::ShopUpgrade,
+    function: |game_ctx| {
+        game_ctx
+            .shop
+            .set_item_count(game_ctx.shop.get_item_count() + 1);
+    },
+    consumed: true,
+};
+
+const ALL_USEABLE_ITEMS: &[UsableItem] = &[USE_SHOP_UPGRADE];

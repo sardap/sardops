@@ -9,6 +9,7 @@ use crate::{
     fonts,
 };
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode)]
 pub enum DeathCause {
     LightingStrike,

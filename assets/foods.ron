@@ -14,4 +14,31 @@
         fill_factor: 50,
         path: "/images/foods/sandwich.aseprite",
     ),
+    FoodTemplate(
+        name: "watermelon",
+        fill_factor: 10,
+        path: "/images/foods/watermelon.aseprite",
+    ),
+    FoodTemplate(
+        name: "kebab",
+        fill_factor: 60,
+        path: "/images/foods/kebab.aseprite",
+    ),
+    FoodTemplate(
+        name: "egg",
+        fill_factor: 10,
+        path: "/images/foods/egg.aseprite",
+    ),
+    FoodTemplate(
+        name: "burger",
+        fill_factor: 50,
+        path: "/images/foods/burger.aseprite",
+    ),
+    FoodTemplate(
+        name: "pizza",
+        fill_factor: 50,
+        path: "/images/foods/pizza.aseprite",
+    ),
+
+
 ]

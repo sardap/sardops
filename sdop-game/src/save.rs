@@ -13,18 +13,35 @@ use crate::{
     Game, Timestamp,
 };
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode)]
 pub struct SaveFile {
-    pet: PetInstance,
-    poops: [Option<Poop>; MAX_POOPS],
-    money: Money,
-    inventory: Inventory,
-    shop: Shop,
-    pet_records: PetHistory,
+    pub pet: PetInstance,
+    pub poops: [Option<Poop>; MAX_POOPS],
+    pub money: Money,
+    pub inventory: Inventory,
+    pub shop: Shop,
+    pub pet_records: PetHistory,
     pub last_timestamp: Timestamp,
 }
 
+impl Default for SaveFile {
+    fn default() -> Self {
+        Self {
+            pet: Default::default(),
+            poops: Default::default(),
+            money: Default::default(),
+            inventory: Default::default(),
+            shop: Default::default(),
+            pet_records: Default::default(),
+            last_timestamp: Default::default(),
+        }
+    }
+}
+
 const BINCODE_CONFIG: bincode::config::Configuration = bincode::config::standard();
+
+const SAVE_SIZE: usize = size_of::<SaveFile>();
 
 impl SaveFile {
     pub fn generate(timestamp: Timestamp, game_ctx: &GameContext) -> Self {
@@ -52,6 +69,11 @@ impl SaveFile {
         size_of::<Self>()
     }
 
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        let (save, _): (SaveFile, usize) = bincode::decode_from_slice(bytes, BINCODE_CONFIG)?;
+        Ok(save)
+    }
+
     pub fn load_from_bytes(
         bytes: &[u8],
         timestamp: Timestamp,
@@ -60,6 +82,12 @@ impl SaveFile {
         let (save, _): (SaveFile, usize) = bincode::decode_from_slice(bytes, BINCODE_CONFIG)?;
         game.load_save(timestamp, save);
         Ok(())
+    }
+
+    pub fn to_bytes(&self) -> Result<[u8; SAVE_SIZE], EncodeError> {
+        let mut result = [0; SAVE_SIZE];
+        bincode::encode_into_slice(self, &mut result, BINCODE_CONFIG)?;
+        Ok(result)
     }
 
     fn save_to_bytes(

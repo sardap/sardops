@@ -10,6 +10,7 @@ const MAX_SHOP_ITEMS: usize = 5;
 
 pub type ShopItemSet = [Item; MAX_SHOP_ITEMS];
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, Encode, Decode)]
 pub struct Shop {
     item_count: u32,
@@ -45,6 +46,14 @@ impl Shop {
         }
 
         result
+    }
+
+    pub fn get_item_count(&self) -> u32 {
+        self.item_count
+    }
+
+    pub fn set_item_count(&mut self, item_count: u32) {
+        self.item_count = item_count;
     }
 }
 
