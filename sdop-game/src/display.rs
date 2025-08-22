@@ -43,6 +43,7 @@ pub enum PostionMode {
     TopLeft,
     Center,
     Bottomleft,
+    BottomRight,
 }
 
 #[derive(Clone, Copy)]
@@ -95,6 +96,11 @@ impl ComplexRenderOption {
 
     pub const fn with_bottom_left(mut self) -> Self {
         self.pos_mode = PostionMode::Bottomleft;
+        self
+    }
+
+    pub const fn with_bottom_right(mut self) -> Self {
+        self.pos_mode = PostionMode::BottomRight;
         self
     }
 
@@ -155,6 +161,7 @@ impl GameDisplay {
             PostionMode::TopLeft => (x, y),
             PostionMode::Center => (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2),
             PostionMode::Bottomleft => (x, y - image_size.y as i32),
+            PostionMode::BottomRight => (x - image_size.x as i32, y - image_size.y as i32),
         };
 
         for iy in 0..image_size.y {
@@ -356,6 +363,7 @@ impl GameDisplay {
                 (pos.x - width as f32 / 2., pos.y + max_height / 2.)
             }
             PostionMode::Bottomleft => (pos.x, pos.y),
+            PostionMode::BottomRight => todo!(),
         };
 
         let sub_complex_options = options.clone().with_pos_mode(PostionMode::Bottomleft);

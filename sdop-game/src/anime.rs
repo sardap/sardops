@@ -1,6 +1,11 @@
 use core::time::Duration;
 
-use crate::assets::{Frame, StaticImage};
+use glam::Vec2;
+
+use crate::{
+    assets::{Frame, StaticImage},
+    display::{ComplexRender, ComplexRenderOption, PostionMode},
+};
 
 const DEFAULT_FRAMES: [Frame; 1] = [Frame::new(
     &crate::assets::IMAGE_FOOD_BISCUIT,
@@ -66,6 +71,10 @@ impl Anime {
     pub fn current_frame_index(&self) -> usize {
         self.current_index
     }
+
+    pub fn total_duration(&self) -> Duration {
+        self.frames.iter().map(|i| i.duration).sum()
+    }
 }
 
 pub trait HasAnime {
@@ -77,5 +86,62 @@ pub fn tick_all_anime<T: HasAnime>(animes: &mut [Option<T>], delta: Duration) {
         if let Some(anime) = i {
             anime.anime().tick(delta);
         }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct MaskedAnimeRender {
+    pub pos: Vec2,
+    pub anime: Anime,
+    pub masked: &'static [Frame],
+    pub pos_mode: PostionMode,
+}
+
+impl MaskedAnimeRender {
+    pub fn new(pos: Vec2, frames: &'static [Frame], masked_frames: &'static [Frame]) -> Self {
+        Self {
+            pos,
+            anime: Anime::new(frames),
+            masked: masked_frames,
+            pos_mode: PostionMode::Center,
+        }
+    }
+}
+
+impl Default for MaskedAnimeRender {
+    fn default() -> Self {
+        Self {
+            pos: Vec2::default(),
+            anime: Default::default(),
+            masked: Default::default(),
+            pos_mode: PostionMode::Center,
+        }
+    }
+}
+
+impl HasAnime for MaskedAnimeRender {
+    fn anime(&mut self) -> &mut Anime {
+        &mut self.anime
+    }
+}
+
+impl ComplexRender for MaskedAnimeRender {
+    fn render(&self, display: &mut crate::display::GameDisplay) {
+        display.render_image_complex(
+            self.pos.x as i32,
+            self.pos.y as i32,
+            self.anime.current_frame(),
+            ComplexRenderOption::new()
+                .with_pos_mode(self.pos_mode)
+                .with_white(),
+        );
+        display.render_image_complex(
+            self.pos.x as i32,
+            self.pos.y as i32,
+            self.masked[self.anime.current_frame_index()].frame,
+            ComplexRenderOption::new()
+                .with_pos_mode(self.pos_mode)
+                .with_black(),
+        );
     }
 }

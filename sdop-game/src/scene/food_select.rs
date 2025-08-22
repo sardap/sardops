@@ -5,7 +5,7 @@ use crate::{
     display::{ComplexRenderOption, GameDisplay, CENTER_X, WIDTH_F32},
     food::{self, Food, FOOD_COUNT},
     geo::Rect,
-    items::Item,
+    items::ItemKind,
     scene::{
         eat_scene::EatScene, home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput,
         SceneTickArgs,
@@ -62,7 +62,11 @@ impl Scene for FoodSelectScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         let mut food_count = 0;
         for food in food::FOODS {
-            if args.game_ctx.inventory.has_item(Item::from_food(food.id)) {
+            if args
+                .game_ctx
+                .inventory
+                .has_item(ItemKind::from_food(food.id))
+            {
                 let x = if food_count % 2 == 0 {
                     WIDTH_F32 / 4.
                 } else {

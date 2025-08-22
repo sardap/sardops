@@ -8,6 +8,7 @@ SDOP_PC_DIR := ./sdop-pc
 SDOP_WEB_DIR := ./sdop-web
 SDOP_PSP_DIR := ./sdop-psp
 SDOP_PICO_DIR := ./sdop-pico
+SDOP_SAVE_EDIT := ./sdop-save-edit
 
 .PHONY: build_all
 build_all: build_gba build_3ds build_psp build_linux_x86 build_wasm build_pico
@@ -52,8 +53,16 @@ build_pico: make_output
 	cd $(SDOP_PICO_DIR) && cargo build --release --target=thumbv8m.main-none-eabihf
 	@zip $(ZIP_OPTIONS) $(OUTPUT_DIR)/sdop_pico.zip $(SDOP_PICO_DIR)/target/thumbv8m.main-none-eabihf/release/sdop-pico
 
-
 .PHONY: clean
 clean:
 	rm -rf $(OUTPUT_DIR)
 	find . -type d -name target -exec rm -rf {} +
+
+.PHONY: decode_save
+decode_save:
+	cargo run --manifest-path=$(SDOP_SAVE_EDIT)/Cargo.toml decode --source sdop.sav
+
+
+.PHONY: encode_save
+encode_save:
+	cargo run --manifest-path=$(SDOP_SAVE_EDIT)/Cargo.toml encode --source sdop-sav.ron

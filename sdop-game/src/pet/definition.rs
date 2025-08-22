@@ -3,6 +3,7 @@ use chrono::Timelike;
 use crate::{
     assets::{self, Frame},
     food::Food,
+    pet::LifeStage,
     Timestamp,
 };
 
@@ -13,6 +14,7 @@ pub type PetDefinitionId = i32;
 pub struct PetDefinition {
     pub id: PetDefinitionId,
     pub name: &'static str,
+    pub life_stage: LifeStage,
     pub images: PetImageSet,
     pub stomach_size: f32,
     pub base_weight: f32,
@@ -22,6 +24,7 @@ impl PetDefinition {
     pub const fn new(
         id: PetDefinitionId,
         name: &'static str,
+        life_stage: LifeStage,
         stomach_size: f32,
         base_weight: f32,
         images: PetImageSet,
@@ -29,6 +32,7 @@ impl PetDefinition {
         Self {
             id,
             name,
+            life_stage,
             images,
             stomach_size,
             base_weight,

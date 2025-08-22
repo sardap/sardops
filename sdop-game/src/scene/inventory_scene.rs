@@ -6,7 +6,7 @@ use crate::{
     display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
-    items::{Inventory, Item, ITEM_COUNT},
+    items::{Inventory, ItemKind, ITEM_COUNT},
     scene::{home_scene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     Button,
 };
@@ -16,7 +16,7 @@ fn change_item(inventory: &Inventory, current: usize, change: i32) -> usize {
 
     // Bloody no box and type issues
     if change >= 0 {
-        for (i, item) in Item::iter().skip(start).enumerate() {
+        for (i, item) in ItemKind::iter().skip(start).enumerate() {
             if inventory.has_item(item) {
                 return start + i;
             }
@@ -25,7 +25,7 @@ fn change_item(inventory: &Inventory, current: usize, change: i32) -> usize {
         change_item(inventory, 0, 0)
     } else {
         for i in (0..=start).rev() {
-            if inventory.has_item(Item::iter().nth(i).unwrap()) {
+            if inventory.has_item(ItemKind::iter().nth(i).unwrap()) {
                 return i;
             }
         }
@@ -46,7 +46,7 @@ impl InventoryScene {
 
 impl Scene for InventoryScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        for (i, item) in Item::iter().enumerate() {
+        for (i, item) in ItemKind::iter().enumerate() {
             if args.game_ctx.inventory.has_item(item) {
                 self.selected_index = i;
                 break;
@@ -72,8 +72,14 @@ impl Scene for InventoryScene {
         }
 
         if args.input.pressed(Button::Middle) {
-            let item = Item::iter().nth(self.selected_index).unwrap_or_default();
-            item.use_item(&mut args.game_ctx);
+            let item = ItemKind::iter()
+                .nth(self.selected_index)
+                .unwrap_or_default();
+            if let Some(output) = item.use_item(&mut args.game_ctx) {
+                if let Some(scene) = output.new_scene {
+                    return SceneOutput::new(scene);
+                }
+            }
         }
 
         SceneOutput::default()
@@ -81,7 +87,9 @@ impl Scene for InventoryScene {
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let inventory = &args.game_ctx.inventory;
-        let item = Item::iter().nth(self.selected_index).unwrap_or_default();
+        let item = ItemKind::iter()
+            .nth(self.selected_index)
+            .unwrap_or_default();
 
         let mut y = 10.;
         {

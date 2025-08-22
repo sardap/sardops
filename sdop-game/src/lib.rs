@@ -1,3 +1,5 @@
+#![feature(duration_constructors)]
+#![feature(duration_millis_float)]
 #![feature(duration_constructors_lite)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
@@ -38,6 +40,7 @@ mod scene;
 mod shop;
 mod sim;
 mod sprite;
+mod stomach;
 mod tic_tac_toe;
 mod tv;
 

@@ -5,17 +5,17 @@ use glam::Vec2;
 
 use crate::{
     anime::HasAnime,
-    assets,
+    assets::{self, Image},
     death::{DeathCause, GraveStone},
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         record::PetRecord,
         render::PetRender,
-        PetInstance,
     },
     scene::{new_pet_scene::NewPetScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sprite::BasicAnimeSprite,
+    sprite::{BasicAnimeSprite, Sprite},
+    stomach::StomachRender,
 };
 
 enum State {
@@ -39,11 +39,26 @@ impl Default for Lighting {
     }
 }
 
+struct Starvation {
+    stomach_x_offset: f32,
+    moving_left: bool,
+}
+
+impl Default for Starvation {
+    fn default() -> Self {
+        Self {
+            stomach_x_offset: 0.,
+            moving_left: false,
+        }
+    }
+}
+
 pub struct DeathScene {
     cause: DeathCause,
     state: State,
     state_elapsed: Duration,
     lighting: Lighting,
+    starving: Starvation,
     pet_render: PetRender,
     grave_stone: GraveStone,
 }
@@ -55,6 +70,7 @@ impl DeathScene {
             state: State::Intro,
             state_elapsed: Duration::ZERO,
             lighting: Lighting::default(),
+            starving: Starvation::default(),
             pet_render: PetRender::new(pet_id),
             grave_stone: GraveStone::default(),
         }
@@ -106,6 +122,34 @@ impl Scene for DeathScene {
                         self.state_elapsed = Duration::ZERO;
                     }
                 }
+                DeathCause::Starvation => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+
+                    const SPEED: f32 = 10.;
+
+                    let change = (SPEED * args.delta.as_secs_f32())
+                        * (1. + self.state_elapsed.as_secs_f32());
+
+                    self.starving.moving_left = if self.starving.stomach_x_offset + change > 2. {
+                        true
+                    } else if self.starving.stomach_x_offset - change < -2. {
+                        false
+                    } else {
+                        self.starving.moving_left
+                    };
+
+                    self.starving.stomach_x_offset += if self.starving.moving_left {
+                        -change
+                    } else {
+                        change
+                    };
+
+                    if self.state_elapsed > Duration::from_millis(5000) {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
+                DeathCause::OldAge => todo!(),
             },
             State::Tombstone => {
                 if args.input.any_pressed() {
@@ -142,6 +186,23 @@ impl Scene for DeathScene {
                         display.invert();
                     }
                 }
+                DeathCause::Starvation => {
+                    display.render_sprite(&self.pet_render);
+
+                    display.render_image_complex(
+                        (CENTER_X + self.starving.stomach_x_offset) as i32,
+                        (CENTER_Y
+                            - self.pet_render.image().size_vec2().y / 2.
+                            - StomachRender::size().y / 2.) as i32,
+                        &assets::IMAGE_STOMACH,
+                        ComplexRenderOption::new().with_white().with_center(),
+                    );
+
+                    if self.state_elapsed > Duration::from_millis(4700) {
+                        display.invert();
+                    }
+                }
+                DeathCause::OldAge => todo!(),
             },
             State::Tombstone => {
                 display.render_complex(&self.grave_stone);

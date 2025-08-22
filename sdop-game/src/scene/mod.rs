@@ -3,6 +3,7 @@ pub mod eat_scene;
 pub mod enter_date_scene;
 pub mod enter_text_scene;
 pub mod evolve_scene;
+pub mod fishing_scene;
 pub mod food_select;
 pub mod game_select;
 pub mod home_scene;
@@ -36,6 +37,7 @@ pub enum SceneEnum {
     PoopClear(poop_clear_scene::PoopClearScene),
     Shop(shop_scene::ShopScene),
     Death(death_scene::DeathScene),
+    Fishing(fishing_scene::FishingScene),
     Inventory(inventory_scene::InventoryScene),
     EnterText(enter_text_scene::EnterTextScene),
     EnterDate(enter_date_scene::EnterDateScene),
@@ -63,6 +65,7 @@ impl SceneEnum {
             SceneEnum::PoopClear(poop_clear_scene) => poop_clear_scene,
             SceneEnum::Shop(shop_scene) => shop_scene,
             SceneEnum::Death(death) => death,
+            SceneEnum::Fishing(fishing) => fishing,
             SceneEnum::Inventory(inventory) => inventory,
             SceneEnum::EnterText(enter_text) => enter_text,
             SceneEnum::EnterDate(enter_date) => enter_date,
