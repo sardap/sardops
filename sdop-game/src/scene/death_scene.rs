@@ -1,11 +1,13 @@
 use core::time::Duration;
 
+use chrono::{NaiveTime, TimeDelta};
 use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
     anime::HasAnime,
     assets::{self, Image},
+    clock::RenderClock,
     death::{DeathCause, GraveStone},
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y},
     pet::{
@@ -53,12 +55,34 @@ impl Default for Starvation {
     }
 }
 
+struct OldAge {
+    clock: RenderClock,
+    time: NaiveTime,
+    speed_mul: i64,
+}
+
+impl Default for OldAge {
+    fn default() -> Self {
+        Self {
+            clock: RenderClock::new(
+                crate::clock::ClockKind::Clock41,
+                CENTER_VEC,
+                NaiveTime::default(),
+            )
+            .without_second_hand(),
+            time: NaiveTime::default(),
+            speed_mul: 1200,
+        }
+    }
+}
+
 pub struct DeathScene {
     cause: DeathCause,
     state: State,
     state_elapsed: Duration,
     lighting: Lighting,
     starving: Starvation,
+    old_age: OldAge,
     pet_render: PetRender,
     grave_stone: GraveStone,
 }
@@ -71,6 +95,7 @@ impl DeathScene {
             state_elapsed: Duration::ZERO,
             lighting: Lighting::default(),
             starving: Starvation::default(),
+            old_age: Default::default(),
             pet_render: PetRender::new(pet_id),
             grave_stone: GraveStone::default(),
         }
@@ -149,7 +174,28 @@ impl Scene for DeathScene {
                         self.state_elapsed = Duration::ZERO;
                     }
                 }
-                DeathCause::OldAge => todo!(),
+                DeathCause::OldAge => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+                    self.pet_render.pos = CENTER_VEC + Vec2::new(0., 20.);
+
+                    self.old_age.clock.pos = CENTER_VEC - Vec2::new(0., 20.);
+
+                    self.old_age.speed_mul += (args.delta.as_millis_f32() * 3.) as i64;
+
+                    (self.old_age.time, _) =
+                        self.old_age
+                            .time
+                            .overflowing_add_signed(TimeDelta::microseconds(
+                                args.delta.as_micros() as i64 * self.old_age.speed_mul,
+                            ));
+
+                    self.old_age.clock.update_time(&self.old_age.time);
+
+                    if self.state_elapsed > Duration::from_secs(10) {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
             },
             State::Tombstone => {
                 if args.input.any_pressed() {
@@ -202,7 +248,11 @@ impl Scene for DeathScene {
                         display.invert();
                     }
                 }
-                DeathCause::OldAge => todo!(),
+                DeathCause::OldAge => {
+                    display.render_complex(&self.old_age.clock);
+
+                    display.render_sprite(&self.pet_render);
+                }
             },
             State::Tombstone => {
                 display.render_complex(&self.grave_stone);

@@ -54,6 +54,14 @@ impl Rect {
         delta.x <= (half_self.x + half_other.x) && delta.y <= (half_self.y + half_other.y)
     }
 
+    pub const fn x2(&self) -> f32 {
+        self.pos.x + self.size.x / 2.
+    }
+
+    pub const fn y2(&self) -> f32 {
+        self.pos.y + self.size.y / 2.
+    }
+
     #[allow(dead_code)]
     pub fn shrink(mut self, by: f32) -> Self {
         self.size.x = (self.size.x - by).max(0.);

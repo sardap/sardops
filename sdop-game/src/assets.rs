@@ -86,3 +86,15 @@ impl Frame {
         Self { frame, duration }
     }
 }
+
+#[derive(Clone, Copy)]
+pub struct MaskedFramesSet {
+    pub frame: &'static [Frame],
+    pub masked: &'static [Frame],
+}
+
+impl MaskedFramesSet {
+    pub const fn new(frame: &'static [Frame], masked: &'static [Frame]) -> Self {
+        Self { frame, masked }
+    }
+}

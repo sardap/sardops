@@ -15,6 +15,7 @@ const DEFAULT_FRAMES: [Frame; 1] = [Frame::new(
 #[derive(Copy, Clone)]
 pub struct Anime {
     frames: &'static [Frame],
+    masked_frames: Option<&'static [Frame]>,
     elapsed: Duration,
     current_index: usize,
 }
@@ -23,6 +24,7 @@ impl Default for Anime {
     fn default() -> Self {
         Self {
             frames: &DEFAULT_FRAMES,
+            masked_frames: None,
             elapsed: Duration::ZERO,
             current_index: 0,
         }
@@ -35,6 +37,11 @@ impl Anime {
             frames,
             ..Default::default()
         }
+    }
+
+    pub fn with_mask(mut self, frames: &'static [Frame]) -> Self {
+        self.masked_frames = Some(frames);
+        self
     }
 
     pub fn tick(&mut self, delta: Duration) {
@@ -66,6 +73,14 @@ impl Anime {
 
     pub fn current_frame(&self) -> &'static StaticImage {
         &self.frames[self.current_index].frame
+    }
+
+    pub fn current_frame_mask(&self) -> Option<&'static StaticImage> {
+        if let Some(mask) = &self.masked_frames {
+            return Some(mask[self.current_index].frame);
+        }
+
+        None
     }
 
     pub fn current_frame_index(&self) -> usize {

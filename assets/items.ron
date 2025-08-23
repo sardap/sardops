@@ -6,7 +6,7 @@
         image: "tv_lcd",
         unique: true,
         desc: "Wow A wonderfull TV that's just so thin and light!",
-        fishing_odds: 0.8,
+        fishing_odds: 0.2,
     ),
     ItemEntry(
         name: "tv crt",
@@ -35,5 +35,13 @@
         desc: "Go fishing maybe you can catch something good.",
         fishing_odds: 0.4,
     ),
-
+    ItemEntry(
+        name: "analog clock",
+        cost: 1000,
+        rarity: Common,
+        image: "clock_item",
+        unique: true,
+        desc: "Wow you can tell the time.",
+        fishing_odds: 0.2,
+    ),
 ]

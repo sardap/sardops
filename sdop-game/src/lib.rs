@@ -1,3 +1,4 @@
+#![feature(specialization)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
 #![feature(duration_constructors_lite)]
@@ -20,6 +21,7 @@ use crate::{
 mod anime;
 mod assets;
 mod bit_array;
+mod clock;
 mod date_utils;
 mod death;
 mod display;

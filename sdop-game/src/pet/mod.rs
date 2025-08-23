@@ -4,7 +4,6 @@ use bincode::{Decode, Encode};
 use fastrand::Rng;
 
 use crate::{
-    date_utils::duration_from_hours,
     death::DeathCause,
     food::Food,
     game_consts::{
@@ -182,12 +181,12 @@ impl PetInstance {
 
     pub fn should_evolve(&mut self, _rng: &mut Rng) -> Option<PetDefinitionId> {
         match self.def_id {
-            PET_BLOB_ID => {
+            crate::pet::definition::PET_BLOB_ID => {
                 if self.age > Duration::from_hours(4) {
                     return Some(PET_PAWN_WHITE_ID);
                 }
             }
-            PET_PAWN_WHITE_ID => {
+            crate::pet::definition::PET_PAWN_WHITE_ID => {
                 if self.age > Duration::from_hours(24) {
                     return Some(PET_CKCS_ID);
                 }

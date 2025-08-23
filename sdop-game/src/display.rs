@@ -6,6 +6,7 @@ use glam::Vec2;
 
 use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
+use crate::sprite::SpriteMask;
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
@@ -315,8 +316,11 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_sprite<T: Sprite>(&mut self, sprite: &T) {
-        self.render_image_center(sprite.pos().x as i32, sprite.pos().y as i32, sprite.image());
+    pub fn render_sprite<T: Sprite>(&mut self, sprite: &T)
+    where
+        T: RenderSpriteWithMask<T>,
+    {
+        T::render_with_mask(self, sprite);
     }
 
     pub fn render_sprites<T: Sprite>(&mut self, sprites: &[Option<T>]) {
@@ -681,4 +685,40 @@ where
 
 pub trait ComplexRender {
     fn render(&self, display: &mut GameDisplay);
+}
+
+pub trait RenderSpriteWithMask<T: Sprite> {
+    fn render_with_mask(renderer: &mut GameDisplay, sprite: &T);
+}
+
+pub trait HasMask {}
+impl<T: SpriteMask> HasMask for T {}
+
+impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {
+    fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image(),
+            ComplexRenderOption::new().with_white().with_center(),
+        );
+
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image_mask(),
+            ComplexRenderOption::new().with_black().with_center(),
+        );
+    }
+}
+
+impl<T: Sprite> RenderSpriteWithMask<T> for T {
+    default fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image(),
+            ComplexRenderOption::new().with_white().with_center(),
+        );
+    }
 }

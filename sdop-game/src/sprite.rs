@@ -24,6 +24,10 @@ pub trait Sprite {
     }
 }
 
+pub trait SpriteMask {
+    fn image_mask(&self) -> &impl Image;
+}
+
 #[derive(Copy, Clone)]
 pub struct BasicSprite {
     pub pos: Vec2,

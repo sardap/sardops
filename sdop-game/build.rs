@@ -126,10 +126,7 @@ fn convert_ase_file(ase: &AsepriteFile, mask: bool) -> ConvertOuput {
     } else {
         let image = replace_alpha(ase.frame(0).image(), mask);
         // Convert image into a simple u8 array where any non 0,0,0 is converted to 1 and compressed into a u8
-        ConvertOuput::Image(compress_image(
-            image,
-            if mask { Some("MASK".to_owned()) } else { None },
-        ))
+        ConvertOuput::Image(compress_image(image, None))
     }
 }
 
@@ -409,32 +406,44 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         ));
 
         pet_definitions.push_str(&format!(
-            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(&assets::FRAMES_{}, {}, {})",
-            pet_var_name, pet_var_name, template.name, template.life_stage, template.stomach_size, template.base_weight, image_normal_var_name, write_output.width, write_output.height
+            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
+            pet_var_name, pet_var_name, template.name, template.life_stage, template.stomach_size, template.base_weight, image_normal_var_name, image_normal_var_name, write_output.width, write_output.height
         ));
 
         if let Some(path) = &template.images.eat {
             let var_name = format!("{}_EAT", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_eat(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_eat(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.happy {
             let var_name = format!("{}_HAPPY", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_happy(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_happy(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.sad {
             let var_name = format!("{}_SAD", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_sad(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_sad(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.sleep {
             let var_name = format!("{}_SLEEP", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_sleep(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_sleep(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         pet_definitions.push_str(");");

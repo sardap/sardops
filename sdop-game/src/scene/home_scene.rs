@@ -6,12 +6,17 @@ use glam::Vec2;
 use crate::{
     anime::{tick_all_anime, Anime, HasAnime},
     assets::{self, Image, IMAGE_STOMACH_MASK},
+    clock::{ClockKind, RenderClock},
     date_utils::DurationExt,
+    death::DeathCause,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
-    pet::{definition::PetAnimationSet, render::PetRender},
+    pet::{
+        definition::{PetAnimationSet, PET_BLOB_ID},
+        render::PetRender,
+    },
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
@@ -268,8 +273,12 @@ impl Scene for HomeScene {
                     CENTER_Y - self.tv.size().y * 0.5,
                 );
                 self.pet_render.set_animation(PetAnimationSet::Normal);
-                self.pet_render.pos =
-                    self.tv.pos + self.pet_render.image().size().as_vec2() + Vec2::new(3., 3.);
+                self.pet_render.pos = Vec2::new(
+                    WIDTH_F32 - self.pet_render.image().size().x as f32 / 2. - 5.,
+                    self.tv.pos.y
+                        + self.tv.size().y as f32 / 2.
+                        + self.pet_render.image().size().y as f32,
+                );
 
                 self.state = State::WatchingTv {
                     show_timer,
@@ -309,9 +318,6 @@ impl Scene for HomeScene {
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let pet = &args.game_ctx.pet;
-        display.render_sprite(&self.pet_render);
-
-        display.render_sprites(&self.poops);
 
         let total_filled = pet.stomach_filled / pet.definition().stomach_size;
         display.render_stomach(
@@ -356,7 +362,18 @@ impl Scene for HomeScene {
         const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
         match self.state {
-            State::Wondering => {}
+            State::Wondering => {
+                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
+                    display.render_complex(
+                        &RenderClock::new(
+                            ClockKind::Clock21,
+                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
+                            args.timestamp.inner().time(),
+                        )
+                        .without_second_hand(),
+                    );
+                }
+            }
             State::Sleeping => {
                 display.render_sprite(&self.sleeping_z);
             }
@@ -368,6 +385,10 @@ impl Scene for HomeScene {
                 display.render_complex(&self.tv);
             }
         }
+
+        display.render_sprite(&self.pet_render);
+
+        display.render_sprites(&self.poops);
 
         let options = get_options(self.state);
 
