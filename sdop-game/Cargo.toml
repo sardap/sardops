@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-serde = ["dep:serde", "fixedstr/serde", "chrono/serde"]
+serde = ["dep:serde", "fixedstr/serde", "chrono/serde", "dep:serde-big-array"]
 
 
 [dependencies]
@@ -28,6 +28,8 @@ paste = "1.0.15"
 serde = { version = "1.0", default-features = false, features = [
     "derive",
 ], optional = true }
+serde-big-array = { version = "0.5", optional = true }
+heapless = "0.9.1"
 
 [build-dependencies]
 asefile = "0.3.8"

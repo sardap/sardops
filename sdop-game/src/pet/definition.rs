@@ -1,8 +1,9 @@
 use chrono::Timelike;
 
 use crate::{
-    assets::{self, Frame},
+    assets::{self, Frame, MaskedFramesSet},
     food::Food,
+    pet::LifeStage,
     Timestamp,
 };
 
@@ -13,6 +14,7 @@ pub type PetDefinitionId = i32;
 pub struct PetDefinition {
     pub id: PetDefinitionId,
     pub name: &'static str,
+    pub life_stage: LifeStage,
     pub images: PetImageSet,
     pub stomach_size: f32,
     pub base_weight: f32,
@@ -22,6 +24,7 @@ impl PetDefinition {
     pub const fn new(
         id: PetDefinitionId,
         name: &'static str,
+        life_stage: LifeStage,
         stomach_size: f32,
         base_weight: f32,
         images: PetImageSet,
@@ -29,6 +32,7 @@ impl PetDefinition {
         Self {
             id,
             name,
+            life_stage,
             images,
             stomach_size,
             base_weight,
@@ -82,15 +86,15 @@ impl Default for PetAnimationSet {
 pub struct PetImageSet {
     pub width: i32,
     pub height: i32,
-    pub normal: &'static [Frame],
-    pub happy: Option<&'static [Frame]>,
-    pub sad: Option<&'static [Frame]>,
-    pub eat: Option<&'static [Frame]>,
-    pub sleep: Option<&'static [Frame]>,
+    pub normal: MaskedFramesSet,
+    pub happy: Option<MaskedFramesSet>,
+    pub sad: Option<MaskedFramesSet>,
+    pub eat: Option<MaskedFramesSet>,
+    pub sleep: Option<MaskedFramesSet>,
 }
 
 impl PetImageSet {
-    pub const fn new(normal: &'static [Frame], width: i32, height: i32) -> Self {
+    pub const fn new(normal: MaskedFramesSet, width: i32, height: i32) -> Self {
         Self {
             width,
             height,
@@ -102,27 +106,27 @@ impl PetImageSet {
         }
     }
 
-    pub const fn with_happy(mut self, happy: &'static [Frame]) -> Self {
+    pub const fn with_happy(mut self, happy: MaskedFramesSet) -> Self {
         self.happy = Some(happy);
         self
     }
 
-    pub const fn with_sad(mut self, sad: &'static [Frame]) -> Self {
+    pub const fn with_sad(mut self, sad: MaskedFramesSet) -> Self {
         self.sad = Some(sad);
         self
     }
 
-    pub const fn with_eat(mut self, eat: &'static [Frame]) -> Self {
+    pub const fn with_eat(mut self, eat: MaskedFramesSet) -> Self {
         self.eat = Some(eat);
         self
     }
 
-    pub const fn with_sleep(mut self, sleep: &'static [Frame]) -> Self {
+    pub const fn with_sleep(mut self, sleep: MaskedFramesSet) -> Self {
         self.sleep = Some(sleep);
         self
     }
 
-    pub fn frames(&self, mood: PetAnimationSet) -> &[Frame] {
+    pub fn frames(&self, mood: PetAnimationSet) -> MaskedFramesSet {
         match mood {
             PetAnimationSet::Normal => return self.normal,
             PetAnimationSet::Happy => {

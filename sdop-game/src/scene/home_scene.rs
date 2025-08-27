@@ -6,11 +6,17 @@ use glam::Vec2;
 use crate::{
     anime::{tick_all_anime, Anime, HasAnime},
     assets::{self, Image, IMAGE_STOMACH_MASK},
+    clock::{ClockKind, RenderClock},
     date_utils::DurationExt,
-    display::{GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
+    fish_tank::FishtankRender,
+    fonts::FONT_VARIABLE_SMALL,
     geo::{vec2_direction, vec2_distance, Rect},
-    items::{Inventory, Item},
-    pet::{definition::PetAnimationSet, render::PetRender},
+    items::ItemKind,
+    pet::{
+        definition::{PetAnimationSet, PET_BLOB_ID},
+        render::PetRender,
+    },
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
@@ -66,6 +72,7 @@ fn get_options(state: State) -> &'static [MenuOption] {
         | State::WatchingTv {
             show_timer: _,
             show_end: _,
+            watch_end: _,
         } => AWAKE_OPTIONS,
         State::Sleeping => SLEEP_OPTIONS,
     }
@@ -78,6 +85,7 @@ enum State {
     WatchingTv {
         show_timer: Duration,
         show_end: Duration,
+        watch_end: Duration,
     },
 }
 
@@ -89,8 +97,10 @@ pub struct HomeScene {
     selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
+    fish_tank: FishtankRender,
     state: State,
     state_elapsed: Duration,
+    wonder_end: Duration,
 }
 
 impl HomeScene {
@@ -107,8 +117,10 @@ impl HomeScene {
                 Vec2::new(20., 40.),
                 &assets::FRAMES_TV_SHOW_SPORT,
             ),
+            fish_tank: FishtankRender::new(Vec2::new(15., 70.)),
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
+            wonder_end: Duration::ZERO,
         }
     }
 
@@ -133,6 +145,10 @@ impl HomeScene {
     }
 }
 
+fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
+    Duration::from_millis(rng.u64(0..(1 * 60000)))
+}
+
 impl Scene for HomeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         self.pet_render.pos = self
@@ -140,7 +156,15 @@ impl Scene for HomeScene {
             .random_point_inside(&mut args.game_ctx.rng);
         self.target = self.pet_render.pos;
         self.selected_index = 0;
-        self.tv.random_show(&mut args.game_ctx.rng)
+        self.tv.random_show(&mut args.game_ctx.rng);
+        self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+
+        for fish in args.game_ctx.home_fish_tank.fish {
+            if fish == 0. {
+                break;
+            }
+            self.fish_tank.add_fish(&mut args.game_ctx.rng, fish);
+        }
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -164,17 +188,17 @@ impl Scene for HomeScene {
         }
 
         if !matches!(self.state, State::Sleeping) {
-            if let Some(next_pet_id) = pet.should_evolve(rng) {
-                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
-                    pet.def_id,
-                    next_pet_id,
-                )));
-            }
-
             if let Some(cause_of_death) = pet.should_die() {
                 return SceneOutput::new(SceneEnum::Death(DeathScene::new(
                     cause_of_death,
                     args.game_ctx.pet.def_id,
+                )));
+            }
+
+            if let Some(next_pet_id) = pet.should_evolve(rng) {
+                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
+                    pet.def_id,
+                    next_pet_id,
                 )));
             }
         }
@@ -192,21 +216,27 @@ impl Scene for HomeScene {
 
         match self.state {
             State::Wondering => {
-                if self.state_elapsed > Duration::from_secs(5) {
-                    if args.game_ctx.inventory.has_item(Item::TvCrt) {
-                        self.tv.kind = TvKind::CRT;
-                        self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
-                        });
-                    }
-                    if args.game_ctx.inventory.has_item(Item::TvLcd) {
-                        self.tv.kind = TvKind::LCD;
-                        self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
-                        });
-                    }
+                self.fish_tank.tick(args.delta, rng);
+
+                if self.state_elapsed > self.wonder_end {
+                    // if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                    //     self.tv.kind = TvKind::LCD;
+                    //     self.change_state(State::WatchingTv {
+                    //         show_timer: Duration::ZERO,
+                    //         show_end: Duration::from_secs(30),
+                    //         watch_end: Duration::from_secs(3 * 60),
+                    //     });
+                    // }
+                    // if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                    //     self.tv.kind = TvKind::CRT;
+                    //     self.change_state(State::WatchingTv {
+                    //         show_timer: Duration::ZERO,
+                    //         show_end: Duration::from_secs(30),
+                    //         watch_end: Duration::from_secs(2 * 60),
+                    //     });
+                    // }
+
+                    self.wonder_end = reset_wonder_end(rng);
                 }
 
                 self.pet_render
@@ -235,8 +265,9 @@ impl Scene for HomeScene {
             State::WatchingTv {
                 mut show_timer,
                 show_end,
+                watch_end,
             } => {
-                if self.state_elapsed > Duration::from_secs(600) {
+                if self.state_elapsed > watch_end {
                     self.change_state(State::Wondering);
                 }
 
@@ -253,12 +284,17 @@ impl Scene for HomeScene {
                     CENTER_Y - self.tv.size().y * 0.5,
                 );
                 self.pet_render.set_animation(PetAnimationSet::Normal);
-                self.pet_render.pos =
-                    self.tv.pos + self.pet_render.image().size().as_vec2() + Vec2::new(3., 3.);
+                self.pet_render.pos = Vec2::new(
+                    WIDTH_F32 - self.pet_render.image().size().x as f32 / 2. - 5.,
+                    self.tv.pos.y
+                        + self.tv.size().y as f32 / 2.
+                        + self.pet_render.image().size().y as f32,
+                );
 
                 self.state = State::WatchingTv {
-                    show_timer: show_timer,
-                    show_end: show_end,
+                    show_timer,
+                    show_end,
+                    watch_end,
                 }
             }
         }
@@ -293,9 +329,6 @@ impl Scene for HomeScene {
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let pet = &args.game_ctx.pet;
-        display.render_sprite(&self.pet_render);
-
-        display.render_sprites(&self.poops);
 
         let total_filled = pet.stomach_filled / pet.definition().stomach_size;
         display.render_stomach(
@@ -317,7 +350,13 @@ impl Scene for HomeScene {
         );
 
         let money_str = fixedstr::str_format!(str32, "${}", args.game_ctx.money);
-        display.render_text(Vec2::new(STOMACH_END_X as f32, 10.), &money_str);
+        display.render_text_complex(
+            Vec2::new(STOMACH_END_X as f32, 10.),
+            &money_str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_font(&FONT_VARIABLE_SMALL),
+        );
 
         const TOP_BORDER_RECT: Rect = Rect::new_center(
             Vec2::new(CENTER_X, 24.),
@@ -334,17 +373,46 @@ impl Scene for HomeScene {
         const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
         match self.state {
-            State::Wondering => {}
+            State::Wondering => {
+                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
+                    display.render_complex(
+                        &RenderClock::new(
+                            ClockKind::Clock21,
+                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
+                            args.timestamp.inner().time(),
+                        )
+                        .without_second_hand(),
+                    );
+                }
+
+                display.render_complex(&self.fish_tank);
+            }
             State::Sleeping => {
+                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
+                    display.render_complex(
+                        &RenderClock::new(
+                            ClockKind::Clock21,
+                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
+                            args.timestamp.inner().time(),
+                        )
+                        .without_second_hand(),
+                    );
+                }
+
                 display.render_sprite(&self.sleeping_z);
             }
             State::WatchingTv {
                 show_timer: _,
                 show_end: _,
+                watch_end: _,
             } => {
                 display.render_complex(&self.tv);
             }
         }
+
+        display.render_sprite(&self.pet_render);
+
+        display.render_sprites(&self.poops);
 
         let options = get_options(self.state);
 

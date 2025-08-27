@@ -2,13 +2,13 @@ use bincode::{Decode, Encode};
 use chrono::Datelike;
 
 use crate::{
-    items::{Item, COMMON_ITEMS, RARE_ITEMS},
+    items::{ItemKind, COMMON_ITEMS, RARE_ITEMS},
     Timestamp,
 };
 
-const MAX_SHOP_ITEMS: usize = 5;
+const MAX_SHOP_ITEMS: usize = 10;
 
-pub type ShopItemSet = [Item; MAX_SHOP_ITEMS];
+pub type ShopItemSet = [ItemKind; MAX_SHOP_ITEMS];
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, Encode, Decode)]
@@ -29,10 +29,10 @@ impl Shop {
 
         let mut rng = fastrand::Rng::with_seed(seed);
 
-        let mut result = [Item::None; MAX_SHOP_ITEMS];
+        let mut result = [ItemKind::None; MAX_SHOP_ITEMS];
         let mut count = 0;
         while count < self.item_count {
-            let set: &[Item] = if rng.f32() < 0.9 {
+            let set: &[ItemKind] = if rng.f32() < 0.9 {
                 &COMMON_ITEMS
             } else {
                 &RARE_ITEMS

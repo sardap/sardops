@@ -1,5 +1,6 @@
 use crate::{
     date_utils::SpecialDayUpdater,
+    fish_tank::HomeFishTank,
     items::Inventory,
     money::Money,
     pet::{record::PetHistory, PetInstance},
@@ -14,6 +15,7 @@ pub struct GameContext {
     pub poops: [Option<Poop>; MAX_POOPS],
     pub money: Money,
     pub inventory: Inventory,
+    pub home_fish_tank: HomeFishTank,
     pub shop: Shop,
     pub pet_records: PetHistory,
     pub rng: fastrand::Rng,
@@ -30,6 +32,7 @@ impl GameContext {
             poops: Default::default(),
             money: Money::default(),
             inventory: Inventory::default(),
+            home_fish_tank: Default::default(),
             shop: Shop::default(),
             pet_records: Default::default(),
             rng: fastrand::Rng::with_seed(timestamp.seed()),

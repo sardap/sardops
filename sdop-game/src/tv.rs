@@ -10,6 +10,7 @@ const SHOWS: &[&'static [Frame]] = &[
     &assets::FRAMES_TV_SHOW_NEWS,
     &assets::FRAMES_TV_SHOW_SPORT,
     &assets::FRAMES_TV_SHOW_SUBWAY,
+    &assets::FRAMES_TV_SHOW_WEIGHT_LIFTING,
 ];
 
 pub enum TvKind {

@@ -43,6 +43,10 @@ impl Rect {
         )
     }
 
+    pub fn point_inside(&self, pos: &Vec2) -> bool {
+        pos.x > self.x() && pos.x < self.x2() && pos.y > self.y() && pos.y < self.y2()
+    }
+
     pub fn overlapping(&self, other: &Self) -> bool {
         let half_self = self.size * 0.5;
         let half_other = other.size * 0.5;
@@ -52,6 +56,22 @@ impl Rect {
 
         // overlap exists only if both axes satisfy the half-size sum condition
         delta.x <= (half_self.x + half_other.x) && delta.y <= (half_self.y + half_other.y)
+    }
+
+    pub const fn x(&self) -> f32 {
+        self.pos.x - self.size.x / 2.
+    }
+
+    pub const fn y(&self) -> f32 {
+        self.pos.y - self.size.y / 2.
+    }
+
+    pub const fn x2(&self) -> f32 {
+        self.pos.x + self.size.x / 2.
+    }
+
+    pub const fn y2(&self) -> f32 {
+        self.pos.y + self.size.y / 2.
     }
 
     #[allow(dead_code)]

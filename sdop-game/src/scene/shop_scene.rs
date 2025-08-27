@@ -395,7 +395,7 @@ impl Scene for ShopScene {
                         y += 10.;
                     }
 
-                    let str = if too_much {
+                    let str = if !too_much {
                         fixedstr::str_format!(fixedstr::str12, "BUY")
                     } else {
                         fixedstr::str_format!(fixedstr::str12, "CAN'T BUY")

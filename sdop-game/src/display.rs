@@ -6,6 +6,7 @@ use glam::Vec2;
 
 use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
+use crate::sprite::SpriteMask;
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
@@ -43,6 +44,15 @@ pub enum PostionMode {
     TopLeft,
     Center,
     Bottomleft,
+    BottomRight,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Rotation {
+    R0,
+    R90,
+    R180,
+    R270,
 }
 
 #[derive(Clone, Copy)]
@@ -52,6 +62,7 @@ pub struct ComplexRenderOption {
     flip_colors: bool,
     font: &'static Font,
     font_wrapping_x: Option<i32>,
+    rotation: Rotation,
 }
 
 impl ComplexRenderOption {
@@ -62,6 +73,7 @@ impl ComplexRenderOption {
             flip_colors: false,
             font: &FONT_MONOSPACE_8X8,
             font_wrapping_x: None,
+            rotation: Rotation::R0,
         }
     }
 
@@ -98,9 +110,19 @@ impl ComplexRenderOption {
         self
     }
 
+    pub const fn with_bottom_right(mut self) -> Self {
+        self.pos_mode = PostionMode::BottomRight;
+        self
+    }
+
     #[allow(dead_code)]
     pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
         self.pos_mode = value;
+        self
+    }
+
+    pub const fn with_rotation(mut self, value: Rotation) -> Self {
+        self.rotation = value;
         self
     }
 
@@ -155,7 +177,11 @@ impl GameDisplay {
             PostionMode::TopLeft => (x, y),
             PostionMode::Center => (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2),
             PostionMode::Bottomleft => (x, y - image_size.y as i32),
+            PostionMode::BottomRight => (x - image_size.x as i32, y - image_size.y as i32),
         };
+
+        let cx = (image_size.x as i32) / 2;
+        let cy = (image_size.y as i32) / 2;
 
         for iy in 0..image_size.y {
             for ix in 0..image_size.x {
@@ -173,8 +199,19 @@ impl GameDisplay {
                     continue;
                 }
 
-                let dx = x_plus + ix as i32;
-                let dy = y_plus + iy as i32;
+                let ox = ix as i32 - cx;
+                let oy = iy as i32 - cy;
+                let (rx, ry) = match options.rotation {
+                    Rotation::R0 => (ox, oy),
+                    Rotation::R90 => (oy, -ox),
+                    Rotation::R180 => (-ox, -oy),
+                    Rotation::R270 => (-oy, ox),
+                };
+                let rx = rx + cx;
+                let ry = ry + cy;
+
+                let dx = x_plus + rx;
+                let dy = y_plus + ry;
 
                 if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
                     self.set_bit(dx, dy, bit_set);
@@ -308,8 +345,11 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_sprite<T: Sprite>(&mut self, sprite: &T) {
-        self.render_image_center(sprite.pos().x as i32, sprite.pos().y as i32, sprite.image());
+    pub fn render_sprite<T: Sprite>(&mut self, sprite: &T)
+    where
+        T: RenderSpriteWithMask<T>,
+    {
+        T::render_with_mask(self, sprite);
     }
 
     pub fn render_sprites<T: Sprite>(&mut self, sprites: &[Option<T>]) {
@@ -356,6 +396,7 @@ impl GameDisplay {
                 (pos.x - width as f32 / 2., pos.y + max_height / 2.)
             }
             PostionMode::Bottomleft => (pos.x, pos.y),
+            PostionMode::BottomRight => todo!(),
         };
 
         let sub_complex_options = options.clone().with_pos_mode(PostionMode::Bottomleft);
@@ -673,4 +714,40 @@ where
 
 pub trait ComplexRender {
     fn render(&self, display: &mut GameDisplay);
+}
+
+pub trait RenderSpriteWithMask<T: Sprite> {
+    fn render_with_mask(renderer: &mut GameDisplay, sprite: &T);
+}
+
+pub trait HasMask {}
+impl<T: SpriteMask> HasMask for T {}
+
+impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {
+    fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image(),
+            ComplexRenderOption::new().with_white().with_center(),
+        );
+
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image_mask(),
+            ComplexRenderOption::new().with_black().with_center(),
+        );
+    }
+}
+
+impl<T: Sprite> RenderSpriteWithMask<T> for T {
+    default fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+        display.render_image_complex(
+            sprite.pos().x as i32,
+            sprite.pos().y as i32,
+            sprite.image(),
+            ComplexRenderOption::new().with_white().with_center(),
+        );
+    }
 }

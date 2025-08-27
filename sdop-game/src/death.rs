@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use bincode::{Decode, Encode};
 use chrono::{Datelike, NaiveDate};
 use fixedstr::str12;
@@ -13,6 +15,8 @@ use crate::{
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode)]
 pub enum DeathCause {
     LightingStrike,
+    Starvation,
+    OldAge,
 }
 
 pub struct GraveStone {
@@ -110,5 +114,16 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
+    }
+}
+
+pub struct Threshold {
+    pub elapsed: Duration,
+    pub odds: f32,
+}
+
+impl Threshold {
+    pub const fn new(elapsed: Duration, odds: f32) -> Self {
+        Self { elapsed, odds }
     }
 }

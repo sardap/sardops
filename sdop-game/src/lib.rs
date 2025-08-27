@@ -1,3 +1,6 @@
+#![feature(specialization)]
+#![feature(duration_constructors)]
+#![feature(duration_millis_float)]
 #![feature(duration_constructors_lite)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
@@ -18,9 +21,11 @@ use crate::{
 mod anime;
 mod assets;
 mod bit_array;
+mod clock;
 mod date_utils;
 mod death;
 mod display;
+mod fish_tank;
 mod fonts;
 mod food;
 mod fps;
@@ -31,6 +36,7 @@ mod input;
 mod items;
 mod link_four;
 mod money;
+mod particle_system;
 mod pet;
 mod poop;
 mod save;
@@ -38,6 +44,7 @@ mod scene;
 mod shop;
 mod sim;
 mod sprite;
+mod stomach;
 mod tic_tac_toe;
 mod tv;
 
@@ -196,6 +203,7 @@ impl Game {
             };
             tick_sim(1., &mut scene_args);
         }
+        self.scene_manger = SceneManger::default();
     }
 }
 

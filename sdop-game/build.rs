@@ -1,7 +1,7 @@
 use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
-use image::GenericImageView;
+use image::{GenericImageView, Rgba};
 use serde::{Deserialize, Serialize};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
@@ -96,24 +96,35 @@ enum ConvertOuput {
     Anime(Vec<Frame>),
 }
 
-fn convert_ase_file<P: AsRef<Path>>(path: P) -> ConvertOuput {
-    if !path.as_ref().exists() {
-        panic!("{:?}", path.as_ref())
+fn replace_alpha(mut img: image::RgbaImage, mask: bool) -> image::RgbaImage {
+    for pixel in img.pixels_mut() {
+        if pixel[3] == 0 {
+            *pixel = if mask {
+                Rgba([255, 255, 255, 255])
+            } else {
+                Rgba([0, 0, 0, 255])
+            };
+        }
     }
-    let ase = AsepriteFile::read_file(path.as_ref()).unwrap();
 
+    img
+}
+
+fn convert_ase_file(ase: &AsepriteFile, mask: bool) -> ConvertOuput {
     if ase.num_frames() > 1 {
         let mut frames = vec![];
         for i in 0..ase.num_frames() {
             let ase_frame = ase.frame(i);
+            let img = replace_alpha(ase_frame.image(), mask);
+            let suffix = i.to_string();
             frames.push(Frame {
                 duration_ms: ase_frame.duration(),
-                image: compress_image(ase_frame.image(), Some(i.to_string())),
+                image: compress_image(img, Some(suffix)),
             });
         }
         ConvertOuput::Anime(frames)
     } else {
-        let image = ase.frame(0).image();
+        let image = replace_alpha(ase.frame(0).image(), mask);
         // Convert image into a simple u8 array where any non 0,0,0 is converted to 1 and compressed into a u8
         ConvertOuput::Image(compress_image(image, None))
     }
@@ -172,19 +183,19 @@ impl Tileset {
     }
 }
 
-struct WriteOutput {
-    width: u32,
-    height: u32,
-}
-
-fn write_image<T: ToString, P: AsRef<Path>>(
+fn write_image_base<T: ToString>(
     target: &mut String,
     var_name: T,
-    path: P,
+    ase: &AsepriteFile,
+    mask: bool,
 ) -> WriteOutput {
-    let var_name_base = var_name.to_string();
+    let mut var_name_base = var_name.to_string();
+    if mask {
+        var_name_base += "_MASK"
+    }
     let data_name_base = format!("IMAGE_DATA_{}", var_name_base);
-    let output = convert_ase_file(path);
+
+    let output = convert_ase_file(ase, mask);
     let images = match &output {
         ConvertOuput::Image(converted_image) => vec![converted_image.clone()],
         ConvertOuput::Anime(frames) => frames
@@ -231,6 +242,29 @@ fn write_image<T: ToString, P: AsRef<Path>>(
         width: width as u32,
         height: height as u32,
     }
+}
+
+struct WriteOutput {
+    width: u32,
+    height: u32,
+}
+
+fn write_image<T: ToString, P: AsRef<Path>>(
+    target: &mut String,
+    var_name: T,
+    path: P,
+) -> WriteOutput {
+    if !path.as_ref().exists() {
+        panic!("{:?}", path.as_ref())
+    }
+    let ase = AsepriteFile::read_file(path.as_ref()).unwrap();
+    let var_name = var_name.to_string();
+    // Check if first frame has alpha
+    if ase.frame(0).image().pixels().any(|pixel| pixel[3] == 0) {
+        write_image_base(target, &var_name, &ase, true);
+    }
+
+    write_image_base(target, var_name, &ase, false)
 }
 
 fn generate_image_code<P: AsRef<Path>>(path: P) -> ContentOut {
@@ -321,9 +355,18 @@ struct PetImageSet {
     sleep: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Display)]
+enum LifeStage {
+    Baby,
+    Child,
+    Adult,
+    Elder,
+}
+
 #[derive(Serialize, Deserialize)]
 struct PetTemplate {
     name: String,
+    life_stage: LifeStage,
     images: PetImageSet,
     stomach_size: f32,
     base_weight: f32,
@@ -363,32 +406,44 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         ));
 
         pet_definitions.push_str(&format!(
-            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", {:.2}, {:.2}, PetImageSet::new(&assets::FRAMES_{}, {}, {})",
-            pet_var_name, pet_var_name, template.name, template.stomach_size, template.base_weight, image_normal_var_name, write_output.width, write_output.height
+            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
+            pet_var_name, pet_var_name, template.name, template.life_stage, template.stomach_size, template.base_weight, image_normal_var_name, image_normal_var_name, write_output.width, write_output.height
         ));
 
         if let Some(path) = &template.images.eat {
             let var_name = format!("{}_EAT", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_eat(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_eat(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.happy {
             let var_name = format!("{}_HAPPY", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_happy(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_happy(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.sad {
             let var_name = format!("{}_SAD", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_sad(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_sad(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         if let Some(path) = &template.images.sleep {
             let var_name = format!("{}_SLEEP", pet_var_name);
             write_image(&mut assets, &var_name, asset_path_base.join(&path));
-            pet_definitions.push_str(&format!(".with_sleep(&assets::FRAMES_{})", var_name));
+            pet_definitions.push_str(&format!(
+                ".with_sleep(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
+                var_name, var_name
+            ));
         }
 
         pet_definitions.push_str(");");
@@ -472,6 +527,8 @@ struct ItemEntry {
     image: String,
     unique: bool,
     desc: String,
+    #[serde(default)]
+    fishing_odds: f32,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -485,81 +542,95 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     enum_def
         .push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, FromRepr)]\n");
     enum_def.push_str("#[repr(usize)]\n");
-    enum_def.push_str("pub enum Item \n{");
+    enum_def.push_str("pub enum ItemKind \n{");
     enum_def.push_str("None = 0,");
     let mut rare_fn_def = String::new();
     rare_fn_def.push_str("pub const fn rarity(&self) -> ItemRarity {\n");
     rare_fn_def.push_str("return match self {\n");
-    rare_fn_def.push_str("Item::None => ItemRarity::Common,\n");
+    rare_fn_def.push_str("Self::None => ItemRarity::Common,\n");
     let mut cost_fn_def = String::new();
     cost_fn_def.push_str("pub const fn cost(&self) -> crate::money::Money {\n");
     cost_fn_def.push_str("return match self {\n");
-    cost_fn_def.push_str("Item::None => 0,\n");
+    cost_fn_def.push_str("Self::None => 0,\n");
     let mut name_fn_def = String::new();
     name_fn_def.push_str("pub const fn name(&self) -> &'static str {\n");
     name_fn_def.push_str("return match self {\n");
-    name_fn_def.push_str("Item::None => \"none\",\n");
+    name_fn_def.push_str("Self::None => \"none\",\n");
     let mut unique_fn_def = String::new();
     unique_fn_def.push_str("pub const fn unique(&self) -> bool {\n");
     unique_fn_def.push_str("return match self {\n");
-    unique_fn_def.push_str("Item::None => false,\n");
+    unique_fn_def.push_str("Self::None => false,\n");
     let mut image_fn_def = String::new();
     image_fn_def.push_str("pub const fn image(&self) -> &'static crate::assets::StaticImage {\n");
     image_fn_def.push_str("return match self {\n");
-    image_fn_def.push_str("Item::None => &crate::assets::IMAGE_POOP_0,\n");
+    image_fn_def.push_str("Self::None => &crate::assets::IMAGE_POOP_0,\n");
     let mut from_food_fn = String::new();
     from_food_fn.push_str("pub const fn from_food(food_id: u32) -> Self {\n");
     from_food_fn.push_str("return match food_id {\n");
     let mut desc_fn = String::new();
     desc_fn.push_str("pub const fn desc(&self) -> &'static str {\n");
     desc_fn.push_str("return match self {\n");
-    desc_fn.push_str("Item::None => \"?????\",\n");
+    desc_fn.push_str("Self::None => \"?????\",\n");
+    let mut fishing_chance_def = String::new();
+    fishing_chance_def.push_str("pub const FISHING_ITEM_ODDS: &[ItemChance] = &[\n");
+
+    let fishing_sum: f32 = templates.iter().map(|i| i.fishing_odds).sum();
+    let mut fishing_current: f32 = 0.;
 
     let mut item_count = 1;
     for template in templates {
         let enum_name = template.name.to_case(Case::Pascal);
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
         rare_fn_def.push_str(&format!(
-            "Item::{} => ItemRarity::{},\n",
+            "Self::{} => ItemRarity::{},\n",
             enum_name,
             template.rarity.to_string()
         ));
-        cost_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, template.cost));
+        cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.cost));
 
-        name_fn_def.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.name));
+        name_fn_def.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.name));
 
-        desc_fn.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.desc));
+        desc_fn.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.desc));
 
-        unique_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, template.unique));
+        unique_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.unique));
 
         image_fn_def.push_str(&format!(
-            "Item::{} => &crate::assets::IMAGE_{},\n",
+            "Self::{} => &crate::assets::IMAGE_{},\n",
             enum_name,
             template.image.to_case(Case::UpperSnake)
         ));
+
+        if template.fishing_odds > 0. {
+            fishing_current += template.fishing_odds / fishing_sum;
+            fishing_chance_def.push_str(&format!(
+                "ItemChance::new(ItemKind::{}, {:.8}),",
+                enum_name, fishing_current
+            ));
+        }
+
         item_count += 1;
     }
 
     for (i, template) in food_tempaltes.iter().enumerate() {
         let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
-        rare_fn_def.push_str(&format!("Item::{} => ItemRarity::Common,\n", enum_name,));
+        rare_fn_def.push_str(&format!("Self::{} => ItemRarity::Common,\n", enum_name,));
 
         let price = (template.fill_factor * 50.) as i32;
-        cost_fn_def.push_str(&format!("Item::{} => {},\n", enum_name, price));
+        cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, price));
 
-        name_fn_def.push_str(&format!("Item::{} => \"{}\",\n", enum_name, template.name));
+        name_fn_def.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.name));
 
         desc_fn.push_str(&format!(
-            "Item::{} => \"Allows to make {}\",\n",
+            "Self::{} => \"Allows to make {}\",\n",
             enum_name, template.name
         ));
 
-        unique_fn_def.push_str(&format!("Item::{} => true,\n", enum_name));
+        unique_fn_def.push_str(&format!("Self::{} => true,\n", enum_name));
 
         let food_var_name = template.name.replace(" ", "_").to_uppercase();
         image_fn_def.push_str(&format!(
-            "Item::{} => &crate::assets::IMAGE_FOOD_{},\n",
+            "Self::{} => &crate::assets::IMAGE_FOOD_{},\n",
             enum_name, food_var_name
         ));
 
@@ -577,11 +648,12 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     from_food_fn.push_str("_ => Self::None\n");
     from_food_fn.push_str("}\n}\n");
     desc_fn.push_str("}\n}\n");
+    fishing_chance_def.push_str("];");
 
     let mut items_definitions = String::new();
 
     items_definitions.push_str(&enum_def);
-    items_definitions.push_str("impl Item {\n");
+    items_definitions.push_str("impl ItemKind {\n");
     items_definitions.push_str(&rare_fn_def);
     items_definitions.push_str(&cost_fn_def);
     items_definitions.push_str(&name_fn_def);
@@ -590,6 +662,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&from_food_fn);
     items_definitions.push_str(&desc_fn);
     items_definitions.push_str("}");
+    items_definitions.push_str(&fishing_chance_def);
 
     ContentOut {
         item_definitions: items_definitions,

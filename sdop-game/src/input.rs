@@ -15,6 +15,17 @@ impl Button {
     }
 }
 
+pub const ALL_BUTTONS: [Button; 3] = [Button::Left, Button::Middle, Button::Right];
+
+pub fn random_button(rng: &mut fastrand::Rng) -> Button {
+    match rng.usize(0..=2) {
+        0 => Button::Left,
+        1 => Button::Middle,
+        2 => Button::Right,
+        _ => unreachable!(),
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ButtonState {
     Down,

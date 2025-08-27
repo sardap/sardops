@@ -1,6 +1,7 @@
 [
     PetTemplate(
         name: "blob",
+        life_stage: Baby,
         stomach_size: 20,
         base_weight: 100,
         images: PetImageSet(
@@ -13,6 +14,7 @@
     ),
     PetTemplate(
         name: "pawn white",
+        life_stage: Adult,
         stomach_size: 40,
         base_weight: 200,
         images: PetImageSet(
@@ -25,6 +27,7 @@
     ),
     PetTemplate(
         name: "ckcs",
+        life_stage: Adult,
         stomach_size: 80,
         base_weight: 300,
         images: PetImageSet(
@@ -37,6 +40,7 @@
     ),
     PetTemplate(
         name: "computie",
+        life_stage: Adult,
         stomach_size: 40,
         base_weight: 1000,
         images: PetImageSet(
@@ -49,6 +53,7 @@
     ),
     PetTemplate(
         name: "ballotee",
+        life_stage: Adult,
         stomach_size: 60,
         base_weight: 300,
         images: PetImageSet(
@@ -61,6 +66,7 @@
     ),
     PetTemplate(
         name: "was gaurd",
+        life_stage: Adult,
         stomach_size: 80,
         base_weight: 400,
         images: PetImageSet(
@@ -73,6 +79,7 @@
     ),
     PetTemplate(
         name: "beerie",
+        life_stage: Adult,
         stomach_size: 60,
         base_weight: 300,
         images: PetImageSet(
@@ -83,4 +90,18 @@
             sleep: Some("images/pets/beerie_sleeping.ase"),
         )
     ),
+    PetTemplate(
+        name: "humbie",
+        life_stage: Child,
+        stomach_size: 30,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/humbie_normal.ase",
+            eat: Some("images/pets/humbie_eat.ase"),
+            happy: Some("images/pets/humbie_happy.ase"),
+            sad: Some("images/pets/humbie_sad.ase"),
+            sleep: Some("images/pets/humbie_sleep.ase"),
+        )
+    ),
+
 ]

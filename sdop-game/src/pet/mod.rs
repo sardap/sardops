@@ -4,15 +4,17 @@ use bincode::{Decode, Encode};
 use fastrand::Rng;
 
 use crate::{
-    date_utils::duration_from_hours,
     death::DeathCause,
     food::Food,
-    game_consts::{DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVAL},
+    game_consts::{
+        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVAL, DEATH_STARVE_THRESHOLDS,
+        HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL,
+    },
     pet::definition::{
         PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
         PET_PAWN_WHITE_ID,
     },
-    poop::{poop_count, Poop, POOP_INTERVNAL},
+    poop::{poop_count, Poop},
     Timestamp,
 };
 
@@ -40,6 +42,7 @@ pub struct PetInstance {
     pub born: Timestamp,
     pub age: Duration,
     pub stomach_mood: StomachMood,
+    pub total_starve_time: Duration,
     pub stomach_filled: f32,
     pub extra_weight: f32,
     pub since_poop: Duration,
@@ -73,12 +76,12 @@ impl PetInstance {
         self.extra_weight = (self.extra_weight
             - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
             .max(0.);
-        const HUNGER_LOSS_PER_SECOND: f32 = 0.1;
         self.stomach_filled = (self.stomach_filled
             - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
             .max(0.);
         if !sleep && self.stomach_filled <= 0. {
             let elapsed = if let StomachMood::Starving { elapsed } = self.stomach_mood {
+                self.total_starve_time += delta;
                 elapsed
             } else {
                 Duration::ZERO
@@ -127,6 +130,29 @@ impl PetInstance {
                 self.should_die = Some(DeathCause::LightingStrike);
                 return;
             }
+
+            if let StomachMood::Starving { elapsed } = self.stomach_mood {
+                for threashold in DEATH_STARVE_THRESHOLDS {
+                    if threashold.elapsed > elapsed {
+                        // if rng.f32() < threashold.odds {
+                        //     self.should_die = Some(DeathCause::Starvation);
+                        //     return;
+                        // }
+                        break;
+                    }
+                }
+
+                for threshold in OLD_AGE_THRESHOLD {
+                    if threshold.elapsed > elapsed {
+                        if rng.f32() < threshold.odds {
+                            self.should_die = Some(DeathCause::OldAge);
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+
             self.since_death_check = Duration::ZERO;
         }
     }
@@ -155,13 +181,13 @@ impl PetInstance {
 
     pub fn should_evolve(&mut self, _rng: &mut Rng) -> Option<PetDefinitionId> {
         match self.def_id {
-            PET_BLOB_ID => {
-                if self.age > duration_from_hours(1.).div_f32(10.) {
+            crate::pet::definition::PET_BLOB_ID => {
+                if self.age > Duration::from_hours(4) {
                     return Some(PET_PAWN_WHITE_ID);
                 }
             }
-            PET_PAWN_WHITE_ID => {
-                if self.age > duration_from_hours(2.).div_f32(10.) {
+            crate::pet::definition::PET_PAWN_WHITE_ID => {
+                if self.age > Duration::from_hours(24) {
                     return Some(PET_CKCS_ID);
                 }
             }
@@ -194,6 +220,10 @@ impl PetInstance {
 
         return Mood::Normal;
     }
+
+    pub fn weight(&self) -> f32 {
+        self.extra_weight + self.definition().base_weight
+    }
 }
 
 impl Default for PetInstance {
@@ -207,6 +237,7 @@ impl Default for PetInstance {
             stomach_mood: StomachMood::Full {
                 elapsed: Duration::ZERO,
             },
+            total_starve_time: Duration::ZERO,
             stomach_filled: 0.,
             extra_weight: 0.,
             since_poop: Duration::ZERO,
@@ -238,4 +269,12 @@ impl Mood {
             Mood::Happy => PetAnimationSet::Happy,
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub enum LifeStage {
+    Baby,
+    Child,
+    Adult,
+    Elder,
 }

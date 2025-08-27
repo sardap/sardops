@@ -3,8 +3,8 @@ use glam::Vec2;
 use crate::{
     anime::Anime,
     assets::Image,
-    pet::definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
-    sprite::Sprite,
+    pet::definition::{PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID},
+    sprite::{Sprite, SpriteMask},
 };
 
 #[derive(Clone, Copy)]
@@ -15,15 +15,16 @@ pub struct PetRender {
     pub anime: Anime,
 }
 
+fn create_pet_anime(def_id: PetDefinitionId, set: PetAnimationSet) -> Anime {
+    Anime::new(PetDefinition::get_by_id(def_id).images.frames(set).frame)
+        .with_mask(PetDefinition::get_by_id(def_id).images.frames(set).masked)
+}
+
 impl PetRender {
     pub fn new(def_id: PetDefinitionId) -> Self {
         Self {
             def_id,
-            anime: Anime::new(
-                PetDefinition::get_by_id(def_id)
-                    .images
-                    .frames(PetAnimationSet::default()),
-            ),
+            anime: create_pet_anime(def_id, Default::default()),
             ..Default::default()
         }
     }
@@ -37,7 +38,7 @@ impl PetRender {
     }
 
     fn reset_anime(&mut self) {
-        self.anime = Anime::new(self.definition().images.frames(self.set));
+        self.anime = create_pet_anime(self.def_id, self.set);
     }
 
     pub fn set_def_id(&mut self, def_id: PetDefinitionId) {
@@ -69,17 +70,19 @@ impl Sprite for PetRender {
     }
 }
 
+impl SpriteMask for PetRender {
+    fn image_mask(&self) -> &impl Image {
+        self.anime.current_frame_mask().unwrap()
+    }
+}
+
 impl Default for PetRender {
     fn default() -> Self {
         Self {
             def_id: Default::default(),
             pos: Vec2::default(),
             set: PetAnimationSet::default(),
-            anime: Anime::new(
-                PetDefinition::get_by_id(Default::default())
-                    .images
-                    .frames(PetAnimationSet::default()),
-            ),
+            anime: create_pet_anime(PET_BLOB_ID, Default::default()),
         }
     }
 }
