@@ -1,0 +1,133 @@
+(
+    pet: (
+        upid: 474797337557,
+        def_id: 0,
+        name: "d     ",
+        born: ("2025-08-27T20:37:55.831637687"),
+        age: (
+            secs: 7,
+            nanos: 52027624,
+        ),
+        stomach_mood: Starving(
+            elapsed: (
+                secs: 7,
+                nanos: 52027624,
+            ),
+        ),
+        total_starve_time: (
+            secs: 7,
+            nanos: 35273934,
+        ),
+        stomach_filled: 0.0,
+        extra_weight: 0.0,
+        since_poop: (
+            secs: 0,
+            nanos: 0,
+        ),
+        since_game: (
+            secs: 7,
+            nanos: 52027624,
+        ),
+        since_death_check: (
+            secs: 7,
+            nanos: 52027624,
+        ),
+        should_die: None,
+    ),
+    poops: (None, None, None, None, None),
+    money: 0,
+    inventory: (
+        contents: ((
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 0,
+            item_extra: (
+                uses: 0,
+            ),
+        )),
+    ),
+    shop: (
+        item_count: 2,
+    ),
+    pet_records: (
+        top: 0,
+        entires: (None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
+    ),
+    fish_tank: (
+        fish: (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+    ),
+    last_timestamp: ("2025-08-27T20:38:02.884498129"),
+)
