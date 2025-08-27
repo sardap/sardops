@@ -6,7 +6,8 @@ use crate::{
     geo::Rect,
     scene::{
         home_scene::HomeScene, mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene,
-        mg_tic_tac_toe::MgTicTacToeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        mg_tic_tac_toe::MgTicTacToeScene, mg_weight_lift::MgWeightLift, RenderArgs, Scene,
+        SceneEnum, SceneOutput, SceneTickArgs,
     },
     Button, HEIGHT,
 };
@@ -15,6 +16,7 @@ enum MiniGame {
     TicTacToe,
     DogeEm,
     LinkFour,
+    WeightLift,
 }
 
 impl MiniGame {
@@ -23,11 +25,17 @@ impl MiniGame {
             MiniGame::TicTacToe => &assets::IMAGE_MG_TIC_TAC_TOE_ICON,
             MiniGame::DogeEm => &assets::IMAGE_MG_DOGE_ICON,
             MiniGame::LinkFour => &assets::IMAGE_MG_LINK_FOUR_ICON,
+            MiniGame::WeightLift => &assets::IMAGE_MG_WEIGHT_LIFT_ICON,
         }
     }
 }
 
-const MINIGAMES: &[MiniGame] = &[MiniGame::TicTacToe, MiniGame::DogeEm, MiniGame::LinkFour];
+const MINIGAMES: &[MiniGame] = &[
+    MiniGame::TicTacToe,
+    MiniGame::DogeEm,
+    MiniGame::LinkFour,
+    MiniGame::WeightLift,
+];
 
 pub struct GameSelectScene {
     active_minigames: &'static [MiniGame],
@@ -83,6 +91,9 @@ impl Scene for GameSelectScene {
                     SceneEnum::MgDogeEm(MgDogeEmScene::new(args.game_ctx.pet.def_id))
                 }
                 MiniGame::LinkFour => SceneEnum::MgTicLinkFour(MgLinkFourScene::new()),
+                MiniGame::WeightLift => {
+                    SceneEnum::MgWeightLift(MgWeightLift::new(args.game_ctx.pet.def_id))
+                }
             });
         }
 

@@ -220,6 +220,10 @@ impl PetInstance {
 
         return Mood::Normal;
     }
+
+    pub fn weight(&self) -> f32 {
+        self.extra_weight + self.definition().base_weight
+    }
 }
 
 impl Default for PetInstance {

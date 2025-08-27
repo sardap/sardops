@@ -1,4 +1,4 @@
-*.sav
+/sdop.sav
 target/
 build/
 n64-heart-rust/

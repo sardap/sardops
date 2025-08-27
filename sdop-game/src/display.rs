@@ -47,6 +47,14 @@ pub enum PostionMode {
     BottomRight,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Rotation {
+    R0,
+    R90,
+    R180,
+    R270,
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
     color_mode: ColorMode,
@@ -54,6 +62,7 @@ pub struct ComplexRenderOption {
     flip_colors: bool,
     font: &'static Font,
     font_wrapping_x: Option<i32>,
+    rotation: Rotation,
 }
 
 impl ComplexRenderOption {
@@ -64,6 +73,7 @@ impl ComplexRenderOption {
             flip_colors: false,
             font: &FONT_MONOSPACE_8X8,
             font_wrapping_x: None,
+            rotation: Rotation::R0,
         }
     }
 
@@ -108,6 +118,11 @@ impl ComplexRenderOption {
     #[allow(dead_code)]
     pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
         self.pos_mode = value;
+        self
+    }
+
+    pub const fn with_rotation(mut self, value: Rotation) -> Self {
+        self.rotation = value;
         self
     }
 
@@ -165,6 +180,9 @@ impl GameDisplay {
             PostionMode::BottomRight => (x - image_size.x as i32, y - image_size.y as i32),
         };
 
+        let cx = (image_size.x as i32) / 2;
+        let cy = (image_size.y as i32) / 2;
+
         for iy in 0..image_size.y {
             for ix in 0..image_size.x {
                 let pixel_index = (iy as usize) * (image_size.x as usize) + (ix as usize);
@@ -181,8 +199,19 @@ impl GameDisplay {
                     continue;
                 }
 
-                let dx = x_plus + ix as i32;
-                let dy = y_plus + iy as i32;
+                let ox = ix as i32 - cx;
+                let oy = iy as i32 - cy;
+                let (rx, ry) = match options.rotation {
+                    Rotation::R0 => (ox, oy),
+                    Rotation::R90 => (oy, -ox),
+                    Rotation::R180 => (-ox, -oy),
+                    Rotation::R270 => (-oy, ox),
+                };
+                let rx = rx + cx;
+                let ry = ry + cy;
+
+                let dx = x_plus + rx;
+                let dy = y_plus + ry;
 
                 if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
                     self.set_bit(dx, dy, bit_set);

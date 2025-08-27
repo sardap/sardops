@@ -6,7 +6,7 @@ use crate::{
     Timestamp,
 };
 
-const MAX_SHOP_ITEMS: usize = 5;
+const MAX_SHOP_ITEMS: usize = 10;
 
 pub type ShopItemSet = [ItemKind; MAX_SHOP_ITEMS];
 

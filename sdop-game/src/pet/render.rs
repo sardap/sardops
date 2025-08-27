@@ -15,26 +15,16 @@ pub struct PetRender {
     pub anime: Anime,
 }
 
-fn create_pet_anime(def_id: PetDefinitionId) -> Anime {
-    Anime::new(
-        PetDefinition::get_by_id(def_id)
-            .images
-            .frames(PetAnimationSet::default())
-            .frame,
-    )
-    .with_mask(
-        PetDefinition::get_by_id(def_id)
-            .images
-            .frames(PetAnimationSet::default())
-            .masked,
-    )
+fn create_pet_anime(def_id: PetDefinitionId, set: PetAnimationSet) -> Anime {
+    Anime::new(PetDefinition::get_by_id(def_id).images.frames(set).frame)
+        .with_mask(PetDefinition::get_by_id(def_id).images.frames(set).masked)
 }
 
 impl PetRender {
     pub fn new(def_id: PetDefinitionId) -> Self {
         Self {
             def_id,
-            anime: create_pet_anime(def_id),
+            anime: create_pet_anime(def_id, Default::default()),
             ..Default::default()
         }
     }
@@ -48,7 +38,7 @@ impl PetRender {
     }
 
     fn reset_anime(&mut self) {
-        self.anime = create_pet_anime(self.def_id);
+        self.anime = create_pet_anime(self.def_id, self.set);
     }
 
     pub fn set_def_id(&mut self, def_id: PetDefinitionId) {
@@ -92,7 +82,7 @@ impl Default for PetRender {
             def_id: Default::default(),
             pos: Vec2::default(),
             set: PetAnimationSet::default(),
-            anime: create_pet_anime(PET_BLOB_ID),
+            anime: create_pet_anime(PET_BLOB_ID, Default::default()),
         }
     }
 }

@@ -161,10 +161,11 @@ impl Scene for FishingScene {
             State::Waiting { duration } => {
                 if self.state_elasped > duration {
                     self.state_elasped = Duration::ZERO;
-                    self.pet_render.set_animation(PetAnimationSet::Happy);
                     if args.game_ctx.rng.f32() < 0.2 {
+                        self.pet_render.set_animation(PetAnimationSet::Sad);
                         self.state = State::PullOut;
                     } else {
+                        self.pet_render.set_animation(PetAnimationSet::Happy);
                         self.state = State::Pulling;
                     }
                 }

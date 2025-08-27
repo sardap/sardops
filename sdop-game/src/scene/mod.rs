@@ -12,6 +12,7 @@ pub mod mg_doge_em;
 pub mod mg_fanfare;
 pub mod mg_link_four;
 pub mod mg_tic_tac_toe;
+pub mod mg_weight_lift;
 pub mod new_pet_scene;
 pub mod pet_info_scene;
 pub mod poop_clear_scene;
@@ -45,6 +46,7 @@ pub enum SceneEnum {
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
     MgTicLinkFour(mg_link_four::MgLinkFourScene),
+    MgWeightLift(mg_weight_lift::MgWeightLift),
 }
 
 impl Default for SceneEnum {
@@ -69,11 +71,12 @@ impl SceneEnum {
             SceneEnum::Inventory(inventory) => inventory,
             SceneEnum::EnterText(enter_text) => enter_text,
             SceneEnum::EnterDate(enter_date) => enter_date,
+            SceneEnum::Evovle(evovle_scene) => evovle_scene,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
             SceneEnum::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
-            SceneEnum::Evovle(evovle_scene) => evovle_scene,
+            SceneEnum::MgWeightLift(mg_weight_lift_scene) => mg_weight_lift_scene,
         }
     }
 }

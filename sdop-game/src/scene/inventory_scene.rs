@@ -141,7 +141,7 @@ impl Scene for InventoryScene {
         );
         y = HEIGHT_F32 - 20.;
 
-        if item.is_usable() && args.game_ctx.inventory.has_item(item) {
+        if args.game_ctx.inventory.has_item(item) && item.is_usable(args.game_ctx) {
             display.render_text_complex(
                 Vec2::new(CENTER_X, y),
                 "USE",

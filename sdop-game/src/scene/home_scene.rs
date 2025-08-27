@@ -8,8 +8,8 @@ use crate::{
     assets::{self, Image, IMAGE_STOMACH_MASK},
     clock::{ClockKind, RenderClock},
     date_utils::DurationExt,
-    death::DeathCause,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
+    fish_tank::FishtankRender,
     fonts::FONT_VARIABLE_SMALL,
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
@@ -97,6 +97,7 @@ pub struct HomeScene {
     selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
+    fish_tank: FishtankRender,
     state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
@@ -116,6 +117,7 @@ impl HomeScene {
                 Vec2::new(20., 40.),
                 &assets::FRAMES_TV_SHOW_SPORT,
             ),
+            fish_tank: FishtankRender::new(Vec2::new(15., 70.)),
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
@@ -156,6 +158,13 @@ impl Scene for HomeScene {
         self.selected_index = 0;
         self.tv.random_show(&mut args.game_ctx.rng);
         self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+
+        for fish in args.game_ctx.home_fish_tank.fish {
+            if fish == 0. {
+                break;
+            }
+            self.fish_tank.add_fish(&mut args.game_ctx.rng, fish);
+        }
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -207,23 +216,25 @@ impl Scene for HomeScene {
 
         match self.state {
             State::Wondering => {
+                self.fish_tank.tick(args.delta, rng);
+
                 if self.state_elapsed > self.wonder_end {
-                    if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                        self.tv.kind = TvKind::LCD;
-                        self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
-                            watch_end: Duration::from_secs(3 * 60),
-                        });
-                    }
-                    if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                        self.tv.kind = TvKind::CRT;
-                        self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
-                            watch_end: Duration::from_secs(2 * 60),
-                        });
-                    }
+                    // if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                    //     self.tv.kind = TvKind::LCD;
+                    //     self.change_state(State::WatchingTv {
+                    //         show_timer: Duration::ZERO,
+                    //         show_end: Duration::from_secs(30),
+                    //         watch_end: Duration::from_secs(3 * 60),
+                    //     });
+                    // }
+                    // if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                    //     self.tv.kind = TvKind::CRT;
+                    //     self.change_state(State::WatchingTv {
+                    //         show_timer: Duration::ZERO,
+                    //         show_end: Duration::from_secs(30),
+                    //         watch_end: Duration::from_secs(2 * 60),
+                    //     });
+                    // }
 
                     self.wonder_end = reset_wonder_end(rng);
                 }
@@ -373,8 +384,21 @@ impl Scene for HomeScene {
                         .without_second_hand(),
                     );
                 }
+
+                display.render_complex(&self.fish_tank);
             }
             State::Sleeping => {
+                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
+                    display.render_complex(
+                        &RenderClock::new(
+                            ClockKind::Clock21,
+                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
+                            args.timestamp.inner().time(),
+                        )
+                        .without_second_hand(),
+                    );
+                }
+
                 display.render_sprite(&self.sleeping_z);
             }
             State::WatchingTv {

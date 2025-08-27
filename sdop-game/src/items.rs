@@ -29,8 +29,14 @@ impl ItemKind {
         !self.is_none()
     }
 
-    pub fn is_usable(&self) -> bool {
-        ALL_USEABLE_ITEMS.iter().any(|i| *self == i.item)
+    pub fn is_usable(&self, game_ctx: &mut GameContext) -> bool {
+        for usable in ALL_USEABLE_ITEMS {
+            if usable.item == *self && (usable.usable_fn)(game_ctx) {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn use_item(&self, game_ctx: &mut GameContext) -> Option<UseItemOutput> {
@@ -202,12 +208,12 @@ impl UseItemOutput {
         }
     }
 
-    pub const fn with_consumed(mut self) -> Self {
+    pub fn with_consumed(mut self) -> Self {
         self.consumed = true;
         self
     }
 
-    pub const fn with_scene(mut self, scene: SceneEnum) -> Self {
+    pub fn with_scene(mut self, scene: SceneEnum) -> Self {
         self.new_scene = Some(scene);
         self
     }
@@ -223,15 +229,30 @@ impl Default for UseItemOutput {
 }
 
 pub type UseItemFn = fn(game_ctx: &mut GameContext) -> UseItemOutput;
+pub type IsUseableItemFn = fn(game_ctx: &mut GameContext) -> bool;
 
 pub struct UsableItem {
     item: ItemKind,
-    function: UseItemFn,
+    use_fn: UseItemFn,
+    usable_fn: IsUseableItemFn,
 }
 
 impl UsableItem {
+    pub const fn new(item: ItemKind, use_fn: UseItemFn) -> Self {
+        Self {
+            item: item,
+            use_fn,
+            usable_fn: |_| true,
+        }
+    }
+
+    pub const fn with_is_usable_fn(mut self, usable_fn: IsUseableItemFn) -> Self {
+        self.usable_fn = usable_fn;
+        self
+    }
+
     pub fn use_item(&self, game_ctx: &mut GameContext) -> UseItemOutput {
-        let output = (self.function)(game_ctx);
+        let output = (self.use_fn)(game_ctx);
 
         if output.consumed {
             game_ctx.inventory.add_item(self.item, -1);
@@ -241,34 +262,34 @@ impl UsableItem {
     }
 }
 
-const USE_SHOP_UPGRADE: UsableItem = UsableItem {
-    item: ItemKind::ShopUpgrade,
-    function: |game_ctx| {
-        game_ctx
-            .shop
-            .set_item_count(game_ctx.shop.get_item_count() + 1);
+const USE_SHOP_UPGRADE: UsableItem = UsableItem::new(ItemKind::ShopUpgrade, |game_ctx| {
+    game_ctx
+        .shop
+        .set_item_count(game_ctx.shop.get_item_count() + 1);
 
-        UseItemOutput::new().with_consumed()
-    },
-};
+    UseItemOutput::new().with_consumed()
+});
 
-const USE_FISHING_ROD: UsableItem = UsableItem {
-    item: ItemKind::FishingRod,
-    function: |game_ctx| {
-        let mut result =
-            UseItemOutput::new().with_scene(SceneEnum::Fishing(fishing_scene::FishingScene::new()));
-        let entry = game_ctx.inventory.get_entry_mut(ItemKind::FishingRod);
-        entry.item_extra.uses -= 1;
-        if entry.item_extra.uses <= 0 {
-            entry.item_extra = ItemExtra::new_from_kind(ItemKind::FishingRod);
-            result = result.with_consumed();
-        }
+const USE_FISHING_ROD: UsableItem = UsableItem::new(ItemKind::FishingRod, |game_ctx| {
+    let mut result =
+        UseItemOutput::new().with_scene(SceneEnum::Fishing(fishing_scene::FishingScene::new()));
+    let entry = game_ctx.inventory.get_entry_mut(ItemKind::FishingRod);
+    entry.item_extra.uses -= 1;
+    if entry.item_extra.uses <= 0 {
+        entry.item_extra = ItemExtra::new_from_kind(ItemKind::FishingRod);
+        result = result.with_consumed();
+    }
 
-        result
-    },
-};
+    result
+});
 
-const ALL_USEABLE_ITEMS: &[UsableItem] = &[USE_SHOP_UPGRADE, USE_FISHING_ROD];
+const USE_FISH: UsableItem = UsableItem::new(ItemKind::Fish, |game_ctx| {
+    game_ctx.home_fish_tank.add(&mut game_ctx.rng);
+    UseItemOutput::new().with_consumed()
+})
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+
+const ALL_USEABLE_ITEMS: &[UsableItem] = &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH];
 
 pub struct ItemChance {
     kind: ItemKind,

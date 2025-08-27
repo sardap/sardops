@@ -15,6 +15,22 @@ pub trait Sprite {
         Rect::new_center(*self.pos(), self.image().size_vec2())
     }
 
+    fn x1(&self) -> f32 {
+        self.pos().x - self.image().size().x as f32 / 2.
+    }
+
+    fn x2(&self) -> f32 {
+        self.pos().x + self.image().size().x as f32 / 2.
+    }
+
+    fn y1(&self) -> f32 {
+        self.pos().y - self.image().size().y as f32 / 2.
+    }
+
+    fn y2(&self) -> f32 {
+        self.pos().y + self.image().size().y as f32 / 2.
+    }
+
     #[allow(dead_code)]
     fn top_left(&self) -> Vec2 {
         Vec2::new(
@@ -52,10 +68,46 @@ impl Sprite for BasicSprite {
 
 impl Default for BasicSprite {
     fn default() -> Self {
-        Self {
-            pos: Vec2::default(),
-            image: &assets::IMAGE_ALPHABET_SPACE,
-        }
+        Self::new(Default::default(), &assets::IMAGE_ALPHABET_SPACE)
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct BasicMaskedSprite {
+    pub pos: Vec2,
+    pub image: &'static StaticImage,
+    pub mask: &'static StaticImage,
+}
+
+impl BasicMaskedSprite {
+    pub fn new(pos: Vec2, image: &'static StaticImage, mask: &'static StaticImage) -> Self {
+        Self { pos, image, mask }
+    }
+}
+
+impl Sprite for BasicMaskedSprite {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl Image {
+        self.image
+    }
+}
+
+impl SpriteMask for BasicMaskedSprite {
+    fn image_mask(&self) -> &impl Image {
+        self.mask
+    }
+}
+
+impl Default for BasicMaskedSprite {
+    fn default() -> Self {
+        Self::new(
+            Default::default(),
+            &assets::IMAGE_ALPHABET_SPACE,
+            &assets::IMAGE_ALPHABET_SPACE,
+        )
     }
 }
 
