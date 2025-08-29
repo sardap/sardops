@@ -1,7 +1,7 @@
 use crate::{
     date_utils::SpecialDayUpdater,
     fish_tank::HomeFishTank,
-    items::Inventory,
+    items::{HomeLayout, Inventory},
     money::Money,
     pet::{record::PetHistory, PetInstance},
     poop::{Poop, MAX_POOPS},
@@ -16,6 +16,7 @@ pub struct GameContext {
     pub money: Money,
     pub inventory: Inventory,
     pub home_fish_tank: HomeFishTank,
+    pub home_layout: HomeLayout,
     pub shop: Shop,
     pub pet_records: PetHistory,
     pub rng: fastrand::Rng,
@@ -33,6 +34,7 @@ impl GameContext {
             money: Money::default(),
             inventory: Inventory::default(),
             home_fish_tank: Default::default(),
+            home_layout: Default::default(),
             shop: Shop::default(),
             pet_records: Default::default(),
             rng: fastrand::Rng::with_seed(timestamp.seed()),
@@ -41,5 +43,9 @@ impl GameContext {
             shared_out: Default::default(),
             set_timestamp: None,
         }
+    }
+
+    pub fn poop_count(&self) -> usize {
+        self.poops.iter().filter(|i| i.is_some()).count()
     }
 }

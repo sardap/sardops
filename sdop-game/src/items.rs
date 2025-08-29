@@ -1,12 +1,15 @@
 use bincode::{Decode, Encode};
 use const_for::const_for;
-use glam::usize;
+use glam::{usize, Vec2};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 use crate::{
+    assets::{self, Image},
+    clock::{AnalogueClockKind, DigitalClockRender},
+    fish_tank::FishTankRender,
     food::STARTING_FOOD,
     game_context::GameContext,
-    scene::{fishing_scene, SceneEnum},
+    scene::{fishing_scene, home_scene::HomeFurnitureLocation, SceneEnum},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
@@ -47,6 +50,20 @@ impl ItemKind {
         }
 
         None
+    }
+
+    pub const fn furniture(&self) -> Option<HomeFurnitureKind> {
+        Some(match self {
+            ItemKind::AnalogClock => HomeFurnitureKind::AnalogueClock,
+            ItemKind::DigitalClock => HomeFurnitureKind::DigitalClock,
+            ItemKind::FishTank => HomeFurnitureKind::FishTank,
+            ItemKind::PaintingBranch => HomeFurnitureKind::PaintingBranch,
+            ItemKind::PaintingDude => HomeFurnitureKind::PaintingDude,
+            ItemKind::PaintingMan => HomeFurnitureKind::PaintingMan,
+            ItemKind::PaintingPc => HomeFurnitureKind::PaintingPc,
+            ItemKind::PaintingSun => HomeFurnitureKind::PaintingSun,
+            _ => return None,
+        })
     }
 }
 
@@ -314,4 +331,80 @@ pub fn pick_item_from_set(val: f32, chance_set: &[ItemChance]) -> ItemKind {
     }
 
     ItemKind::None
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy, Encode, Decode, PartialEq, Eq)]
+pub enum HomeFurnitureKind {
+    None,
+    DigitalClock,
+    AnalogueClock,
+    FishTank,
+    PaintingBranch,
+    PaintingDude,
+    PaintingMan,
+    PaintingPc,
+    PaintingSun,
+}
+
+impl HomeFurnitureKind {
+    pub fn size(&self) -> Vec2 {
+        match self {
+            HomeFurnitureKind::None => Vec2::ZERO,
+            HomeFurnitureKind::DigitalClock => DigitalClockRender::size(),
+            HomeFurnitureKind::AnalogueClock => AnalogueClockKind::Clock21.size(),
+            HomeFurnitureKind::FishTank => FishTankRender::size(),
+            HomeFurnitureKind::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
+            HomeFurnitureKind::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
+            HomeFurnitureKind::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
+            HomeFurnitureKind::PaintingPc => assets::IMAGE_PAINTING_PC.size_vec2(),
+            HomeFurnitureKind::PaintingSun => assets::IMAGE_PAINTING_SUN.size_vec2(),
+        }
+    }
+}
+
+impl Default for HomeFurnitureKind {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy, Encode, Decode)]
+pub struct HomeLayout {
+    pub top: HomeFurnitureKind,
+    pub left: HomeFurnitureKind,
+    pub right: HomeFurnitureKind,
+}
+
+impl HomeLayout {
+    pub fn place(&mut self, location: HomeFurnitureLocation, kind: HomeFurnitureKind) {
+        if self.top == kind {
+            self.top = HomeFurnitureKind::None;
+        }
+
+        if self.left == kind {
+            self.left = HomeFurnitureKind::None;
+        }
+
+        if self.right == kind {
+            self.right = HomeFurnitureKind::None;
+        }
+
+        match location {
+            HomeFurnitureLocation::Top => self.top = kind,
+            HomeFurnitureLocation::Left => self.left = kind,
+            HomeFurnitureLocation::Right => self.right = kind,
+        }
+    }
+}
+
+impl Default for HomeLayout {
+    fn default() -> Self {
+        Self {
+            top: HomeFurnitureKind::None,
+            left: HomeFurnitureKind::None,
+            right: HomeFurnitureKind::None,
+        }
+    }
 }

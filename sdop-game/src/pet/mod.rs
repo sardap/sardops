@@ -7,14 +7,15 @@ use crate::{
     death::DeathCause,
     food::Food,
     game_consts::{
-        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVAL, DEATH_STARVE_THRESHOLDS,
-        HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL,
+        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_BY_TOXIC_SHOCK_LARGE, DEATH_BY_TOXIC_SHOCK_SMALL,
+        DEATH_CHECK_INTERVAL, DEATH_STARVE_THRESHOLDS, HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD,
+        POOP_INTERVNAL,
     },
     pet::definition::{
         PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
         PET_PAWN_WHITE_ID,
     },
-    poop::{poop_count, Poop},
+    poop::{poop_count, Poop, MAX_POOPS},
     Timestamp,
 };
 
@@ -117,7 +118,13 @@ impl PetInstance {
         }
     }
 
-    pub fn tick_death(&mut self, delta: Duration, rng: &mut fastrand::Rng, sleep: bool) {
+    pub fn tick_death(
+        &mut self,
+        delta: Duration,
+        rng: &mut fastrand::Rng,
+        sleep: bool,
+        poop_count: u8,
+    ) {
         if sleep || self.should_die.is_some() {
             return;
         }
@@ -134,21 +141,35 @@ impl PetInstance {
             if let StomachMood::Starving { elapsed } = self.stomach_mood {
                 for threashold in DEATH_STARVE_THRESHOLDS {
                     if threashold.elapsed > elapsed {
-                        // if rng.f32() < threashold.odds {
-                        //     self.should_die = Some(DeathCause::Starvation);
-                        //     return;
-                        // }
-                        break;
-                    }
-                }
-
-                for threshold in OLD_AGE_THRESHOLD {
-                    if threshold.elapsed > elapsed {
-                        if rng.f32() < threshold.odds {
-                            self.should_die = Some(DeathCause::OldAge);
+                        if rng.f32() < threashold.odds {
+                            self.should_die = Some(DeathCause::Starvation);
                             return;
                         }
                         break;
+                    }
+                }
+            }
+
+            for threshold in OLD_AGE_THRESHOLD {
+                if threshold.elapsed > self.age {
+                    if rng.f32() < threshold.odds {
+                        self.should_die = Some(DeathCause::OldAge);
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            if !sleep {
+                if poop_count >= MAX_POOPS as u8 {
+                    if rng.f32() < DEATH_BY_TOXIC_SHOCK_LARGE {
+                        self.should_die = Some(DeathCause::ToxicShock);
+                        return;
+                    }
+                } else if poop_count >= (MAX_POOPS / 2) as u8 {
+                    if rng.f32() < DEATH_BY_TOXIC_SHOCK_SMALL {
+                        self.should_die = Some(DeathCause::ToxicShock);
+                        return;
                     }
                 }
             }

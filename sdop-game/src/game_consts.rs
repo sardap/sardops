@@ -34,6 +34,9 @@ pub const OLD_AGE_THRESHOLD: &[Threshold] = &[
     Threshold::new(Duration::MAX, odds_per_hour(0.3)),
 ];
 
+pub const DEATH_BY_TOXIC_SHOCK_SMALL: f32 = odds_per_hour(0.05);
+pub const DEATH_BY_TOXIC_SHOCK_LARGE: f32 = odds_per_hour(0.1);
+
 // Base stomach size is 30 Drain 7 poiints per hour so 4 hours empty stomach
 pub const HUNGER_LOSS_PER_SECOND: f32 = 7. / Duration::from_hours(1).as_secs_f32();
 

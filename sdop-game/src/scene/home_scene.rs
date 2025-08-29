@@ -6,13 +6,17 @@ use glam::Vec2;
 use crate::{
     anime::{tick_all_anime, Anime, HasAnime},
     assets::{self, Image, IMAGE_STOMACH_MASK},
-    clock::{ClockKind, RenderClock},
+    clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
     date_utils::DurationExt,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
-    fish_tank::FishtankRender,
+    death::DeathCause,
+    display::{
+        ComplexRender, ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y,
+        HEIGHT_F32, WIDTH_F32,
+    },
+    fish_tank::FishTankRender,
     fonts::FONT_VARIABLE_SMALL,
     geo::{vec2_direction, vec2_distance, Rect},
-    items::ItemKind,
+    items::{HomeFurnitureKind, ItemKind},
     pet::{
         definition::{PetAnimationSet, PET_BLOB_ID},
         render::PetRender,
@@ -24,7 +28,7 @@ use crate::{
         pet_info_scene::PetInfoScene, poop_clear_scene::PoopClearScene, shop_scene::ShopScene,
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sprite::{BasicAnimeSprite, Sprite},
+    sprite::{BasicAnimeSprite, BasicSprite, Sprite},
     tv::{TvKind, TvRender},
     Button, WIDTH,
 };
@@ -78,6 +82,13 @@ fn get_options(state: State) -> &'static [MenuOption] {
     }
 }
 
+const BORDER_HEIGHT: f32 = 1.;
+
+const TOP_BORDER_RECT: Rect = Rect::new_center(
+    Vec2::new(CENTER_X, 24.),
+    Vec2::new(WIDTH_F32, BORDER_HEIGHT),
+);
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
     Wondering,
@@ -97,10 +108,12 @@ pub struct HomeScene {
     selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
-    fish_tank: FishtankRender,
     state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
+    left_render: HomeFurnitureRender,
+    top_render: HomeFurnitureRender,
+    right_render: HomeFurnitureRender,
 }
 
 impl HomeScene {
@@ -117,10 +130,12 @@ impl HomeScene {
                 Vec2::new(20., 40.),
                 &assets::FRAMES_TV_SHOW_SPORT,
             ),
-            fish_tank: FishtankRender::new(Vec2::new(15., 70.)),
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
+            left_render: HomeFurnitureRender::None,
+            top_render: HomeFurnitureRender::None,
+            right_render: HomeFurnitureRender::None,
         }
     }
 
@@ -159,20 +174,20 @@ impl Scene for HomeScene {
         self.tv.random_show(&mut args.game_ctx.rng);
         self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
 
-        for fish in args.game_ctx.home_fish_tank.fish {
-            if fish == 0. {
-                break;
-            }
-            self.fish_tank.add_fish(&mut args.game_ctx.rng, fish);
-        }
+        self.top_render =
+            HomeFurnitureRender::new(HomeFurnitureLocation::Top, args.game_ctx.home_layout.top);
+        self.left_render =
+            HomeFurnitureRender::new(HomeFurnitureLocation::Left, args.game_ctx.home_layout.left);
+        self.right_render = HomeFurnitureRender::new(
+            HomeFurnitureLocation::Right,
+            args.game_ctx.home_layout.right,
+        );
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
-        let pet = &mut args.game_ctx.pet;
-        let rng = &mut args.game_ctx.rng;
-        self.pet_render.set_def_id(pet.def_id);
+        self.pet_render.set_def_id(args.game_ctx.pet.def_id);
 
         update_poop_renders(&mut self.poops, &args.game_ctx.poops);
 
@@ -180,7 +195,11 @@ impl Scene for HomeScene {
         self.pet_render.tick(args.delta);
         tick_all_anime(&mut self.poops, args.delta);
 
-        let should_be_sleeping = pet.definition().should_be_sleeping(&args.timestamp);
+        let should_be_sleeping = args
+            .game_ctx
+            .pet
+            .definition()
+            .should_be_sleeping(&args.timestamp);
         if should_be_sleeping && !matches!(self.state, State::Sleeping) {
             self.change_state(State::Sleeping);
         } else if !should_be_sleeping && matches!(self.state, State::Sleeping) {
@@ -188,16 +207,16 @@ impl Scene for HomeScene {
         }
 
         if !matches!(self.state, State::Sleeping) {
-            if let Some(cause_of_death) = pet.should_die() {
+            if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
                 return SceneOutput::new(SceneEnum::Death(DeathScene::new(
                     cause_of_death,
                     args.game_ctx.pet.def_id,
                 )));
             }
 
-            if let Some(next_pet_id) = pet.should_evolve(rng) {
+            if let Some(next_pet_id) = args.game_ctx.pet.should_evolve(&mut args.game_ctx.rng) {
                 return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
-                    pet.def_id,
+                    args.game_ctx.pet.def_id,
                     next_pet_id,
                 )));
             }
@@ -216,35 +235,22 @@ impl Scene for HomeScene {
 
         match self.state {
             State::Wondering => {
-                self.fish_tank.tick(args.delta, rng);
+                self.top_render.tick(args);
+                self.left_render.tick(args);
+                self.right_render.tick(args);
 
                 if self.state_elapsed > self.wonder_end {
-                    // if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                    //     self.tv.kind = TvKind::LCD;
-                    //     self.change_state(State::WatchingTv {
-                    //         show_timer: Duration::ZERO,
-                    //         show_end: Duration::from_secs(30),
-                    //         watch_end: Duration::from_secs(3 * 60),
-                    //     });
-                    // }
-                    // if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                    //     self.tv.kind = TvKind::CRT;
-                    //     self.change_state(State::WatchingTv {
-                    //         show_timer: Duration::ZERO,
-                    //         show_end: Duration::from_secs(30),
-                    //         watch_end: Duration::from_secs(2 * 60),
-                    //     });
-                    // }
-
-                    self.wonder_end = reset_wonder_end(rng);
+                    self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
                 }
 
                 self.pet_render
-                    .set_animation(pet.mood(&args.game_ctx.poops).anime_set());
+                    .set_animation(args.game_ctx.pet.mood(&args.game_ctx.poops).anime_set());
 
                 let dist = vec2_distance(self.pet_render.pos, self.target);
                 if dist.abs() < 5. {
-                    self.target = self.wonder_rect().random_point_inside(rng);
+                    self.target = self
+                        .wonder_rect()
+                        .random_point_inside(&mut args.game_ctx.rng);
                 }
 
                 self.pet_render.pos += vec2_direction(self.pet_render.pos, self.target)
@@ -336,8 +342,6 @@ impl Scene for HomeScene {
             total_filled,
         );
 
-        const BORDER_HEIGHT: f32 = 1.;
-
         const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.size.y as i32 + 1;
         display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
         let age_str = fixedstr::str_format!(str32, "{:.0}", pet.age.as_mins());
@@ -358,10 +362,6 @@ impl Scene for HomeScene {
                 .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        const TOP_BORDER_RECT: Rect = Rect::new_center(
-            Vec2::new(CENTER_X, 24.),
-            Vec2::new(WIDTH_F32, BORDER_HEIGHT),
-        );
         display.render_rect_solid(TOP_BORDER_RECT, true);
 
         const BOTTOM_BORDER_RECT: Rect = Rect::new_center(
@@ -374,24 +374,15 @@ impl Scene for HomeScene {
 
         match self.state {
             State::Wondering => {
-                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
-                    display.render_complex(
-                        &RenderClock::new(
-                            ClockKind::Clock21,
-                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
-                            args.timestamp.inner().time(),
-                        )
-                        .without_second_hand(),
-                    );
-                }
-
-                display.render_complex(&self.fish_tank);
+                display.render_complex(&self.top_render);
+                display.render_complex(&self.left_render);
+                display.render_complex(&self.right_render);
             }
             State::Sleeping => {
                 if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
                     display.render_complex(
-                        &RenderClock::new(
-                            ClockKind::Clock21,
+                        &AnalogueRenderClock::new(
+                            AnalogueClockKind::Clock21,
                             Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
                             args.timestamp.inner().time(),
                         )
@@ -447,5 +438,118 @@ impl Scene for HomeScene {
             Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),
         );
         display.render_rect_outline(select_rect, true);
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum HomeFurnitureLocation {
+    Top,
+    Left,
+    Right,
+}
+
+impl HomeFurnitureLocation {
+    pub const fn pos(&self) -> Vec2 {
+        match self {
+            HomeFurnitureLocation::Top => Vec2::new(CENTER_X, TOP_BORDER_RECT.y2()),
+            HomeFurnitureLocation::Left => Vec2::new(0., HEIGHT_F32 / 2.),
+            HomeFurnitureLocation::Right => Vec2::new(WIDTH_F32, HEIGHT_F32 / 2.),
+        }
+    }
+
+    pub const fn index(&self) -> usize {
+        match self {
+            HomeFurnitureLocation::Top => 0,
+            HomeFurnitureLocation::Left => 1,
+            HomeFurnitureLocation::Right => 2,
+        }
+    }
+
+    pub const fn from_index(index: usize) -> Option<Self> {
+        match index {
+            0 => Some(HomeFurnitureLocation::Top),
+            1 => Some(HomeFurnitureLocation::Left),
+            2 => Some(HomeFurnitureLocation::Right),
+            _ => None,
+        }
+    }
+}
+
+pub enum HomeFurnitureRender {
+    None,
+    DigitalClock(DigitalClockRender),
+    AnalogueClock(AnalogueRenderClock),
+    FishTank(FishTankRender),
+    Sprite(BasicSprite),
+}
+
+impl HomeFurnitureRender {
+    pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {
+        let pos = location.pos()
+            + match location {
+                HomeFurnitureLocation::Top => Vec2::new(0., kind.size().y / 2.),
+                HomeFurnitureLocation::Left => Vec2::new(kind.size().x / 2. + 1., 0.),
+                HomeFurnitureLocation::Right => Vec2::new(-(kind.size().x / 2. + 1.), 0.),
+            };
+
+        match kind {
+            HomeFurnitureKind::None => HomeFurnitureRender::None,
+            HomeFurnitureKind::DigitalClock => {
+                HomeFurnitureRender::DigitalClock(DigitalClockRender::new(pos, Default::default()))
+            }
+            HomeFurnitureKind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
+                AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
+            ),
+            HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
+            HomeFurnitureKind::PaintingBranch => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_BRANCH))
+            }
+            HomeFurnitureKind::PaintingDude => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_DUDE))
+            }
+            HomeFurnitureKind::PaintingMan => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_MAN))
+            }
+            HomeFurnitureKind::PaintingPc => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_PC))
+            }
+            HomeFurnitureKind::PaintingSun => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_SUN))
+            }
+        }
+    }
+
+    pub fn tick(&mut self, args: &mut SceneTickArgs) {
+        match self {
+            HomeFurnitureRender::None => {}
+            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
+                digital_clock_render.update_time(&args.timestamp.inner().time());
+            }
+            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
+                analogue_render_clock.update_time(&args.timestamp.inner().time());
+            }
+            HomeFurnitureRender::FishTank(fishtank_render) => {
+                fishtank_render.tick(args.delta, &mut args.game_ctx.rng);
+            }
+            HomeFurnitureRender::Sprite(_) => {}
+        }
+    }
+}
+
+impl ComplexRender for HomeFurnitureRender {
+    fn render(&self, display: &mut crate::display::GameDisplay) {
+        match self {
+            HomeFurnitureRender::None => {}
+            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
+                display.render_complex(digital_clock_render)
+            }
+            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
+                display.render_complex(analogue_render_clock)
+            }
+            HomeFurnitureRender::FishTank(fishtank_render) => {
+                display.render_complex(fishtank_render)
+            }
+            HomeFurnitureRender::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
+        }
     }
 }

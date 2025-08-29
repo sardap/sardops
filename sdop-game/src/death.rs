@@ -17,6 +17,7 @@ pub enum DeathCause {
     LightingStrike,
     Starvation,
     OldAge,
+    ToxicShock,
 }
 
 pub struct GraveStone {
