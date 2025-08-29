@@ -15,24 +15,34 @@ use crate::{
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct HomeFishTank {
     #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))]
-    pub fish: [f32; MAX_FISH],
+    pub fish: [u8; MAX_FISH],
 }
 
 impl HomeFishTank {
     pub fn add(&mut self, rng: &mut fastrand::Rng) {
         for i in 0..self.fish.len() {
-            if self.fish[i] == 0. {
-                self.fish[i] = rng.i32(1..=3) as f32 + rng.f32();
+            if self.fish[i] == 0 {
+                self.fish[i] = rng.u8(1..=3);
                 break;
             }
         }
+    }
+
+    pub fn count(&self) -> usize {
+        for i in 0..self.fish.len() {
+            if self.fish[i] == 0 {
+                return i;
+            }
+        }
+
+        return self.fish.len();
     }
 }
 
 impl Default for HomeFishTank {
     fn default() -> Self {
         Self {
-            fish: [0.; MAX_FISH],
+            fish: [0; MAX_FISH],
         }
     }
 }
@@ -89,6 +99,10 @@ impl FishTankRender {
             Vec2::new(x_dir, y_dir),
             speed,
         ));
+    }
+
+    pub fn fish_count(&self) -> usize {
+        self.fish.len()
     }
 
     pub fn tick(&mut self, delta: Duration, rng: &mut fastrand::Rng) {

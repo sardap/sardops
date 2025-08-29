@@ -16,6 +16,7 @@ use crate::{
     fish_tank::FishTankRender,
     fonts::FONT_VARIABLE_SMALL,
     geo::{vec2_direction, vec2_distance, Rect},
+    invetro_light::InvetroLightRender,
     items::{HomeFurnitureKind, ItemKind},
     pet::{
         definition::{PetAnimationSet, PET_BLOB_ID},
@@ -258,6 +259,10 @@ impl Scene for HomeScene {
                     * args.delta.as_secs_f32();
             }
             State::Sleeping => {
+                self.top_render.tick(args);
+                self.left_render.tick(args);
+                self.right_render.tick(args);
+
                 self.pet_render.set_animation(PetAnimationSet::Sleeping);
 
                 self.sleeping_z.anime().tick(args.delta);
@@ -372,24 +377,15 @@ impl Scene for HomeScene {
         const SYMBOL_BUFFER: f32 = 2.;
         const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
-        match self.state {
-            State::Wondering => {
-                display.render_complex(&self.top_render);
-                display.render_complex(&self.left_render);
-                display.render_complex(&self.right_render);
-            }
-            State::Sleeping => {
-                if args.game_ctx.inventory.has_item(ItemKind::AnalogClock) {
-                    display.render_complex(
-                        &AnalogueRenderClock::new(
-                            AnalogueClockKind::Clock21,
-                            Vec2::new(CENTER_X, TOP_BORDER_RECT.y2() + 21. / 2.),
-                            args.timestamp.inner().time(),
-                        )
-                        .without_second_hand(),
-                    );
-                }
+        if matches!(self.state, State::Wondering) || matches!(self.state, State::Sleeping) {
+            display.render_complex(&self.top_render);
+            display.render_complex(&self.left_render);
+            display.render_complex(&self.right_render);
+        }
 
+        match self.state {
+            State::Wondering => {}
+            State::Sleeping => {
                 display.render_sprite(&self.sleeping_z);
             }
             State::WatchingTv {
@@ -438,6 +434,15 @@ impl Scene for HomeScene {
             Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),
         );
         display.render_rect_outline(select_rect, true);
+
+        // No lights if sleeping
+        if matches!(self.state, State::Wondering) {
+            for i in [&self.top_render, &self.right_render, &self.left_render] {
+                if let HomeFurnitureRender::InvetroLight(light) = i {
+                    display.render_complex(light);
+                }
+            }
+        }
     }
 }
 
@@ -480,6 +485,7 @@ pub enum HomeFurnitureRender {
     DigitalClock(DigitalClockRender),
     AnalogueClock(AnalogueRenderClock),
     FishTank(FishTankRender),
+    InvetroLight(InvetroLightRender),
     Sprite(BasicSprite),
 }
 
@@ -501,6 +507,9 @@ impl HomeFurnitureRender {
                 AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
             ),
             HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
+            HomeFurnitureKind::InvertroLight => {
+                HomeFurnitureRender::InvetroLight(InvetroLightRender::new(pos, 50, location))
+            }
             HomeFurnitureKind::PaintingBranch => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_BRANCH))
             }
@@ -529,8 +538,16 @@ impl HomeFurnitureRender {
                 analogue_render_clock.update_time(&args.timestamp.inner().time());
             }
             HomeFurnitureRender::FishTank(fishtank_render) => {
+                while fishtank_render.fish_count() < args.game_ctx.home_fish_tank.count() {
+                    fishtank_render.add_fish(
+                        &mut args.game_ctx.rng,
+                        args.game_ctx.home_fish_tank.fish[fishtank_render.fish_count()] as f32,
+                    );
+                }
+
                 fishtank_render.tick(args.delta, &mut args.game_ctx.rng);
             }
+            HomeFurnitureRender::InvetroLight(_) => {}
             HomeFurnitureRender::Sprite(_) => {}
         }
     }
@@ -549,6 +566,8 @@ impl ComplexRender for HomeFurnitureRender {
             HomeFurnitureRender::FishTank(fishtank_render) => {
                 display.render_complex(fishtank_render)
             }
+            // We want these to render later so this is a hack
+            HomeFurnitureRender::InvetroLight(_) => {}
             HomeFurnitureRender::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
         }
     }

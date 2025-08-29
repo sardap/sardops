@@ -9,6 +9,7 @@ use crate::{
     fish_tank::FishTankRender,
     food::STARTING_FOOD,
     game_context::GameContext,
+    invetro_light::InvetroLightRender,
     scene::{fishing_scene, home_scene::HomeFurnitureLocation, SceneEnum},
 };
 
@@ -62,6 +63,7 @@ impl ItemKind {
             ItemKind::PaintingMan => HomeFurnitureKind::PaintingMan,
             ItemKind::PaintingPc => HomeFurnitureKind::PaintingPc,
             ItemKind::PaintingSun => HomeFurnitureKind::PaintingSun,
+            ItemKind::InvetroLight => HomeFurnitureKind::InvertroLight,
             _ => return None,
         })
     }
@@ -340,6 +342,7 @@ pub enum HomeFurnitureKind {
     DigitalClock,
     AnalogueClock,
     FishTank,
+    InvertroLight,
     PaintingBranch,
     PaintingDude,
     PaintingMan,
@@ -354,6 +357,7 @@ impl HomeFurnitureKind {
             HomeFurnitureKind::DigitalClock => DigitalClockRender::size(),
             HomeFurnitureKind::AnalogueClock => AnalogueClockKind::Clock21.size(),
             HomeFurnitureKind::FishTank => FishTankRender::size(),
+            HomeFurnitureKind::InvertroLight => InvetroLightRender::size(),
             HomeFurnitureKind::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
             HomeFurnitureKind::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
             HomeFurnitureKind::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
