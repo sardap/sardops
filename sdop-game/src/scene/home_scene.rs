@@ -6,30 +6,22 @@ use glam::Vec2;
 use crate::{
     anime::{tick_all_anime, Anime, HasAnime},
     assets::{self, Image, IMAGE_STOMACH_MASK},
-    clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
     date_utils::DurationExt,
-    death::DeathCause,
-    display::{
-        ComplexRender, ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y,
-        HEIGHT_F32, WIDTH_F32,
-    },
-    fish_tank::FishTankRender,
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
+    furniture::{HomeFurnitureLocation, HomeFurnitureRender},
     geo::{vec2_direction, vec2_distance, Rect},
-    invetro_light::InvetroLightRender,
-    items::{HomeFurnitureKind, ItemKind},
-    pet::{
-        definition::{PetAnimationSet, PET_BLOB_ID},
-        render::PetRender,
-    },
+    items::ItemKind,
+    pet::{definition::PetAnimationSet, render::PetRender},
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
         game_select::GameSelectScene, inventory_scene::InventoryScene,
-        pet_info_scene::PetInfoScene, poop_clear_scene::PoopClearScene, shop_scene::ShopScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        pet_info_scene::PetInfoScene, place_furniture_scene::PlaceFurnitureScene,
+        poop_clear_scene::PoopClearScene, shop_scene::ShopScene, RenderArgs, Scene, SceneEnum,
+        SceneOutput, SceneTickArgs,
     },
-    sprite::{BasicAnimeSprite, BasicSprite, Sprite},
+    sprite::{BasicAnimeSprite, Sprite},
     tv::{TvKind, TvRender},
     Button, WIDTH,
 };
@@ -45,6 +37,7 @@ enum MenuOption {
     FoodSelect,
     Shop,
     Inventory,
+    PlaceFurniture,
 }
 
 const AWAKE_OPTIONS: &[MenuOption] = &[
@@ -54,9 +47,14 @@ const AWAKE_OPTIONS: &[MenuOption] = &[
     MenuOption::FoodSelect,
     MenuOption::Shop,
     MenuOption::Inventory,
+    MenuOption::PlaceFurniture,
 ];
 
-const SLEEP_OPTIONS: &[MenuOption] = &[MenuOption::PetInfo, MenuOption::Inventory];
+const SLEEP_OPTIONS: &[MenuOption] = &[
+    MenuOption::PetInfo,
+    MenuOption::Inventory,
+    MenuOption::PlaceFurniture,
+];
 
 fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
     let index = current as i32 + change;
@@ -85,7 +83,7 @@ fn get_options(state: State) -> &'static [MenuOption] {
 
 const BORDER_HEIGHT: f32 = 1.;
 
-const TOP_BORDER_RECT: Rect = Rect::new_center(
+pub const HOME_SCENE_TOP_BORDER_RECT: Rect = Rect::new_center(
     Vec2::new(CENTER_X, 24.),
     Vec2::new(WIDTH_F32, BORDER_HEIGHT),
 );
@@ -241,6 +239,23 @@ impl Scene for HomeScene {
                 self.right_render.tick(args);
 
                 if self.state_elapsed > self.wonder_end {
+                    if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                        self.tv.kind = TvKind::LCD;
+                        self.change_state(State::WatchingTv {
+                            show_timer: Duration::ZERO,
+                            show_end: Duration::from_secs(30),
+                            watch_end: Duration::from_secs(3 * 60),
+                        });
+                    }
+                    if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                        self.tv.kind = TvKind::CRT;
+                        self.change_state(State::WatchingTv {
+                            show_timer: Duration::ZERO,
+                            show_end: Duration::from_secs(30),
+                            watch_end: Duration::from_secs(2 * 60),
+                        });
+                    }
+
                     self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
                 }
 
@@ -332,6 +347,9 @@ impl Scene for HomeScene {
                 MenuOption::Inventory => {
                     return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
                 }
+                MenuOption::PlaceFurniture => {
+                    return SceneOutput::new(SceneEnum::PlaceFurniture(PlaceFurnitureScene::new()));
+                }
             };
         }
 
@@ -367,7 +385,7 @@ impl Scene for HomeScene {
                 .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        display.render_rect_solid(TOP_BORDER_RECT, true);
+        display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
 
         const BOTTOM_BORDER_RECT: Rect = Rect::new_center(
             Vec2::new(CENTER_X, WONDER_RECT.pos_top_left().y + WONDER_RECT.size.y),
@@ -416,6 +434,7 @@ impl Scene for HomeScene {
                 MenuOption::FoodSelect => self.food_anime.current_frame(),
                 MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
                 MenuOption::Inventory => &assets::IMAGE_SYMBOL_INVENTORY,
+                MenuOption::PlaceFurniture => &assets::IMAGE_SYMBOL_PLACE_FURNITURE,
             };
             let x = if self.selected_index > 0 {
                 let x_index = i as i32 - self.selected_index as i32 + 1;
@@ -442,133 +461,6 @@ impl Scene for HomeScene {
                     display.render_complex(light);
                 }
             }
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum HomeFurnitureLocation {
-    Top,
-    Left,
-    Right,
-}
-
-impl HomeFurnitureLocation {
-    pub const fn pos(&self) -> Vec2 {
-        match self {
-            HomeFurnitureLocation::Top => Vec2::new(CENTER_X, TOP_BORDER_RECT.y2()),
-            HomeFurnitureLocation::Left => Vec2::new(0., HEIGHT_F32 / 2.),
-            HomeFurnitureLocation::Right => Vec2::new(WIDTH_F32, HEIGHT_F32 / 2.),
-        }
-    }
-
-    pub const fn index(&self) -> usize {
-        match self {
-            HomeFurnitureLocation::Top => 0,
-            HomeFurnitureLocation::Left => 1,
-            HomeFurnitureLocation::Right => 2,
-        }
-    }
-
-    pub const fn from_index(index: usize) -> Option<Self> {
-        match index {
-            0 => Some(HomeFurnitureLocation::Top),
-            1 => Some(HomeFurnitureLocation::Left),
-            2 => Some(HomeFurnitureLocation::Right),
-            _ => None,
-        }
-    }
-}
-
-pub enum HomeFurnitureRender {
-    None,
-    DigitalClock(DigitalClockRender),
-    AnalogueClock(AnalogueRenderClock),
-    FishTank(FishTankRender),
-    InvetroLight(InvetroLightRender),
-    Sprite(BasicSprite),
-}
-
-impl HomeFurnitureRender {
-    pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {
-        let pos = location.pos()
-            + match location {
-                HomeFurnitureLocation::Top => Vec2::new(0., kind.size().y / 2.),
-                HomeFurnitureLocation::Left => Vec2::new(kind.size().x / 2. + 1., 0.),
-                HomeFurnitureLocation::Right => Vec2::new(-(kind.size().x / 2. + 1.), 0.),
-            };
-
-        match kind {
-            HomeFurnitureKind::None => HomeFurnitureRender::None,
-            HomeFurnitureKind::DigitalClock => {
-                HomeFurnitureRender::DigitalClock(DigitalClockRender::new(pos, Default::default()))
-            }
-            HomeFurnitureKind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
-                AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
-            ),
-            HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
-            HomeFurnitureKind::InvertroLight => {
-                HomeFurnitureRender::InvetroLight(InvetroLightRender::new(pos, 50, location))
-            }
-            HomeFurnitureKind::PaintingBranch => {
-                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_BRANCH))
-            }
-            HomeFurnitureKind::PaintingDude => {
-                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_DUDE))
-            }
-            HomeFurnitureKind::PaintingMan => {
-                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_MAN))
-            }
-            HomeFurnitureKind::PaintingPc => {
-                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_PC))
-            }
-            HomeFurnitureKind::PaintingSun => {
-                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_SUN))
-            }
-        }
-    }
-
-    pub fn tick(&mut self, args: &mut SceneTickArgs) {
-        match self {
-            HomeFurnitureRender::None => {}
-            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
-                digital_clock_render.update_time(&args.timestamp.inner().time());
-            }
-            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
-                analogue_render_clock.update_time(&args.timestamp.inner().time());
-            }
-            HomeFurnitureRender::FishTank(fishtank_render) => {
-                while fishtank_render.fish_count() < args.game_ctx.home_fish_tank.count() {
-                    fishtank_render.add_fish(
-                        &mut args.game_ctx.rng,
-                        args.game_ctx.home_fish_tank.fish[fishtank_render.fish_count()] as f32,
-                    );
-                }
-
-                fishtank_render.tick(args.delta, &mut args.game_ctx.rng);
-            }
-            HomeFurnitureRender::InvetroLight(_) => {}
-            HomeFurnitureRender::Sprite(_) => {}
-        }
-    }
-}
-
-impl ComplexRender for HomeFurnitureRender {
-    fn render(&self, display: &mut crate::display::GameDisplay) {
-        match self {
-            HomeFurnitureRender::None => {}
-            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
-                display.render_complex(digital_clock_render)
-            }
-            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
-                display.render_complex(analogue_render_clock)
-            }
-            HomeFurnitureRender::FishTank(fishtank_render) => {
-                display.render_complex(fishtank_render)
-            }
-            // We want these to render later so this is a hack
-            HomeFurnitureRender::InvetroLight(_) => {}
-            HomeFurnitureRender::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
         }
     }
 }

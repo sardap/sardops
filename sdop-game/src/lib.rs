@@ -29,6 +29,7 @@ mod fish_tank;
 mod fonts;
 mod food;
 mod fps;
+mod furniture;
 mod game_consts;
 mod game_context;
 mod geo;

@@ -5,8 +5,9 @@ use bincode::{
 
 use crate::{
     fish_tank::HomeFishTank,
+    furniture::HomeLayout,
     game_context::GameContext,
-    items::{HomeLayout, Inventory},
+    items::Inventory,
     money::Money,
     pet::{record::PetHistory, PetInstance},
     poop::{Poop, MAX_POOPS},

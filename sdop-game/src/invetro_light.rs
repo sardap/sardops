@@ -3,8 +3,8 @@ use glam::Vec2;
 use crate::{
     assets::{self, Image},
     display::{ComplexRender, ComplexRenderOption, Rotation},
+    furniture::HomeFurnitureLocation,
     math::norm_tau,
-    scene::home_scene::HomeFurnitureLocation,
 };
 
 pub struct InvetroLightRender {

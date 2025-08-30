@@ -1,7 +1,8 @@
 use crate::{
     date_utils::SpecialDayUpdater,
     fish_tank::HomeFishTank,
-    items::{HomeLayout, Inventory},
+    furniture::HomeLayout,
+    items::Inventory,
     money::Money,
     pet::{record::PetHistory, PetInstance},
     poop::{Poop, MAX_POOPS},

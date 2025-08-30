@@ -6,10 +6,11 @@ use crate::{
     assets::{self, Image},
     display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
+    furniture::{HomeFurnitureKind, HomeFurnitureLocation},
     geo::Rect,
-    items::{HomeFurnitureKind, Inventory, ItemKind, ITEM_COUNT},
+    items::{Inventory, ItemKind, ITEM_COUNT},
     scene::{
-        home_scene::{self, HomeFurnitureLocation},
+        home_scene::{self},
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     Button,
