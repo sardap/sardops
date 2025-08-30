@@ -12,8 +12,7 @@ use crate::{
         POOP_INTERVNAL,
     },
     pet::definition::{
-        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID, PET_CKCS_ID,
-        PET_PAWN_WHITE_ID,
+        PetAnimationSet, PetDefinition, PetDefinitionId, PET_CKCS_ID, PET_PAWN_WHITE_ID,
     },
     poop::{poop_count, Poop, MAX_POOPS},
     Timestamp,

@@ -130,10 +130,15 @@ impl Scene for DeathScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         self.pet_render.pos = CENTER_VEC;
         self.grave_stone = GraveStone::new(
-            self.pet_render.pos,
+            Vec2::new(
+                CENTER_X,
+                HEIGHT_F32 - assets::IMAGE_GRAVESTONE.size.y as f32 / 2. - 5.,
+            ),
             str_format!(fixedstr::str12, "{}", args.game_ctx.pet.name),
+            self.pet_render.def_id(),
             args.game_ctx.pet.born.inner().date(),
             args.timestamp.inner().date(),
+            self.cause,
         );
 
         if self.cause == DeathCause::ToxicShock {
@@ -258,6 +263,10 @@ impl Scene for DeathScene {
                 }
             },
             State::Tombstone => {
+                self.pet_render.pos =
+                    Vec2::new(CENTER_X, assets::IMAGE_GHOST_CLOUD.size.y as f32 / 2.);
+                self.pet_render.set_animation(PetAnimationSet::Sad);
+
                 if args.input.any_pressed() {
                     args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
                         &args.game_ctx.pet,
@@ -362,6 +371,9 @@ impl Scene for DeathScene {
                 }
             },
             State::Tombstone => {
+                display.render_image_top_left(0, 0, &assets::IMAGE_GHOST_CLOUD);
+
+                display.render_sprite(&self.pet_render);
                 display.render_complex(&self.grave_stone);
             }
         }
