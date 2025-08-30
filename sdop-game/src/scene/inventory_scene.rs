@@ -41,7 +41,6 @@ fn change_item(inventory: &Inventory, current: usize, change: i32) -> usize {
 
 enum InputState {
     View,
-    PlacingFurniture { selected_index: usize },
 }
 
 pub struct InventoryScene {
@@ -83,18 +82,11 @@ impl Scene for InventoryScene {
                 }
 
                 if args.input.pressed(Button::Left) {
-                    if change_item(&args.game_ctx.inventory, 0, 0) == self.selected_index {
-                        return SceneOutput::new(SceneEnum::Home(home_scene::HomeScene::new()));
-                    } else {
-                        self.selected_index =
-                            change_item(&args.game_ctx.inventory, self.selected_index, -1);
-                    }
+                    return SceneOutput::new(SceneEnum::Home(home_scene::HomeScene::new()));
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if item.furniture().is_some() {
-                        self.state = InputState::PlacingFurniture { selected_index: 0 };
-                    } else if let Some(output) = item.use_item(&mut args.game_ctx) {
+                    if let Some(output) = item.use_item(&mut args.game_ctx) {
                         if let Some(scene) = output.new_scene {
                             return SceneOutput::new(scene);
                         }
@@ -108,41 +100,6 @@ impl Scene for InventoryScene {
                             }
                         }
                     }
-                }
-            }
-            InputState::PlacingFurniture { selected_index } => {
-                if args.input.pressed(Button::Right) {
-                    self.state = InputState::PlacingFurniture {
-                        selected_index: match selected_index {
-                            0 => HomeFurnitureLocation::Right.index(),
-                            1 => HomeFurnitureLocation::Top.index(),
-                            2 => 3,
-                            3 => HomeFurnitureLocation::Left.index(),
-                            _ => 0,
-                        },
-                    };
-                }
-
-                if args.input.pressed(Button::Left) {
-                    self.state = InputState::PlacingFurniture {
-                        selected_index: match selected_index {
-                            0 => HomeFurnitureLocation::Left.index(),
-                            1 => 3,
-                            2 => HomeFurnitureLocation::Top.index(),
-                            3 => HomeFurnitureLocation::Right.index(),
-                            _ => 0,
-                        },
-                    };
-                }
-
-                if args.input.pressed(Button::Middle) {
-                    if let Some(location) = HomeFurnitureLocation::from_index(selected_index) {
-                        args.game_ctx
-                            .home_layout
-                            .place(location, item.furniture().unwrap_or_default());
-                    }
-
-                    self.state = InputState::View;
                 }
             }
         }
@@ -219,88 +176,6 @@ impl Scene for InventoryScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     let rect = Rect::new_center(Vec2::new(CENTER_X, y), Vec2::new(20., 10.));
-                    display.render_rect_outline(rect, true);
-                } else if item.furniture().is_some() {
-                    display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
-                        "PLACE",
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_center()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    let rect = Rect::new_center(Vec2::new(CENTER_X, y), Vec2::new(35., 10.));
-                    display.render_rect_outline(rect, true);
-                }
-            }
-            InputState::PlacingFurniture { selected_index } => {
-                let mut y = 30.;
-
-                display.render_image_complex(
-                    ((WIDTH_F32 / 2.) - (item.image().size.x as f32 / 2.)) as i32,
-                    y as i32,
-                    item.image(),
-                    ComplexRenderOption::new().with_white(),
-                );
-                y += item.image().size.y as f32 + 5.;
-
-                const SIZE: Vec2 = Vec2::new(20., 15.);
-                let locations = [
-                    (HomeFurnitureLocation::Left, Vec2::new(1., y)),
-                    (HomeFurnitureLocation::Top, Vec2::new(22., y)),
-                    (HomeFurnitureLocation::Right, Vec2::new(43., y)),
-                ];
-                for (location, pos) in locations {
-                    let rect: Rect = Rect::new_top_left(pos, SIZE);
-                    if selected_index == location.index() {
-                        display.render_rect_outline(rect, true);
-                    } else {
-                        display.render_rect_outline_dashed(rect, true, 2);
-                    }
-                    display.render_text_complex(
-                        pos + Vec2::new(4., 2.),
-                        match location {
-                            HomeFurnitureLocation::Top => "TOP",
-                            HomeFurnitureLocation::Left => "LFT",
-                            HomeFurnitureLocation::Right => "RHT",
-                        },
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    display.render_text_complex(
-                        pos + Vec2::new(1., 7.),
-                        if match location {
-                            HomeFurnitureLocation::Top => args.game_ctx.home_layout.top,
-                            HomeFurnitureLocation::Left => args.game_ctx.home_layout.left,
-                            HomeFurnitureLocation::Right => args.game_ctx.home_layout.right,
-                        } != HomeFurnitureKind::None
-                        {
-                            "FILL"
-                        } else {
-                            "EMPY"
-                        },
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                }
-
-                y += SIZE.y + 15.;
-
-                display.render_image_complex(
-                    CENTER_X as i32,
-                    y as i32,
-                    &assets::IMAGE_BACK_SYMBOL,
-                    ComplexRenderOption::new().with_center().with_white(),
-                );
-
-                if selected_index == 3 {
-                    let rect: Rect = Rect::new_center(
-                        Vec2::new(CENTER_X, y),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
-                    )
-                    .grow(5.);
                     display.render_rect_outline(rect, true);
                 }
             }

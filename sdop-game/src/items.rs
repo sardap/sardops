@@ -52,7 +52,7 @@ impl ItemKind {
 
     pub const fn furniture(&self) -> Option<HomeFurnitureKind> {
         Some(match self {
-            ItemKind::AnalogClock => HomeFurnitureKind::AnalogueClock,
+            ItemKind::AnalogueClock => HomeFurnitureKind::AnalogueClock,
             ItemKind::DigitalClock => HomeFurnitureKind::DigitalClock,
             ItemKind::FishTank => HomeFurnitureKind::FishTank,
             ItemKind::PaintingBranch => HomeFurnitureKind::PaintingBranch,
@@ -71,7 +71,7 @@ impl From<HomeFurnitureKind> for ItemKind {
         match value {
             HomeFurnitureKind::None => ItemKind::None,
             HomeFurnitureKind::DigitalClock => ItemKind::DigitalClock,
-            HomeFurnitureKind::AnalogueClock => ItemKind::AnalogClock,
+            HomeFurnitureKind::AnalogueClock => ItemKind::AnalogueClock,
             HomeFurnitureKind::FishTank => ItemKind::FishTank,
             HomeFurnitureKind::InvertroLight => ItemKind::InvetroLight,
             HomeFurnitureKind::PaintingBranch => ItemKind::PaintingBranch,
