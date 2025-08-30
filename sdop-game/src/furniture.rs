@@ -9,7 +9,6 @@ use crate::{
     display::{ComplexRender, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fish_tank::FishTankRender,
     invetro_light::InvetroLightRender,
-    items::Inventory,
     scene::{home_scene::HOME_SCENE_TOP_BORDER_RECT, SceneTickArgs},
     sprite::BasicSprite,
 };

@@ -17,29 +17,26 @@ pub struct InvetroLightRender {
 
 impl InvetroLightRender {
     pub const fn new(pos: Vec2, length: i32, location: HomeFurnitureLocation) -> Self {
-        let (start, end) = match location {
-            HomeFurnitureLocation::Top => (
-                3.0 * core::f32::consts::PI / 2.0 - (core::f32::consts::FRAC_PI_4),
-                3.0 * core::f32::consts::PI / 2.0 + (core::f32::consts::FRAC_PI_4),
-            ),
-            HomeFurnitureLocation::Left => {
-                let width = core::f32::consts::FRAC_PI_2;
-                (0.0 - width / 2.0, 0.0 + width / 2.0)
-            }
-            HomeFurnitureLocation::Right => {
-                let width = core::f32::consts::FRAC_PI_2;
-                (
-                    core::f32::consts::PI - width / 2.0,
-                    core::f32::consts::PI + width / 2.0,
-                )
-            }
+        let width = core::f32::consts::FRAC_PI_2;
+
+        let center = match location {
+            HomeFurnitureLocation::Top => core::f32::consts::FRAC_PI_2,
+            HomeFurnitureLocation::Left => core::f32::consts::PI,
+            HomeFurnitureLocation::Right => 0.0,
         };
+
+        let start = norm_tau(center - width / 2.0);
+        let mut end = norm_tau(center + width / 2.0);
+
+        if end < start {
+            end += core::f32::consts::TAU;
+        }
 
         Self {
             pos,
             length,
-            start: norm_tau(start + core::f32::consts::PI),
-            end: norm_tau(end + core::f32::consts::PI),
+            start: start,
+            end: end,
             rotation: match location {
                 HomeFurnitureLocation::Top => Rotation::R0,
                 HomeFurnitureLocation::Left => Rotation::R90,

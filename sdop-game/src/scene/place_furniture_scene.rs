@@ -1,6 +1,4 @@
 use glam::Vec2;
-use heapless::Vec;
-use strum::IntoEnumIterator;
 
 use crate::{
     assets::{self, Image},
@@ -180,7 +178,7 @@ impl Scene for PlaceFurnitureScene {
         SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         display.render_complex(&self.left.render);
         display.render_complex(&self.top.render);
         display.render_complex(&self.right.render);
