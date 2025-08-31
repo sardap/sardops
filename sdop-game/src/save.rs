@@ -5,6 +5,7 @@ use bincode::{
 
 use crate::{
     fish_tank::HomeFishTank,
+    furniture::HomeLayout,
     game_context::GameContext,
     items::Inventory,
     money::Money,
@@ -24,6 +25,7 @@ pub struct SaveFile {
     pub shop: Shop,
     pub pet_records: PetHistory,
     pub fish_tank: HomeFishTank,
+    pub home_layout: HomeLayout,
     pub last_timestamp: Timestamp,
 }
 
@@ -36,8 +38,9 @@ impl Default for SaveFile {
             inventory: Default::default(),
             shop: Default::default(),
             pet_records: Default::default(),
-            last_timestamp: Default::default(),
             fish_tank: Default::default(),
+            home_layout: Default::default(),
+            last_timestamp: Default::default(),
         }
     }
 }
@@ -55,8 +58,9 @@ impl SaveFile {
             inventory: game_ctx.inventory,
             shop: game_ctx.shop,
             pet_records: game_ctx.pet_records,
-            last_timestamp: timestamp,
             fish_tank: game_ctx.home_fish_tank,
+            home_layout: game_ctx.home_layout,
+            last_timestamp: timestamp,
         }
     }
 
@@ -68,6 +72,7 @@ impl SaveFile {
         game_ctx.shop = self.shop;
         game_ctx.pet_records = self.pet_records;
         game_ctx.home_fish_tank = self.fish_tank;
+        game_ctx.home_layout = self.home_layout;
     }
 
     pub const fn size() -> usize {

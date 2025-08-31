@@ -15,43 +15,57 @@ use crate::{
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct HomeFishTank {
     #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))]
-    pub fish: [f32; MAX_FISH],
+    pub fish: [u8; MAX_FISH],
 }
 
 impl HomeFishTank {
     pub fn add(&mut self, rng: &mut fastrand::Rng) {
         for i in 0..self.fish.len() {
-            if self.fish[i] == 0. {
-                self.fish[i] = rng.i32(1..=3) as f32 + rng.f32();
+            if self.fish[i] == 0 {
+                self.fish[i] = rng.u8(1..=3);
                 break;
             }
         }
+    }
+
+    pub fn count(&self) -> usize {
+        for i in 0..self.fish.len() {
+            if self.fish[i] == 0 {
+                return i;
+            }
+        }
+
+        return self.fish.len();
     }
 }
 
 impl Default for HomeFishTank {
     fn default() -> Self {
         Self {
-            fish: [0.; MAX_FISH],
+            fish: [0; MAX_FISH],
         }
     }
 }
 
-pub const MAX_FISH: usize = 100;
+pub const MAX_FISH: usize = 20;
 
 struct Fish {
     pos: Vec2,
-    angle: f32,
+    direction: Vec2,
     speed: f32,
 }
 
 impl Fish {
-    pub fn new(pos: Vec2, angle: f32, speed: f32) -> Self {
-        Self { pos, angle, speed }
+    pub fn new(pos: Vec2, direction: Vec2, speed: f32) -> Self {
+        Self {
+            pos,
+            direction,
+            speed,
+        }
     }
 }
 
-pub struct FishtankRender {
+pub struct FishTankRender {
     pub pos: Vec2,
     fish: Vec<Fish, MAX_FISH>,
     anime: Anime,
@@ -59,7 +73,7 @@ pub struct FishtankRender {
 
 const FISH_AREA: Rect = Rect::new_top_left(Vec2::new(1., 4.), Vec2::new(16., 10.));
 
-impl FishtankRender {
+impl FishTankRender {
     pub fn new(pos: Vec2) -> Self {
         Self {
             pos,
@@ -68,30 +82,41 @@ impl FishtankRender {
         }
     }
 
-    fn size(&self) -> Vec2 {
-        assets::IMAGE_FISH_TANK_EMPTY_0.size.as_vec2()
+    pub const fn size() -> Vec2 {
+        Vec2::new(
+            assets::IMAGE_FISH_TANK_EMPTY_0.size.x as f32,
+            assets::IMAGE_FISH_TANK_EMPTY_0.size.y as f32,
+        )
     }
 
     pub fn add_fish(&mut self, rng: &mut fastrand::Rng, speed: f32) {
+        let angle = rng.i32(0..360) as f32;
+        let x_dir = libm::sinf(angle);
+        let y_dir = libm::cosf(angle);
+
         let _ = self.fish.push(Fish::new(
             FISH_AREA.random_point_inside(rng),
-            rng.i32(0..360) as f32,
+            Vec2::new(x_dir, y_dir),
             speed,
         ));
     }
 
+    pub fn fish_count(&self) -> usize {
+        self.fish.len()
+    }
+
     pub fn tick(&mut self, delta: Duration, rng: &mut fastrand::Rng) {
         for fish in &mut self.fish {
-            let x_dir = libm::sinf(fish.angle);
-            let y_dir = libm::cosf(fish.angle);
-
             let change = Vec2::new(
-                x_dir * fish.speed * delta.as_secs_f32(),
-                y_dir * fish.speed * delta.as_secs_f32(),
+                fish.direction.x * fish.speed * delta.as_secs_f32(),
+                fish.direction.y * fish.speed * delta.as_secs_f32(),
             );
 
             if !FISH_AREA.point_inside(&(fish.pos + change)) {
-                fish.angle = rng.i32(0..360) as f32;
+                let angle = rng.i32(0..360) as f32;
+                let x_dir = libm::sinf(angle);
+                let y_dir = libm::cosf(angle);
+                fish.direction = Vec2::new(x_dir, y_dir);
             } else {
                 fish.pos += change
             }
@@ -101,13 +126,13 @@ impl FishtankRender {
     }
 }
 
-impl HasAnime for FishtankRender {
+impl HasAnime for FishTankRender {
     fn anime(&mut self) -> &mut Anime {
         &mut self.anime
     }
 }
 
-impl ComplexRender for FishtankRender {
+impl ComplexRender for FishTankRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         display.render_image_complex(
             self.pos.x as i32,
@@ -116,10 +141,11 @@ impl ComplexRender for FishtankRender {
             ComplexRenderOption::new().with_white().with_center(),
         );
 
-        let top_left = self.pos - Vec2::new(self.size().x / 2., self.size().y / 2.);
+        let top_left = self.pos - Vec2::new(Self::size().x / 2., Self::size().y / 2.);
         for fish in &self.fish {
             let pos = top_left + fish.pos;
             display.set_bit(pos.x as i32, pos.y as i32, true);
+            display.set_bit(pos.x as i32 + 1, pos.y as i32, true);
         }
     }
 }

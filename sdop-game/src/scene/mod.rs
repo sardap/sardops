@@ -15,6 +15,7 @@ pub mod mg_tic_tac_toe;
 pub mod mg_weight_lift;
 pub mod new_pet_scene;
 pub mod pet_info_scene;
+pub mod place_furniture_scene;
 pub mod poop_clear_scene;
 pub mod shop_scene;
 
@@ -42,6 +43,7 @@ pub enum SceneEnum {
     Inventory(inventory_scene::InventoryScene),
     EnterText(enter_text_scene::EnterTextScene),
     EnterDate(enter_date_scene::EnterDateScene),
+    PlaceFurniture(place_furniture_scene::PlaceFurnitureScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -72,6 +74,7 @@ impl SceneEnum {
             SceneEnum::EnterText(enter_text) => enter_text,
             SceneEnum::EnterDate(enter_date) => enter_date,
             SceneEnum::Evovle(evovle_scene) => evovle_scene,
+            SceneEnum::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,

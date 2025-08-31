@@ -29,12 +29,15 @@ mod fish_tank;
 mod fonts;
 mod food;
 mod fps;
+mod furniture;
 mod game_consts;
 mod game_context;
 mod geo;
 mod input;
+mod invetro_light;
 mod items;
 mod link_four;
+mod math;
 mod money;
 mod particle_system;
 mod pet;
@@ -51,6 +54,7 @@ mod tv;
 pub use crate::date_utils::Timestamp;
 pub use crate::display::{HEIGHT, WIDTH};
 pub use crate::input::{Button, ButtonState, ButtonStates};
+pub use crate::items::ALL_ITEMS;
 pub use crate::save::SaveFile;
 
 pub struct Game {

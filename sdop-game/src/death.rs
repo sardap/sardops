@@ -9,6 +9,7 @@ use crate::{
     assets,
     display::{ComplexRender, ComplexRenderOption, CENTER_X},
     fonts,
+    pet::definition::{PetDefinition, PetDefinitionId},
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,11 +18,25 @@ pub enum DeathCause {
     LightingStrike,
     Starvation,
     OldAge,
+    ToxicShock,
+}
+
+impl DeathCause {
+    pub const fn name(&self) -> &'static str {
+        match self {
+            DeathCause::LightingStrike => "Lighting",
+            DeathCause::Starvation => "Starvation",
+            DeathCause::OldAge => "Old age",
+            DeathCause::ToxicShock => "Toxic shock",
+        }
+    }
 }
 
 pub struct GraveStone {
     pub pos: Vec2,
     pub name: str12,
+    pub def_id: PetDefinitionId,
+    pub cause: DeathCause,
     pub born: NaiveDate,
     pub died: NaiveDate,
 }
@@ -31,6 +46,8 @@ impl Default for GraveStone {
         Self {
             pos: Default::default(),
             name: Default::default(),
+            def_id: Default::default(),
+            cause: DeathCause::LightingStrike,
             born: Default::default(),
             died: Default::default(),
         }
@@ -38,12 +55,21 @@ impl Default for GraveStone {
 }
 
 impl GraveStone {
-    pub fn new(pos: Vec2, name: str12, born: NaiveDate, died: NaiveDate) -> Self {
+    pub fn new(
+        pos: Vec2,
+        name: str12,
+        def_id: PetDefinitionId,
+        born: NaiveDate,
+        died: NaiveDate,
+        cause: DeathCause,
+    ) -> Self {
         Self {
             pos,
             name,
+            def_id,
             born,
             died,
+            cause,
         }
     }
 }
@@ -67,11 +93,44 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 10.;
+        top += 7.;
 
         display.render_text_complex(
             Vec2::new(CENTER_X, top),
             &self.name,
+            ComplexRenderOption::new()
+                .with_flip()
+                .with_black()
+                .with_font(&fonts::FONT_VARIABLE_SMALL)
+                .with_center(),
+        );
+        top += 7.;
+
+        display.render_text_complex(
+            Vec2::new(CENTER_X, top),
+            PetDefinition::get_by_id(self.def_id).name,
+            ComplexRenderOption::new()
+                .with_flip()
+                .with_black()
+                .with_font(&fonts::FONT_VARIABLE_SMALL)
+                .with_center(),
+        );
+        top += 10.;
+
+        display.render_text_complex(
+            Vec2::new(CENTER_X, top),
+            "Died from",
+            ComplexRenderOption::new()
+                .with_flip()
+                .with_black()
+                .with_font(&fonts::FONT_VARIABLE_SMALL)
+                .with_center(),
+        );
+        top += 7.;
+
+        display.render_text_complex(
+            Vec2::new(CENTER_X, top),
+            &self.cause.name(),
             ComplexRenderOption::new()
                 .with_flip()
                 .with_black()
@@ -96,7 +155,7 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 8.;
+        top += 7.;
 
         let str = fixedstr::str_format!(
             fixedstr::str12,

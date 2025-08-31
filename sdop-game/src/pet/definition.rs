@@ -1,7 +1,7 @@
 use chrono::Timelike;
 
 use crate::{
-    assets::{self, Frame, MaskedFramesSet},
+    assets::{self, MaskedFramesSet},
     food::Food,
     pet::LifeStage,
     Timestamp,

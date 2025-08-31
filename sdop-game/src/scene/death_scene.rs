@@ -5,11 +5,14 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    anime::HasAnime,
+    anime::{Anime, HasAnime},
     assets::{self, Image},
-    clock::RenderClock,
+    clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y},
+    display::{
+        ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
+    },
+    geo::Rect,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -56,7 +59,7 @@ impl Default for Starvation {
 }
 
 struct OldAge {
-    clock: RenderClock,
+    clock: AnalogueRenderClock,
     time: NaiveTime,
     speed_mul: i64,
 }
@@ -64,14 +67,31 @@ struct OldAge {
 impl Default for OldAge {
     fn default() -> Self {
         Self {
-            clock: RenderClock::new(
-                crate::clock::ClockKind::Clock41,
+            clock: AnalogueRenderClock::new(
+                crate::clock::AnalogueClockKind::Clock41,
                 CENTER_VEC,
                 NaiveTime::default(),
             )
             .without_second_hand(),
             time: NaiveTime::default(),
             speed_mul: 1200,
+        }
+    }
+}
+
+struct ToxicShock {
+    around_poops: [BasicAnimeSprite; 30],
+    pet_poops: [BasicAnimeSprite; 10],
+}
+
+const POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
+const PET_POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
+
+impl Default for ToxicShock {
+    fn default() -> Self {
+        Self {
+            around_poops: [BasicAnimeSprite::default(); 30],
+            pet_poops: [BasicAnimeSprite::default(); 10],
         }
     }
 }
@@ -84,6 +104,7 @@ pub struct DeathScene {
     starving: Starvation,
     old_age: OldAge,
     pet_render: PetRender,
+    toxic_shock: ToxicShock,
     grave_stone: GraveStone,
 }
 
@@ -97,20 +118,52 @@ impl DeathScene {
             starving: Starvation::default(),
             old_age: Default::default(),
             pet_render: PetRender::new(pet_id),
+            toxic_shock: Default::default(),
             grave_stone: GraveStone::default(),
         }
     }
 }
 
+const AREA: Rect = Rect::new_top_left(Vec2::ZERO, Vec2::new(WIDTH_F32, HEIGHT_F32));
+
 impl Scene for DeathScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         self.pet_render.pos = CENTER_VEC;
         self.grave_stone = GraveStone::new(
-            self.pet_render.pos,
+            Vec2::new(
+                CENTER_X,
+                HEIGHT_F32 - assets::IMAGE_GRAVESTONE.size.y as f32 / 2. - 5.,
+            ),
             str_format!(fixedstr::str12, "{}", args.game_ctx.pet.name),
+            self.pet_render.def_id(),
             args.game_ctx.pet.born.inner().date(),
             args.timestamp.inner().date(),
+            self.cause,
         );
+
+        if self.cause == DeathCause::ToxicShock {
+            let pet_rect = Rect::new_center(
+                self.pet_render.pos,
+                self.pet_render.anime.current_frame().size.as_vec2(),
+            )
+            .grow(5.);
+            for poop in &mut self.toxic_shock.around_poops {
+                poop.anime = Anime::new(&assets::FRAMES_POOP);
+                poop.anime.set_random_frame(&mut args.game_ctx.rng);
+                loop {
+                    poop.pos = AREA.random_point_inside(&mut args.game_ctx.rng);
+                    if !pet_rect.point_inside(&poop.pos) {
+                        break;
+                    }
+                }
+            }
+
+            for poop in &mut self.toxic_shock.pet_poops {
+                poop.anime = Anime::new(&assets::FRAMES_POOP);
+                poop.anime.set_random_frame(&mut args.game_ctx.rng);
+                poop.pos = pet_rect.random_point_inside(&mut args.game_ctx.rng);
+            }
+        }
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -196,8 +249,24 @@ impl Scene for DeathScene {
                         self.state_elapsed = Duration::ZERO;
                     }
                 }
+                DeathCause::ToxicShock => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+
+                    for poop in &mut self.toxic_shock.around_poops {
+                        poop.anime.tick(args.delta);
+                    }
+
+                    if self.state_elapsed > POOP_SPAWN_DURATION + PET_POOP_SPAWN_DURATION {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
             },
             State::Tombstone => {
+                self.pet_render.pos =
+                    Vec2::new(CENTER_X, assets::IMAGE_GHOST_CLOUD.size.y as f32 / 2.);
+                self.pet_render.set_animation(PetAnimationSet::Sad);
+
                 if args.input.any_pressed() {
                     args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
                         &args.game_ctx.pet,
@@ -253,8 +322,58 @@ impl Scene for DeathScene {
 
                     display.render_sprite(&self.pet_render);
                 }
+                DeathCause::ToxicShock => {
+                    display.render_sprite(&self.pet_render);
+
+                    log::info!(
+                        "{}",
+                        self.state_elapsed.as_secs_f32() / POOP_SPAWN_DURATION.as_secs_f32()
+                    );
+
+                    let cutoff = (self.toxic_shock.around_poops.len() as f32
+                        * (self.state_elapsed.as_secs_f32() / POOP_SPAWN_DURATION.as_secs_f32()))
+                        as usize;
+
+                    for (i, poop) in self.toxic_shock.around_poops.iter().enumerate() {
+                        display.render_sprite(poop);
+
+                        if i > cutoff {
+                            break;
+                        }
+                    }
+
+                    let cutoff = (self.toxic_shock.around_poops.len() as f32
+                        * (self.state_elapsed.as_secs_f32() / POOP_SPAWN_DURATION.as_secs_f32()))
+                        as usize;
+
+                    for (i, poop) in self.toxic_shock.around_poops.iter().enumerate() {
+                        if i >= cutoff {
+                            break;
+                        }
+
+                        display.render_sprite(poop);
+                    }
+
+                    if self.state_elapsed > POOP_SPAWN_DURATION {
+                        let cutoff = (self.toxic_shock.pet_poops.len() as f32
+                            * (self.state_elapsed.as_secs_f32()
+                                / (PET_POOP_SPAWN_DURATION + POOP_SPAWN_DURATION).as_secs_f32()))
+                            as usize;
+
+                        for (i, poop) in self.toxic_shock.pet_poops.iter().enumerate() {
+                            if i >= cutoff {
+                                break;
+                            }
+
+                            display.render_sprite(poop);
+                        }
+                    }
+                }
             },
             State::Tombstone => {
+                display.render_image_top_left(0, 0, &assets::IMAGE_GHOST_CLOUD);
+
+                display.render_sprite(&self.pet_render);
                 display.render_complex(&self.grave_stone);
             }
         }

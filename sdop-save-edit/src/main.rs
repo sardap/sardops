@@ -4,8 +4,8 @@ use std::{
     str::FromStr,
 };
 
-use clap::{Parser, Subcommand};
-use sdop_game::SaveFile;
+use clap::{ArgAction, Parser, Subcommand};
+use sdop_game::{ALL_ITEMS, SaveFile};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -19,6 +19,8 @@ enum AppSubCommand {
     Decode {
         #[arg(short, long)]
         source: PathBuf,
+        #[arg(short, long)]
+        unlock_all: bool,
     },
     Encode {
         #[arg(short, long)]
@@ -30,7 +32,7 @@ fn main() {
     let args = Args::parse();
 
     match args.subcommand {
-        AppSubCommand::Decode { source } => {
+        AppSubCommand::Decode { source, unlock_all } => {
             println!("Loading {:?}", source.as_os_str());
 
             if !source.exists() {
@@ -38,7 +40,7 @@ fn main() {
                 std::process::exit(1);
             }
 
-            let save = {
+            let mut save = {
                 let mut file = std::fs::File::open(source).unwrap();
                 let mut bytes = vec![];
                 file.read_to_end(&mut bytes).unwrap();
@@ -50,6 +52,12 @@ fn main() {
                     }
                 }
             };
+
+            if unlock_all {
+                for item in ALL_ITEMS {
+                    save.inventory.add_item(item, 1);
+                }
+            }
 
             println!("Loaded save");
 

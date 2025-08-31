@@ -2,7 +2,7 @@ use bincode::{Decode, Encode};
 
 use crate::{
     death::DeathCause,
-    pet::{definition::PetDefinitionId, PetInstance, PetName, UniquePetId},
+    pet::{definition::PetDefinitionId, ParentInfo, PetInstance, PetName, PetParents, UniquePetId},
     Timestamp,
 };
 
@@ -16,6 +16,7 @@ pub struct PetRecord {
     pub death: Timestamp,
     pub extra_weight: f32,
     pub died_of: DeathCause,
+    pub parents: Option<PetParents>,
 }
 
 impl PetRecord {
@@ -32,6 +33,7 @@ impl PetRecord {
             death: time_of_death,
             extra_weight: pet_instance.extra_weight,
             died_of: cause_of_death,
+            parents: pet_instance.parents,
         }
     }
 }

@@ -5,6 +5,7 @@ use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 use crate::{
     food::STARTING_FOOD,
+    furniture::HomeFurnitureKind,
     game_context::GameContext,
     scene::{fishing_scene, SceneEnum},
 };
@@ -47,6 +48,38 @@ impl ItemKind {
         }
 
         None
+    }
+
+    pub const fn furniture(&self) -> Option<HomeFurnitureKind> {
+        Some(match self {
+            ItemKind::AnalogueClock => HomeFurnitureKind::AnalogueClock,
+            ItemKind::DigitalClock => HomeFurnitureKind::DigitalClock,
+            ItemKind::FishTank => HomeFurnitureKind::FishTank,
+            ItemKind::PaintingBranch => HomeFurnitureKind::PaintingBranch,
+            ItemKind::PaintingDude => HomeFurnitureKind::PaintingDude,
+            ItemKind::PaintingMan => HomeFurnitureKind::PaintingMan,
+            ItemKind::PaintingPc => HomeFurnitureKind::PaintingPc,
+            ItemKind::PaintingSun => HomeFurnitureKind::PaintingSun,
+            ItemKind::InvetroLight => HomeFurnitureKind::InvertroLight,
+            _ => return None,
+        })
+    }
+}
+
+impl From<HomeFurnitureKind> for ItemKind {
+    fn from(value: HomeFurnitureKind) -> Self {
+        match value {
+            HomeFurnitureKind::None => ItemKind::None,
+            HomeFurnitureKind::DigitalClock => ItemKind::DigitalClock,
+            HomeFurnitureKind::AnalogueClock => ItemKind::AnalogueClock,
+            HomeFurnitureKind::FishTank => ItemKind::FishTank,
+            HomeFurnitureKind::InvertroLight => ItemKind::InvetroLight,
+            HomeFurnitureKind::PaintingBranch => ItemKind::PaintingBranch,
+            HomeFurnitureKind::PaintingDude => ItemKind::PaintingDude,
+            HomeFurnitureKind::PaintingMan => ItemKind::PaintingMan,
+            HomeFurnitureKind::PaintingPc => ItemKind::PaintingPc,
+            HomeFurnitureKind::PaintingSun => ItemKind::PaintingSun,
+        }
     }
 }
 
@@ -110,7 +143,7 @@ pub const MAX_OWNED: i32 = 1000000;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct ItemExtra {
-    uses: i32,
+    uses: i8,
 }
 
 impl ItemExtra {
@@ -118,7 +151,7 @@ impl ItemExtra {
         Self { uses: 0 }
     }
 
-    pub const fn with_uses(mut self, uses: i32) -> Self {
+    pub const fn with_uses(mut self, uses: i8) -> Self {
         self.uses = uses;
         self
     }

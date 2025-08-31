@@ -469,6 +469,52 @@ impl GameDisplay {
         }
     }
 
+    pub fn invert_cone(&mut self, center: Vec2, radius: i32, angle_start: f32, angle_end: f32) {
+        let cx = center.x as i32;
+        let cy = center.y as i32;
+
+        let r2 = (radius * radius) as i32;
+
+        let (sx, sy) = (libm::cosf(angle_start), libm::sinf(angle_start));
+        let (ex, ey) = (libm::cosf(angle_end), libm::sinf(angle_end));
+
+        let wraps = angle_start > angle_end;
+
+        for y in (cy - radius)..=(cy + radius) {
+            for x in (cx - radius)..=(cx + radius) {
+                let dx = x - cx;
+                let dy = y - cy;
+                let dist2 = dx * dx + dy * dy;
+
+                if dist2 > r2 {
+                    continue;
+                }
+
+                let fx = dx as f32;
+                let fy = -dy as f32;
+
+                if fx == 0.0 && fy == 0.0 {
+                    continue;
+                }
+
+                let cross_start = sx * fy - sy * fx;
+                let cross_end = ex * fy - ey * fx;
+
+                let inside = if !wraps {
+                    cross_start <= 0.0 && cross_end >= 0.0
+                } else {
+                    cross_start <= 0.0 || cross_end >= 0.0
+                };
+
+                if inside {
+                    let ux = x as usize;
+                    let uy = y as usize;
+                    self.set_bit(x, y, !self.bits.get_bit(ux, uy));
+                }
+            }
+        }
+    }
+
     pub fn render_fps(&mut self, fps: &FPSCounter) {
         use fixedstr::{str16, str_format};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
