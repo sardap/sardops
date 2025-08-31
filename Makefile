@@ -60,7 +60,7 @@ clean:
 
 .PHONY: decode_save
 decode_save:
-	cargo run --manifest-path=$(SDOP_SAVE_EDIT)/Cargo.toml decode --source sdop.sav
+	cargo run --manifest-path=$(SDOP_SAVE_EDIT)/Cargo.toml decode --source sdop.sav --unlock-all
 
 
 .PHONY: encode_save

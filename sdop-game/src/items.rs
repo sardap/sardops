@@ -143,7 +143,7 @@ pub const MAX_OWNED: i32 = 1000000;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct ItemExtra {
-    uses: i32,
+    uses: i8,
 }
 
 impl ItemExtra {
@@ -151,7 +151,7 @@ impl ItemExtra {
         Self { uses: 0 }
     }
 
-    pub const fn with_uses(mut self, uses: i32) -> Self {
+    pub const fn with_uses(mut self, uses: i8) -> Self {
         self.uses = uses;
         self
     }

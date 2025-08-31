@@ -31,6 +31,19 @@ pub enum StomachMood {
     Starving { elapsed: Duration },
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+pub struct ParentInfo {
+    upid: UniquePetId,
+    def_id: PetDefinitionId,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+pub struct PetParents {
+    value: [ParentInfo; 2],
+}
+
 pub type UniquePetId = u64;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -49,6 +62,7 @@ pub struct PetInstance {
     pub since_game: Duration,
     pub since_death_check: Duration,
     pub should_die: Option<DeathCause>,
+    pub parents: Option<PetParents>,
 }
 
 impl PetInstance {
@@ -264,6 +278,7 @@ impl Default for PetInstance {
             since_game: Duration::ZERO,
             since_death_check: Duration::ZERO,
             should_die: None,
+            parents: None,
         }
     }
 }

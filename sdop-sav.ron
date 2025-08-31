@@ -1,42 +1,41 @@
 (
     pet: (
-        upid: 946783424447,
+        upid: 581700527399,
         def_id: 0,
-        name: "a     ",
-        born: ("2025-08-30T08:17:32.894270790"),
+        name: "d     ",
+        born: ("2025-08-31T17:25:16.857794545"),
         age: (
-            secs: 10520,
-            nanos: 437119977,
+            secs: 1,
+            nanos: 21750540,
         ),
         stomach_mood: Starving(
             elapsed: (
-                secs: 5377,
-                nanos: 345415718,
+                secs: 1,
+                nanos: 21750540,
             ),
         ),
         total_starve_time: (
-            secs: 5377,
-            nanos: 328666489,
+            secs: 1,
+            nanos: 5002905,
         ),
         stomach_filled: 0.0,
         extra_weight: 0.0,
         since_poop: (
-            secs: 1543,
-            nanos: 87935329,
+            secs: 0,
+            nanos: 0,
         ),
         since_game: (
-            secs: 10520,
-            nanos: 437119977,
+            secs: 1,
+            nanos: 21750540,
         ),
         since_death_check: (
-            secs: 20,
-            nanos: 351527928,
+            secs: 1,
+            nanos: 21750540,
         ),
         should_die: None,
+        parents: None,
     ),
-    poops: (Some((
-        spawned: ("2025-08-30T09:18:42.707593660"),
-    )), None, None, None, None),
+    poops: (None, None, None, None, None),
     money: 0,
     inventory: (
         contents: ((
@@ -62,6 +61,21 @@
         ), (
             owned: 1,
             item_extra: (
+                uses: 5,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
                 uses: 0,
             ),
         ), (
@@ -80,32 +94,12 @@
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
-            item_extra: (
-                uses: 0,
-            ),
-        ), (
-            owned: 0,
-            item_extra: (
-                uses: 0,
-            ),
-        ), (
-            owned: 0,
-            item_extra: (
-                uses: 0,
-            ),
-        ), (
-            owned: 0,
-            item_extra: (
-                uses: 0,
-            ),
-        ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
@@ -120,37 +114,47 @@
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 2,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
         ), (
-            owned: 0,
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
             item_extra: (
                 uses: 0,
             ),
@@ -160,24 +164,16 @@
         item_count: 2,
     ),
     pet_records: (
-        top: 1,
-        entires: (Some((
-            upid: 927334367072,
-            def_id: 1,
-            name: "a     ",
-            born: ("2025-08-29T22:44:47.401328447"),
-            death: ("2025-08-30T08:17:31.067962029"),
-            extra_weight: 0.0,
-            died_of: Starvation,
-        )), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
+        top: 0,
+        entires: (None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
     ),
     fish_tank: (
-        fish: (3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        fish: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     ),
     home_layout: (
-        top: FishTank,
-        left: InvertroLight,
-        right: AnalogueClock,
+        top: r#None,
+        left: r#None,
+        right: r#None,
     ),
-    last_timestamp: ("2025-08-30T11:12:53.855910802"),
+    last_timestamp: ("2025-08-31T17:25:17.882664231"),
 )

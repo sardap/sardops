@@ -1,5 +1,6 @@
-use core::time::Duration;
+use core::{time::Duration, u8};
 
+use chrono::Timelike;
 use fixedstr::str32;
 use glam::Vec2;
 
@@ -22,7 +23,7 @@ use crate::{
         SceneOutput, SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, Sprite},
-    tv::{TvKind, TvRender},
+    tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
     Button, WIDTH,
 };
 
@@ -73,8 +74,7 @@ fn get_options(state: State) -> &'static [MenuOption] {
     match state {
         State::Wondering
         | State::WatchingTv {
-            show_timer: _,
-            show_end: _,
+            last_checked: _,
             watch_end: _,
         } => AWAKE_OPTIONS,
         State::Sleeping => SLEEP_OPTIONS,
@@ -93,8 +93,7 @@ enum State {
     Wondering,
     Sleeping,
     WatchingTv {
-        show_timer: Duration,
-        show_end: Duration,
+        last_checked: u8,
         watch_end: Duration,
     },
 }
@@ -170,7 +169,6 @@ impl Scene for HomeScene {
             .random_point_inside(&mut args.game_ctx.rng);
         self.target = self.pet_render.pos;
         self.selected_index = 0;
-        self.tv.random_show(&mut args.game_ctx.rng);
         self.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
 
         self.top_render =
@@ -242,16 +240,14 @@ impl Scene for HomeScene {
                     if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
                         self.tv.kind = TvKind::LCD;
                         self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
+                            last_checked: u8::MAX,
                             watch_end: Duration::from_secs(3 * 60),
                         });
                     }
                     if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
                         self.tv.kind = TvKind::CRT;
                         self.change_state(State::WatchingTv {
-                            show_timer: Duration::ZERO,
-                            show_end: Duration::from_secs(30),
+                            last_checked: u8::MAX,
                             watch_end: Duration::from_secs(2 * 60),
                         });
                     }
@@ -289,21 +285,22 @@ impl Scene for HomeScene {
                 );
             }
             State::WatchingTv {
-                mut show_timer,
-                show_end,
+                mut last_checked,
                 watch_end,
             } => {
                 if self.state_elapsed > watch_end {
                     self.change_state(State::Wondering);
                 }
 
-                self.tv.anime().tick(args.delta);
-                show_timer += args.delta;
-
-                if show_timer > show_end {
-                    self.tv.random_show(&mut args.game_ctx.rng);
-                    show_timer = Duration::ZERO;
+                if args.timestamp.inner().minute() as u8 / SHOW_RUN_TIME != last_checked {
+                    last_checked = args.timestamp.inner().minute() as u8 / SHOW_RUN_TIME;
+                    self.tv.change_show(
+                        get_show_for_time(args.timestamp.inner()),
+                        &mut args.game_ctx.rng,
+                    );
                 }
+
+                self.tv.anime().tick(args.delta);
 
                 self.tv.pos = Vec2::new(
                     self.tv.size().x * 0.5 + 1.,
@@ -318,8 +315,7 @@ impl Scene for HomeScene {
                 );
 
                 self.state = State::WatchingTv {
-                    show_timer,
-                    show_end,
+                    last_checked,
                     watch_end,
                 }
             }
@@ -407,8 +403,7 @@ impl Scene for HomeScene {
                 display.render_sprite(&self.sleeping_z);
             }
             State::WatchingTv {
-                show_timer: _,
-                show_end: _,
+                last_checked: _,
                 watch_end: _,
             } => {
                 display.render_complex(&self.tv);

@@ -1,3 +1,4 @@
+use chrono::{Datelike, NaiveDateTime, Timelike};
 use glam::Vec2;
 
 use crate::{
@@ -6,12 +7,29 @@ use crate::{
     display::{ComplexRender, ComplexRenderOption},
 };
 
-const SHOWS: &[&'static [Frame]] = &[
+pub type Show = &'static [Frame];
+
+const SHOWS: &[Show] = &[
     &assets::FRAMES_TV_SHOW_NEWS,
     &assets::FRAMES_TV_SHOW_SPORT,
     &assets::FRAMES_TV_SHOW_SUBWAY,
     &assets::FRAMES_TV_SHOW_WEIGHT_LIFTING,
 ];
+
+pub const SHOW_RUN_TIME: u8 = 15;
+
+pub fn get_show_for_time(date_time: &NaiveDateTime) -> Show {
+    let day = date_time.day() as u8;
+    let month = date_time.month() as u8;
+    let hour = date_time.hour() as u8;
+    let miniutes = date_time.minute() as u8 / SHOW_RUN_TIME;
+
+    let seed = u32::from_be_bytes([day, month, hour, miniutes]) as u64;
+
+    let mut rng = fastrand::Rng::with_seed(seed);
+
+    SHOWS[rng.usize(0..SHOWS.len())]
+}
 
 pub enum TvKind {
     CRT,
@@ -47,20 +65,6 @@ impl TvRender {
 
     pub fn size(&self) -> Vec2 {
         self.image().size.as_vec2()
-    }
-
-    pub fn random_show(&mut self, rng: &mut fastrand::Rng) {
-        let mut index = rng.usize(0..SHOWS.len()) as i32;
-        if SHOWS[index as usize] == self.show.frames() {
-            index = index as i32 + if rng.bool() { 1 } else { -1 };
-            if index < 0 {
-                index = SHOWS.len() as i32 - 1;
-            } else if index >= SHOWS.len() as i32 {
-                index = 0;
-            }
-        }
-
-        self.change_show(SHOWS[index as usize], rng);
     }
 }
 

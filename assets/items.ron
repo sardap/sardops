@@ -124,4 +124,13 @@
         desc: "Change up the lighting.",
         fishing_odds: 0.05,
     ),
+    ItemEntry(
+        name: "Personal Computer",
+        cost: 1000,
+        rarity: Rare,
+        image: "pc_desktop_0",
+        unique: true,
+        desc: "A computer it can run software.",
+        fishing_odds: 0.05,
+    ),
 ]
