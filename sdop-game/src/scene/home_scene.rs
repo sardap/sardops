@@ -13,6 +13,7 @@ use crate::{
     furniture::{HomeFurnitureLocation, HomeFurnitureRender},
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
+    pc::{PcKind, PcRender},
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
@@ -76,6 +77,11 @@ fn get_options(state: State) -> &'static [MenuOption] {
         | State::WatchingTv {
             last_checked: _,
             watch_end: _,
+        }
+        | State::PlayingComputer {
+            watch_end: _,
+            program_end_time: _,
+            program_run_time: _,
         } => AWAKE_OPTIONS,
         State::Sleeping => SLEEP_OPTIONS,
     }
@@ -88,12 +94,20 @@ pub const HOME_SCENE_TOP_BORDER_RECT: Rect = Rect::new_center(
     Vec2::new(WIDTH_F32, BORDER_HEIGHT),
 );
 
+const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
+    Duration::from_secs(30)..Duration::from_mins(3);
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
     Wondering,
     Sleeping,
     WatchingTv {
         last_checked: u8,
+        watch_end: Duration,
+    },
+    PlayingComputer {
+        program_run_time: Duration,
+        program_end_time: Duration,
         watch_end: Duration,
     },
 }
@@ -106,6 +120,7 @@ pub struct HomeScene {
     selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
+    pc: PcRender,
     state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
@@ -127,6 +142,11 @@ impl HomeScene {
                 TvKind::LCD,
                 Vec2::new(20., 40.),
                 &assets::FRAMES_TV_SHOW_SPORT,
+            ),
+            pc: PcRender::new(
+                PcKind::Desktop,
+                Vec2::new(20., 50.),
+                &assets::FRAMES_PC_PROGRAM_RTS,
             ),
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
@@ -179,6 +199,8 @@ impl Scene for HomeScene {
             HomeFurnitureLocation::Right,
             args.game_ctx.home_layout.right,
         );
+
+        self.pc.change_random_program(&mut args.game_ctx.rng);
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -232,6 +254,15 @@ impl Scene for HomeScene {
 
         match self.state {
             State::Wondering => {
+                self.change_state(State::PlayingComputer {
+                    watch_end: Duration::MAX,
+                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
+                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
+                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
+                    )),
+                    program_run_time: Duration::ZERO,
+                });
+
                 self.top_render.tick(args);
                 self.left_render.tick(args);
                 self.right_render.tick(args);
@@ -316,6 +347,35 @@ impl Scene for HomeScene {
 
                 self.state = State::WatchingTv {
                     last_checked,
+                    watch_end,
+                }
+            }
+            State::PlayingComputer {
+                watch_end,
+                mut program_end_time,
+                mut program_run_time,
+            } => {
+                self.pc.tick(args.delta);
+                self.pet_render.pos = Vec2::new(CENTER_X, CENTER_Y + 20.);
+                program_run_time += args.delta;
+
+                if program_run_time > program_end_time {
+                    program_run_time = Duration::ZERO;
+                    program_end_time = Duration::from_millis(args.game_ctx.rng.u64(
+                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
+                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
+                    ));
+                    // Should probably make it always switch to the OS between programs
+                    self.pc.change_random_program(&mut args.game_ctx.rng);
+                }
+
+                if self.state_elapsed > watch_end {
+                    self.change_state(State::Wondering);
+                }
+
+                self.state = State::PlayingComputer {
+                    program_run_time,
+                    program_end_time,
                     watch_end,
                 }
             }
@@ -407,6 +467,13 @@ impl Scene for HomeScene {
                 watch_end: _,
             } => {
                 display.render_complex(&self.tv);
+            }
+            State::PlayingComputer {
+                watch_end: _,
+                program_end_time: _,
+                program_run_time: _,
+            } => {
+                display.render_complex(&self.pc);
             }
         }
 

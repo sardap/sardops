@@ -40,6 +40,7 @@ mod link_four;
 mod math;
 mod money;
 mod particle_system;
+mod pc;
 mod pet;
 mod poop;
 mod save;
