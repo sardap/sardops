@@ -6,7 +6,7 @@ use crate::{
     money::Money,
     pet::{record::PetHistory, PetInstance},
     poop::{Poop, MAX_POOPS},
-    scene::SharedSceneOutput,
+    scene::{home_scene::HomeSceneData, SharedSceneOutput},
     shop::Shop,
     Timestamp,
 };
@@ -25,6 +25,7 @@ pub struct GameContext {
     pub should_save: bool,
     pub shared_out: SharedSceneOutput,
     pub set_timestamp: Option<Timestamp>,
+    pub home: HomeSceneData,
 }
 
 impl GameContext {
@@ -43,6 +44,7 @@ impl GameContext {
             should_save: false,
             shared_out: Default::default(),
             set_timestamp: None,
+            home: Default::default(),
         }
     }
 

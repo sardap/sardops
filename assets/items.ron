@@ -130,7 +130,26 @@
         rarity: Rare,
         image: "pc_desktop_0",
         unique: true,
-        desc: "A computer it can run software.",
+        desc: "A computer it can run software. Screen and a keyboard sold separately.",
         fishing_odds: 0.05,
     ),
+    ItemEntry(
+        name: "Screen",
+        cost: 1000,
+        rarity: Rare,
+        image: "pc_desktop_screen",
+        unique: true,
+        desc: "A computer screen can show graphics. Computer and a keyboard sold separately.",
+        fishing_odds: 0.05,
+    ),
+    ItemEntry(
+        name: "Keyboard",
+        cost: 1000,
+        rarity: Rare,
+        image: "pc_keyboard",
+        unique: true,
+        desc: "A computer keyboard can be used for input. Computer and screen sold separately.",
+        fishing_odds: 0.05,
+    ),
+
 ]

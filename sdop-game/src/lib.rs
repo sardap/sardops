@@ -21,6 +21,7 @@ use crate::{
 mod anime;
 mod assets;
 mod bit_array;
+mod breeding;
 mod clock;
 mod date_utils;
 mod death;

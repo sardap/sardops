@@ -1,22 +1,22 @@
 (
     pet: (
-        upid: 581700527399,
+        upid: 669711364239,
         def_id: 0,
-        name: "d     ",
-        born: ("2025-08-31T17:25:16.857794545"),
+        name: "a     ",
+        born: ("2025-09-03T16:17:11.178868361"),
         age: (
             secs: 1,
-            nanos: 21750540,
+            nanos: 21188260,
         ),
         stomach_mood: Starving(
             elapsed: (
                 secs: 1,
-                nanos: 21750540,
+                nanos: 21188260,
             ),
         ),
         total_starve_time: (
             secs: 1,
-            nanos: 5002905,
+            nanos: 4450564,
         ),
         stomach_filled: 0.0,
         extra_weight: 0.0,
@@ -26,11 +26,11 @@
         ),
         since_game: (
             secs: 1,
-            nanos: 21750540,
+            nanos: 21188260,
         ),
         since_death_check: (
             secs: 1,
-            nanos: 21750540,
+            nanos: 21188260,
         ),
         should_die: None,
         parents: None,
@@ -62,6 +62,16 @@
             owned: 1,
             item_extra: (
                 uses: 5,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
             ),
         ), (
             owned: 1,
@@ -175,5 +185,5 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-08-31T17:25:17.882664231"),
+    last_timestamp: ("2025-09-03T16:17:12.200789027"),
 )
