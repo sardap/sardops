@@ -113,7 +113,9 @@ impl Scene for EvolveScene {
         }
     }
 
-    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+    fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.pet.evolve(self.to_pet_render.def_id());
+    }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.to_pet_render.tick(args.delta.mul_f32(2.));
@@ -185,7 +187,6 @@ impl Scene for EvolveScene {
                 self.to_pet_render
                     .set_animation(crate::pet::definition::PetAnimationSet::Happy);
                 if args.timestamp - self.start_time > Duration::from_secs(20) {
-                    args.game_ctx.pet.def_id = self.to_pet_render.def_id();
                     return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
                 }
 

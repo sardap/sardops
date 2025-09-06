@@ -1,5 +1,6 @@
 use crate::{
     date_utils::SpecialDayUpdater,
+    egg::SavedEgg,
     fish_tank::HomeFishTank,
     furniture::HomeLayout,
     items::Inventory,
@@ -26,6 +27,7 @@ pub struct GameContext {
     pub shared_out: SharedSceneOutput,
     pub set_timestamp: Option<Timestamp>,
     pub home: HomeSceneData,
+    pub egg: Option<SavedEgg>,
 }
 
 impl GameContext {
@@ -45,6 +47,7 @@ impl GameContext {
             shared_out: Default::default(),
             set_timestamp: None,
             home: Default::default(),
+            egg: None,
         }
     }
 

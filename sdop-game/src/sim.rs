@@ -3,7 +3,16 @@ use crate::{poop::add_poop, scene::SceneTickArgs};
 pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
     let delta = args.delta.mul_f32(time_scale);
 
+    if let Some(egg) = &mut args.game_ctx.egg {
+        egg.tick(delta);
+    }
+
     if args.game_ctx.pet.should_die().is_none() {
+        args.game_ctx.pet.tick_mood(&args.game_ctx.poops);
+        args.game_ctx
+            .pet
+            .tick_breed(&mut args.game_ctx.rng, args.game_ctx.egg.is_some());
+
         let poop_count = args.game_ctx.poop_count() as u8;
         let pet = &mut args.game_ctx.pet;
 

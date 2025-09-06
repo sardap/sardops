@@ -3,7 +3,7 @@ use fixedstr::str_format;
 
 use crate::{
     display::GameDisplay,
-    pet::{definition::PET_BLOB_ID, PetInstance, PetName},
+    pet::{definition::PET_BLOB_ID, gen_pid, PetInstance, PetName},
     scene::{
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
@@ -72,7 +72,7 @@ impl Scene for NewPetScene {
                 args.game_ctx.pet = PetInstance::default();
 
                 // Largest number that can fit on the info screen
-                args.game_ctx.pet.upid = args.game_ctx.rng.u64(u64::MIN..0xFFFFFFFFFF);
+                args.game_ctx.pet.upid = gen_pid(&mut args.game_ctx.rng);
                 args.game_ctx.pet.def_id = PET_BLOB_ID;
                 args.game_ctx.pet.born = args.timestamp;
                 args.game_ctx.pet.name =

@@ -2,7 +2,7 @@ use bincode::{Decode, Encode};
 
 use crate::{
     death::DeathCause,
-    pet::{definition::PetDefinitionId, ParentInfo, PetInstance, PetName, PetParents, UniquePetId},
+    pet::{definition::PetDefinitionId, PetInstance, PetName, PetParents, UniquePetId},
     Timestamp,
 };
 

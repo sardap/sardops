@@ -144,8 +144,8 @@ impl ComplexRender for FishTankRender {
         let top_left = self.pos - Vec2::new(Self::size().x / 2., Self::size().y / 2.);
         for fish in &self.fish {
             let pos = top_left + fish.pos;
-            display.set_bit(pos.x as i32, pos.y as i32, true);
-            display.set_bit(pos.x as i32 + 1, pos.y as i32, true);
+            display.render_point(pos.x as i32, pos.y as i32, true);
+            display.render_point(pos.x as i32 + 1, pos.y as i32, true);
         }
     }
 }

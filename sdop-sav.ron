@@ -1,39 +1,45 @@
 (
     pet: (
-        upid: 669711364239,
-        def_id: 0,
-        name: "a     ",
-        born: ("2025-09-03T16:17:11.178868361"),
+        upid: 1079573252602,
+        def_id: 2,
+        name: "8     ",
+        born: ("2025-09-05T20:36:30.723504630"),
         age: (
-            secs: 1,
-            nanos: 21188260,
+            secs: 4,
+            nanos: 372000039,
+        ),
+        life_stage_age: (
+            secs: 4,
+            nanos: 372000039,
         ),
         stomach_mood: Starving(
             elapsed: (
-                secs: 1,
-                nanos: 21188260,
+                secs: 4,
+                nanos: 372000039,
             ),
         ),
         total_starve_time: (
-            secs: 1,
-            nanos: 4450564,
+            secs: 4,
+            nanos: 355250944,
         ),
-        stomach_filled: 0.0,
+        stomach_filled: 10000.0,
         extra_weight: 0.0,
         since_poop: (
             secs: 0,
             nanos: 0,
         ),
         since_game: (
-            secs: 1,
-            nanos: 21188260,
+            secs: 4,
+            nanos: 372000039,
         ),
         since_death_check: (
-            secs: 1,
-            nanos: 21188260,
+            secs: 4,
+            nanos: 372000039,
         ),
         should_die: None,
         parents: None,
+        mood: Sad,
+        should_breed: false,
     ),
     poops: (None, None, None, None, None),
     money: 0,
@@ -174,8 +180,17 @@
         item_count: 2,
     ),
     pet_records: (
-        top: 0,
-        entires: (None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
+        top: 1,
+        entires: (Some((
+            upid: 281214820875,
+            def_id: 0,
+            name: "9     ",
+            born: ("2025-09-05T19:14:06.396996252"),
+            death: ("2025-09-05T20:36:28.160710966"),
+            extra_weight: 0.0,
+            died_of: Starvation,
+            parents: None,
+        )), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
     ),
     fish_tank: (
         fish: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -185,5 +200,5 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-09-03T16:17:12.200789027"),
+    last_timestamp: ("2025-09-05T20:36:35.159154326"),
 )

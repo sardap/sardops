@@ -9,19 +9,24 @@ use crate::{
     assets::{self, Image, IMAGE_STOMACH_MASK},
     date_utils::DurationExt,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
+    egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureLocation, HomeFurnitureRender},
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
     pc::{PcKind, PcRender},
-    pet::{definition::PetAnimationSet, render::PetRender},
+    pet::{
+        definition::{PetAnimationSet, PET_CKCS_ID, PET_COMPUTIE_ID},
+        gen_pid,
+        render::PetRender,
+    },
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
-        death_scene::DeathScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
-        game_select::GameSelectScene, inventory_scene::InventoryScene,
-        pet_info_scene::PetInfoScene, place_furniture_scene::PlaceFurnitureScene,
-        poop_clear_scene::PoopClearScene, shop_scene::ShopScene, RenderArgs, Scene, SceneEnum,
-        SceneOutput, SceneTickArgs,
+        breed_scene::BreedScene, death_scene::DeathScene, evolve_scene::EvolveScene,
+        food_select::FoodSelectScene, game_select::GameSelectScene,
+        inventory_scene::InventoryScene, pet_info_scene::PetInfoScene,
+        place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
+        shop_scene::ShopScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     sprite::{BasicAnimeSprite, Sprite},
     tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
@@ -179,6 +184,8 @@ pub struct HomeScene {
     left_render: HomeFurnitureRender,
     top_render: HomeFurnitureRender,
     right_render: HomeFurnitureRender,
+    egg_render: EggRender,
+    egg_bounce: f32,
 }
 
 impl HomeScene {
@@ -187,6 +194,8 @@ impl HomeScene {
             left_render: HomeFurnitureRender::None,
             top_render: HomeFurnitureRender::None,
             right_render: HomeFurnitureRender::None,
+            egg_render: Default::default(),
+            egg_bounce: 0.,
         }
     }
 }
@@ -205,6 +214,14 @@ impl Scene for HomeScene {
         args.game_ctx.home.target = args.game_ctx.home.pet_render.pos;
         if args.game_ctx.home.wonder_end == Duration::ZERO {
             args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+        }
+
+        self.egg_render.pos = Vec2::new(
+            WIDTH_F32 - assets::IMAGE_EGG.size.x as f32,
+            WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
+        );
+        if let Some(egg) = &args.game_ctx.egg {
+            self.egg_render.set_pid(egg.upid);
         }
 
         self.top_render =
@@ -247,6 +264,20 @@ impl Scene for HomeScene {
             args.game_ctx.home.change_state(State::Wondering);
         }
 
+        const EGG_BOUNCE_SPEED: f32 = 3.;
+        const BOUNCE_RANGE: i32 = 5;
+
+        self.egg_bounce += EGG_BOUNCE_SPEED * args.delta.as_secs_f32();
+        self.egg_render.pos = Vec2::new(
+            self.egg_render.pos.x,
+            WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32
+                + if (self.egg_bounce as i32) % BOUNCE_RANGE * 2 > BOUNCE_RANGE {
+                    BOUNCE_RANGE * 2 + -(self.egg_bounce as i32 % BOUNCE_RANGE * 2)
+                } else {
+                    self.egg_bounce as i32 % BOUNCE_RANGE * 2
+                } as f32,
+        );
+
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
                 return SceneOutput::new(SceneEnum::Death(DeathScene::new(
@@ -259,6 +290,15 @@ impl Scene for HomeScene {
                 return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
                     args.game_ctx.pet.def_id,
                     next_pet_id,
+                )));
+            }
+
+            if args.game_ctx.pet.should_breed() {
+                return SceneOutput::new(SceneEnum::Breed(BreedScene::new(
+                    PET_CKCS_ID,
+                    args.game_ctx.pet.upid,
+                    PET_COMPUTIE_ID,
+                    gen_pid(&mut args.game_ctx.rng),
                 )));
             }
         }
@@ -337,7 +377,7 @@ impl Scene for HomeScene {
                 args.game_ctx
                     .home
                     .pet_render
-                    .set_animation(args.game_ctx.pet.mood(&args.game_ctx.poops).anime_set());
+                    .set_animation(args.game_ctx.pet.mood().anime_set());
 
                 let dist =
                     vec2_distance(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target);
@@ -585,6 +625,10 @@ impl Scene for HomeScene {
             Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),
         );
         display.render_rect_outline(select_rect, true);
+
+        if args.game_ctx.egg.is_some() {
+            display.render_complex(&self.egg_render);
+        }
 
         // No lights if sleeping
         if matches!(args.game_ctx.home.state, State::Wondering) {

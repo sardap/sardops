@@ -3,10 +3,8 @@ use glam::Vec2;
 use strum::IntoEnumIterator;
 
 use crate::{
-    assets::{self, Image},
     display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    furniture::{HomeFurnitureKind, HomeFurnitureLocation},
     geo::Rect,
     items::{Inventory, ItemKind, ITEM_COUNT},
     scene::{

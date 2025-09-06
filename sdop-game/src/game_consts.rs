@@ -18,15 +18,22 @@ pub const fn odds_per_day(chance_per_day: f32) -> f32 {
     chance_per_day * multipler
 }
 
+pub const fn odds_per_day_waking_hours(chance_per_day: f32) -> f32 {
+    const DAY: Duration = Duration::from_hours(18);
+    let multipler = DEATH_CHECK_INTERVAL.as_millis_f32() / DAY.as_millis_f32();
+
+    chance_per_day * multipler
+}
+
 pub const DEATH_BY_LIGHTING_STRIKE_ODDS: f32 = odds_per_hour(0.001);
 
-pub const DEATH_STARVE_THRESHOLDS: &[Threshold] = &[
+pub const DEATH_STARVE_THRESHOLDS: &[Threshold<Duration>] = &[
     Threshold::new(Duration::from_hours(8), odds_per_hour(0.05)),
     Threshold::new(Duration::from_hours(16), odds_per_hour(0.1)),
     Threshold::new(Duration::MAX, odds_per_hour(0.2)),
 ];
 
-pub const OLD_AGE_THRESHOLD: &[Threshold] = &[
+pub const OLD_AGE_THRESHOLD: &[Threshold<Duration>] = &[
     Threshold::new(Duration::from_days(4), odds_per_day(0.0)),
     Threshold::new(Duration::from_days(5), odds_per_day(0.05)),
     Threshold::new(Duration::from_days(6), odds_per_day(0.1)),
@@ -41,3 +48,11 @@ pub const DEATH_BY_TOXIC_SHOCK_LARGE: f32 = odds_per_hour(0.1);
 pub const HUNGER_LOSS_PER_SECOND: f32 = 7. / Duration::from_hours(1).as_secs_f32();
 
 pub const POOP_INTERVNAL: Duration = Duration::from_hours(1);
+
+pub const BREED_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
+    Threshold::new(Duration::from_days(1), odds_per_day(0.0)),
+    Threshold::new(Duration::from_days(2), odds_per_day(0.25)),
+    Threshold::new(Duration::from_days(3), odds_per_day(0.5)),
+    Threshold::new(Duration::from_days(4), odds_per_day(0.75)),
+    Threshold::new(Duration::MAX, odds_per_day(0.9)),
+];

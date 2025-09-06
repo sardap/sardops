@@ -176,13 +176,32 @@ impl ComplexRender for GraveStone {
     }
 }
 
-pub struct Threshold {
-    pub elapsed: Duration,
+pub struct Threshold<T> {
+    pub value: T,
     pub odds: f32,
 }
 
-impl Threshold {
-    pub const fn new(elapsed: Duration, odds: f32) -> Self {
-        Self { elapsed, odds }
+impl<T> Threshold<T> {
+    pub const fn new(value: T, odds: f32) -> Self {
+        Self { value, odds }
     }
+}
+
+pub fn passed_threshold_chance<T>(
+    rng: &mut fastrand::Rng,
+    values: &[Threshold<T>],
+    elapsed: T,
+) -> bool
+where
+    T: Ord,
+{
+    for threashold in values {
+        if threashold.value > elapsed {
+            if rng.f32() < threashold.odds {
+                return true;
+            }
+        }
+    }
+
+    false
 }
