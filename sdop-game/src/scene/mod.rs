@@ -1,5 +1,7 @@
+pub mod breed_scene;
 pub mod death_scene;
 pub mod eat_scene;
+pub mod egg_hatch;
 pub mod enter_date_scene;
 pub mod enter_text_scene;
 pub mod evolve_scene;
@@ -44,6 +46,8 @@ pub enum SceneEnum {
     EnterText(enter_text_scene::EnterTextScene),
     EnterDate(enter_date_scene::EnterDateScene),
     PlaceFurniture(place_furniture_scene::PlaceFurnitureScene),
+    Breed(breed_scene::BreedScene),
+    EggHatch(egg_hatch::EggHatchScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -75,6 +79,8 @@ impl SceneEnum {
             SceneEnum::EnterDate(enter_date) => enter_date,
             SceneEnum::Evovle(evovle_scene) => evovle_scene,
             SceneEnum::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
+            SceneEnum::Breed(breed_scene) => breed_scene,
+            SceneEnum::EggHatch(egg_hatch) => egg_hatch,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,

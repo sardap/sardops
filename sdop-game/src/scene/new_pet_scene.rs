@@ -3,7 +3,7 @@ use fixedstr::str_format;
 
 use crate::{
     display::GameDisplay,
-    pet::{definition::PET_BLOB_ID, PetInstance, PetName},
+    pet::{definition::PetDefinitionId, gen_pid, PetInstance, PetName, PetParents, UniquePetId},
     scene::{
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
@@ -22,19 +22,30 @@ enum State {
 
 #[derive(Clone)]
 pub struct NewPetScene {
+    def_id: PetDefinitionId,
     need_timestamp: bool,
     state: State,
+    upid: UniquePetId,
+    parents: Option<PetParents>,
 }
 
 impl NewPetScene {
-    pub fn new(need_timestamp: bool) -> Self {
+    pub fn new(
+        def_id: PetDefinitionId,
+        need_timestamp: bool,
+        upid: Option<UniquePetId>,
+        parents: Option<PetParents>,
+    ) -> Self {
         Self {
+            def_id,
             state: if need_timestamp {
                 State::EnterDate
             } else {
                 State::EnterName
             },
             need_timestamp: need_timestamp,
+            upid: upid.unwrap_or_default(),
+            parents,
         }
     }
 }
@@ -42,7 +53,19 @@ impl NewPetScene {
 impl Scene for NewPetScene {
     fn setup(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+    fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.pet = PetInstance::default();
+        args.game_ctx.pet.parents = self.parents;
+        args.game_ctx.pet.upid = if self.upid == 0 {
+            gen_pid(&mut args.game_ctx.rng)
+        } else {
+            self.upid
+        };
+        args.game_ctx.pet.def_id = self.def_id;
+        args.game_ctx.pet.born = args.timestamp;
+        args.game_ctx.pet.name =
+            str_format!(PetName, "{}", args.game_ctx.shared_out.enter_text_out);
+    }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         match self.state {
@@ -69,14 +92,6 @@ impl Scene for NewPetScene {
                 )));
             }
             State::NameEntered => {
-                args.game_ctx.pet = PetInstance::default();
-
-                // Largest number that can fit on the info screen
-                args.game_ctx.pet.upid = args.game_ctx.rng.u64(u64::MIN..0xFFFFFFFFFF);
-                args.game_ctx.pet.def_id = PET_BLOB_ID;
-                args.game_ctx.pet.born = args.timestamp;
-                args.game_ctx.pet.name =
-                    str_format!(PetName, "{}", args.game_ctx.shared_out.enter_text_out);
                 return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
             }
         }

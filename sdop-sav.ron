@@ -1,22 +1,26 @@
 (
     pet: (
-        upid: 581700527399,
-        def_id: 0,
-        name: "d     ",
-        born: ("2025-08-31T17:25:16.857794545"),
+        upid: 706530727222,
+        def_id: 8,
+        name: "9     ",
+        born: ("2025-09-07T08:54:08.553333240"),
         age: (
-            secs: 1,
-            nanos: 21750540,
+            secs: 4,
+            nanos: 253627700,
+        ),
+        life_stage_age: (
+            secs: 4,
+            nanos: 253627700,
         ),
         stomach_mood: Starving(
             elapsed: (
-                secs: 1,
-                nanos: 21750540,
+                secs: 4,
+                nanos: 253627700,
             ),
         ),
         total_starve_time: (
-            secs: 1,
-            nanos: 5002905,
+            secs: 4,
+            nanos: 236881788,
         ),
         stomach_filled: 0.0,
         extra_weight: 0.0,
@@ -25,15 +29,22 @@
             nanos: 0,
         ),
         since_game: (
-            secs: 1,
-            nanos: 21750540,
+            secs: 4,
+            nanos: 253627700,
         ),
         since_death_check: (
-            secs: 1,
-            nanos: 21750540,
+            secs: 4,
+            nanos: 253627700,
+        ),
+        since_evolve_check: (
+            secs: 4,
+            nanos: 253627700,
         ),
         should_die: None,
+        should_evolve: None,
         parents: None,
+        mood: Sad,
+        should_breed: false,
     ),
     poops: (None, None, None, None, None),
     money: 0,
@@ -62,6 +73,16 @@
             owned: 1,
             item_extra: (
                 uses: 5,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
             ),
         ), (
             owned: 1,
@@ -175,5 +196,6 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-08-31T17:25:17.882664231"),
+    last_timestamp: ("2025-09-07T08:54:10.563699154"),
+    egg: None,
 )

@@ -14,7 +14,7 @@ use crate::{
     },
     geo::Rect,
     pet::{
-        definition::{PetAnimationSet, PetDefinitionId},
+        definition::{PetAnimationSet, PetDefinitionId, PET_BABIES},
         record::PetRecord,
         render::PetRender,
     },
@@ -261,6 +261,7 @@ impl Scene for DeathScene {
                         self.state_elapsed = Duration::ZERO;
                     }
                 }
+                DeathCause::Leaving => {}
             },
             State::Tombstone => {
                 self.pet_render.pos =
@@ -273,7 +274,12 @@ impl Scene for DeathScene {
                         args.timestamp,
                         self.cause,
                     ));
-                    return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(false)));
+                    return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(
+                        args.game_ctx.rng.choice(PET_BABIES).unwrap(),
+                        false,
+                        None,
+                        None,
+                    )));
                 }
             }
         }
@@ -369,6 +375,7 @@ impl Scene for DeathScene {
                         }
                     }
                 }
+                DeathCause::Leaving => {}
             },
             State::Tombstone => {
                 display.render_image_top_left(0, 0, &assets::IMAGE_GHOST_CLOUD);

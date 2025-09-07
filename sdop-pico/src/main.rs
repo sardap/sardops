@@ -3,6 +3,7 @@
 
 use core::time::Duration;
 
+use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::InputPin;
 use embedded_sdmmc::{TimeSource, Timestamp};
 use hal::block::ImageDef;
@@ -145,6 +146,17 @@ fn main() -> ! {
 
         game.drawable(|c| c).draw(&mut display).unwrap();
         display.flush().unwrap();
+
+        const TARGET_FPS: u64 = 15;
+        const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / TARGET_FPS);
+
+        let now = timer.get_counter();
+        let delta = now - last_time;
+        let delta = Duration::from_micros(delta.to_micros() as u64);
+        if delta < FRAME_TIME {
+            let sleep_time = FRAME_TIME - delta;
+            timer.delay_ns(sleep_time.as_nanos() as u32);
+        }
     }
 }
 

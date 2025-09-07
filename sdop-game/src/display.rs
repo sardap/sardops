@@ -150,7 +150,7 @@ impl GameDisplay {
         self.bits.clear();
     }
 
-    pub fn set_bit(&mut self, x: i32, y: i32, value: bool) {
+    pub fn render_point(&mut self, x: i32, y: i32, value: bool) {
         if !(x >= 0 && x < WIDTH as i32 && y >= 0 && y < HEIGHT as i32) {
             return;
         }
@@ -214,7 +214,7 @@ impl GameDisplay {
                 let dy = y_plus + ry;
 
                 if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
-                    self.set_bit(dx, dy, bit_set);
+                    self.render_point(dx, dy, bit_set);
                 }
             }
         }
@@ -237,7 +237,7 @@ impl GameDisplay {
         let top_left = rect.pos_top_left();
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
             for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
-                self.set_bit(x, y, white);
+                self.render_point(x, y, white);
             }
         }
     }
@@ -249,14 +249,14 @@ impl GameDisplay {
 
         // Top and bottom borders
         for x in top_left.x as i32..=bottom_right_x as i32 {
-            self.set_bit(x, top_left.y as i32, white); // Top
-            self.set_bit(x, bottom_right_y as i32, white); // Bottom
+            self.render_point(x, top_left.y as i32, white); // Top
+            self.render_point(x, bottom_right_y as i32, white); // Bottom
         }
 
         // Left and right borders (excluding corners, already set above)
         for y in (top_left.y as i32 + 1)..(bottom_right_y as i32) {
-            self.set_bit(top_left.x as i32, y, white); // Left
-            self.set_bit(bottom_right_x as i32, y, white); // Right
+            self.render_point(top_left.x as i32, y, white); // Left
+            self.render_point(bottom_right_x as i32, y, white); // Right
         }
     }
 
@@ -270,16 +270,16 @@ impl GameDisplay {
         // Top and bottom borders
         for (i, x) in (top_left.x as i32..=bottom_right_x as i32).enumerate() {
             if (i / dash_width) % 2 == 0 {
-                self.set_bit(x, top_left.y as i32, white); // Top
-                self.set_bit(x, bottom_right_y as i32, white); // Bottom
+                self.render_point(x, top_left.y as i32, white); // Top
+                self.render_point(x, bottom_right_y as i32, white); // Bottom
             }
         }
 
         // Left and right borders
         for (i, y) in ((top_left.y as i32 + 1)..(bottom_right_y as i32)).enumerate() {
             if (i / dash_width) % 2 == 0 {
-                self.set_bit(top_left.x as i32, y, white); // Left
-                self.set_bit(bottom_right_x as i32, y, white); // Right
+                self.render_point(top_left.x as i32, y, white); // Left
+                self.render_point(bottom_right_x as i32, y, white); // Right
             }
         }
     }
@@ -296,7 +296,7 @@ impl GameDisplay {
         let mut err = dx + dy;
 
         loop {
-            self.set_bit(x0, y0, white);
+            self.render_point(x0, y0, white);
             if x0 == x1 && y0 == y1 {
                 break;
             }
@@ -325,14 +325,14 @@ impl GameDisplay {
         let mut err = 0;
 
         while x >= y {
-            self.set_bit(cx + x, cy + y, white);
-            self.set_bit(cx + y, cy + x, white);
-            self.set_bit(cx - y, cy + x, white);
-            self.set_bit(cx - x, cy + y, white);
-            self.set_bit(cx - x, cy - y, white);
-            self.set_bit(cx - y, cy - x, white);
-            self.set_bit(cx + y, cy - x, white);
-            self.set_bit(cx + x, cy - y, white);
+            self.render_point(cx + x, cy + y, white);
+            self.render_point(cx + y, cy + x, white);
+            self.render_point(cx - y, cy + x, white);
+            self.render_point(cx - x, cy + y, white);
+            self.render_point(cx - x, cy - y, white);
+            self.render_point(cx - y, cy - x, white);
+            self.render_point(cx + y, cy - x, white);
+            self.render_point(cx + x, cy - y, white);
 
             y += 1;
             if err <= 0 {
@@ -463,7 +463,7 @@ impl GameDisplay {
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
             for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
                 if x > 0 && y > 0 {
-                    self.set_bit(x, y, !self.bits.get_bit(x as usize, y as usize));
+                    self.render_point(x, y, !self.bits.get_bit(x as usize, y as usize));
                 }
             }
         }
@@ -509,7 +509,7 @@ impl GameDisplay {
                 if inside {
                     let ux = x as usize;
                     let uy = y as usize;
-                    self.set_bit(x, y, !self.bits.get_bit(ux, uy));
+                    self.render_point(x, y, !self.bits.get_bit(ux, uy));
                 }
             }
         }

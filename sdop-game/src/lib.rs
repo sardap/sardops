@@ -14,6 +14,7 @@ use crate::{
     fps::FPSCounter,
     game_context::GameContext,
     input::Input,
+    pet::{definition::PET_BABIES, gen_pid},
     scene::{new_pet_scene::NewPetScene, RenderArgs, SceneEnum, SceneManger, SceneTickArgs},
     sim::tick_sim,
 };
@@ -25,6 +26,7 @@ mod clock;
 mod date_utils;
 mod death;
 mod display;
+mod egg;
 mod fish_tank;
 mod fonts;
 mod food;
@@ -40,6 +42,7 @@ mod link_four;
 mod math;
 mod money;
 mod particle_system;
+mod pc;
 mod pet;
 mod poop;
 mod save;
@@ -89,7 +92,12 @@ impl Game {
 
         result
             .scene_manger
-            .set_next(SceneEnum::NewPet(NewPetScene::new(timestamp.is_none())));
+            .set_next(SceneEnum::NewPet(NewPetScene::new(
+                result.game_ctx.rng.choice(PET_BABIES).unwrap(),
+                timestamp.is_none(),
+                None,
+                None,
+            )));
 
         result
     }
@@ -195,11 +203,11 @@ impl Game {
         let last_timestamp = save.last_timestamp;
         let delta = timestamp - last_timestamp;
         save.load(&mut self.game_ctx);
-        const STEP_SIZE: Duration = Duration::from_millis(16);
+        const STEP_SIZE: Duration = Duration::from_millis(15);
         let steps = (delta.as_millis() / STEP_SIZE.as_millis()) as u64;
         for i in 0..steps {
             let mut scene_args = SceneTickArgs {
-                timestamp: last_timestamp + Duration::from_millis(i * 16),
+                timestamp: last_timestamp + Duration::from_millis(i * 15),
                 delta: STEP_SIZE,
                 input: &self.input,
                 game_ctx: &mut self.game_ctx,
