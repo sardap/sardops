@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
-use fastrand::Rng;
+use heapless::Vec;
 
 use crate::{
     death::{passed_threshold_chance, DeathCause},
@@ -9,10 +9,12 @@ use crate::{
     game_consts::{
         BREED_ODDS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_BY_TOXIC_SHOCK_LARGE,
         DEATH_BY_TOXIC_SHOCK_SMALL, DEATH_CHECK_INTERVAL, DEATH_STARVE_THRESHOLDS,
-        HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL,
+        EVOLVE_CHECK_INTERVERAL, HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL,
     },
+    items::{Inventory, ItemKind},
     pet::definition::{
-        PetAnimationSet, PetDefinition, PetDefinitionId, PET_CKCS_ID, PET_PAWN_WHITE_ID,
+        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BALLOTEE_ID, PET_BEERIE_ID,
+        PET_CKCS_ID, PET_COMPUTIE_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID,
     },
     poop::{poop_count, Poop, MAX_POOPS},
     Timestamp,
@@ -84,7 +86,9 @@ pub struct PetInstance {
     pub since_poop: Duration,
     pub since_game: Duration,
     pub since_death_check: Duration,
+    pub since_evolve_check: Duration,
     pub should_die: Option<DeathCause>,
+    should_evolve: Option<PetDefinitionId>,
     pub parents: Option<PetParents>,
     mood: Mood,
     should_breed: bool,
@@ -213,6 +217,10 @@ impl PetInstance {
         self.should_die
     }
 
+    pub fn should_die_of_leaving(&mut self) {
+        self.should_die = Some(DeathCause::Leaving);
+    }
+
     pub fn should_poop(&mut self, sleeping: bool) -> bool {
         if !sleeping
             && self
@@ -227,22 +235,61 @@ impl PetInstance {
         false
     }
 
-    pub fn should_evolve(&mut self, _rng: &mut Rng) -> Option<PetDefinitionId> {
-        match self.def_id {
-            crate::pet::definition::PET_BLOB_ID => {
-                if self.age > Duration::from_hours(4) {
-                    return Some(PET_PAWN_WHITE_ID);
-                }
-            }
-            crate::pet::definition::PET_PAWN_WHITE_ID => {
-                if self.age > Duration::from_hours(24) {
-                    return Some(PET_CKCS_ID);
-                }
-            }
-            _ => {}
+    pub fn tick_evolve(&mut self, delta: Duration, inv: &Inventory) {
+        self.since_evolve_check += delta;
+
+        if self.since_evolve_check < EVOLVE_CHECK_INTERVERAL {
+            return;
         }
 
-        return None;
+        self.since_evolve_check = Duration::ZERO;
+
+        match self.definition().life_stage {
+            LifeStage::Baby => {
+                if self.life_stage_age < Duration::from_hours(4) {
+                    return;
+                }
+            }
+            LifeStage::Child => {
+                if self.life_stage_age < Duration::from_days(1) {
+                    return;
+                }
+            }
+            LifeStage::Adult => {
+                return;
+            }
+        }
+
+        let mut rng = fastrand::Rng::with_seed(self.upid);
+
+        let mut possible = Vec::<PetDefinitionId, 10>::new();
+        match self.definition().life_stage {
+            LifeStage::Baby => {
+                let _ = possible.push(PET_HUMBIE_ID);
+                let _ = possible.push(PET_PAWN_WHITE_ID);
+            }
+            LifeStage::Child => {
+                let _ = possible.push(PET_BEERIE_ID);
+                let _ = possible.push(PET_WAS_GAURD_ID);
+                let _ = possible.push(PET_BALLOTEE_ID);
+                if inv.has_item(ItemKind::PersonalComputer)
+                    && inv.has_item(ItemKind::Screen)
+                    && inv.has_item(ItemKind::Keyboard)
+                {
+                    let _ = possible.push(PET_COMPUTIE_ID);
+                }
+                if self.extra_weight > 50. {
+                    let _ = possible.push(PET_CKCS_ID);
+                }
+            }
+            LifeStage::Adult => {}
+        };
+
+        self.should_evolve = rng.choice(possible.iter()).cloned();
+    }
+
+    pub fn should_evolve(&mut self) -> Option<PetDefinitionId> {
+        self.should_evolve
     }
 
     pub fn evolve(&mut self, next: PetDefinitionId) {
@@ -328,6 +375,8 @@ impl Default for PetInstance {
             since_poop: Duration::ZERO,
             since_game: Duration::ZERO,
             since_death_check: Duration::ZERO,
+            since_evolve_check: Duration::ZERO,
+            should_evolve: None,
             should_die: None,
             parents: None,
             mood: Mood::Normal,
@@ -365,5 +414,4 @@ pub enum LifeStage {
     Baby,
     Child,
     Adult,
-    Elder,
 }

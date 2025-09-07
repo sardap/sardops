@@ -1,28 +1,28 @@
 (
     pet: (
-        upid: 1079573252602,
-        def_id: 2,
-        name: "8     ",
-        born: ("2025-09-05T20:36:30.723504630"),
+        upid: 706530727222,
+        def_id: 8,
+        name: "9     ",
+        born: ("2025-09-07T08:54:08.553333240"),
         age: (
             secs: 4,
-            nanos: 372000039,
+            nanos: 253627700,
         ),
         life_stage_age: (
             secs: 4,
-            nanos: 372000039,
+            nanos: 253627700,
         ),
         stomach_mood: Starving(
             elapsed: (
                 secs: 4,
-                nanos: 372000039,
+                nanos: 253627700,
             ),
         ),
         total_starve_time: (
             secs: 4,
-            nanos: 355250944,
+            nanos: 236881788,
         ),
-        stomach_filled: 10000.0,
+        stomach_filled: 0.0,
         extra_weight: 0.0,
         since_poop: (
             secs: 0,
@@ -30,13 +30,18 @@
         ),
         since_game: (
             secs: 4,
-            nanos: 372000039,
+            nanos: 253627700,
         ),
         since_death_check: (
             secs: 4,
-            nanos: 372000039,
+            nanos: 253627700,
+        ),
+        since_evolve_check: (
+            secs: 4,
+            nanos: 253627700,
         ),
         should_die: None,
+        should_evolve: None,
         parents: None,
         mood: Sad,
         should_breed: false,
@@ -180,17 +185,8 @@
         item_count: 2,
     ),
     pet_records: (
-        top: 1,
-        entires: (Some((
-            upid: 281214820875,
-            def_id: 0,
-            name: "9     ",
-            born: ("2025-09-05T19:14:06.396996252"),
-            death: ("2025-09-05T20:36:28.160710966"),
-            extra_weight: 0.0,
-            died_of: Starvation,
-            parents: None,
-        )), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
+        top: 0,
+        entires: (None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
     ),
     fish_tank: (
         fish: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -200,5 +196,6 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-09-05T20:36:35.159154326"),
+    last_timestamp: ("2025-09-07T08:54:10.563699154"),
+    egg: None,
 )

@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use bincode::{Decode, Encode};
 use chrono::{Datelike, NaiveDate};
 use fixedstr::str12;
@@ -19,6 +17,7 @@ pub enum DeathCause {
     Starvation,
     OldAge,
     ToxicShock,
+    Leaving,
 }
 
 impl DeathCause {
@@ -28,6 +27,7 @@ impl DeathCause {
             DeathCause::Starvation => "Starvation",
             DeathCause::OldAge => "Old age",
             DeathCause::ToxicShock => "Toxic shock",
+            DeathCause::Leaving => "Left",
         }
     }
 }
@@ -196,10 +196,11 @@ where
     T: Ord,
 {
     for threashold in values {
-        if threashold.value > elapsed {
+        if elapsed < threashold.value {
             if rng.f32() < threashold.odds {
                 return true;
             }
+            return false;
         }
     }
 

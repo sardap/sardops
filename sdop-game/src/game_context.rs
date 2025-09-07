@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use crate::{
     date_utils::SpecialDayUpdater,
     egg::SavedEgg,
@@ -28,6 +30,7 @@ pub struct GameContext {
     pub set_timestamp: Option<Timestamp>,
     pub home: HomeSceneData,
     pub egg: Option<SavedEgg>,
+    pub sim_extra: Duration,
 }
 
 impl GameContext {
@@ -48,6 +51,7 @@ impl GameContext {
             set_timestamp: None,
             home: Default::default(),
             egg: None,
+            sim_extra: Duration::ZERO,
         }
     }
 

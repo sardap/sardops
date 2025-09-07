@@ -6,6 +6,7 @@ use crate::{
     pet::LifeStage,
     Timestamp,
 };
+use const_for::const_for;
 
 include!(concat!(env!("OUT_DIR"), "/dist_pets.rs"));
 
@@ -154,3 +155,39 @@ impl PetImageSet {
         return self.normal;
     }
 }
+
+pub const fn get_count_from_stage(stage: LifeStage) -> usize {
+    let mut result = 0;
+    const_for!(i in 0..PET_DEFINITIONS.len() => {
+        let def = PET_DEFINITIONS[i];
+        if def.life_stage as u8 == stage as u8 {
+            result += 1;
+        }
+    });
+    result
+}
+
+pub const fn get_pets_from_stage<const N: usize>(stage: LifeStage) -> [PetDefinitionId; N] {
+    let mut top = 0;
+    let mut result: [PetDefinitionId; N] = [0; N];
+    const_for!(i in 0..PET_DEFINITIONS.len() => {
+        let def = PET_DEFINITIONS[i];
+        if def.life_stage as u8 == stage as u8 {
+            result[top] = def.id;
+            top += 1;
+        }
+    });
+    result
+}
+
+pub const PET_BABY_ID_COUNT: usize = get_count_from_stage(LifeStage::Baby);
+pub const PET_BABIES: [PetDefinitionId; PET_BABY_ID_COUNT] =
+    get_pets_from_stage::<PET_BABY_ID_COUNT>(LifeStage::Baby);
+
+pub const PET_CHILD_ID_COUNT: usize = get_count_from_stage(LifeStage::Child);
+pub const PET_CHILDS: [PetDefinitionId; PET_CHILD_ID_COUNT] =
+    get_pets_from_stage::<PET_CHILD_ID_COUNT>(LifeStage::Child);
+
+pub const PET_ADULT_ID_COUNT: usize = get_count_from_stage(LifeStage::Adult);
+pub const PET_ADULTS: [PetDefinitionId; PET_ADULT_ID_COUNT] =
+    get_pets_from_stage::<PET_ADULT_ID_COUNT>(LifeStage::Adult);

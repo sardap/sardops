@@ -103,5 +103,17 @@
             sleep: Some("images/pets/humbie_sleep.ase"),
         )
     ),
-
+    PetTemplate(
+        name: "Devil",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/devil_normal.ase",
+            eat: Some("images/pets/devil_eat.ase"),
+            happy: Some("images/pets/devil_happy.ase"),
+            sad: Some("images/pets/devil_sad.ase"),
+            sleep: Some("images/pets/devil_sleep.ase"),
+        )
+    ),
 ]

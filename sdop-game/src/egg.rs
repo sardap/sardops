@@ -5,7 +5,9 @@ use glam::{I8Vec2, Vec2};
 
 use crate::{
     assets,
+    death::passed_threshold_chance,
     display::{ComplexRender, ComplexRenderOption, GameDisplay},
+    game_consts::EGG_HATCH_ODDS_THRESHOLD,
     pet::{PetParents, UniquePetId},
 };
 
@@ -15,6 +17,7 @@ pub struct SavedEgg {
     pub age: Duration,
     pub upid: UniquePetId,
     pub parents: Option<PetParents>,
+    pub hatch: bool,
 }
 
 impl SavedEgg {
@@ -23,11 +26,16 @@ impl SavedEgg {
             age: Duration::ZERO,
             upid: pid,
             parents,
+            hatch: false,
         }
     }
 
-    pub fn tick(&mut self, delta: Duration) {
+    pub fn sim_tick(&mut self, delta: Duration, rng: &mut fastrand::Rng) {
         self.age += delta;
+
+        if passed_threshold_chance(rng, EGG_HATCH_ODDS_THRESHOLD, self.age) {
+            self.hatch = true
+        }
     }
 }
 

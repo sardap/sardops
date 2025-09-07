@@ -16,14 +16,14 @@ use crate::{
     items::ItemKind,
     pc::{PcKind, PcRender},
     pet::{
-        definition::{PetAnimationSet, PET_CKCS_ID, PET_COMPUTIE_ID},
+        definition::{PetAnimationSet, PET_ADULTS},
         gen_pid,
         render::PetRender,
     },
     poop::{update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
-        breed_scene::BreedScene, death_scene::DeathScene, evolve_scene::EvolveScene,
-        food_select::FoodSelectScene, game_select::GameSelectScene,
+        breed_scene::BreedScene, death_scene::DeathScene, egg_hatch::EggHatchScene,
+        evolve_scene::EvolveScene, food_select::FoodSelectScene, game_select::GameSelectScene,
         inventory_scene::InventoryScene, pet_info_scene::PetInfoScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -279,6 +279,12 @@ impl Scene for HomeScene {
         );
 
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
+            if let Some(egg) = &args.game_ctx.egg {
+                if egg.hatch {
+                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(*egg)));
+                }
+            }
+
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
                 return SceneOutput::new(SceneEnum::Death(DeathScene::new(
                     cause_of_death,
@@ -286,7 +292,7 @@ impl Scene for HomeScene {
                 )));
             }
 
-            if let Some(next_pet_id) = args.game_ctx.pet.should_evolve(&mut args.game_ctx.rng) {
+            if let Some(next_pet_id) = args.game_ctx.pet.should_evolve() {
                 return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
                     args.game_ctx.pet.def_id,
                     next_pet_id,
@@ -295,9 +301,9 @@ impl Scene for HomeScene {
 
             if args.game_ctx.pet.should_breed() {
                 return SceneOutput::new(SceneEnum::Breed(BreedScene::new(
-                    PET_CKCS_ID,
+                    args.game_ctx.pet.def_id,
                     args.game_ctx.pet.upid,
-                    PET_COMPUTIE_ID,
+                    *args.game_ctx.rng.choice(PET_ADULTS.iter()).unwrap(),
                     gen_pid(&mut args.game_ctx.rng),
                 )));
             }
