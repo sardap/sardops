@@ -1,15 +1,15 @@
-use glam::{usize, Vec2};
+use glam::{Vec2, usize};
 
 use crate::{
+    Button, HEIGHT,
     assets::{self, Image, StaticImage},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay},
     geo::Rect,
     scene::{
-        home_scene::HomeScene, mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene,
-        mg_tic_tac_toe::MgTicTacToeScene, mg_weight_lift::MgWeightLift, RenderArgs, Scene,
-        SceneEnum, SceneOutput, SceneTickArgs,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene,
+        mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
+        mg_weight_lift::MgWeightLift,
     },
-    Button, HEIGHT,
 };
 
 enum MiniGame {

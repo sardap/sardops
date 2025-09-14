@@ -1,17 +1,18 @@
 use core::time::Duration;
 
 use crate::{
+    Timestamp,
     date_utils::SpecialDayUpdater,
     egg::SavedEgg,
     fish_tank::HomeFishTank,
     furniture::HomeLayout,
     items::Inventory,
     money::Money,
-    pet::{record::PetHistory, PetInstance},
-    poop::{Poop, MAX_POOPS},
-    scene::{home_scene::HomeSceneData, SharedSceneOutput},
+    pet::{PetInstance, record::PetHistory},
+    poop::{MAX_POOPS, Poop},
+    scene::{SharedSceneOutput, home_scene::HomeSceneData},
     shop::Shop,
-    Timestamp,
+    suiter::{Suiter, SuiterSystem},
 };
 
 pub struct GameContext {
@@ -30,6 +31,7 @@ pub struct GameContext {
     pub set_timestamp: Option<Timestamp>,
     pub home: HomeSceneData,
     pub egg: Option<SavedEgg>,
+    pub suiter_system: SuiterSystem,
     pub sim_extra: Duration,
 }
 
@@ -51,6 +53,7 @@ impl GameContext {
             set_timestamp: None,
             home: Default::default(),
             egg: None,
+            suiter_system: SuiterSystem::default(),
             sim_extra: Duration::ZERO,
         }
     }

@@ -17,17 +17,19 @@ pub mod mg_tic_tac_toe;
 pub mod mg_weight_lift;
 pub mod new_pet_scene;
 pub mod pet_info_scene;
+pub mod pet_records_scene;
 pub mod place_furniture_scene;
 pub mod poop_clear_scene;
 pub mod shop_scene;
+pub mod suiters_scene;
 
 use core::time::Duration;
 
 use chrono::{NaiveDate, NaiveTime};
 
 use crate::{
-    display::GameDisplay, game_context::GameContext, input::Input,
-    scene::enter_text_scene::EnterTextStr, Timestamp,
+    Timestamp, display::GameDisplay, game_context::GameContext, input::Input,
+    scene::enter_text_scene::EnterTextStr,
 };
 
 pub enum SceneEnum {
@@ -47,7 +49,9 @@ pub enum SceneEnum {
     EnterDate(enter_date_scene::EnterDateScene),
     PlaceFurniture(place_furniture_scene::PlaceFurnitureScene),
     Breed(breed_scene::BreedScene),
+    Suiters(suiters_scene::SuitersScene),
     EggHatch(egg_hatch::EggHatchScene),
+    PetRecords(pet_records_scene::PetRecordsScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -80,6 +84,8 @@ impl SceneEnum {
             SceneEnum::Evovle(evovle_scene) => evovle_scene,
             SceneEnum::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
             SceneEnum::Breed(breed_scene) => breed_scene,
+            Self::Suiters(suiters_scene) => suiters_scene,
+            SceneEnum::PetRecords(pet_records_scene) => pet_records_scene,
             SceneEnum::EggHatch(egg_hatch) => egg_hatch,
             SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,

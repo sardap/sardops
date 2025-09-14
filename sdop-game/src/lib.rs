@@ -1,3 +1,4 @@
+#![feature(const_option_ops)]
 #![feature(specialization)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
@@ -14,14 +15,15 @@ use crate::{
     fps::FPSCounter,
     game_context::GameContext,
     input::Input,
-    pet::{definition::PET_BABIES, gen_pid},
-    scene::{new_pet_scene::NewPetScene, RenderArgs, SceneEnum, SceneManger, SceneTickArgs},
+    pet::definition::PET_BABIES,
+    scene::{RenderArgs, SceneEnum, SceneManger, SceneTickArgs, new_pet_scene::NewPetScene},
     sim::tick_sim,
 };
 
 mod anime;
 mod assets;
 mod bit_array;
+mod book;
 mod clock;
 mod date_utils;
 mod death;
@@ -51,6 +53,7 @@ mod shop;
 mod sim;
 mod sprite;
 mod stomach;
+mod suiter;
 mod tic_tac_toe;
 mod tv;
 

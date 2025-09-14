@@ -5,63 +5,49 @@ use fixedstr::str32;
 use glam::Vec2;
 
 use crate::{
-    anime::{tick_all_anime, Anime, HasAnime},
-    assets::{self, Image, IMAGE_STOMACH_MASK},
+    Button, WIDTH,
+    anime::{Anime, HasAnime, tick_all_anime},
+    assets::{self, IMAGE_STOMACH_MASK, Image},
     date_utils::DurationExt,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32},
+    display::{CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureLocation, HomeFurnitureRender},
-    geo::{vec2_direction, vec2_distance, Rect},
+    game_context::GameContext,
+    geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
     pc::{PcKind, PcRender},
-    pet::{
-        definition::{PetAnimationSet, PET_ADULTS},
-        gen_pid,
-        render::PetRender,
-    },
-    poop::{update_poop_renders, PoopRender, MAX_POOPS},
+    pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
+    poop::{MAX_POOPS, PoopRender, update_poop_renders},
     scene::{
-        breed_scene::BreedScene, death_scene::DeathScene, egg_hatch::EggHatchScene,
-        evolve_scene::EvolveScene, food_select::FoodSelectScene, game_select::GameSelectScene,
-        inventory_scene::InventoryScene, pet_info_scene::PetInfoScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
+        egg_hatch::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
+        game_select::GameSelectScene, inventory_scene::InventoryScene,
+        pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
-        shop_scene::ShopScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        shop_scene::ShopScene, suiters_scene::SuitersScene,
     },
     sprite::{BasicAnimeSprite, Sprite},
-    tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
-    Button, WIDTH,
+    tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
 
 const WONDER_SPEED: f32 = 5.;
 pub const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+pub const GREATER_WONDER_RECT: Rect = WONDER_RECT.grow(50.);
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum MenuOption {
-    Poop,
     PetInfo,
+    Breed,
+    Poop,
     GameSelect,
     FoodSelect,
     Shop,
     Inventory,
     PlaceFurniture,
+    PetRecords,
 }
-
-const AWAKE_OPTIONS: &[MenuOption] = &[
-    MenuOption::PetInfo,
-    MenuOption::Poop,
-    MenuOption::GameSelect,
-    MenuOption::FoodSelect,
-    MenuOption::Shop,
-    MenuOption::Inventory,
-    MenuOption::PlaceFurniture,
-];
-
-const SLEEP_OPTIONS: &[MenuOption] = &[
-    MenuOption::PetInfo,
-    MenuOption::Inventory,
-    MenuOption::PlaceFurniture,
-];
 
 fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
     let index = current as i32 + change;
@@ -76,20 +62,40 @@ fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
     index as usize
 }
 
-fn get_options(state: State) -> &'static [MenuOption] {
-    match state {
-        State::Wondering
-        | State::WatchingTv {
-            last_checked: _,
-            watch_end: _,
-        }
-        | State::PlayingComputer {
-            watch_end: _,
-            program_end_time: _,
-            program_run_time: _,
-        } => AWAKE_OPTIONS,
-        State::Sleeping => SLEEP_OPTIONS,
+const MENU_OPTIONS_COUNT: usize = core::mem::variant_count::<MenuOption>();
+type MenuOptions = heapless::Vec<MenuOption, MENU_OPTIONS_COUNT>;
+
+// SLOW POINT
+fn get_options(state: State, game_ctx: &GameContext) -> MenuOptions {
+    let mut result = heapless::Vec::new();
+    let _ = result.push(MenuOption::PetInfo);
+    if game_ctx.suiter_system.suiter_waiting() {
+        let _ = result.push(MenuOption::Breed);
     }
+    if game_ctx.inventory.has_any_item() {
+        let _ = result.push(MenuOption::Inventory);
+    }
+    if game_ctx.inventory.has_any_furniture() {
+        let _ = result.push(MenuOption::PlaceFurniture);
+    }
+
+    if game_ctx.poop_count() > 0 {
+        let _ = result.push(MenuOption::Poop);
+    }
+
+    if game_ctx.pet_records.count() > 0 {
+        let _ = result.push(MenuOption::PetRecords);
+    }
+
+    if state != State::Sleeping {
+        let _ = result.push(MenuOption::GameSelect);
+        let _ = result.push(MenuOption::FoodSelect);
+        let _ = result.push(MenuOption::Shop);
+    }
+
+    result.sort_unstable();
+
+    result
 }
 
 const BORDER_HEIGHT: f32 = 1.;
@@ -99,8 +105,15 @@ pub const HOME_SCENE_TOP_BORDER_RECT: Rect = Rect::new_center(
     Vec2::new(WIDTH_F32, BORDER_HEIGHT),
 );
 
+pub const HOME_SCENE_TOP_AREA_RECT: Rect = Rect::new_top_left(
+    Vec2::new(0., 0.),
+    Vec2::new(WIDTH_F32, HOME_SCENE_TOP_BORDER_RECT.y2()),
+);
+
 const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
     Duration::from_secs(30)..Duration::from_mins(3);
+
+const BOOK_POS: Vec2 = Vec2::new(CENTER_X, 90.);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
@@ -115,6 +128,15 @@ enum State {
         program_end_time: Duration,
         watch_end: Duration,
     },
+    ReadingBook {
+        book: ItemKind,
+    },
+}
+
+struct Word {
+    pos: Vec2,
+    dir: Vec2,
+    text: &'static str,
 }
 
 pub struct HomeSceneData {
@@ -122,10 +144,13 @@ pub struct HomeSceneData {
     poops: [Option<PoopRender>; MAX_POOPS],
     target: Vec2,
     food_anime: Anime,
+    options: MenuOptions,
     selected_index: usize,
     sleeping_z: BasicAnimeSprite,
     tv: TvRender,
     pc: PcRender,
+    next_word_spawn: Duration,
+    floating_words: [Option<Word>; 5],
     state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
@@ -138,6 +163,7 @@ impl Default for HomeSceneData {
             poops: [None; MAX_POOPS],
             target: Vec2::default(),
             food_anime: Anime::new(&assets::FRAMES_FOOD_SYMBOL),
+            options: heapless::Vec::new(),
             selected_index: 0,
             sleeping_z: BasicAnimeSprite::new(CENTER_VEC, &assets::FRAMES_SLEEPING_Z),
             tv: TvRender::new(
@@ -150,6 +176,8 @@ impl Default for HomeSceneData {
                 Vec2::new(20., 50.),
                 &assets::FRAMES_PC_PROGRAM_RTS,
             ),
+            floating_words: Default::default(),
+            next_word_spawn: Duration::ZERO,
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
@@ -172,11 +200,6 @@ impl HomeSceneData {
 
         self.state = new_state;
         self.state_elapsed = Duration::ZERO;
-
-        let options = get_options(self.state);
-        if self.selected_index >= options.len() {
-            self.selected_index = 0;
-        }
     }
 }
 
@@ -233,10 +256,11 @@ impl Scene for HomeScene {
             args.game_ctx.home_layout.right,
         );
 
-        args.game_ctx
-            .home
-            .pc
-            .change_random_program(&mut args.game_ctx.rng);
+        args.game_ctx.home.pc.change_program(
+            &mut args.game_ctx.rng,
+            &args.game_ctx.inventory,
+            &args.game_ctx.pet,
+        );
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -281,7 +305,10 @@ impl Scene for HomeScene {
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
             if let Some(egg) = &args.game_ctx.egg {
                 if egg.hatch {
-                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(*egg)));
+                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
+                        *egg,
+                        args.game_ctx.pet.def_id,
+                    )));
                 }
             }
 
@@ -298,55 +325,69 @@ impl Scene for HomeScene {
                     next_pet_id,
                 )));
             }
-
-            if args.game_ctx.pet.should_breed() {
-                return SceneOutput::new(SceneEnum::Breed(BreedScene::new(
-                    args.game_ctx.pet.def_id,
-                    args.game_ctx.pet.upid,
-                    *args.game_ctx.rng.choice(PET_ADULTS.iter()).unwrap(),
-                    gen_pid(&mut args.game_ctx.rng),
-                )));
-            }
         }
 
-        let options = get_options(args.game_ctx.home.state);
+        args.game_ctx.home.options = get_options(args.game_ctx.home.state, &args.game_ctx);
 
         if args.input.pressed(Button::Left) {
-            args.game_ctx.home.selected_index =
-                change_option(options, args.game_ctx.home.selected_index, -1);
+            args.game_ctx.home.selected_index = change_option(
+                &args.game_ctx.home.options,
+                args.game_ctx.home.selected_index,
+                -1,
+            );
         }
         if args.input.pressed(Button::Right) {
-            args.game_ctx.home.selected_index =
-                change_option(options, args.game_ctx.home.selected_index, 1);
+            args.game_ctx.home.selected_index = change_option(
+                &args.game_ctx.home.options,
+                args.game_ctx.home.selected_index,
+                1,
+            );
         }
 
         args.game_ctx.home.state_elapsed += args.delta;
 
         match args.game_ctx.home.state {
             State::Wondering => {
-                // Here is fucky might need to move some stuff from data back into home
                 self.top_render.tick(args);
                 self.left_render.tick(args);
                 self.right_render.tick(args);
 
-                // Rethink this
+                args.game_ctx.home.change_state(State::PlayingComputer {
+                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
+                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
+                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
+                    )),
+                    program_run_time: Duration::ZERO,
+                });
+                return SceneOutput::default();
+
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
-                    let mut options: heapless::Vec<i32, 3> = heapless::Vec::new();
-                    if args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
+                    let mut options: heapless::Vec<i32, 4> = heapless::Vec::new();
+                    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
+                        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
                         && args.game_ctx.inventory.has_item(ItemKind::Screen)
                         && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
                     {
                         let _ = options.push(0);
                     }
-                    if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                    if args.game_ctx.pet.definition().life_stage == LifeStage::Baby
+                        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
+                            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
+                    {
                         let _ = options.push(1);
                     }
-                    if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                    if args
+                        .game_ctx
+                        .pet
+                        .book_history
+                        .has_book_to_read(&args.game_ctx.inventory)
+                    {
                         let _ = options.push(2);
                     }
 
                     if options.len() > 0 {
-                        let option = options[args.game_ctx.rng.usize(0..options.len())];
+                        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
 
                         match option {
                             0 => {
@@ -360,17 +401,34 @@ impl Scene for HomeScene {
                                 });
                             }
                             1 => {
-                                args.game_ctx.home.tv.kind = TvKind::LCD;
+                                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
+                                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                                    let _ = kinds.push(TvKind::LCD);
+                                }
+
+                                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                                    let _ = kinds.push(TvKind::CRT);
+                                }
+                                args.game_ctx.home.tv.kind =
+                                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
+
                                 args.game_ctx.home.change_state(State::WatchingTv {
                                     last_checked: u8::MAX,
                                     watch_end: reset_wonder_end(&mut args.game_ctx.rng),
                                 });
                             }
                             2 => {
-                                args.game_ctx.home.tv.kind = TvKind::CRT;
-                                args.game_ctx.home.change_state(State::WatchingTv {
-                                    last_checked: u8::MAX,
-                                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                                let book_history = &args.game_ctx.pet.book_history;
+                                let inventory = &args.game_ctx.inventory;
+                                args.game_ctx.home.change_state(State::ReadingBook {
+                                    book: book_history.get_reading_book(inventory).unwrap_or(
+                                        book_history
+                                            .pick_random_unread_book(
+                                                &mut args.game_ctx.rng,
+                                                inventory,
+                                            )
+                                            .unwrap_or_default(),
+                                    ),
                                 });
                             }
                             _ => {}
@@ -477,10 +535,11 @@ impl Scene for HomeScene {
                             ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
                     ));
                     // Should probably make it always switch to the OS between programs
-                    args.game_ctx
-                        .home
-                        .pc
-                        .change_random_program(&mut args.game_ctx.rng);
+                    args.game_ctx.home.pc.change_program(
+                        &mut args.game_ctx.rng,
+                        &args.game_ctx.inventory,
+                        &args.game_ctx.pet,
+                    );
                 }
 
                 if args.game_ctx.home.state_elapsed > watch_end {
@@ -493,14 +552,86 @@ impl Scene for HomeScene {
                     }
                 }
             }
+            State::ReadingBook { book } => {
+                args.game_ctx.home.next_word_spawn = args
+                    .game_ctx
+                    .home
+                    .next_word_spawn
+                    .checked_sub(args.delta)
+                    .unwrap_or_default();
+
+                if args.game_ctx.home.next_word_spawn <= Duration::ZERO {
+                    args.game_ctx.home.next_word_spawn =
+                        Duration::from_millis(args.game_ctx.rng.u64(2500..10000));
+
+                    // get first free index
+                    let mut index = 0;
+                    for i in 0..args.game_ctx.home.floating_words.len() {
+                        if args.game_ctx.home.floating_words[i].is_none() {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    const SPEED_RANGE: core::ops::Range<i32> = 5..15;
+
+                    args.game_ctx.home.floating_words[index] = Some(Word {
+                        pos: BOOK_POS,
+                        dir: Vec2::new(
+                            args.game_ctx.rng.i32(-10..10) as f32,
+                            -(args.game_ctx.rng.i32(SPEED_RANGE) as f32),
+                        ),
+                        text: args
+                            .game_ctx
+                            .rng
+                            .choice(book.book_info().word_bank.iter())
+                            .cloned()
+                            .unwrap_or(""),
+                    })
+                }
+
+                for i in 0..args.game_ctx.home.floating_words.len() {
+                    if args.game_ctx.home.floating_words[i].is_some() {
+                        let outside = {
+                            let word = &mut args.game_ctx.home.floating_words[i].as_mut().unwrap();
+                            word.pos += Vec2::new(
+                                word.dir.x * args.delta.as_secs_f32(),
+                                word.dir.y * args.delta.as_secs_f32(),
+                            );
+
+                            GREATER_WONDER_RECT.point_inside(&word.pos)
+                        };
+                        if !outside {
+                            args.game_ctx.home.floating_words[i] = None;
+                        }
+                    }
+                }
+
+                args.game_ctx.home.pet_render.pos = Vec2::new(
+                    CENTER_X,
+                    BOOK_POS.y - book.book_info().open_book.size.y as f32 / 2.,
+                );
+
+                if args.game_ctx.home.state_elapsed > book.book_info().chapter_length() {
+                    args.game_ctx
+                        .pet
+                        .book_history
+                        .get_mut_read(book)
+                        .compelte_chapter();
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
         }
 
         if args.input.pressed(Button::Middle) {
-            match get_options(args.game_ctx.home.state)[args.game_ctx.home.selected_index] {
+            match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
+                MenuOption::Breed => {
+                    return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
+                        args.game_ctx.suiter_system.suiter.unwrap_or_default(),
+                    )));
+                }
                 MenuOption::Poop => {
-                    if args.game_ctx.poops.iter().any(|i| i.is_some()) {
-                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
-                    }
+                    return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
                 }
                 MenuOption::PetInfo => {
                     return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
@@ -520,6 +651,9 @@ impl Scene for HomeScene {
                 MenuOption::PlaceFurniture => {
                     return SceneOutput::new(SceneEnum::PlaceFurniture(PlaceFurnitureScene::new()));
                 }
+                MenuOption::PetRecords => {
+                    return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
+                }
             };
         }
 
@@ -527,7 +661,78 @@ impl Scene for HomeScene {
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
+        const BOTTOM_BORDER_RECT: Rect = Rect::new_center(
+            Vec2::new(CENTER_X, WONDER_RECT.pos_top_left().y + WONDER_RECT.size.y),
+            Vec2::new(WIDTH_F32, BORDER_HEIGHT),
+        );
+
+        const SYMBOL_BUFFER: f32 = 2.;
+        const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
+
+        if matches!(args.game_ctx.home.state, State::Wondering)
+            || matches!(args.game_ctx.home.state, State::Sleeping)
+        {
+            display.render_complex(&self.top_render);
+            display.render_complex(&self.left_render);
+            display.render_complex(&self.right_render);
+        }
+
+        match args.game_ctx.home.state {
+            State::Wondering => {
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
+            State::Sleeping => {
+                display.render_sprite(&args.game_ctx.home.sleeping_z);
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
+            State::WatchingTv {
+                last_checked: _,
+                watch_end: _,
+            } => {
+                display.render_complex(&args.game_ctx.home.tv);
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
+            State::PlayingComputer {
+                watch_end: _,
+                program_end_time: _,
+                program_run_time: _,
+            } => {
+                display.render_complex(&args.game_ctx.home.pc);
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
+            State::ReadingBook { book } => {
+                for word in &args.game_ctx.home.floating_words {
+                    if let Some(word) = word {
+                        display.render_text_complex(
+                            word.pos,
+                            word.text,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                    }
+                }
+
+                display.render_sprite(&args.game_ctx.home.pet_render);
+
+                display.render_image_complex(
+                    BOOK_POS.x as i32,
+                    BOOK_POS.y as i32,
+                    book.book_info().open_book,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_black()
+                        .with_center(),
+                );
+            }
+        }
+
+        display.render_sprites(&args.game_ctx.home.poops);
+
         let pet = &args.game_ctx.pet;
+
+        display.render_rect_solid(HOME_SCENE_TOP_AREA_RECT, false);
 
         let total_filled = pet.stomach_filled / pet.definition().stomach_size;
         display.render_stomach(
@@ -557,47 +762,7 @@ impl Scene for HomeScene {
 
         display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
 
-        const BOTTOM_BORDER_RECT: Rect = Rect::new_center(
-            Vec2::new(CENTER_X, WONDER_RECT.pos_top_left().y + WONDER_RECT.size.y),
-            Vec2::new(WIDTH_F32, BORDER_HEIGHT),
-        );
-
-        const SYMBOL_BUFFER: f32 = 2.;
-        const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
-
-        if matches!(args.game_ctx.home.state, State::Wondering)
-            || matches!(args.game_ctx.home.state, State::Sleeping)
-        {
-            display.render_complex(&self.top_render);
-            display.render_complex(&self.left_render);
-            display.render_complex(&self.right_render);
-        }
-
-        match args.game_ctx.home.state {
-            State::Wondering => {}
-            State::Sleeping => {
-                display.render_sprite(&args.game_ctx.home.sleeping_z);
-            }
-            State::WatchingTv {
-                last_checked: _,
-                watch_end: _,
-            } => {
-                display.render_complex(&args.game_ctx.home.tv);
-            }
-            State::PlayingComputer {
-                watch_end: _,
-                program_end_time: _,
-                program_run_time: _,
-            } => {
-                display.render_complex(&args.game_ctx.home.pc);
-            }
-        }
-
-        display.render_sprite(&args.game_ctx.home.pet_render);
-
-        display.render_sprites(&args.game_ctx.home.poops);
-
-        let options = get_options(args.game_ctx.home.state);
+        let options = &args.game_ctx.home.options;
 
         const SIZE: Vec2 = Vec2::new(
             assets::IMAGE_POOP_SYMBOL.size.x as f32,
@@ -606,6 +771,7 @@ impl Scene for HomeScene {
 
         for i in 0..options.len() {
             let image = match options[i] {
+                MenuOption::Breed => &assets::IMAGE_SYMBOL_BREED,
                 MenuOption::Poop => &assets::IMAGE_POOP_SYMBOL,
                 MenuOption::PetInfo => &assets::IMAGE_INFO_SYMBOL,
                 MenuOption::GameSelect => &assets::IMAGE_GAME_SYMBOL,
@@ -613,6 +779,7 @@ impl Scene for HomeScene {
                 MenuOption::Shop => &assets::IMAGE_SHOP_SYMBOL,
                 MenuOption::Inventory => &assets::IMAGE_SYMBOL_INVENTORY,
                 MenuOption::PlaceFurniture => &assets::IMAGE_SYMBOL_PLACE_FURNITURE,
+                MenuOption::PetRecords => &assets::IMAGE_SYMBOL_RECORDS,
             };
             let x = if args.game_ctx.home.selected_index > 0 {
                 let x_index = i as i32 - args.game_ctx.home.selected_index as i32 + 1;

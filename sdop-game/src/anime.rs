@@ -75,6 +75,10 @@ impl Anime {
         &self.frames[self.current_index].frame
     }
 
+    pub fn last_frame(&self) -> &'static StaticImage {
+        &self.frames[self.frames.len() - 1].frame
+    }
+
     pub fn current_frame_mask(&self) -> Option<&'static StaticImage> {
         if let Some(mask) = &self.masked_frames {
             return Some(mask[self.current_index].frame);

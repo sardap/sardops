@@ -539,8 +539,12 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     let templates: Vec<ItemEntry> = ron::from_str(&contents).unwrap();
 
     let mut enum_def = String::new();
+
+    enum_def.push_str(
+        "#[cfg_attr(feature = \"serde\", derive(serde::Serialize, serde::Deserialize))]\n",
+    );
     enum_def
-        .push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, FromRepr)]\n");
+        .push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, FromRepr, bincode::Encode, bincode::Decode)]\n");
     enum_def.push_str("#[repr(usize)]\n");
     enum_def.push_str("pub enum ItemKind \n{");
     enum_def.push_str("None = 0,");

@@ -4,9 +4,9 @@ use glam::Vec2;
 use crate::{
     anime::HasAnime,
     assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
+    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     shop::ShopItemSet,
     sprite::BasicAnimeSprite,
 };

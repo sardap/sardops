@@ -4,16 +4,15 @@ use glam::Vec2;
 
 use crate::{
     assets::{IMAGE_HEART, IMAGE_HEART_MASK},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     egg::{EggRender, SavedEgg},
     geo::Rect,
     pet::{
-        combine_pid,
+        ParentInfo, PetParents, UniquePetId, combine_pid,
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
-        ParentInfo, PetParents, UniquePetId,
     },
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
 #[derive(PartialEq, Eq)]
@@ -26,9 +25,9 @@ enum State {
 
 pub struct BreedScene {
     left_render: PetRender,
-    left_pid: UniquePetId,
+    left: ParentInfo,
     right_render: PetRender,
-    right_pid: UniquePetId,
+    right: ParentInfo,
     hearts: [f32; 10],
     blinds_y: f32,
     state: State,
@@ -40,22 +39,20 @@ pub struct BreedScene {
 const EGG_Y: f32 = CENTER_Y + 20.;
 
 impl BreedScene {
-    pub fn new(
-        left_def_id: PetDefinitionId,
-        left_pid: UniquePetId,
-        right_def_id: PetDefinitionId,
-        right_pid: UniquePetId,
-    ) -> Self {
+    pub fn new(left: ParentInfo, right: ParentInfo) -> Self {
         Self {
-            left_render: PetRender::new(left_def_id),
-            left_pid,
-            right_render: PetRender::new(right_def_id),
-            right_pid,
+            egg: EggRender::new(
+                Vec2::new(CENTER_X, EGG_Y),
+                combine_pid(left.upid(), right.upid()),
+            ),
+            left_render: PetRender::new(left.def_id()),
+            right_render: PetRender::new(right.def_id()),
+            left: left,
+            right: right,
             hearts: Default::default(),
             blinds_y: 0.,
             state: State::Entering,
             state_elapsed: Duration::ZERO,
-            egg: EggRender::new(Vec2::new(CENTER_X, EGG_Y), combine_pid(left_pid, right_pid)),
             egg_bounce: 0.,
         }
     }
@@ -69,11 +66,8 @@ impl Scene for BreedScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.egg = Some(SavedEgg::new(
-            combine_pid(self.left_pid, self.right_pid),
-            Some(PetParents::new([
-                ParentInfo::new(self.left_pid, self.left_render.def_id()),
-                ParentInfo::new(self.right_pid, self.right_render.def_id()),
-            ])),
+            combine_pid(self.left.upid(), self.right.upid()),
+            Some(PetParents::new([self.left, self.right])),
         ));
     }
 

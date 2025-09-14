@@ -1,22 +1,19 @@
 use core::time::Duration;
 
 use glam::Vec2;
+use heapless::Vec;
 
 use crate::{
     anime::Anime,
     assets::{self, Frame},
     display::{ComplexRender, ComplexRenderOption},
+    items::{ALL_PROGRAMS, Inventory, ItemKind, PROGRAM_COUNT},
+    pet::PetInstance,
 };
 
 const KEY_X_LOCATIONS: &[i8] = &[2, 4, 6, 8, 10, 11, 13, 15, 17, 19, 20, 21, 23];
 
 pub type Program = &'static [Frame];
-
-pub const ALL_PROGRAMS: &[Program] = &[
-    &assets::FRAMES_PC_PROGRAM_OS,
-    &assets::FRAMES_PC_PROGRAM_TIC_TAC_TOE,
-    &assets::FRAMES_PC_PROGRAM_RTS,
-];
 
 pub enum PcKind {
     Desktop,
@@ -57,8 +54,25 @@ impl PcRender {
         }
     }
 
-    pub fn change_random_program(&mut self, rng: &mut fastrand::Rng) {
-        self.program_anime = Anime::new(rng.choice(ALL_PROGRAMS.iter()).unwrap());
+    pub fn change_program(
+        &mut self,
+        rng: &mut fastrand::Rng,
+        inventory: &Inventory,
+        pet: &PetInstance,
+    ) {
+        let mut owned: Vec<Program, PROGRAM_COUNT> = Vec::new();
+        for item in ALL_PROGRAMS {
+            if inventory.has_item(item)
+                && (item != ItemKind::ProgramCCompiler
+                    || pet.book_history.get_read(item).completed())
+            {
+                let _ = owned.push(item.program().unwrap_or_default());
+            }
+        }
+        if owned.len() == 0 {
+            let _ = owned.push(&assets::FRAMES_PC_PROGRAM_OS);
+        }
+        self.program_anime = Anime::new(rng.choice(owned.iter()).unwrap());
     }
 }
 

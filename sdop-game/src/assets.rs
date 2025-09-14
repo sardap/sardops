@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use glam::{usize, U8Vec2, Vec2};
+use glam::{U8Vec2, Vec2, usize};
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 
@@ -19,6 +19,12 @@ pub trait Image {
 pub struct StaticImage {
     pub size: U8Vec2,
     pub texture: &'static [u8],
+}
+
+impl StaticImage {
+    pub const fn const_size_vec2(&self) -> Vec2 {
+        Vec2::new(self.size.x as f32, self.size.y as f32)
+    }
 }
 
 impl Image for StaticImage {

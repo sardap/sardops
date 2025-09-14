@@ -4,11 +4,11 @@ use glam::Vec2;
 
 use crate::{
     anime::tick_all_anime,
-    display::{GameDisplay, CENTER_VEC, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_VEC, GameDisplay, HEIGHT_F32, WIDTH_F32},
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
-    poop::{update_poop_renders, PoopRender, MAX_POOPS},
-    scene::{home_scene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    poop::{MAX_POOPS, PoopRender, update_poop_renders},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene},
 };
 
 const WIPE_SPEED: f32 = 20.;

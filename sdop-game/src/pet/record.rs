@@ -1,9 +1,14 @@
+use core::time::Duration;
+
 use bincode::{Decode, Encode};
 
 use crate::{
-    death::DeathCause,
-    pet::{definition::PetDefinitionId, PetInstance, PetName, PetParents, UniquePetId},
     Timestamp,
+    death::DeathCause,
+    pet::{
+        PetInstance, PetName, PetParents, UniquePetId,
+        definition::{PetDefinition, PetDefinitionId},
+    },
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -36,6 +41,14 @@ impl PetRecord {
             parents: pet_instance.parents,
         }
     }
+
+    pub fn age(&self) -> Duration {
+        self.death - self.born
+    }
+
+    pub fn weight(&self) -> f32 {
+        self.extra_weight + PetDefinition::get_by_id(self.def_id).base_weight
+    }
 }
 
 pub const PET_HISTORY_ENTRIES: usize = 20;
@@ -51,6 +64,26 @@ impl PetHistory {
     pub fn add(&mut self, entry: PetRecord) {
         self.entires[self.top] = Some(entry);
         self.top += 1;
+    }
+
+    pub fn get_by_index(&self, index: usize) -> Option<&PetRecord> {
+        self.entires.get(index)?.as_ref()
+    }
+
+    pub fn get_by_upid(&self, upid: UniquePetId) -> Option<&PetRecord> {
+        for entry in &self.entires {
+            if let Some(entry) = entry
+                && entry.upid == upid
+            {
+                return Some(entry);
+            }
+        }
+
+        return None;
+    }
+
+    pub fn count(&self) -> usize {
+        self.top
     }
 }
 

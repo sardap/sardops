@@ -42,6 +42,9 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
             if pet.should_poop(sleeping) {
                 add_poop(&mut args.game_ctx.poops, args.timestamp);
             }
+            args.game_ctx
+                .suiter_system
+                .sim_tick(delta, &mut args.game_ctx.rng, pet, sleeping);
         }
     }
 }

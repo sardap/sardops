@@ -3,7 +3,7 @@ use glam::Vec2;
 use crate::{
     anime::Anime,
     assets::Image,
-    pet::definition::{PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID},
+    pet::definition::{PET_BLOB_ID, PetAnimationSet, PetDefinition, PetDefinitionId},
     sprite::{Sprite, SpriteMask},
 };
 

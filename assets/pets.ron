@@ -14,7 +14,7 @@
     ),
     PetTemplate(
         name: "pawn white",
-        life_stage: Adult,
+        life_stage: Child,
         stomach_size: 40,
         base_weight: 200,
         images: PetImageSet(

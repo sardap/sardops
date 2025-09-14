@@ -9,7 +9,7 @@ ENV DEVKITARM=${DEVKITPRO}/devkitARM
 ENV PATH=${DEVKITPRO}/tools/bin:$PATH
 ENV PATH=${DEVKITARM}/bin:$PATH
 
-ENV RUST_TOOLCHAIN=nightly-2025-07-23
+ENV RUST_TOOLCHAIN=nightly-2025-09-08
 
 RUN apt-get update && \
     apt-get install -y make zip gcc g++ gcc-arm-none-eabi clang libsdl2-image-dev libsdl2-dev cmake && \

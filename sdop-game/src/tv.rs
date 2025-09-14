@@ -31,6 +31,7 @@ pub fn get_show_for_time(date_time: &NaiveDateTime) -> Show {
     SHOWS[rng.usize(0..SHOWS.len())]
 }
 
+#[derive(Copy, Clone)]
 pub enum TvKind {
     CRT,
     LCD,
