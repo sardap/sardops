@@ -32,10 +32,6 @@ jobs:
     # container: psarda/sdop_builder:latest
     steps:
       - uses: actions/checkout@v3
-      - name: Cache Docker images.
-        uses: ScribeMD/docker-cache@0.5.0
-        with:
-          key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
       - name: Build all
         run: sudo chown -R 1000:1000 .
       - name: Build all

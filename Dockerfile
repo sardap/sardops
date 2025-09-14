@@ -13,7 +13,7 @@ ENV PATH=${DEVKITARM}/bin:$PATH
 ENV RUST_TOOLCHAIN=nightly-2025-09-08
 
 RUN apt-get update && \
-    apt-get install -y make zip gcc g++ gcc-arm-none-eabi clang libsdl2-image-dev libsdl2-dev cmake && \
+    apt-get install --no-install-recommends -y make zip gcc g++ gcc-arm-none-eabi clang libsdl2-image-dev libsdl2-dev cmake && \
     cargo install agb-gbafix && \
     cargo install trunk && \
     cargo install --locked cargo-3ds && \
@@ -23,7 +23,9 @@ RUN apt-get update && \
     rustup target add thumbv8m.main-none-eabihf --toolchain ${RUST_TOOLCHAIN} && \
     rustup component add rust-src --toolchain ${RUST_TOOLCHAIN} && \
     rustup component add clippy --toolchain ${RUST_TOOLCHAIN} && \
-    rustup component add rustfmt --toolchain ${RUST_TOOLCHAIN}
+    rustup component add rustfmt --toolchain ${RUST_TOOLCHAIN} && \
+    cargo install cargo-cache && \
+    cargo cache -a
 
 RUN useradd -ms /bin/bash builder
 USER builder
@@ -36,5 +38,7 @@ RUN chown -R builder:builder ${DEVKITPRO}
 
 RUN apt-get install -y nodejs
 USER builder
+
+USER root
 
 WORKDIR /app
