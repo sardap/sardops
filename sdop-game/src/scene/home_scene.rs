@@ -352,16 +352,6 @@ impl Scene for HomeScene {
                 self.left_render.tick(args);
                 self.right_render.tick(args);
 
-                args.game_ctx.home.change_state(State::PlayingComputer {
-                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
-                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
-                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
-                    )),
-                    program_run_time: Duration::ZERO,
-                });
-                return SceneOutput::default();
-
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
                     let mut options: heapless::Vec<i32, 4> = heapless::Vec::new();
                     if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
