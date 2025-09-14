@@ -1,13 +1,13 @@
 use glam::Vec2;
 
 use crate::{
+    Button,
     assets::{self, Image},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::Rect,
-    items::ItemKind,
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    Button,
+    items::{ITEM_COUNT, ItemKind},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -136,7 +136,7 @@ impl Scene for PlaceFurnitureScene {
 
                 let mut dirty = false;
                 if args.input.pressed(Button::Left) {
-                    loop {
+                    for _ in 0..ITEM_COUNT {
                         selected.kind = selected.kind.change(-1);
                         if args
                             .game_ctx
@@ -149,7 +149,7 @@ impl Scene for PlaceFurnitureScene {
                     dirty = true;
                 }
                 if args.input.pressed(Button::Right) {
-                    loop {
+                    for _ in 0..ITEM_COUNT {
                         selected.kind = selected.kind.change(1);
                         if args
                             .game_ctx

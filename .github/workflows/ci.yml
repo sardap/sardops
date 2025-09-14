@@ -19,7 +19,7 @@ jobs:
           key: ubuntu-latest-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2025-07-23
+          toolchain: nightly-2025-09-08
           components: rustfmt, clippy
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
@@ -32,10 +32,6 @@ jobs:
     # container: psarda/sdop_builder:latest
     steps:
       - uses: actions/checkout@v3
-      - name: Cache Docker images.
-        uses: ScribeMD/docker-cache@0.5.0
-        with:
-          key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
       - name: Build all
         run: sudo chown -R 1000:1000 .
       - name: Build all

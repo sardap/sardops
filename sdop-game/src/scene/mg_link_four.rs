@@ -3,15 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    Button, Timestamp,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay},
     geo::Rect,
-    link_four::{BestMoveSearch, Game, GameStatus, Side, COLUMNS},
+    link_four::{BestMoveSearch, COLUMNS, Game, GameStatus, Side},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    Button, Timestamp,
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
 };
 
 enum State {

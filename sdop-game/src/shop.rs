@@ -2,8 +2,8 @@ use bincode::{Decode, Encode};
 use chrono::Datelike;
 
 use crate::{
-    items::{ItemKind, COMMON_ITEMS, RARE_ITEMS},
     Timestamp,
+    items::{COMMON_ITEMS, ItemKind, RARE_ITEMS},
 };
 
 const MAX_SHOP_ITEMS: usize = 10;

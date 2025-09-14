@@ -1,10 +1,10 @@
 use core::f32;
 
 use embedded_graphics::prelude::*;
-use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
+use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
 
-use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
+use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
 use crate::sprite::SpriteMask;
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
@@ -63,6 +63,7 @@ pub struct ComplexRenderOption {
     font: &'static Font,
     font_wrapping_x: Option<i32>,
     rotation: Rotation,
+    invert: bool,
 }
 
 impl ComplexRenderOption {
@@ -74,6 +75,7 @@ impl ComplexRenderOption {
             font: &FONT_MONOSPACE_8X8,
             font_wrapping_x: None,
             rotation: Rotation::R0,
+            invert: false,
         }
     }
 
@@ -133,6 +135,11 @@ impl ComplexRenderOption {
 
     pub const fn with_font_wrapping_x(mut self, x: i32) -> Self {
         self.font_wrapping_x = Some(x);
+        self
+    }
+
+    pub const fn with_invert(mut self) -> Self {
+        self.invert = true;
         self
     }
 }
@@ -214,7 +221,11 @@ impl GameDisplay {
                 let dy = y_plus + ry;
 
                 if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
-                    self.render_point(dx, dy, bit_set);
+                    if options.invert {
+                        self.render_point(dx, dy, !self.bits.get_bit(dx as usize, dy as usize));
+                    } else {
+                        self.render_point(dx, dy, bit_set);
+                    }
                 }
             }
         }
@@ -374,7 +385,7 @@ impl GameDisplay {
                     max = image.size.y;
                 }
             }
-            max
+            max + 1
         } as f32;
 
         let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
@@ -516,7 +527,7 @@ impl GameDisplay {
     }
 
     pub fn render_fps(&mut self, fps: &FPSCounter) {
-        use fixedstr::{str16, str_format};
+        use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
             Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 10.)),

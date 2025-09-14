@@ -10,15 +10,15 @@ use crate::{
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
     display::{
-        ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
     },
     geo::Rect,
     pet::{
-        definition::{PetAnimationSet, PetDefinitionId, PET_BABIES},
+        definition::{PET_BABIES, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
         render::PetRender,
     },
-    scene::{new_pet_scene::NewPetScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
     sprite::{BasicAnimeSprite, Sprite},
     stomach::StomachRender,
 };
@@ -166,7 +166,14 @@ impl Scene for DeathScene {
         }
     }
 
-    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+    fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.poops = Default::default();
+        args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
+            &args.game_ctx.pet,
+            args.timestamp,
+            self.cause,
+        ));
+    }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.state_elapsed += args.delta;
@@ -269,11 +276,6 @@ impl Scene for DeathScene {
                 self.pet_render.set_animation(PetAnimationSet::Sad);
 
                 if args.input.any_pressed() {
-                    args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
-                        &args.game_ctx.pet,
-                        args.timestamp,
-                        self.cause,
-                    ));
                     return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(
                         args.game_ctx.rng.choice(PET_BABIES).unwrap(),
                         false,

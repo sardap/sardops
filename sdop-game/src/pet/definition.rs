@@ -1,10 +1,10 @@
 use chrono::Timelike;
 
 use crate::{
+    Timestamp,
     assets::{self, MaskedFramesSet},
     food::Food,
     pet::LifeStage,
-    Timestamp,
 };
 use const_for::const_for;
 

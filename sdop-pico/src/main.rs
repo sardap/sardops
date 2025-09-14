@@ -71,16 +71,16 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
+    let mut left_button = pins.gpio13.into_pull_up_input();
+    let mut middle_button = pins.gpio12.into_pull_up_input();
+    let mut right_button = pins.gpio11.into_pull_up_input();
+
     let mut timer = hal::Timer::new_timer0(pac.TIMER0, &mut pac.RESETS, &clocks);
 
     // The logic for the I2C & OLED starts here
 
     let sda_pin: Pin<_, FunctionI2C, _> = pins.gpio18.reconfigure();
     let scl_pin: Pin<_, FunctionI2C, _> = pins.gpio19.reconfigure();
-
-    let mut left_button = pins.gpio13.into_pull_up_input();
-    let mut middle_button = pins.gpio12.into_pull_up_input();
-    let mut right_button = pins.gpio11.into_pull_up_input();
 
     let i2c = hal::I2C::i2c1(
         pac.I2C1,
@@ -118,17 +118,17 @@ fn main() -> ! {
         timestamp = timestamp + delta;
 
         let inputs = [
-            if left_button.is_low().unwrap() {
+            if left_button.is_low().unwrap_or(false) {
                 sdop_game::ButtonState::Down
             } else {
                 sdop_game::ButtonState::Up
             },
-            if middle_button.is_low().unwrap() {
+            if middle_button.is_low().unwrap_or(false) {
                 sdop_game::ButtonState::Down
             } else {
                 sdop_game::ButtonState::Up
             },
-            if right_button.is_low().unwrap() {
+            if right_button.is_low().unwrap_or(false) {
                 sdop_game::ButtonState::Down
             } else {
                 sdop_game::ButtonState::Up
@@ -138,16 +138,18 @@ fn main() -> ! {
         if Duration::from_micros((now - last_save).to_micros()) > Duration::from_secs(5) {
             last_save = now;
             // TODO
+            if let Some(save) = game.get_save(timestamp) {}
         }
 
         game.update_input_states(inputs);
         game.tick(delta);
         game.refresh_display(delta);
 
-        game.drawable(|c| c).draw(&mut display).unwrap();
-        display.flush().unwrap();
+        if game.drawable(|c| c).draw(&mut display).is_err() || display.flush().is_err() {
+            while display.init().is_err() {}
+        }
 
-        const TARGET_FPS: u64 = 15;
+        const TARGET_FPS: u64 = 20;
         const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / TARGET_FPS);
 
         let now = timer.get_counter();

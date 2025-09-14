@@ -4,6 +4,7 @@ use bincode::{Decode, Encode};
 use glam::{I8Vec2, Vec2};
 
 use crate::{
+    anime::Anime,
     assets,
     death::passed_threshold_chance,
     display::{ComplexRender, ComplexRenderOption, GameDisplay},
@@ -131,6 +132,7 @@ const EGG_DOT_POSTIONS: &[I8Vec2] = &[
 
 pub struct EggRender {
     pub pos: Vec2,
+    crack_anime: Anime,
     dots: [isize; 15],
 }
 
@@ -138,6 +140,7 @@ impl Default for EggRender {
     fn default() -> Self {
         Self {
             pos: Default::default(),
+            crack_anime: Anime::new(&assets::FRAMES_EGG_CRACK_MASK),
             dots: Default::default(),
         }
     }
@@ -145,14 +148,22 @@ impl Default for EggRender {
 
 impl EggRender {
     pub fn new(pos: Vec2, pid: UniquePetId) -> Self {
-        let mut result = EggRender {
-            pos,
-            dots: Default::default(),
-        };
+        let mut result = EggRender::default();
+        result.pos = pos;
 
         result.set_pid(pid);
 
         result
+    }
+
+    pub fn cracked(&self) -> bool {
+        self.crack_anime.current_frame() == self.crack_anime.last_frame()
+    }
+
+    pub fn tick(&mut self, delta: Duration) {
+        if !self.cracked() {
+            self.crack_anime.tick(delta);
+        }
     }
 
     pub fn set_pid(&mut self, pid: UniquePetId) {
@@ -216,5 +227,12 @@ impl ComplexRender for EggRender {
                 false,
             );
         }
+
+        display.render_image_complex(
+            self.pos.x as i32,
+            self.pos.y as i32,
+            self.crack_anime.current_frame(),
+            ComplexRenderOption::new().with_black().with_center(),
+        );
     }
 }

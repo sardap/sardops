@@ -4,20 +4,21 @@ use bincode::{Decode, Encode};
 use heapless::Vec;
 
 use crate::{
-    death::{passed_threshold_chance, DeathCause},
+    Timestamp,
+    book::BookHistory,
+    death::{DeathCause, passed_threshold_chance},
     food::Food,
     game_consts::{
-        BREED_ODDS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_BY_TOXIC_SHOCK_LARGE,
-        DEATH_BY_TOXIC_SHOCK_SMALL, DEATH_CHECK_INTERVAL, DEATH_STARVE_THRESHOLDS,
-        EVOLVE_CHECK_INTERVERAL, HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL,
+        BREED_ODDS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
+        DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
+        HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     pet::definition::{
-        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BALLOTEE_ID, PET_BEERIE_ID,
-        PET_CKCS_ID, PET_COMPUTIE_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID,
+        PET_BALLOTEE_ID, PET_BEERIE_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_DEVIL_ID, PET_HUMBIE_ID,
+        PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
     },
-    poop::{poop_count, Poop, MAX_POOPS},
-    Timestamp,
+    poop::{Poop, poop_count},
 };
 
 pub mod definition;
@@ -25,6 +26,15 @@ pub mod record;
 pub mod render;
 
 pub type PetName = fixedstr::str7;
+
+pub fn random_name(rng: &mut fastrand::Rng) -> PetName {
+    let mut result = PetName::new();
+
+    let name = rng.choice(RANDOM_NAMES.iter()).cloned().unwrap_or("");
+    result.push(name);
+
+    result
+}
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
@@ -38,18 +48,33 @@ pub enum StomachMood {
 pub struct ParentInfo {
     upid: UniquePetId,
     def_id: PetDefinitionId,
+    name: PetName,
 }
 
 impl ParentInfo {
-    pub const fn new(upid: UniquePetId, def_id: PetDefinitionId) -> Self {
-        Self { upid, def_id }
+    pub fn upid(&self) -> UniquePetId {
+        self.upid
+    }
+
+    pub fn def_id(&self) -> PetDefinitionId {
+        self.def_id
+    }
+
+    pub fn name(&self) -> &PetName {
+        &self.name
+    }
+}
+
+impl ParentInfo {
+    pub const fn new(upid: UniquePetId, def_id: PetDefinitionId, name: PetName) -> Self {
+        Self { upid, def_id, name }
     }
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct PetParents {
-    values: [ParentInfo; 2],
+    pub values: [ParentInfo; 2],
 }
 
 impl PetParents {
@@ -68,6 +93,13 @@ pub fn combine_pid(a: UniquePetId, b: UniquePetId) -> UniquePetId {
 
 pub fn gen_pid(rng: &mut fastrand::Rng) -> UniquePetId {
     rng.u64(u64::MIN..0xFFFFFFFFFF)
+}
+
+pub fn location_from_upid(upid: UniquePetId) -> (&'static str, u8) {
+    let mut rng = fastrand::Rng::with_seed(upid);
+    let planet = rng.choice(SPLACE_LOCATIONS.iter()).unwrap();
+    let mut number = rng.u8(u8::MIN..u8::MAX);
+    (planet, number)
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -92,6 +124,7 @@ pub struct PetInstance {
     pub parents: Option<PetParents>,
     mood: Mood,
     should_breed: bool,
+    pub book_history: BookHistory,
 }
 
 impl PetInstance {
@@ -115,7 +148,7 @@ impl PetInstance {
     }
 
     pub fn tick_hunger(&mut self, delta: Duration, sleep: bool) {
-        const GRAMS_LOSS_PER_SECOND: f32 = 1.;
+        const GRAMS_LOSS_PER_SECOND: f32 = 0.005;
         let sleep_modifer = if sleep { 0.4 } else { 1. };
         self.extra_weight = (self.extra_weight
             - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
@@ -174,7 +207,7 @@ impl PetInstance {
 
         self.since_death_check += delta;
 
-        if self.since_death_check > DEATH_CHECK_INTERVAL {
+        if self.since_death_check > DEATH_CHECK_INTERVERAL {
             // Random death
             if rng.f32() < DEATH_BY_LIGHTING_STRIKE_ODDS {
                 self.should_die = Some(DeathCause::LightingStrike);
@@ -191,18 +224,8 @@ impl PetInstance {
                 self.should_die = Some(DeathCause::OldAge);
             }
 
-            if !sleep {
-                if poop_count >= MAX_POOPS as u8 {
-                    if rng.f32() < DEATH_BY_TOXIC_SHOCK_LARGE {
-                        self.should_die = Some(DeathCause::ToxicShock);
-                        return;
-                    }
-                } else if poop_count >= (MAX_POOPS / 2) as u8 {
-                    if rng.f32() < DEATH_BY_TOXIC_SHOCK_SMALL {
-                        self.should_die = Some(DeathCause::ToxicShock);
-                        return;
-                    }
-                }
+            if !sleep && passed_threshold_chance(rng, DEATH_TOXIC_SHOCK_THRESHOLD, poop_count) {
+                self.should_die = Some(DeathCause::ToxicShock);
             }
 
             self.since_death_check = Duration::ZERO;
@@ -272,6 +295,7 @@ impl PetInstance {
                 let _ = possible.push(PET_BEERIE_ID);
                 let _ = possible.push(PET_WAS_GAURD_ID);
                 let _ = possible.push(PET_BALLOTEE_ID);
+                let _ = possible.push(PET_DEVIL_ID);
                 if inv.has_item(ItemKind::PersonalComputer)
                     && inv.has_item(ItemKind::Screen)
                     && inv.has_item(ItemKind::Keyboard)
@@ -288,13 +312,14 @@ impl PetInstance {
         self.should_evolve = rng.choice(possible.iter()).cloned();
     }
 
-    pub fn should_evolve(&mut self) -> Option<PetDefinitionId> {
+    pub fn should_evolve(&self) -> Option<PetDefinitionId> {
         self.should_evolve
     }
 
     pub fn evolve(&mut self, next: PetDefinitionId) {
         self.life_stage_age = Duration::ZERO;
         self.def_id = next;
+        self.should_evolve = None;
     }
 
     pub fn stomach_mood(&self) -> StomachMood {
@@ -381,6 +406,7 @@ impl Default for PetInstance {
             parents: None,
             mood: Mood::Normal,
             should_breed: false,
+            book_history: Default::default(),
         }
     }
 }

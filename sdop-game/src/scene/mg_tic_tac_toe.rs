@@ -3,15 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    Button, Timestamp,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay},
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
     tic_tac_toe::{
-        BestMoveSearch, BoardStatus, Side, Square, TicTacToeGame, TicTacToeOpponent,
-        TIC_TAC_TOE_OPPONENT,
+        BestMoveSearch, BoardStatus, Side, Square, TIC_TAC_TOE_OPPONENT, TicTacToeGame,
+        TicTacToeOpponent,
     },
-    Button, Timestamp,
 };
 
 enum State {

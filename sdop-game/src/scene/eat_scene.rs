@@ -3,15 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
+    Timestamp,
     assets::{DynamicImage, IMAGE_STOMACH_MASK},
-    display::{GameDisplay, CENTER_VEC, CENTER_X},
+    display::{CENTER_VEC, CENTER_X, GameDisplay},
     food::Food,
     pet::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    Timestamp,
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
 #[derive(Clone, Copy)]

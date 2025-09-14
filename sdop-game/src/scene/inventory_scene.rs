@@ -1,17 +1,19 @@
+use bincode::Encode;
 use fixedstr::str_format;
 use glam::Vec2;
 use strum::IntoEnumIterator;
 
 use crate::{
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
+    Button,
+    date_utils::DurationExt,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
-    items::{Inventory, ItemKind, ITEM_COUNT},
+    items::{ITEM_COUNT, Inventory, ItemKind},
     scene::{
-        home_scene::{self},
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        home_scene::{self},
     },
-    Button,
 };
 
 fn change_item(inventory: &Inventory, current: usize, change: i32) -> usize {
@@ -88,6 +90,9 @@ impl Scene for InventoryScene {
                         if let Some(scene) = output.new_scene {
                             return SceneOutput::new(scene);
                         }
+                    } else if item.toggleable() {
+                        let entry = args.game_ctx.inventory.get_entry_mut(item);
+                        entry.item_extra.enabled = !entry.item_extra.enabled;
                     }
 
                     if !args.game_ctx.inventory.has_item(item) {
@@ -106,7 +111,6 @@ impl Scene for InventoryScene {
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
-        let inventory = &args.game_ctx.inventory;
         let item = ItemKind::iter()
             .nth(self.selected_index)
             .unwrap_or_default();
@@ -118,14 +122,14 @@ impl Scene for InventoryScene {
                     let str =
                         str_format!(fixedstr::str32, "#{} {} ", self.selected_index, item.name());
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
+                        Vec2::new(5., y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
-                            .with_center()
-                            .with_font(&FONT_VARIABLE_SMALL),
+                            .with_font(&FONT_VARIABLE_SMALL)
+                            .with_font_wrapping_x((WIDTH_F32 - 10.) as i32),
                     );
-                    y += 7.
+                    y += 14.
                 }
 
                 display.render_image_complex(
@@ -140,7 +144,11 @@ impl Scene for InventoryScene {
                     let str = if item.unique() {
                         str_format!(fixedstr::str32, "OWN")
                     } else {
-                        str_format!(fixedstr::str32, "OWN: {}", inventory.item_count(item))
+                        str_format!(
+                            fixedstr::str32,
+                            "OWN: {}",
+                            args.game_ctx.inventory.item_count(item)
+                        )
                     };
 
                     display.render_text_complex(
@@ -151,7 +159,47 @@ impl Scene for InventoryScene {
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += 5.
+                    y += 7.
+                }
+
+                if item.is_book() {
+                    let read = args.game_ctx.pet.book_history.get_read(item);
+                    let completed = read.chapters();
+
+                    let str = fixedstr::str_format!(
+                        fixedstr::str12,
+                        "{} / {}",
+                        completed,
+                        item.book_info().chapters
+                    );
+
+                    display.render_text_complex(
+                        Vec2::new(CENTER_X, y),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 7.;
+
+                    let str = fixedstr::str_format!(
+                        fixedstr::str12,
+                        "Length {} mins",
+                        item.book_info().length.as_mins()
+                    );
+
+                    display.render_text_complex(
+                        Vec2::new(CENTER_X, y),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 7.;
                 }
 
                 display.render_text_complex(
@@ -160,9 +208,10 @@ impl Scene for InventoryScene {
                     ComplexRenderOption::new()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL)
-                        .with_font_wrapping_x((WIDTH_F32 - 5.) as i32),
+                        .with_font_wrapping_x((WIDTH_F32 - 10.) as i32),
                 );
-                y = HEIGHT_F32 - 20.;
+
+                y = HEIGHT_F32 - 10.;
 
                 if item.is_usable(args.game_ctx) {
                     display.render_text_complex(
@@ -174,6 +223,21 @@ impl Scene for InventoryScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     let rect = Rect::new_center(Vec2::new(CENTER_X, y), Vec2::new(20., 10.));
+                    display.render_rect_outline(rect, true);
+                } else if item.toggleable() {
+                    display.render_text_complex(
+                        Vec2::new(CENTER_X, y),
+                        if args.game_ctx.inventory.get_entry(item).item_extra.enabled {
+                            "ENABLED"
+                        } else {
+                            "DISABLED"
+                        },
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    let rect = Rect::new_center(Vec2::new(CENTER_X, y + 6.), Vec2::new(20., 1.));
                     display.render_rect_outline(rect, true);
                 }
             }

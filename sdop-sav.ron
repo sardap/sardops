@@ -1,26 +1,26 @@
 (
     pet: (
-        upid: 706530727222,
-        def_id: 8,
-        name: "9     ",
-        born: ("2025-09-07T08:54:08.553333240"),
+        upid: 785766946605,
+        def_id: 0,
+        name: "c     ",
+        born: ("2025-09-13T22:26:14.519933076"),
         age: (
-            secs: 4,
-            nanos: 253627700,
+            secs: 59,
+            nanos: 765581753,
         ),
         life_stage_age: (
-            secs: 4,
-            nanos: 253627700,
+            secs: 59,
+            nanos: 765581753,
         ),
-        stomach_mood: Starving(
+        stomach_mood: Full(
             elapsed: (
-                secs: 4,
-                nanos: 253627700,
+                secs: 0,
+                nanos: 0,
             ),
         ),
         total_starve_time: (
-            secs: 4,
-            nanos: 236881788,
+            secs: 0,
+            nanos: 0,
         ),
         stomach_filled: 0.0,
         extra_weight: 0.0,
@@ -29,22 +29,46 @@
             nanos: 0,
         ),
         since_game: (
-            secs: 4,
-            nanos: 253627700,
+            secs: 0,
+            nanos: 0,
         ),
         since_death_check: (
-            secs: 4,
-            nanos: 253627700,
+            secs: 0,
+            nanos: 0,
         ),
         since_evolve_check: (
-            secs: 4,
-            nanos: 253627700,
+            secs: 59,
+            nanos: 765581753,
         ),
         should_die: None,
         should_evolve: None,
         parents: None,
-        mood: Sad,
+        mood: Happy,
         should_breed: false,
+        book_history: (
+            books: ((
+                item: BookVic19811992,
+                chapters: 0,
+            ), (
+                item: BookNevileWran,
+                chapters: 0,
+            ), (
+                item: BookCProgramming,
+                chapters: 0,
+            ), (
+                item: BookDracula,
+                chapters: 0,
+            ), (
+                item: BookGreatGatsby,
+                chapters: 0,
+            ), (
+                item: BookEpicOfGilgamesh,
+                chapters: 0,
+            ), (
+                item: BookHomersOdyssey,
+                chapters: 0,
+            )),
+        ),
     ),
     poops: (None, None, None, None, None),
     money: 0,
@@ -53,131 +77,229 @@
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 5,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
+            ),
+        ), (
+            owned: 1,
+            item_extra: (
+                uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 2,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         ), (
             owned: 1,
             item_extra: (
                 uses: 0,
+                enabled: false,
             ),
         )),
     ),
@@ -196,6 +318,13 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-09-07T08:54:10.563699154"),
+    last_timestamp: ("2025-09-13T12:26:44.027044925"),
     egg: None,
+    suiter_system: (
+        suiter: None,
+        waiting_for_suiter: (
+            secs: 0,
+            nanos: 0,
+        ),
+    ),
 )

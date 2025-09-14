@@ -2,15 +2,15 @@ use chrono::NaiveDateTime;
 use fixedstr::str_format;
 
 use crate::{
+    Timestamp,
     display::GameDisplay,
-    pet::{definition::PetDefinitionId, gen_pid, PetInstance, PetName, PetParents, UniquePetId},
+    pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
     scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
         home_scene::HomeScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    Timestamp,
 };
 
 #[derive(Clone)]

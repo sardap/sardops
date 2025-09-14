@@ -1,19 +1,20 @@
 use bincode::{
-    error::{DecodeError, EncodeError},
     Decode, Encode,
+    error::{DecodeError, EncodeError},
 };
 
 use crate::{
+    Game, Timestamp,
     egg::SavedEgg,
     fish_tank::HomeFishTank,
     furniture::HomeLayout,
     game_context::GameContext,
     items::Inventory,
     money::Money,
-    pet::{record::PetHistory, PetInstance},
-    poop::{Poop, MAX_POOPS},
+    pet::{PetInstance, record::PetHistory},
+    poop::{MAX_POOPS, Poop},
     shop::Shop,
-    Game, Timestamp,
+    suiter::SuiterSystem,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -29,6 +30,7 @@ pub struct SaveFile {
     pub home_layout: HomeLayout,
     pub last_timestamp: Timestamp,
     pub egg: Option<SavedEgg>,
+    pub suiter_system: SuiterSystem,
 }
 
 impl Default for SaveFile {
@@ -44,6 +46,7 @@ impl Default for SaveFile {
             home_layout: Default::default(),
             last_timestamp: Default::default(),
             egg: Default::default(),
+            suiter_system: Default::default(),
         }
     }
 }
@@ -64,6 +67,7 @@ impl SaveFile {
             fish_tank: game_ctx.home_fish_tank,
             home_layout: game_ctx.home_layout,
             egg: game_ctx.egg,
+            suiter_system: game_ctx.suiter_system,
             last_timestamp: timestamp,
         }
     }
@@ -77,6 +81,7 @@ impl SaveFile {
         game_ctx.pet_records = self.pet_records;
         game_ctx.home_fish_tank = self.fish_tank;
         game_ctx.home_layout = self.home_layout;
+        game_ctx.suiter_system = self.suiter_system;
         game_ctx.egg = self.egg;
     }
 

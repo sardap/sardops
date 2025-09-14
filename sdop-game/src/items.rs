@@ -1,13 +1,19 @@
+use core::time::Duration;
+
 use bincode::{Decode, Encode};
 use const_for::const_for;
 use glam::usize;
+use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 use crate::{
+    assets,
+    book::BookInfo,
     food::STARTING_FOOD,
     furniture::HomeFurnitureKind,
     game_context::GameContext,
-    scene::{fishing_scene, SceneEnum},
+    pc::Program,
+    scene::{SceneEnum, fishing_scene},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
@@ -63,6 +69,219 @@ impl ItemKind {
             ItemKind::InvetroLight => HomeFurnitureKind::InvertroLight,
             _ => return None,
         })
+    }
+
+    pub const fn program(&self) -> Option<Program> {
+        Some(match self {
+            ItemKind::ProgramTicTacToe => &assets::FRAMES_PC_PROGRAM_TIC_TAC_TOE,
+            ItemKind::ProgramDopCraft => &assets::FRAMES_PC_PROGRAM_RTS,
+            ItemKind::ProgramCCompiler => &assets::FRAMES_PC_PROGRAM_C_COMPILER,
+            ItemKind::ProgramWwwSurfer => &assets::FRAMES_PC_PROGRAM_WWW,
+            ItemKind::ProgramSardips => &assets::FRAMES_PC_PROGRAM_SARDIPS,
+            _ => return None,
+        })
+    }
+
+    pub const fn toggleable(&self) -> bool {
+        self.is_book()
+    }
+
+    pub const fn is_book(&self) -> bool {
+        self.book_info().chapters > 0
+    }
+
+    pub const fn book_info(&self) -> &'static BookInfo {
+        const DEFAULT: BookInfo = BookInfo {
+            item: ItemKind::None,
+            length: Duration::ZERO,
+            chapters: 0,
+            open_book: &assets::IMAGE_BOOK_0_OPEN,
+            word_bank: &[],
+        };
+
+        const VIC: BookInfo = BookInfo {
+            item: ItemKind::BookVic19811992,
+            length: Duration::from_hours(2),
+            chapters: 9,
+            open_book: &assets::IMAGE_BOOK_0_OPEN,
+            word_bank: &[
+                "John", "Cain", "Jr", "Debt", "Bundoora", "Union", "City", "Loop", "Dock", "Lands",
+                "Trams", "Metcard",
+            ],
+        };
+
+        const WRAN: BookInfo = BookInfo {
+            item: ItemKind::BookNevileWran,
+            length: Duration::from_hours(3),
+            chapters: 24,
+            open_book: &assets::IMAGE_BOOK_WRAN_OPEN,
+            word_bank: &[
+                "Neville",
+                "Wran",
+                "Wranslide",
+                "Health",
+                "Train",
+                "Strike",
+                "Economy",
+                "Women",
+                "Reform",
+                "Shelter",
+                "Vote",
+                "One",
+                "Person",
+                "Rainforest",
+            ],
+        };
+
+        const C_PROGRAMMING: BookInfo = BookInfo {
+            item: ItemKind::BookNevileWran,
+            length: Duration::from_hours(4),
+            chapters: 17,
+            open_book: &assets::IMAGE_BOOK_C_OPEN,
+            word_bank: &[
+                "Segfault",
+                "Recursion",
+                "Stack",
+                "Malloc",
+                "Null",
+                "float*",
+                "float**",
+                "void****",
+                "&top",
+                "Pointer",
+                "Pointer-Pointer",
+                "Array",
+                "Struct",
+                "Typedef",
+                "Macro",
+                "Static",
+            ],
+        };
+
+        const DRACULA: BookInfo = BookInfo {
+            item: ItemKind::BookDracula,
+            length: Duration::from_hours(1),
+            chapters: 27,
+            open_book: &assets::IMAGE_BOOK_DRACULA_OPEN,
+            word_bank: &[
+                "Dracula",
+                "vampire",
+                "Transylvania",
+                "Count",
+                "Blood",
+                "Undead",
+                "Fangs",
+                "Night",
+                "Castle",
+                "Ghoul",
+                "Renfield",
+                "Lucy",
+                "Mina",
+                "Jonathan",
+                "Van Helsing",
+                "Stake",
+                "Garlic",
+                "Cross",
+                "Coffin",
+            ],
+        };
+
+        const GATSBY: BookInfo = BookInfo {
+            item: ItemKind::BookGreatGatsby,
+            length: Duration::from_mins(45),
+            chapters: 9,
+            open_book: &assets::IMAGE_BOOK_GREAT_GATSBY_OPEN,
+            word_bank: &[
+                "Gatsby",
+                "Daisy",
+                "Nick",
+                "Tom",
+                "Jordan",
+                "Myrtle",
+                "Valley of Ashes",
+                "Green Light",
+                "American Dream",
+                "Parties",
+                "Bootlegging",
+                "Affair",
+                "Infidelity",
+                "Class",
+                "Wealth",
+                "Illusion",
+                "Hope",
+                "Tragedy",
+                "WW1",
+                "Veteran",
+            ],
+        };
+
+        const GILGAMESH: BookInfo = BookInfo {
+            item: ItemKind::BookEpicOfGilgamesh,
+            length: Duration::from_mins(45),
+            chapters: 12,
+            open_book: &assets::IMAGE_BOOK_GILGAMESH_OPEN,
+            word_bank: &[
+                "Enkidu",
+                "Uruk",
+                "Immortality",
+                "Death",
+                "Friendship",
+                "Gods",
+                "Humbaba",
+                "Ishtar",
+                "Eanna",
+                "Council",
+                "Journey",
+                "Flood",
+                "Utnapishtim",
+                "Wild man",
+                "Temple",
+                "Cuneiform",
+                "Epic",
+                "Hero",
+                "Quest",
+            ],
+        };
+
+        const ODYSSEY: BookInfo = BookInfo {
+            item: ItemKind::BookEpicOfGilgamesh,
+            length: Duration::from_hours(5),
+            chapters: 24,
+            open_book: &assets::IMAGE_BOOK_ODYSSEY_OPEN,
+            word_bank: &[
+                "Homer",
+                "Odysseus",
+                "Ithaca",
+                "Penelope",
+                "Telemachus",
+                "Athena",
+                "Poseidon",
+                "Zeus",
+                "Calypso",
+                "Circe",
+                "Cyclops",
+                "Polyphemus",
+                "Sirens",
+                "Scylla",
+                "Charybdis",
+                "Trojan",
+                "War",
+                "Suitors",
+                "Revenge",
+                "Homecoming",
+            ],
+        };
+
+        match self {
+            ItemKind::BookVic19811992 => &VIC,
+            ItemKind::BookNevileWran => &WRAN,
+            ItemKind::BookCProgramming => &C_PROGRAMMING,
+            ItemKind::BookDracula => &DRACULA,
+            ItemKind::BookGreatGatsby => &GATSBY,
+            ItemKind::BookEpicOfGilgamesh => &GILGAMESH,
+            ItemKind::BookHomersOdyssey => &ODYSSEY,
+            _ => &DEFAULT,
+        }
     }
 }
 
@@ -138,17 +357,50 @@ const fn all_items_gen() -> [ItemKind; ITEM_COUNT] {
 #[allow(dead_code)]
 pub const ALL_ITEMS: [ItemKind; ITEM_COUNT] = all_items_gen();
 
+const fn program_count() -> usize {
+    let mut count = 0;
+    const_for!(i in 0..ITEM_COUNT => {
+        let item = ItemKind::from_repr(i).unwrap();
+        if item.program().is_some() {
+            count += 1;
+        }
+    });
+    count
+}
+
+pub const PROGRAM_COUNT: usize = program_count();
+
+const fn get_all_programs() -> [ItemKind; PROGRAM_COUNT] {
+    let mut result: [ItemKind; PROGRAM_COUNT] = [ItemKind::None; PROGRAM_COUNT];
+    let mut top = 0;
+    const_for!(i in 0..ITEM_COUNT => {
+        let item = ItemKind::from_repr(i).unwrap();
+        if item.program().is_some() {
+            result[top] = item;
+            top += 1;
+        }
+    });
+    result
+}
+
+pub const ALL_PROGRAMS: [ItemKind; PROGRAM_COUNT] = get_all_programs();
+
 pub const MAX_OWNED: i32 = 1000000;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct ItemExtra {
     uses: i8,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub enabled: bool,
 }
 
 impl ItemExtra {
     pub const fn new() -> Self {
-        Self { uses: 0 }
+        Self {
+            uses: 0,
+            enabled: false,
+        }
     }
 
     pub const fn with_uses(mut self, uses: i8) -> Self {
@@ -183,6 +435,7 @@ impl Default for InventoryEntry {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct Inventory {
+    #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))]
     contents: [InventoryEntry; ITEM_COUNT],
 }
 
@@ -191,12 +444,36 @@ impl Inventory {
         self.contents[item as usize].owned
     }
 
+    pub fn has_any_item(&self) -> bool {
+        for item in ItemKind::iter() {
+            if item != ItemKind::None && self.has_item(item) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn has_any_furniture(&self) -> bool {
+        for item in ItemKind::iter() {
+            if item.furniture().is_some() && self.has_item(item) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn has_item(&self, item: ItemKind) -> bool {
         item != ItemKind::None && self.item_count(item) > 0
     }
 
     pub fn get_entry_mut(&mut self, item: ItemKind) -> &mut InventoryEntry {
         &mut self.contents[item as usize]
+    }
+
+    pub fn get_entry(&self, item: ItemKind) -> &InventoryEntry {
+        &self.contents[item as usize]
     }
 
     pub fn add_item(&mut self, item: ItemKind, qty: i32) {
@@ -212,12 +489,23 @@ impl Inventory {
         }
         entry.owned = updated as u32;
     }
+
+    // SLOW POINT this is called really rarely
+    pub fn has_any_enabled_book(&self) -> bool {
+        for item in ItemKind::iter() {
+            if item.is_book() && self.has_item(item) {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 impl Default for Inventory {
     fn default() -> Self {
         let mut result = Self {
-            contents: Default::default(),
+            contents: core::array::from_fn(|_| InventoryEntry::default()),
         };
 
         for food in STARTING_FOOD {
@@ -348,3 +636,31 @@ pub fn pick_item_from_set(val: f32, chance_set: &[ItemChance]) -> ItemKind {
 
     ItemKind::None
 }
+
+pub const fn get_book_count() -> usize {
+    let mut result = 0;
+    const_for!(i in 0..ITEM_COUNT => {
+        let item = ItemKind::from_repr(i).unwrap();
+        if item.is_book() {
+            result += 1;
+        }
+    });
+    result
+}
+
+pub const BOOK_COUNT: usize = get_book_count();
+
+pub const fn get_books() -> [ItemKind; BOOK_COUNT] {
+    let mut result = [ItemKind::None; BOOK_COUNT];
+    let mut top = 0;
+    const_for!(i in 0..ITEM_COUNT => {
+        let item = ItemKind::from_repr(i).unwrap();
+        if item.is_book() {
+            result[top] = item;
+            top += 1;
+        }
+    });
+    result
+}
+
+pub const BOOKS: [ItemKind; BOOK_COUNT] = get_books();
