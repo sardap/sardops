@@ -68,10 +68,10 @@ pub const DEATH_TOXIC_SHOCK_THRESHOLD: &[Threshold<u8>] = &[
 ];
 
 pub const DEATH_BY_ILLNESS_THRESHOLD: &[Threshold<Duration>] = &[
-    Threshold::new(Duration::from_hours(2), death_odds_per_day(0.0)),
-    Threshold::new(Duration::from_hours(4), death_odds_per_day(0.05)),
-    Threshold::new(Duration::from_days(1), death_odds_per_day(0.1)),
-    Threshold::new(Duration::MAX, death_odds_per_day(0.5)),
+    Threshold::new(Duration::from_hours(2), death_odds_per_hour(0.01)),
+    Threshold::new(Duration::from_hours(4), death_odds_per_hour(0.05)),
+    Threshold::new(Duration::from_days(1), death_odds_per_hour(0.1)),
+    Threshold::new(Duration::MAX, death_odds_per_hour(0.5)),
 ];
 
 // Base stomach size is 30 Drain 7 poiints per hour so 4 hours empty stomach
