@@ -1,4 +1,3 @@
-use bincode::Encode;
 use fixedstr::str_format;
 use glam::Vec2;
 use strum::IntoEnumIterator;

@@ -149,14 +149,14 @@ fn main() -> ! {
             while display.init().is_err() {}
         }
 
-        const TARGET_FPS: u64 = 20;
-        const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / TARGET_FPS);
+        let target_fps: u64 = if game.low_power() { 5 } else { 30 };
+        let frame_time: Duration = Duration::from_nanos(1_000_000_000 / target_fps);
 
         let now = timer.get_counter();
         let delta = now - last_time;
         let delta = Duration::from_micros(delta.to_micros() as u64);
-        if delta < FRAME_TIME {
-            let sleep_time = FRAME_TIME - delta;
+        if delta < frame_time {
+            let sleep_time = frame_time - delta;
             timer.delay_ns(sleep_time.as_nanos() as u32);
         }
     }

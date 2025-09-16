@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use chrono::NaiveDateTime;
 use fixedstr::str_format;
 
@@ -65,6 +67,7 @@ impl Scene for NewPetScene {
         args.game_ctx.pet.born = args.timestamp;
         args.game_ctx.pet.name =
             str_format!(PetName, "{}", args.game_ctx.shared_out.enter_text_out);
+        args.game_ctx.sim_rng = fastrand::Rng::with_seed(args.game_ctx.pet.upid);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {

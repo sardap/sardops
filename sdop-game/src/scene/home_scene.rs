@@ -6,8 +6,8 @@ use glam::Vec2;
 
 use crate::{
     Button, WIDTH,
-    anime::{Anime, HasAnime, tick_all_anime},
-    assets::{self, IMAGE_STOMACH_MASK, Image},
+    anime::{Anime, HasAnime, MaskedAnimeRender, tick_all_anime},
+    assets::{self, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK, Image},
     date_utils::DurationExt,
     display::{CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
     egg::EggRender,
@@ -22,7 +22,7 @@ use crate::{
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
         egg_hatch::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
-        game_select::GameSelectScene, inventory_scene::InventoryScene,
+        game_select::GameSelectScene, heal_scene::HealScene, inventory_scene::InventoryScene,
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, suiters_scene::SuitersScene,
@@ -41,6 +41,7 @@ enum MenuOption {
     PetInfo,
     Breed,
     Poop,
+    Heal,
     GameSelect,
     FoodSelect,
     Shop,
@@ -85,6 +86,10 @@ fn get_options(state: State, game_ctx: &GameContext) -> MenuOptions {
 
     if game_ctx.pet_records.count() > 0 {
         let _ = result.push(MenuOption::PetRecords);
+    }
+
+    if game_ctx.pet.is_ill() {
+        let _ = result.push(MenuOption::Heal);
     }
 
     if state != State::Sleeping {
@@ -154,6 +159,7 @@ pub struct HomeSceneData {
     state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
+    skull: MaskedAnimeRender,
 }
 
 impl Default for HomeSceneData {
@@ -181,6 +187,7 @@ impl Default for HomeSceneData {
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
+            skull: MaskedAnimeRender::new(CENTER_VEC, &FRAMES_SKULL, &FRAMES_SKULL_MASK),
         }
     }
 }
@@ -342,6 +349,17 @@ impl Scene for HomeScene {
                 args.game_ctx.home.selected_index,
                 1,
             );
+        }
+
+        if args.game_ctx.pet.is_ill() {
+            args.game_ctx.home.skull.pos = args.game_ctx.home.pet_render.pos
+                - Vec2::new(
+                    0.,
+                    args.game_ctx.home.pet_render.anime.current_frame().size.y as f32 / 2.
+                        + args.game_ctx.home.skull.anime.current_frame().size.y as f32 / 2.
+                        + 2.,
+                );
+            args.game_ctx.home.skull.anime().tick(args.delta);
         }
 
         args.game_ctx.home.state_elapsed += args.delta;
@@ -644,6 +662,9 @@ impl Scene for HomeScene {
                 MenuOption::PetRecords => {
                     return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
                 }
+                MenuOption::Heal => {
+                    return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
+                }
             };
         }
 
@@ -665,6 +686,10 @@ impl Scene for HomeScene {
             display.render_complex(&self.top_render);
             display.render_complex(&self.left_render);
             display.render_complex(&self.right_render);
+        }
+
+        if args.game_ctx.pet.is_ill() {
+            display.render_complex(&args.game_ctx.home.skull);
         }
 
         match args.game_ctx.home.state {
@@ -770,6 +795,7 @@ impl Scene for HomeScene {
                 MenuOption::Inventory => &assets::IMAGE_SYMBOL_INVENTORY,
                 MenuOption::PlaceFurniture => &assets::IMAGE_SYMBOL_PLACE_FURNITURE,
                 MenuOption::PetRecords => &assets::IMAGE_SYMBOL_RECORDS,
+                MenuOption::Heal => &assets::IMAGE_SYMBOL_HEALTHCARE,
             };
             let x = if args.game_ctx.home.selected_index > 0 {
                 let x_index = i as i32 - args.game_ctx.home.selected_index as i32 + 1;

@@ -1,6 +1,10 @@
-use core::time::Duration;
+use core::{ops::Range, time::Duration};
 
-use crate::{death::Threshold, sim::SIM_LENGTH_STEP};
+use crate::{death::Threshold, money::Money};
+
+pub const LOW_POWER_THRESHOLD: Duration = Duration::from_mins(1);
+
+pub const SIM_LENGTH_STEP: Duration = Duration::from_millis(100);
 
 pub const DEATH_CHECK_INTERVERAL: Duration = Duration::from_mins(5);
 
@@ -23,6 +27,12 @@ pub const fn death_odds_per_day(chance_per_day: f32) -> f32 {
 
 pub const fn sim_tick_odds_per_hour(chance_per_hour: f32) -> f32 {
     let multipler = SIM_LENGTH_STEP.as_millis_f32() / HOUR.as_millis_f32();
+
+    chance_per_hour * multipler
+}
+
+pub const fn sim_tick_odds_per_day(chance_per_hour: f32) -> f32 {
+    let multipler = SIM_LENGTH_STEP.as_millis_f32() / DAY.as_millis_f32();
 
     chance_per_hour * multipler
 }
@@ -57,6 +67,13 @@ pub const DEATH_TOXIC_SHOCK_THRESHOLD: &[Threshold<u8>] = &[
     Threshold::new(5, death_odds_per_day_waking_hours(0.1)),
 ];
 
+pub const DEATH_BY_ILLNESS_THRESHOLD: &[Threshold<Duration>] = &[
+    Threshold::new(Duration::from_hours(2), death_odds_per_day(0.0)),
+    Threshold::new(Duration::from_hours(4), death_odds_per_day(0.05)),
+    Threshold::new(Duration::from_days(1), death_odds_per_day(0.1)),
+    Threshold::new(Duration::MAX, death_odds_per_day(0.5)),
+];
+
 // Base stomach size is 30 Drain 7 poiints per hour so 4 hours empty stomach
 pub const HUNGER_LOSS_PER_SECOND: f32 = 7. / Duration::from_hours(1).as_secs_f32();
 
@@ -83,6 +100,23 @@ pub const EGG_HATCH_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
     Threshold::new(Duration::from_days(2), sim_tick_odds_per_hour(0.1)),
     Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.99)),
 ];
+
+pub const ILLNESS_SINCE_GAME_DURATION: Duration = Duration::from_hours(6);
+
+pub const ILLNESS_BASE_ODDS: f32 = sim_tick_odds_per_day(0.05);
+pub const ILLNESS_STARVING_ODDS: f32 = sim_tick_odds_per_day(0.3);
+pub const ILLNESS_SINCE_GAME_ODDS: f32 = sim_tick_odds_per_day(0.1);
+pub const ILLNESS_BABY_ODDS: f32 = sim_tick_odds_per_day(0.2);
+pub const ILLNESS_CHILD_ODDS: f32 = sim_tick_odds_per_day(0.1);
+
+pub const ILLNESS_SINCE_ODDS: &[Threshold<Duration>] = &[
+    Threshold::new(Duration::from_hours(4), sim_tick_odds_per_day(0.0)),
+    Threshold::new(Duration::from_hours(8), sim_tick_odds_per_hour(0.05)),
+    Threshold::new(Duration::from_days(2), sim_tick_odds_per_hour(0.1)),
+    Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.15)),
+];
+
+pub const HEALING_COST_RANGE: Range<Money> = 1000..10000;
 
 pub const RANDOM_NAMES: &[&'static str] = &[
     "Abel", "Adam", "Amos", "Cain", "Caleb", "Dan", "David", "Eli", "Esau", "Gad", "Hagar",

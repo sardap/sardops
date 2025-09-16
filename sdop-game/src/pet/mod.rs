@@ -6,14 +6,18 @@ use heapless::Vec;
 use crate::{
     Timestamp,
     book::BookHistory,
-    death::{DeathCause, passed_threshold_chance},
+    death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     food::Food,
     game_consts::{
-        BREED_ODDS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
-        DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
-        HUNGER_LOSS_PER_SECOND, OLD_AGE_THRESHOLD, POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
+        BREED_ODDS_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS,
+        DEATH_CHECK_INTERVERAL, DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD,
+        EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS,
+        ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION,
+        ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD,
+        POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
+    money::Money,
     pet::definition::{
         PET_BALLOTEE_ID, PET_BEERIE_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_DEVIL_ID, PET_HUMBIE_ID,
         PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
@@ -95,11 +99,30 @@ pub fn gen_pid(rng: &mut fastrand::Rng) -> UniquePetId {
     rng.u64(u64::MIN..0xFFFFFFFFFF)
 }
 
-pub fn location_from_upid(upid: UniquePetId) -> (&'static str, u8) {
+pub fn planet_location_from_upid(upid: UniquePetId) -> (&'static str, u8) {
     let mut rng = fastrand::Rng::with_seed(upid);
     let planet = rng.choice(SPLACE_LOCATIONS.iter()).unwrap();
-    let mut number = rng.u8(u8::MIN..u8::MAX);
+    let number = rng.u8(u8::MIN..u8::MAX);
     (planet, number)
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+struct PetIllness {
+    since_ilness: Duration,
+    with_ilness: Duration,
+    #[cfg_attr(feature = "serde", serde(default))]
+    cost: Money,
+}
+
+impl Default for PetIllness {
+    fn default() -> Self {
+        Self {
+            since_ilness: Default::default(),
+            with_ilness: Default::default(),
+            cost: 0,
+        }
+    }
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -125,6 +148,8 @@ pub struct PetInstance {
     mood: Mood,
     should_breed: bool,
     pub book_history: BookHistory,
+    #[cfg_attr(feature = "serde", serde(default))]
+    illness: PetIllness,
 }
 
 impl PetInstance {
@@ -217,15 +242,23 @@ impl PetInstance {
             if let StomachMood::Starving { elapsed } = self.stomach_mood {
                 if passed_threshold_chance(rng, DEATH_STARVE_THRESHOLDS, elapsed) {
                     self.should_die = Some(DeathCause::Starvation);
+                    return;
                 }
             }
 
             if passed_threshold_chance(rng, OLD_AGE_THRESHOLD, self.age) {
                 self.should_die = Some(DeathCause::OldAge);
+                return;
             }
 
             if !sleep && passed_threshold_chance(rng, DEATH_TOXIC_SHOCK_THRESHOLD, poop_count) {
                 self.should_die = Some(DeathCause::ToxicShock);
+                return;
+            }
+
+            if passed_threshold_chance(rng, DEATH_BY_ILLNESS_THRESHOLD, self.illness.with_ilness) {
+                self.should_die = Some(DeathCause::Illness);
+                return;
             }
 
             self.since_death_check = Duration::ZERO;
@@ -337,7 +370,7 @@ impl PetInstance {
     fn calc_mood(&self, poops: &[Option<Poop>]) -> Mood {
         let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
 
-        if is_starved || poop_count(poops) > 0 {
+        if is_starved || poop_count(poops) > 0 || self.is_ill() {
             return Mood::Sad;
         }
 
@@ -380,6 +413,53 @@ impl PetInstance {
             self.should_breed = true;
         }
     }
+
+    pub fn is_ill(&self) -> bool {
+        self.illness.with_ilness > Duration::ZERO
+    }
+
+    pub fn heal_cost(&self) -> Money {
+        self.illness.cost
+    }
+
+    pub fn cure(&mut self) {
+        self.illness.with_ilness = Duration::ZERO;
+    }
+
+    pub fn tick_illness(&mut self, rng: &mut fastrand::Rng, delta: Duration) {
+        if self.illness.with_ilness > Duration::ZERO {
+            self.illness.since_ilness = Duration::ZERO;
+            self.illness.with_ilness += delta;
+        } else {
+            self.illness.since_ilness += delta;
+            let mut odds = ILLNESS_BASE_ODDS;
+            let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
+            if is_starved {
+                odds += ILLNESS_STARVING_ODDS;
+            }
+            if self.since_game > ILLNESS_SINCE_GAME_DURATION {
+                odds += ILLNESS_SINCE_GAME_ODDS;
+            }
+
+            odds += match self.definition().life_stage {
+                LifeStage::Baby => ILLNESS_BABY_ODDS,
+                LifeStage::Child => ILLNESS_CHILD_ODDS,
+                LifeStage::Adult => 0.,
+            };
+
+            odds += get_threshold_odds(ILLNESS_SINCE_ODDS, self.illness.since_ilness);
+
+            if rng.f32() < odds {
+                self.illness.cost = (rng.i32(HEALING_COST_RANGE) as f32
+                    * match self.definition().life_stage {
+                        LifeStage::Baby => 0.7,
+                        LifeStage::Child => 1.,
+                        LifeStage::Adult => 1.5,
+                    }) as Money;
+                self.illness.with_ilness = delta;
+            }
+        }
+    }
 }
 
 impl Default for PetInstance {
@@ -407,6 +487,7 @@ impl Default for PetInstance {
             mood: Mood::Normal,
             should_breed: false,
             book_history: Default::default(),
+            illness: Default::default(),
         }
     }
 }

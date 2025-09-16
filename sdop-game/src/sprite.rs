@@ -3,6 +3,7 @@ use glam::Vec2;
 use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
+    display::PostionMode,
     geo::Rect,
 };
 
@@ -42,6 +43,10 @@ pub trait Sprite {
 
 pub trait SpriteMask {
     fn image_mask(&self) -> &impl Image;
+}
+
+pub trait SpritePostionMode {
+    fn sprite_postion_mode(&self) -> PostionMode;
 }
 
 #[derive(Copy, Clone)]
@@ -115,6 +120,7 @@ impl Default for BasicMaskedSprite {
 pub struct BasicAnimeSprite {
     pub pos: Vec2,
     pub anime: Anime,
+    pub pos_mode: PostionMode,
 }
 
 impl BasicAnimeSprite {
@@ -122,7 +128,13 @@ impl BasicAnimeSprite {
         Self {
             pos,
             anime: Anime::new(frames),
+            pos_mode: PostionMode::Center,
         }
+    }
+
+    pub fn with_pos_mode(mut self, pos_mode: PostionMode) -> Self {
+        self.pos_mode = pos_mode;
+        self
     }
 }
 
@@ -131,6 +143,7 @@ impl Default for BasicAnimeSprite {
         Self {
             pos: Vec2::default(),
             anime: Default::default(),
+            pos_mode: PostionMode::Center,
         }
     }
 }
@@ -148,5 +161,11 @@ impl Sprite for BasicAnimeSprite {
 
     fn image(&self) -> &impl Image {
         self.anime.current_frame()
+    }
+}
+
+impl SpritePostionMode for BasicAnimeSprite {
+    fn sprite_postion_mode(&self) -> PostionMode {
+        self.pos_mode
     }
 }

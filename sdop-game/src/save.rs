@@ -31,6 +31,8 @@ pub struct SaveFile {
     pub last_timestamp: Timestamp,
     pub egg: Option<SavedEgg>,
     pub suiter_system: SuiterSystem,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub sim_rng_seed: u64,
 }
 
 impl Default for SaveFile {
@@ -47,6 +49,7 @@ impl Default for SaveFile {
             last_timestamp: Default::default(),
             egg: Default::default(),
             suiter_system: Default::default(),
+            sim_rng_seed: Default::default(),
         }
     }
 }
@@ -69,6 +72,7 @@ impl SaveFile {
             egg: game_ctx.egg,
             suiter_system: game_ctx.suiter_system,
             last_timestamp: timestamp,
+            sim_rng_seed: game_ctx.sim_rng.get_seed(),
         }
     }
 
@@ -83,6 +87,7 @@ impl SaveFile {
         game_ctx.home_layout = self.home_layout;
         game_ctx.suiter_system = self.suiter_system;
         game_ctx.egg = self.egg;
+        game_ctx.sim_rng = fastrand::Rng::with_seed(self.sim_rng_seed);
     }
 
     pub const fn size() -> usize {

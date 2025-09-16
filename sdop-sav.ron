@@ -1,49 +1,49 @@
 (
     pet: (
-        upid: 785766946605,
-        def_id: 0,
+        upid: 654710956192,
+        def_id: 1,
         name: "c     ",
-        born: ("2025-09-13T22:26:14.519933076"),
+        born: ("2025-09-16T07:21:58.389057418"),
         age: (
-            secs: 59,
-            nanos: 765581753,
+            secs: 41864,
+            nanos: 583738966,
         ),
         life_stage_age: (
-            secs: 59,
-            nanos: 765581753,
+            secs: 6969,
+            nanos: 300000000,
         ),
         stomach_mood: Full(
             elapsed: (
-                secs: 0,
-                nanos: 0,
+                secs: 6954,
+                nanos: 500000000,
             ),
         ),
         total_starve_time: (
-            secs: 0,
-            nanos: 0,
+            secs: 34910,
+            nanos: 66996535,
         ),
-        stomach_filled: 0.0,
+        stomach_filled: 26.47005,
         extra_weight: 0.0,
         since_poop: (
-            secs: 0,
-            nanos: 0,
+            secs: 3354,
+            nanos: 400000000,
         ),
         since_game: (
-            secs: 0,
-            nanos: 0,
+            secs: 41864,
+            nanos: 583738966,
         ),
         since_death_check: (
-            secs: 0,
-            nanos: 0,
+            secs: 150,
+            nanos: 700000000,
         ),
         since_evolve_check: (
-            secs: 59,
-            nanos: 765581753,
+            secs: 44,
+            nanos: 500000000,
         ),
         should_die: None,
         should_evolve: None,
         parents: None,
-        mood: Happy,
+        mood: Sad,
         should_breed: false,
         book_history: (
             books: ((
@@ -69,234 +69,247 @@
                 chapters: 0,
             )),
         ),
+        illness: (
+            since_ilness: (
+                secs: 0,
+                nanos: 0,
+            ),
+            with_ilness: (
+                secs: 41864,
+                nanos: 583738966,
+            ),
+            cost: 2000,
+        ),
     ),
-    poops: (None, None, None, None, None),
+    poops: (Some((
+        spawned: ("2025-09-16T17:04:24.582117679"),
+    )), None, None, None, None),
     money: 0,
     inventory: (
         contents: ((
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 5,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
+            item_extra: (
+                uses: 0,
+                enabled: true,
+            ),
+        ), (
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 8,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 2,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
             ),
         ), (
-            owned: 1,
-            item_extra: (
-                uses: 0,
-                enabled: false,
-            ),
-        ), (
-            owned: 1,
+            owned: 7,
             item_extra: (
                 uses: 0,
                 enabled: false,
@@ -307,8 +320,44 @@
         item_count: 2,
     ),
     pet_records: (
-        top: 0,
-        entires: (None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
+        top: 4,
+        entires: (Some((
+            upid: 785766946605,
+            def_id: 0,
+            name: "c     ",
+            born: ("2025-09-13T22:26:14.519933076"),
+            death: ("2025-09-14T16:16:02.075065024"),
+            extra_weight: 0.0,
+            died_of: Starvation,
+            parents: None,
+        )), Some((
+            upid: 672517230043,
+            def_id: 3,
+            name: "c     ",
+            born: ("2025-09-14T16:16:03.666217791"),
+            death: ("2025-09-16T06:57:18.567213737"),
+            extra_weight: 0.0,
+            died_of: OldAge,
+            parents: None,
+        )), Some((
+            upid: 860537114759,
+            def_id: 0,
+            name: "cceh  ",
+            born: ("2025-09-16T06:57:25.079933827"),
+            death: ("2025-09-16T07:02:13.655330323"),
+            extra_weight: 0.0,
+            died_of: Starvation,
+            parents: None,
+        )), Some((
+            upid: 234389577630,
+            def_id: 7,
+            name: "c     ",
+            born: ("2025-09-16T07:02:15.079085934"),
+            death: ("2025-09-16T07:21:57.015760313"),
+            extra_weight: 0.0,
+            died_of: OldAge,
+            parents: None,
+        )), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None),
     ),
     fish_tank: (
         fish: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -318,7 +367,7 @@
         left: r#None,
         right: r#None,
     ),
-    last_timestamp: ("2025-09-13T12:26:44.027044925"),
+    last_timestamp: ("2025-09-16T18:59:43.813728336"),
     egg: None,
     suiter_system: (
         suiter: None,
@@ -327,4 +376,5 @@
             nanos: 0,
         ),
     ),
+    sim_rng_seed: 13967798286553073572,
 )

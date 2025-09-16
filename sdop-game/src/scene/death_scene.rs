@@ -5,7 +5,7 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    anime::{Anime, HasAnime},
+    anime::{Anime, HasAnime, MaskedAnimeRender},
     assets::{self, Image},
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
@@ -96,6 +96,24 @@ impl Default for ToxicShock {
     }
 }
 
+struct Illness {
+    skull: MaskedAnimeRender,
+}
+
+impl Default for Illness {
+    fn default() -> Self {
+        Self {
+            skull: MaskedAnimeRender::new(
+                CENTER_VEC,
+                &assets::FRAMES_SKULL,
+                &assets::FRAMES_SKULL_MASK,
+            ),
+        }
+    }
+}
+
+const ILLNESS_RUN_TIME: Duration = Duration::from_secs(7);
+
 pub struct DeathScene {
     cause: DeathCause,
     state: State,
@@ -106,6 +124,7 @@ pub struct DeathScene {
     pet_render: PetRender,
     toxic_shock: ToxicShock,
     grave_stone: GraveStone,
+    ilness: Illness,
 }
 
 impl DeathScene {
@@ -120,6 +139,7 @@ impl DeathScene {
             pet_render: PetRender::new(pet_id),
             toxic_shock: Default::default(),
             grave_stone: GraveStone::default(),
+            ilness: Illness::default(),
         }
     }
 }
@@ -268,6 +288,29 @@ impl Scene for DeathScene {
                         self.state_elapsed = Duration::ZERO;
                     }
                 }
+                DeathCause::Illness => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+                    self.ilness.skull.anime().tick(args.delta);
+
+                    const SPEED: f32 = 10.;
+
+                    if self.state_elapsed > Duration::from_secs(3) {
+                        self.pet_render.pos.y += SPEED * args.delta.as_secs_f32();
+                    }
+
+                    self.ilness.skull.pos = self.pet_render.pos
+                        - Vec2::new(
+                            0.,
+                            self.pet_render.anime.current_frame().size.y as f32 / 2.
+                                + assets::IMAGE_SKULL_0.size.y as f32 / 2.
+                                + 5.,
+                        );
+
+                    if self.state_elapsed > ILLNESS_RUN_TIME {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
                 DeathCause::Leaving => {}
             },
             State::Tombstone => {
@@ -376,6 +419,30 @@ impl Scene for DeathScene {
                             display.render_sprite(poop);
                         }
                     }
+                }
+                DeathCause::Illness => {
+                    display.render_complex(&self.ilness.skull);
+                    display.render_sprite(&self.pet_render);
+
+                    const DOORS_CLOSE_TIME: Duration = Duration::from_secs(6);
+
+                    let x_percent = (self.state_elapsed.as_millis_f32()
+                        / DOORS_CLOSE_TIME.as_millis_f32())
+                    .min(1.)
+                        * 0.5;
+
+                    let left_door = Rect::new_top_left(
+                        Vec2::new(0., 0.),
+                        Vec2::new(WIDTH_F32 * x_percent, HEIGHT_F32),
+                    );
+                    display.render_rect_solid(left_door, false);
+
+                    let right_door = Rect::new_top_left(
+                        Vec2::new(WIDTH_F32 - WIDTH_F32 * x_percent, 0.),
+                        Vec2::new(WIDTH_F32, HEIGHT_F32),
+                    );
+
+                    display.render_rect_solid(right_door, false);
                 }
                 DeathCause::Leaving => {}
             },

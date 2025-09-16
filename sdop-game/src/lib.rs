@@ -13,6 +13,7 @@ use core::time::Duration;
 use crate::{
     display::{ConvertFn, DrawDisplay},
     fps::FPSCounter,
+    game_consts::LOW_POWER_THRESHOLD,
     game_context::GameContext,
     input::Input,
     pet::definition::PET_BABIES,
@@ -71,6 +72,7 @@ pub struct Game {
     game_ctx: GameContext,
     time_scale: f32,
     fps: FPSCounter,
+    since_input: Duration,
 }
 
 impl Game {
@@ -83,6 +85,7 @@ impl Game {
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
             fps: FPSCounter::new(),
+            since_input: Duration::ZERO,
         }
     }
 
@@ -117,6 +120,11 @@ impl Game {
         self.time_scale = time_scale;
     }
 
+    pub fn low_power(&self) -> bool {
+        matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_))
+            && self.since_input > LOW_POWER_THRESHOLD
+    }
+
     pub fn tick(&mut self, delta: Duration) {
         let timestamp = self.last_time + delta;
 
@@ -124,11 +132,13 @@ impl Game {
 
         // Make random more random
         if self.input.any_pressed() {
+            self.since_input = Duration::ZERO;
             let count = self.game_ctx.rng.u128(0..10);
             for _ in 0..count {
                 self.game_ctx.rng.bool();
             }
         } else {
+            self.since_input += delta;
             self.game_ctx.rng.bool();
         }
 
@@ -206,18 +216,14 @@ impl Game {
         let last_timestamp = save.last_timestamp;
         let delta = timestamp - last_timestamp;
         save.load(&mut self.game_ctx);
-        const STEP_SIZE: Duration = Duration::from_millis(15);
-        let steps = (delta.as_millis() / STEP_SIZE.as_millis()) as u64;
-        for i in 0..steps {
-            let mut scene_args = SceneTickArgs {
-                timestamp: last_timestamp + Duration::from_millis(i * 15),
-                delta: STEP_SIZE,
-                input: &self.input,
-                game_ctx: &mut self.game_ctx,
-                last_scene: None,
-            };
-            tick_sim(1., &mut scene_args);
-        }
+        let mut scene_args = SceneTickArgs {
+            timestamp: last_timestamp,
+            delta: delta,
+            input: &self.input,
+            game_ctx: &mut self.game_ctx,
+            last_scene: None,
+        };
+        tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();
     }
 }

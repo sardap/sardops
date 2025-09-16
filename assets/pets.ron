@@ -116,4 +116,6 @@
             sleep: Some("images/pets/devil_sleep.ase"),
         )
     ),
+    // a bunch of cubes that you get if your guy no programming
+    // A pet that you can only get if evolve while sick
 ]
