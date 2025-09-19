@@ -8,13 +8,14 @@ use crate::{
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     food::Food,
+    furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
-        BREED_ODDS_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS,
-        DEATH_CHECK_INTERVERAL, DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD,
-        EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS,
-        ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION,
-        ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD,
-        POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
+        BREED_ODDS_THRESHOLD, DEATH_BY_HYPOTHERMIA_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD,
+        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL, DEATH_STARVE_THRESHOLDS,
+        DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE,
+        HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS,
+        ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS,
+        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -23,6 +24,7 @@ use crate::{
         PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
+    temperature::TemperatureLevel,
 };
 
 pub mod definition;
@@ -148,8 +150,10 @@ pub struct PetInstance {
     mood: Mood,
     should_breed: bool,
     pub book_history: BookHistory,
-    #[cfg_attr(feature = "serde", serde(default))]
     illness: PetIllness,
+    total_cold_for: Duration,
+    cold_for: Duration,
+    total_hot_for: Duration,
 }
 
 impl PetInstance {
@@ -261,6 +265,11 @@ impl PetInstance {
                 return;
             }
 
+            if passed_threshold_chance(rng, DEATH_BY_HYPOTHERMIA_THRESHOLD, self.cold_for) {
+                self.should_die = Some(DeathCause::Hypothermia);
+                return;
+            }
+
             self.since_death_check = Duration::ZERO;
         }
     }
@@ -363,14 +372,29 @@ impl PetInstance {
         self.mood
     }
 
-    pub fn tick_mood(&mut self, poops: &[Option<Poop>]) {
-        self.mood = self.calc_mood(poops);
+    pub fn tick_mood(
+        &mut self,
+        poops: &[Option<Poop>],
+        temperature: TemperatureLevel,
+        layout: &HomeLayout,
+    ) {
+        self.mood = self.calc_mood(poops, temperature, layout);
     }
 
-    fn calc_mood(&self, poops: &[Option<Poop>]) -> Mood {
+    fn calc_mood(
+        &self,
+        poops: &[Option<Poop>],
+        temperature: TemperatureLevel,
+        layout: &HomeLayout,
+    ) -> Mood {
         let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
 
-        if is_starved || poop_count(poops) > 0 || self.is_ill() {
+        if is_starved
+            || poop_count(poops) > 0
+            || self.is_ill()
+            || (temperature.is_hot() && !layout.furniture_present(HomeFurnitureKind::AirCon))
+            || (temperature.is_cold() && !layout.furniture_present(HomeFurnitureKind::SpaceHeater))
+        {
             return Mood::Sad;
         }
 
@@ -411,6 +435,30 @@ impl PetInstance {
 
         if passed_threshold_chance(rng, BREED_ODDS_THRESHOLD, self.life_stage_age) {
             self.should_breed = true;
+        }
+    }
+
+    pub fn tick_tempeture(
+        &mut self,
+        delta: Duration,
+        temperature: TemperatureLevel,
+        home_layout: HomeLayout,
+    ) {
+        if temperature.is_cold() && !home_layout.furniture_present(HomeFurnitureKind::SpaceHeater) {
+            let to_add = delta
+                * if matches!(temperature, TemperatureLevel::VeryCold) {
+                    2
+                } else {
+                    1
+                };
+            self.cold_for += to_add;
+            self.total_cold_for += to_add;
+        } else {
+            self.cold_for = Duration::ZERO;
+        }
+
+        if temperature.is_hot() && !home_layout.furniture_present(HomeFurnitureKind::AirCon) {
+            self.total_hot_for += delta;
         }
     }
 
@@ -488,6 +536,9 @@ impl Default for PetInstance {
             should_breed: false,
             book_history: Default::default(),
             illness: Default::default(),
+            cold_for: Duration::ZERO,
+            total_cold_for: Duration::ZERO,
+            total_hot_for: Duration::ZERO,
         }
     }
 }

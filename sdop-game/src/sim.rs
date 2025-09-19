@@ -1,6 +1,9 @@
 use core::time::Duration;
 
-use crate::{game_consts::SIM_LENGTH_STEP, poop::add_poop, scene::SceneTickArgs};
+use crate::{
+    game_consts::SIM_LENGTH_STEP, poop::add_poop, scene::SceneTickArgs,
+    temperature::TemperatureLevel,
+};
 
 pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
     let delta = args.delta.mul_f32(time_scale);
@@ -22,7 +25,11 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
         }
 
         if args.game_ctx.pet.should_die().is_none() {
-            args.game_ctx.pet.tick_mood(&args.game_ctx.poops);
+            args.game_ctx.pet.tick_mood(
+                &args.game_ctx.poops,
+                TemperatureLevel::from(args.input.temperature()),
+                &args.game_ctx.home_layout,
+            );
             args.game_ctx
                 .pet
                 .tick_breed(&mut args.game_ctx.sim_rng, args.game_ctx.egg.is_some());

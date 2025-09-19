@@ -55,6 +55,8 @@ mod sim;
 mod sprite;
 mod stomach;
 mod suiter;
+mod temperature;
+mod thermometer;
 mod tic_tac_toe;
 mod tv;
 

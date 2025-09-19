@@ -19,7 +19,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
-    sprite::{BasicAnimeSprite, Sprite},
+    sprite::{BasicAnimeSprite, Snowflake, Sprite},
     stomach::StomachRender,
 };
 
@@ -114,6 +114,22 @@ impl Default for Illness {
 
 const ILLNESS_RUN_TIME: Duration = Duration::from_secs(7);
 
+struct Hypothermia {
+    snow_flakes: [Snowflake; 50],
+    shaking_duration: Duration,
+    shaking_left: bool,
+}
+
+impl Default for Hypothermia {
+    fn default() -> Self {
+        Self {
+            snow_flakes: [Snowflake::default(); 50],
+            shaking_duration: Default::default(),
+            shaking_left: Default::default(),
+        }
+    }
+}
+
 pub struct DeathScene {
     cause: DeathCause,
     state: State,
@@ -125,6 +141,7 @@ pub struct DeathScene {
     toxic_shock: ToxicShock,
     grave_stone: GraveStone,
     ilness: Illness,
+    hypothermia: Hypothermia,
 }
 
 impl DeathScene {
@@ -140,6 +157,7 @@ impl DeathScene {
             toxic_shock: Default::default(),
             grave_stone: GraveStone::default(),
             ilness: Illness::default(),
+            hypothermia: Default::default(),
         }
     }
 }
@@ -182,6 +200,11 @@ impl Scene for DeathScene {
                 poop.anime = Anime::new(&assets::FRAMES_POOP);
                 poop.anime.set_random_frame(&mut args.game_ctx.rng);
                 poop.pos = pet_rect.random_point_inside(&mut args.game_ctx.rng);
+            }
+        } else if self.cause == DeathCause::Hypothermia {
+            for flake in &mut self.hypothermia.snow_flakes {
+                flake.reset(true, &mut args.game_ctx.rng);
+                flake.dir.y = args.game_ctx.rng.i32(5..15) as f32;
             }
         }
     }
@@ -307,6 +330,39 @@ impl Scene for DeathScene {
                         );
 
                     if self.state_elapsed > ILLNESS_RUN_TIME {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
+                DeathCause::Hypothermia => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+
+                    for flake in &mut self.hypothermia.snow_flakes {
+                        flake.pos += flake.dir * args.delta.as_secs_f32();
+
+                        if flake.pos.x > WIDTH_F32 + Snowflake::size().x
+                            || flake.pos.x < -Snowflake::size().x
+                            || flake.pos.y > HEIGHT_F32 + Snowflake::size().y
+                        {
+                            flake.reset(false, &mut args.game_ctx.rng);
+                        }
+                    }
+
+                    self.hypothermia.shaking_duration += args.delta;
+                    if self.hypothermia.shaking_duration > Duration::from_millis(200) {
+                        self.hypothermia.shaking_duration = Duration::ZERO;
+                        self.hypothermia.shaking_left = !self.hypothermia.shaking_left;
+                    }
+
+                    const SHAKE_AMOUNT_X: f32 = 10.;
+
+                    self.pet_render.pos.x += if self.hypothermia.shaking_left {
+                        SHAKE_AMOUNT_X
+                    } else {
+                        -SHAKE_AMOUNT_X
+                    } * args.delta.as_secs_f32();
+
+                    if self.state_elapsed > Duration::from_secs(20) {
                         self.state = State::Tombstone;
                         self.state_elapsed = Duration::ZERO;
                     }
@@ -443,6 +499,13 @@ impl Scene for DeathScene {
                     );
 
                     display.render_rect_solid(right_door, false);
+                }
+                DeathCause::Hypothermia => {
+                    display.render_sprite(&self.pet_render);
+
+                    for flake in &self.hypothermia.snow_flakes {
+                        display.render_sprite(flake);
+                    }
                 }
                 DeathCause::Leaving => {}
             },

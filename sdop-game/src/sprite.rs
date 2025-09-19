@@ -1,9 +1,10 @@
 use glam::Vec2;
+use strum::IntoEnumIterator;
 
 use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
-    display::PostionMode,
+    display::{HEIGHT_F32, PostionMode, Rotation, WIDTH_F32},
     geo::Rect,
 };
 
@@ -47,6 +48,10 @@ pub trait SpriteMask {
 
 pub trait SpritePostionMode {
     fn sprite_postion_mode(&self) -> PostionMode;
+}
+
+pub trait SpriteRotation {
+    fn sprite_rotation(&self) -> Rotation;
 }
 
 #[derive(Copy, Clone)]
@@ -167,5 +172,60 @@ impl Sprite for BasicAnimeSprite {
 impl SpritePostionMode for BasicAnimeSprite {
     fn sprite_postion_mode(&self) -> PostionMode {
         self.pos_mode
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct Snowflake {
+    pub pos: Vec2,
+    pub rotation: Rotation,
+    pub dir: Vec2,
+}
+
+impl Snowflake {
+    pub fn reset(&mut self, inital: bool, rng: &mut fastrand::Rng) {
+        self.pos = Vec2::new(
+            rng.i32(0..WIDTH_F32 as i32) as f32,
+            rng.i32(if inital {
+                (-HEIGHT_F32 as i32 + -20)..-5
+            } else {
+                -20..-5
+            }) as f32,
+        );
+        self.rotation = rng.choice(Rotation::iter()).unwrap();
+        self.dir = Vec2::new(rng.i32(-3..3) as f32, rng.i32(3..10) as f32);
+    }
+
+    pub const fn size() -> Vec2 {
+        Vec2::new(
+            assets::IMAGE_SNOWFLAKE.size.x as f32,
+            assets::IMAGE_SNOWFLAKE.size.y as f32,
+        )
+    }
+}
+
+impl Sprite for Snowflake {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl Image {
+        &assets::IMAGE_SNOWFLAKE
+    }
+}
+
+impl SpriteRotation for Snowflake {
+    fn sprite_rotation(&self) -> Rotation {
+        self.rotation
+    }
+}
+
+impl Default for Snowflake {
+    fn default() -> Self {
+        Self {
+            pos: Vec2::new(-100., 0.),
+            rotation: Default::default(),
+            dir: Default::default(),
+        }
     }
 }

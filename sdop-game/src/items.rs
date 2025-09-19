@@ -288,16 +288,19 @@ impl ItemKind {
 impl From<HomeFurnitureKind> for ItemKind {
     fn from(value: HomeFurnitureKind) -> Self {
         match value {
-            HomeFurnitureKind::None => ItemKind::None,
-            HomeFurnitureKind::DigitalClock => ItemKind::DigitalClock,
-            HomeFurnitureKind::AnalogueClock => ItemKind::AnalogueClock,
-            HomeFurnitureKind::FishTank => ItemKind::FishTank,
-            HomeFurnitureKind::InvertroLight => ItemKind::InvetroLight,
-            HomeFurnitureKind::PaintingBranch => ItemKind::PaintingBranch,
-            HomeFurnitureKind::PaintingDude => ItemKind::PaintingDude,
-            HomeFurnitureKind::PaintingMan => ItemKind::PaintingMan,
-            HomeFurnitureKind::PaintingPc => ItemKind::PaintingPc,
-            HomeFurnitureKind::PaintingSun => ItemKind::PaintingSun,
+            HomeFurnitureKind::None => Self::None,
+            HomeFurnitureKind::DigitalClock => Self::DigitalClock,
+            HomeFurnitureKind::AnalogueClock => Self::AnalogueClock,
+            HomeFurnitureKind::ThermometerMercury => Self::ThermometerMercury,
+            HomeFurnitureKind::SpaceHeater => Self::SpaceHeater,
+            HomeFurnitureKind::AirCon => Self::AirConditioner,
+            HomeFurnitureKind::FishTank => Self::FishTank,
+            HomeFurnitureKind::InvertroLight => Self::InvetroLight,
+            HomeFurnitureKind::PaintingBranch => Self::PaintingBranch,
+            HomeFurnitureKind::PaintingDude => Self::PaintingDude,
+            HomeFurnitureKind::PaintingMan => Self::PaintingMan,
+            HomeFurnitureKind::PaintingPc => Self::PaintingPc,
+            HomeFurnitureKind::PaintingSun => Self::PaintingSun,
         }
     }
 }

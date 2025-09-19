@@ -259,5 +259,31 @@
         desc: "A virtual pet game playable on the computer. Does a virutal pet game make sense on a PC?",
         fishing_odds: 0.05,
     ),
-
+    ItemEntry(
+        name: "Thermometer Mercury",
+        cost: 1000,
+        rarity: Common,
+        image: "thermometer_mercury_display",
+        unique: true,
+        desc: "Tell the temperature the old fashioned way just don't drink it!",
+        fishing_odds: 0.05,
+    ),
+    ItemEntry(
+        name: "Space Heater",
+        cost: 1000,
+        rarity: Common,
+        image: "space_heater",
+        unique: true,
+        desc: "The world too cold for your dop, Just chuck one of these bad boys in and it will be nice and toasty.",
+        fishing_odds: 0.05,
+    ),
+    ItemEntry(
+        name: "Air Conditioner",
+        cost: 1000,
+        rarity: Common,
+        image: "air_conditioner",
+        unique: true,
+        desc: "It's like a box of ice that never melts.",
+        fishing_odds: 0.05,
+    ),
 ]

@@ -144,6 +144,8 @@ pub fn main() {
         game.set_sim_time_scale(time_scale);
         game.update_input_states(input);
 
+        // HERE add weather input
+
         game.tick(delta);
         game.refresh_display(delta);
         let texture_creator = canvas.texture_creator();

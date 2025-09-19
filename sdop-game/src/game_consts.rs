@@ -76,6 +76,13 @@ pub const DEATH_BY_ILLNESS_THRESHOLD: &[Threshold<Duration>] = &[
     Threshold::new(Duration::MAX, death_odds_per_hour(0.5)),
 ];
 
+pub const DEATH_BY_HYPOTHERMIA_THRESHOLD: &[Threshold<Duration>] = &[
+    Threshold::new(Duration::from_hours(4), death_odds_per_hour(0.0)),
+    Threshold::new(Duration::from_hours(8), death_odds_per_hour(0.05)),
+    Threshold::new(Duration::from_days(1), death_odds_per_hour(0.1)),
+    Threshold::new(Duration::MAX, death_odds_per_hour(0.2)),
+];
+
 // Base stomach size is 30 Drain 7 poiints per hour so 4 hours empty stomach
 pub const HUNGER_LOSS_PER_SECOND: f32 = 7. / Duration::from_hours(1).as_secs_f32();
 

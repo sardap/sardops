@@ -3,13 +3,17 @@ use core::{time::Duration, u8};
 use chrono::Timelike;
 use fixedstr::str32;
 use glam::Vec2;
+use strum::IntoEnumIterator;
 
 use crate::{
     Button, WIDTH,
     anime::{Anime, HasAnime, MaskedAnimeRender, tick_all_anime},
     assets::{self, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK, Image},
     date_utils::DurationExt,
-    display::{CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
+    display::{
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, Rotation,
+        WIDTH_F32,
+    },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureLocation, HomeFurnitureRender},
@@ -27,7 +31,8 @@ use crate::{
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, suiters_scene::SuitersScene,
     },
-    sprite::{BasicAnimeSprite, Sprite},
+    sprite::{BasicAnimeSprite, Snowflake, Sprite, SpriteRotation},
+    temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
 
@@ -144,6 +149,24 @@ struct Word {
     text: &'static str,
 }
 
+enum Weather {
+    None,
+    Cold,
+    Snow,
+    Hot,
+}
+
+impl From<TemperatureLevel> for Weather {
+    fn from(value: TemperatureLevel) -> Self {
+        match value {
+            TemperatureLevel::VeryHot | TemperatureLevel::Hot => Self::Hot,
+            TemperatureLevel::Pleasant => Self::None,
+            TemperatureLevel::Cold => Self::Cold,
+            TemperatureLevel::VeryCold => Self::Snow,
+        }
+    }
+}
+
 pub struct HomeSceneData {
     pet_render: PetRender,
     poops: [Option<PoopRender>; MAX_POOPS],
@@ -160,6 +183,10 @@ pub struct HomeSceneData {
     state_elapsed: Duration,
     wonder_end: Duration,
     skull: MaskedAnimeRender,
+    weather: Weather,
+    shake_duration: Duration,
+    shake_right: bool,
+    snow_flakes: [Snowflake; 30],
 }
 
 impl Default for HomeSceneData {
@@ -188,6 +215,10 @@ impl Default for HomeSceneData {
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
             skull: MaskedAnimeRender::new(CENTER_VEC, &FRAMES_SKULL, &FRAMES_SKULL_MASK),
+            weather: Weather::None,
+            shake_duration: Duration::ZERO,
+            shake_right: false,
+            snow_flakes: Default::default(),
         }
     }
 }
@@ -236,14 +267,18 @@ fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
 
 impl Scene for HomeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        args.game_ctx.home.pet_render.pos = args
-            .game_ctx
-            .home
-            .wonder_rect()
-            .random_point_inside(&mut args.game_ctx.rng);
-        args.game_ctx.home.target = args.game_ctx.home.pet_render.pos;
         if args.game_ctx.home.wonder_end == Duration::ZERO {
             args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+            args.game_ctx.home.pet_render.pos = args
+                .game_ctx
+                .home
+                .wonder_rect()
+                .random_point_inside(&mut args.game_ctx.rng);
+            args.game_ctx.home.target = args.game_ctx.home.pet_render.pos;
+
+            for flake in &mut args.game_ctx.home.snow_flakes {
+                flake.reset(true, &mut args.game_ctx.rng);
+            }
         }
 
         self.egg_render.pos = Vec2::new(
@@ -261,12 +296,6 @@ impl Scene for HomeScene {
         self.right_render = HomeFurnitureRender::new(
             HomeFurnitureLocation::Right,
             args.game_ctx.home_layout.right,
-        );
-
-        args.game_ctx.home.pc.change_program(
-            &mut args.game_ctx.rng,
-            &args.game_ctx.inventory,
-            &args.game_ctx.pet,
         );
     }
 
@@ -363,6 +392,25 @@ impl Scene for HomeScene {
         }
 
         args.game_ctx.home.state_elapsed += args.delta;
+
+        args.game_ctx.home.weather = TemperatureLevel::from(args.input.temperature()).into();
+
+        match args.game_ctx.home.weather {
+            Weather::None => {}
+            Weather::Cold => {}
+            Weather::Snow => {
+                for flake in &mut args.game_ctx.home.snow_flakes {
+                    flake.pos += flake.dir * args.delta.as_secs_f32();
+                    if flake.pos.y > HEIGHT_F32 + assets::IMAGE_SNOWFLAKE.size.y as f32
+                        || flake.pos.x > WIDTH_F32 + assets::IMAGE_SNOWFLAKE.size.x as f32
+                        || flake.pos.x < -(assets::IMAGE_SNOWFLAKE.size.x as f32)
+                    {
+                        flake.reset(false, &mut args.game_ctx.rng);
+                    }
+                }
+            }
+            Weather::Hot => {}
+        }
 
         match args.game_ctx.home.state {
             State::Wondering => {
@@ -464,6 +512,11 @@ impl Scene for HomeScene {
                 args.game_ctx.home.pet_render.pos +=
                     vec2_direction(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target)
                         * WONDER_SPEED
+                        * if matches!(args.game_ctx.home.weather, Weather::None) {
+                            1.
+                        } else {
+                            0.5
+                        }
                         * args.delta.as_secs_f32();
             }
             State::Sleeping => {
@@ -631,6 +684,23 @@ impl Scene for HomeScene {
             }
         }
 
+        if matches!(args.game_ctx.home.weather, Weather::Cold)
+            || matches!(args.game_ctx.home.weather, Weather::Snow)
+        {
+            const SHAKE_X: f32 = 10.;
+            args.game_ctx.home.shake_duration += args.delta;
+            if args.game_ctx.home.shake_duration > Duration::from_millis(100) {
+                args.game_ctx.home.shake_right = !args.game_ctx.home.shake_right;
+                args.game_ctx.home.shake_duration = Duration::ZERO;
+            }
+
+            args.game_ctx.home.pet_render.pos.x += if args.game_ctx.home.shake_right {
+                SHAKE_X
+            } else {
+                -SHAKE_X
+            } * args.delta.as_secs_f32();
+        }
+
         if args.input.pressed(Button::Middle) {
             match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
                 MenuOption::Breed => {
@@ -745,6 +815,14 @@ impl Scene for HomeScene {
 
         display.render_sprites(&args.game_ctx.home.poops);
 
+        if matches!(args.game_ctx.home.weather, Weather::Snow) {
+            for flake in &args.game_ctx.home.snow_flakes {
+                if flake.pos.y > -((assets::IMAGE_SNOWFLAKE.size.y / 2) as f32) {
+                    display.render_sprite(flake);
+                }
+            }
+        }
+
         let pet = &args.game_ctx.pet;
 
         display.render_rect_solid(HOME_SCENE_TOP_AREA_RECT, false);
@@ -803,7 +881,12 @@ impl Scene for HomeScene {
             } else {
                 SYMBOL_BUFFER + ((i + 1) as f32 * (SIZE.x + SYMBOL_BUFFER))
             };
-            display.render_image_top_left(x as i32, IMAGE_Y_START as i32, image);
+            display.render_image_complex(
+                x as i32,
+                IMAGE_Y_START as i32,
+                image,
+                ComplexRenderOption::new().with_white().with_black(),
+            );
         }
 
         let select_rect = Rect::new_top_left(

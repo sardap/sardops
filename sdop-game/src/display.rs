@@ -3,10 +3,11 @@ use core::f32;
 use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
+use strum_macros::EnumIter;
 
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
-use crate::sprite::{SpriteMask, SpritePostionMode};
+use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
@@ -47,12 +48,18 @@ pub enum PostionMode {
     BottomRight,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum Rotation {
     R0,
     R90,
     R180,
     R270,
+}
+
+impl Default for Rotation {
+    fn default() -> Self {
+        Self::R0
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -358,9 +365,14 @@ impl GameDisplay {
 
     pub fn render_sprite<T: Sprite>(&mut self, sprite: &T)
     where
-        T: RenderSpriteWithMask<T> + SpriteWithPostionMode<T>,
+        T: RenderSpriteWithMask<T> + SpriteWithPostionMode<T> + SpriteWithRotation<T>,
     {
-        T::render_with_mask(self, sprite, T::get_postion_mode(sprite));
+        T::render_with_mask(
+            self,
+            sprite,
+            T::get_postion_mode(sprite),
+            T::get_rotation(sprite),
+        );
     }
 
     pub fn render_sprites<T: Sprite>(&mut self, sprites: &[Option<T>]) {
@@ -809,22 +821,52 @@ impl<T: Sprite> SpriteWithPostionMode<T> for T {
     }
 }
 
+pub trait HasRotation {}
+impl<T: SpriteRotation> HasRotation for T {}
+
+pub trait SpriteWithRotation<T: Sprite> {
+    fn get_rotation(sprite: &T) -> Rotation;
+}
+
+impl<T: Sprite + HasRotation + SpriteRotation> SpriteWithRotation<T> for T {
+    fn get_rotation(sprite: &T) -> Rotation {
+        sprite.sprite_rotation()
+    }
+}
+
+impl<T: Sprite> SpriteWithRotation<T> for T {
+    default fn get_rotation(_: &T) -> Rotation {
+        Rotation::R0
+    }
+}
+
 pub trait RenderSpriteWithMask<T: Sprite> {
-    fn render_with_mask(renderer: &mut GameDisplay, sprite: &T, pos_mode: PostionMode);
+    fn render_with_mask(
+        renderer: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    );
 }
 
 pub trait HasMask {}
 impl<T: SpriteMask> HasMask for T {}
 
 impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {
-    fn render_with_mask(display: &mut GameDisplay, sprite: &T, pos_mode: PostionMode) {
+    fn render_with_mask(
+        display: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    ) {
         display.render_image_complex(
             sprite.pos().x as i32,
             sprite.pos().y as i32,
             sprite.image(),
             ComplexRenderOption::new()
                 .with_white()
-                .with_pos_mode(pos_mode),
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
 
         display.render_image_complex(
@@ -833,20 +875,27 @@ impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {
             sprite.image_mask(),
             ComplexRenderOption::new()
                 .with_black()
-                .with_pos_mode(pos_mode),
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
     }
 }
 
 impl<T: Sprite> RenderSpriteWithMask<T> for T {
-    default fn render_with_mask(display: &mut GameDisplay, sprite: &T, pos_mode: PostionMode) {
+    default fn render_with_mask(
+        display: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    ) {
         display.render_image_complex(
             sprite.pos().x as i32,
             sprite.pos().y as i32,
             sprite.image(),
             ComplexRenderOption::new()
                 .with_white()
-                .with_pos_mode(pos_mode),
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
     }
 }

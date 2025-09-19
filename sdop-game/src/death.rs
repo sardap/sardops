@@ -19,6 +19,7 @@ pub enum DeathCause {
     ToxicShock,
     Leaving,
     Illness,
+    Hypothermia,
 }
 
 impl DeathCause {
@@ -30,6 +31,7 @@ impl DeathCause {
             DeathCause::ToxicShock => "Toxic shock",
             DeathCause::Leaving => "Left",
             DeathCause::Illness => "Sickness",
+            DeathCause::Hypothermia => "Hypothermia",
         }
     }
 }
