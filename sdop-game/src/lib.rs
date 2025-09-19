@@ -60,6 +60,7 @@ mod tv;
 
 pub use crate::date_utils::Timestamp;
 pub use crate::display::{HEIGHT, WIDTH};
+pub use crate::game_consts::ROOM_TEMPTURE;
 pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
 pub use crate::save::SaveFile;
@@ -110,6 +111,10 @@ impl Game {
 
     pub fn update_input_states(&mut self, input_states: ButtonStates) {
         self.input.update_state(input_states);
+    }
+
+    pub fn update_temperature(&mut self, temperature: f32) {
+        self.input.update_temperature(temperature);
     }
 
     pub fn input(&self) -> Input {
@@ -189,6 +194,7 @@ impl Game {
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
         self.display.render_fps(&self.fps);
+        self.display.render_temperature(self.input().temperature());
         self.fps.update(delta);
     }
 

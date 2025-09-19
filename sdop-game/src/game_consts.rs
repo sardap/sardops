@@ -2,6 +2,8 @@ use core::{ops::Range, time::Duration};
 
 use crate::{death::Threshold, money::Money};
 
+pub const ROOM_TEMPTURE: f32 = 25.;
+
 pub const LOW_POWER_THRESHOLD: Duration = Duration::from_mins(1);
 
 pub const SIM_LENGTH_STEP: Duration = Duration::from_millis(100);

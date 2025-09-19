@@ -9,3 +9,4 @@ log = "0.4.27"
 sdl2 = { version = "0.38.0", features = ["image"] }
 sdop-game = { path = "../sdop-game" }
 chrono = { git = "https://github.com/sardap/chrono" }
+embassy-rp = "0.8.0"

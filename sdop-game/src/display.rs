@@ -530,11 +530,28 @@ impl GameDisplay {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
-            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 10.)),
+            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
             false,
         );
         self.render_text_complex(
             Vec2::new(0., 0.),
+            &str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_font(&FONT_VARIABLE_SMALL),
+        );
+    }
+
+    pub fn render_temperature(&mut self, temperature: f32) {
+        use fixedstr::{str_format, str16};
+        let str = str_format!(str16, "{:.0}", temperature);
+        let width = str.len() as f32 * 5. + 3.;
+        self.render_rect_solid(
+            Rect::new_top_left(Vec2::new(WIDTH_F32 - width, 0.), Vec2::new(width, 9.)),
+            false,
+        );
+        self.render_text_complex(
+            Vec2::new(WIDTH_F32 - width + 3., 0.),
             &str,
             ComplexRenderOption::new()
                 .with_white()
