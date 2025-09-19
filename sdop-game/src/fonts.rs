@@ -117,6 +117,8 @@ pub fn get_char_image_small_var(val: char) -> &'static StaticImage {
         '?' => &assets::IMAGE_ALPHA_SMALL_QUESTION_MARK,
         '.' => &assets::IMAGE_ALPHA_FULLSTOP,
         '*' => &assets::IMAGE_ALPHA_SMALL_STAR,
+        '\'' => &assets::IMAGE_ALPHA_SMALL_APOSTROPHE,
+        '%' => &assets::IMAGE_ALPHA_SMALL_PERCENT,
         _ => &assets::IMAGE_ALPHA_SMALL_0,
     }
 }

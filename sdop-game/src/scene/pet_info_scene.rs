@@ -8,11 +8,7 @@ use crate::{
     date_utils::DurationExt,
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
     fonts,
-    pet::{
-        PetName,
-        definition::{PetAnimationSet, PetDefinition},
-        render::PetRender,
-    },
+    pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     sprite::Sprite,
 };

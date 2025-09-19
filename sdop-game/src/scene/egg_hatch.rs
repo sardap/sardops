@@ -3,9 +3,9 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    WIDTH, assets,
+    assets,
     death::DeathCause,
-    display::{CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
+    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
     egg::{EggRender, SavedEgg},
     geo::Rect,
     pet::{

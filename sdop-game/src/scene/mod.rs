@@ -8,6 +8,7 @@ pub mod evolve_scene;
 pub mod fishing_scene;
 pub mod food_select;
 pub mod game_select;
+pub mod heal_scene;
 pub mod home_scene;
 pub mod inventory_scene;
 pub mod mg_doge_em;
@@ -52,6 +53,7 @@ pub enum SceneEnum {
     Suiters(suiters_scene::SuitersScene),
     EggHatch(egg_hatch::EggHatchScene),
     PetRecords(pet_records_scene::PetRecordsScene),
+    Heal(heal_scene::HealScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -68,30 +70,31 @@ impl Default for SceneEnum {
 impl SceneEnum {
     pub fn get_scene<'a>(&'a mut self) -> &'a mut dyn Scene {
         match self {
-            SceneEnum::NewPet(new_pet_scene) => new_pet_scene,
-            SceneEnum::Home(home_scene) => home_scene,
-            SceneEnum::Eat(eat_scene) => eat_scene,
-            SceneEnum::GameSelect(game_select_scene) => game_select_scene,
-            SceneEnum::FoodSelect(food_select_scene) => food_select_scene,
-            SceneEnum::PetInfo(pet_info) => pet_info,
-            SceneEnum::PoopClear(poop_clear_scene) => poop_clear_scene,
-            SceneEnum::Shop(shop_scene) => shop_scene,
-            SceneEnum::Death(death) => death,
-            SceneEnum::Fishing(fishing) => fishing,
-            SceneEnum::Inventory(inventory) => inventory,
-            SceneEnum::EnterText(enter_text) => enter_text,
-            SceneEnum::EnterDate(enter_date) => enter_date,
-            SceneEnum::Evovle(evovle_scene) => evovle_scene,
-            SceneEnum::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
-            SceneEnum::Breed(breed_scene) => breed_scene,
+            Self::NewPet(new_pet_scene) => new_pet_scene,
+            Self::Home(home_scene) => home_scene,
+            Self::Eat(eat_scene) => eat_scene,
+            Self::GameSelect(game_select_scene) => game_select_scene,
+            Self::FoodSelect(food_select_scene) => food_select_scene,
+            Self::PetInfo(pet_info) => pet_info,
+            Self::PoopClear(poop_clear_scene) => poop_clear_scene,
+            Self::Shop(shop_scene) => shop_scene,
+            Self::Death(death) => death,
+            Self::Fishing(fishing) => fishing,
+            Self::Inventory(inventory) => inventory,
+            Self::EnterText(enter_text) => enter_text,
+            Self::EnterDate(enter_date) => enter_date,
+            Self::Evovle(evovle_scene) => evovle_scene,
+            Self::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
+            Self::Breed(breed_scene) => breed_scene,
             Self::Suiters(suiters_scene) => suiters_scene,
-            SceneEnum::PetRecords(pet_records_scene) => pet_records_scene,
-            SceneEnum::EggHatch(egg_hatch) => egg_hatch,
-            SceneEnum::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
-            SceneEnum::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
-            SceneEnum::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
-            SceneEnum::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
-            SceneEnum::MgWeightLift(mg_weight_lift_scene) => mg_weight_lift_scene,
+            Self::PetRecords(pet_records_scene) => pet_records_scene,
+            Self::Heal(heal_scene) => heal_scene,
+            Self::EggHatch(egg_hatch) => egg_hatch,
+            Self::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
+            Self::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
+            Self::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
+            Self::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
+            Self::MgWeightLift(mg_weight_lift_scene) => mg_weight_lift_scene,
         }
     }
 }

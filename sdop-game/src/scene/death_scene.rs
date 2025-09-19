@@ -5,7 +5,7 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    anime::{Anime, HasAnime},
+    anime::{Anime, HasAnime, MaskedAnimeRender},
     assets::{self, Image},
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
@@ -19,7 +19,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
-    sprite::{BasicAnimeSprite, Sprite},
+    sprite::{BasicAnimeSprite, Snowflake, Sprite},
     stomach::StomachRender,
 };
 
@@ -96,6 +96,40 @@ impl Default for ToxicShock {
     }
 }
 
+struct Illness {
+    skull: MaskedAnimeRender,
+}
+
+impl Default for Illness {
+    fn default() -> Self {
+        Self {
+            skull: MaskedAnimeRender::new(
+                CENTER_VEC,
+                &assets::FRAMES_SKULL,
+                &assets::FRAMES_SKULL_MASK,
+            ),
+        }
+    }
+}
+
+const ILLNESS_RUN_TIME: Duration = Duration::from_secs(7);
+
+struct Hypothermia {
+    snow_flakes: [Snowflake; 50],
+    shaking_duration: Duration,
+    shaking_left: bool,
+}
+
+impl Default for Hypothermia {
+    fn default() -> Self {
+        Self {
+            snow_flakes: [Snowflake::default(); 50],
+            shaking_duration: Default::default(),
+            shaking_left: Default::default(),
+        }
+    }
+}
+
 pub struct DeathScene {
     cause: DeathCause,
     state: State,
@@ -106,6 +140,8 @@ pub struct DeathScene {
     pet_render: PetRender,
     toxic_shock: ToxicShock,
     grave_stone: GraveStone,
+    ilness: Illness,
+    hypothermia: Hypothermia,
 }
 
 impl DeathScene {
@@ -120,6 +156,8 @@ impl DeathScene {
             pet_render: PetRender::new(pet_id),
             toxic_shock: Default::default(),
             grave_stone: GraveStone::default(),
+            ilness: Illness::default(),
+            hypothermia: Default::default(),
         }
     }
 }
@@ -162,6 +200,11 @@ impl Scene for DeathScene {
                 poop.anime = Anime::new(&assets::FRAMES_POOP);
                 poop.anime.set_random_frame(&mut args.game_ctx.rng);
                 poop.pos = pet_rect.random_point_inside(&mut args.game_ctx.rng);
+            }
+        } else if self.cause == DeathCause::Hypothermia {
+            for flake in &mut self.hypothermia.snow_flakes {
+                flake.reset(true, &mut args.game_ctx.rng);
+                flake.dir.y = args.game_ctx.rng.i32(5..15) as f32;
             }
         }
     }
@@ -264,6 +307,62 @@ impl Scene for DeathScene {
                     }
 
                     if self.state_elapsed > POOP_SPAWN_DURATION + PET_POOP_SPAWN_DURATION {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
+                DeathCause::Illness => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+                    self.ilness.skull.anime().tick(args.delta);
+
+                    const SPEED: f32 = 10.;
+
+                    if self.state_elapsed > Duration::from_secs(3) {
+                        self.pet_render.pos.y += SPEED * args.delta.as_secs_f32();
+                    }
+
+                    self.ilness.skull.pos = self.pet_render.pos
+                        - Vec2::new(
+                            0.,
+                            self.pet_render.anime.current_frame().size.y as f32 / 2.
+                                + assets::IMAGE_SKULL_0.size.y as f32 / 2.
+                                + 5.,
+                        );
+
+                    if self.state_elapsed > ILLNESS_RUN_TIME {
+                        self.state = State::Tombstone;
+                        self.state_elapsed = Duration::ZERO;
+                    }
+                }
+                DeathCause::Hypothermia => {
+                    self.pet_render.set_animation(PetAnimationSet::Sad);
+
+                    for flake in &mut self.hypothermia.snow_flakes {
+                        flake.pos += flake.dir * args.delta.as_secs_f32();
+
+                        if flake.pos.x > WIDTH_F32 + Snowflake::size().x
+                            || flake.pos.x < -Snowflake::size().x
+                            || flake.pos.y > HEIGHT_F32 + Snowflake::size().y
+                        {
+                            flake.reset(false, &mut args.game_ctx.rng);
+                        }
+                    }
+
+                    self.hypothermia.shaking_duration += args.delta;
+                    if self.hypothermia.shaking_duration > Duration::from_millis(200) {
+                        self.hypothermia.shaking_duration = Duration::ZERO;
+                        self.hypothermia.shaking_left = !self.hypothermia.shaking_left;
+                    }
+
+                    const SHAKE_AMOUNT_X: f32 = 10.;
+
+                    self.pet_render.pos.x += if self.hypothermia.shaking_left {
+                        SHAKE_AMOUNT_X
+                    } else {
+                        -SHAKE_AMOUNT_X
+                    } * args.delta.as_secs_f32();
+
+                    if self.state_elapsed > Duration::from_secs(20) {
                         self.state = State::Tombstone;
                         self.state_elapsed = Duration::ZERO;
                     }
@@ -375,6 +474,37 @@ impl Scene for DeathScene {
 
                             display.render_sprite(poop);
                         }
+                    }
+                }
+                DeathCause::Illness => {
+                    display.render_complex(&self.ilness.skull);
+                    display.render_sprite(&self.pet_render);
+
+                    const DOORS_CLOSE_TIME: Duration = Duration::from_secs(6);
+
+                    let x_percent = (self.state_elapsed.as_millis_f32()
+                        / DOORS_CLOSE_TIME.as_millis_f32())
+                    .min(1.)
+                        * 0.5;
+
+                    let left_door = Rect::new_top_left(
+                        Vec2::new(0., 0.),
+                        Vec2::new(WIDTH_F32 * x_percent, HEIGHT_F32),
+                    );
+                    display.render_rect_solid(left_door, false);
+
+                    let right_door = Rect::new_top_left(
+                        Vec2::new(WIDTH_F32 - WIDTH_F32 * x_percent, 0.),
+                        Vec2::new(WIDTH_F32, HEIGHT_F32),
+                    );
+
+                    display.render_rect_solid(right_door, false);
+                }
+                DeathCause::Hypothermia => {
+                    display.render_sprite(&self.pet_render);
+
+                    for flake in &self.hypothermia.snow_flakes {
+                        display.render_sprite(flake);
                     }
                 }
                 DeathCause::Leaving => {}

@@ -1,5 +1,3 @@
-use core::num;
-
 use chrono::Datelike;
 use fixedstr::str_format;
 use glam::Vec2;
@@ -11,7 +9,7 @@ use crate::{
     death::DeathCause,
     display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    pet::{location_from_upid, render::PetRender},
+    pet::{planet_location_from_upid, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     sprite::Sprite,
 };
@@ -192,7 +190,7 @@ impl Scene for PetRecordsScene {
                         );
                         current_y += Y_BUFFER;
 
-                        let (planet, number) = location_from_upid(record.upid);
+                        let (planet, number) = planet_location_from_upid(record.upid);
 
                         let str =
                             fixedstr::str_format!(fixedstr::str24, "{}-{:03}", planet, number);

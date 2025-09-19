@@ -4,6 +4,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
+    ROOM_TEMPTURE,
     assets::{self, Image},
     clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
     display::{CENTER_X, ComplexRender, HEIGHT_F32, WIDTH_F32},
@@ -11,6 +12,7 @@ use crate::{
     invetro_light::InvetroLightRender,
     scene::{SceneTickArgs, home_scene::HOME_SCENE_TOP_BORDER_RECT},
     sprite::BasicSprite,
+    thermometer::RenderThermometerMercury,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -19,6 +21,9 @@ pub enum HomeFurnitureKind {
     None,
     DigitalClock,
     AnalogueClock,
+    ThermometerMercury,
+    SpaceHeater,
+    AirCon,
     FishTank,
     InvertroLight,
     PaintingBranch,
@@ -31,16 +36,19 @@ pub enum HomeFurnitureKind {
 impl HomeFurnitureKind {
     pub fn size(&self) -> Vec2 {
         match self {
-            HomeFurnitureKind::None => Vec2::ZERO,
-            HomeFurnitureKind::DigitalClock => DigitalClockRender::size(),
-            HomeFurnitureKind::AnalogueClock => AnalogueClockKind::Clock21.size(),
-            HomeFurnitureKind::FishTank => FishTankRender::size(),
-            HomeFurnitureKind::InvertroLight => InvetroLightRender::size(),
-            HomeFurnitureKind::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
-            HomeFurnitureKind::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
-            HomeFurnitureKind::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
-            HomeFurnitureKind::PaintingPc => assets::IMAGE_PAINTING_PC.size_vec2(),
-            HomeFurnitureKind::PaintingSun => assets::IMAGE_PAINTING_SUN.size_vec2(),
+            Self::None => Vec2::ZERO,
+            Self::DigitalClock => DigitalClockRender::size(),
+            Self::AnalogueClock => AnalogueClockKind::Clock21.size(),
+            Self::ThermometerMercury => RenderThermometerMercury::size(),
+            Self::SpaceHeater => assets::IMAGE_SPACE_HEATER.size_vec2(),
+            Self::AirCon => assets::IMAGE_AIR_CONDITIONER.size_vec2(),
+            Self::FishTank => FishTankRender::size(),
+            Self::InvertroLight => InvetroLightRender::size(),
+            Self::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
+            Self::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
+            Self::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
+            Self::PaintingPc => assets::IMAGE_PAINTING_PC.size_vec2(),
+            Self::PaintingSun => assets::IMAGE_PAINTING_SUN.size_vec2(),
         }
     }
 
@@ -86,6 +94,10 @@ impl HomeLayout {
             HomeFurnitureLocation::Left => self.left = kind,
             HomeFurnitureLocation::Right => self.right = kind,
         }
+    }
+
+    pub fn furniture_present(&self, kind: HomeFurnitureKind) -> bool {
+        [self.left, self.top, self.right].iter().any(|i| *i == kind)
     }
 }
 
@@ -143,6 +155,7 @@ pub enum HomeFurnitureRender {
     None,
     DigitalClock(DigitalClockRender),
     AnalogueClock(AnalogueRenderClock),
+    ThermometerMercury(RenderThermometerMercury),
     FishTank(FishTankRender),
     InvetroLight(InvetroLightRender),
     Sprite(BasicSprite),
@@ -171,6 +184,15 @@ impl HomeFurnitureRender {
             HomeFurnitureKind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
                 AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
             ),
+            HomeFurnitureKind::ThermometerMercury => HomeFurnitureRender::ThermometerMercury(
+                RenderThermometerMercury::new(pos, ROOM_TEMPTURE),
+            ),
+            HomeFurnitureKind::SpaceHeater => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_SPACE_HEATER))
+            }
+            HomeFurnitureKind::AirCon => {
+                HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_AIR_CONDITIONER))
+            }
             HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
             HomeFurnitureKind::InvertroLight => {
                 HomeFurnitureRender::InvetroLight(InvetroLightRender::new(pos, 50, location))
@@ -195,25 +217,27 @@ impl HomeFurnitureRender {
 
     pub fn size(&self) -> Vec2 {
         match self {
-            HomeFurnitureRender::None => Vec2::ZERO,
-            HomeFurnitureRender::DigitalClock(_) => HomeFurnitureKind::DigitalClock.size(),
-            HomeFurnitureRender::AnalogueClock(_) => HomeFurnitureKind::AnalogueClock.size(),
-            HomeFurnitureRender::FishTank(_) => HomeFurnitureKind::FishTank.size(),
-            HomeFurnitureRender::InvetroLight(_) => HomeFurnitureKind::InvertroLight.size(),
-            HomeFurnitureRender::Sprite(basic_sprite) => basic_sprite.image.size_vec2(),
+            Self::None => Vec2::ZERO,
+            Self::DigitalClock(_) => HomeFurnitureKind::DigitalClock.size(),
+            Self::AnalogueClock(_) => HomeFurnitureKind::AnalogueClock.size(),
+            Self::ThermometerMercury(_) => HomeFurnitureKind::ThermometerMercury.size(),
+            Self::FishTank(_) => HomeFurnitureKind::FishTank.size(),
+            Self::InvetroLight(_) => HomeFurnitureKind::InvertroLight.size(),
+            Self::Sprite(basic_sprite) => basic_sprite.image.size_vec2(),
         }
     }
 
     pub fn tick(&mut self, args: &mut SceneTickArgs) {
         match self {
-            HomeFurnitureRender::None => {}
-            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
+            Self::None => {}
+            Self::DigitalClock(digital_clock_render) => {
                 digital_clock_render.update_time(&args.timestamp.inner().time());
             }
-            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
+            Self::AnalogueClock(analogue_render_clock) => {
                 analogue_render_clock.update_time(&args.timestamp.inner().time());
             }
-            HomeFurnitureRender::FishTank(fishtank_render) => {
+            Self::ThermometerMercury(_) => {}
+            Self::FishTank(fishtank_render) => {
                 while fishtank_render.fish_count() < args.game_ctx.home_fish_tank.count() {
                     fishtank_render.add_fish(
                         &mut args.game_ctx.rng,
@@ -223,8 +247,8 @@ impl HomeFurnitureRender {
 
                 fishtank_render.tick(args.delta, &mut args.game_ctx.rng);
             }
-            HomeFurnitureRender::InvetroLight(_) => {}
-            HomeFurnitureRender::Sprite(_) => {}
+            Self::InvetroLight(_) => {}
+            Self::Sprite(_) => {}
         }
     }
 }
@@ -232,19 +256,20 @@ impl HomeFurnitureRender {
 impl ComplexRender for HomeFurnitureRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         match self {
-            HomeFurnitureRender::None => {}
-            HomeFurnitureRender::DigitalClock(digital_clock_render) => {
+            Self::None => {}
+            Self::DigitalClock(digital_clock_render) => {
                 display.render_complex(digital_clock_render)
             }
-            HomeFurnitureRender::AnalogueClock(analogue_render_clock) => {
+            Self::AnalogueClock(analogue_render_clock) => {
                 display.render_complex(analogue_render_clock)
             }
-            HomeFurnitureRender::FishTank(fishtank_render) => {
-                display.render_complex(fishtank_render)
+            Self::ThermometerMercury(thermometer_mercury_render) => {
+                display.render_complex(thermometer_mercury_render);
             }
+            Self::FishTank(fishtank_render) => display.render_complex(fishtank_render),
             // We want these to render later so this is a hack
-            HomeFurnitureRender::InvetroLight(_) => {}
-            HomeFurnitureRender::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
+            Self::InvetroLight(_) => {}
+            Self::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
         }
     }
 }

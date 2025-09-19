@@ -3,8 +3,9 @@ use glam::Vec2;
 use crate::{
     anime::Anime,
     assets::Image,
+    display::PostionMode,
     pet::definition::{PET_BLOB_ID, PetAnimationSet, PetDefinition, PetDefinitionId},
-    sprite::{Sprite, SpriteMask},
+    sprite::{Sprite, SpriteMask, SpritePostionMode},
 };
 
 #[derive(Clone, Copy)]
@@ -13,6 +14,7 @@ pub struct PetRender {
     pub pos: Vec2,
     set: PetAnimationSet,
     pub anime: Anime,
+    pub pos_mode: PostionMode,
 }
 
 fn create_pet_anime(def_id: PetDefinitionId, set: PetAnimationSet) -> Anime {
@@ -27,6 +29,11 @@ impl PetRender {
             anime: create_pet_anime(def_id, Default::default()),
             ..Default::default()
         }
+    }
+
+    pub fn with_pos_mode(mut self, pos_mode: PostionMode) -> Self {
+        self.pos_mode = pos_mode;
+        self
     }
 
     pub fn definition(&self) -> &'static PetDefinition {
@@ -83,6 +90,13 @@ impl Default for PetRender {
             pos: Vec2::default(),
             set: PetAnimationSet::default(),
             anime: create_pet_anime(PET_BLOB_ID, Default::default()),
+            pos_mode: PostionMode::Center,
         }
+    }
+}
+
+impl SpritePostionMode for PetRender {
+    fn sprite_postion_mode(&self) -> PostionMode {
+        self.pos_mode
     }
 }

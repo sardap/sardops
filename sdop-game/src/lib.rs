@@ -13,6 +13,7 @@ use core::time::Duration;
 use crate::{
     display::{ConvertFn, DrawDisplay},
     fps::FPSCounter,
+    game_consts::LOW_POWER_THRESHOLD,
     game_context::GameContext,
     input::Input,
     pet::definition::PET_BABIES,
@@ -54,11 +55,14 @@ mod sim;
 mod sprite;
 mod stomach;
 mod suiter;
+mod temperature;
+mod thermometer;
 mod tic_tac_toe;
 mod tv;
 
 pub use crate::date_utils::Timestamp;
 pub use crate::display::{HEIGHT, WIDTH};
+pub use crate::game_consts::ROOM_TEMPTURE;
 pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
 pub use crate::save::SaveFile;
@@ -71,6 +75,7 @@ pub struct Game {
     game_ctx: GameContext,
     time_scale: f32,
     fps: FPSCounter,
+    since_input: Duration,
 }
 
 impl Game {
@@ -83,6 +88,7 @@ impl Game {
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
             fps: FPSCounter::new(),
+            since_input: Duration::ZERO,
         }
     }
 
@@ -109,12 +115,21 @@ impl Game {
         self.input.update_state(input_states);
     }
 
+    pub fn update_temperature(&mut self, temperature: f32) {
+        self.input.update_temperature(temperature);
+    }
+
     pub fn input(&self) -> Input {
         self.input
     }
 
     pub fn set_sim_time_scale(&mut self, time_scale: f32) {
         self.time_scale = time_scale;
+    }
+
+    pub fn low_power(&self) -> bool {
+        matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_))
+            && self.since_input > LOW_POWER_THRESHOLD
     }
 
     pub fn tick(&mut self, delta: Duration) {
@@ -124,11 +139,13 @@ impl Game {
 
         // Make random more random
         if self.input.any_pressed() {
+            self.since_input = Duration::ZERO;
             let count = self.game_ctx.rng.u128(0..10);
             for _ in 0..count {
                 self.game_ctx.rng.bool();
             }
         } else {
+            self.since_input += delta;
             self.game_ctx.rng.bool();
         }
 
@@ -179,6 +196,7 @@ impl Game {
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
         self.display.render_fps(&self.fps);
+        self.display.render_temperature(self.input().temperature());
         self.fps.update(delta);
     }
 
@@ -206,18 +224,14 @@ impl Game {
         let last_timestamp = save.last_timestamp;
         let delta = timestamp - last_timestamp;
         save.load(&mut self.game_ctx);
-        const STEP_SIZE: Duration = Duration::from_millis(15);
-        let steps = (delta.as_millis() / STEP_SIZE.as_millis()) as u64;
-        for i in 0..steps {
-            let mut scene_args = SceneTickArgs {
-                timestamp: last_timestamp + Duration::from_millis(i * 15),
-                delta: STEP_SIZE,
-                input: &self.input,
-                game_ctx: &mut self.game_ctx,
-                last_scene: None,
-            };
-            tick_sim(1., &mut scene_args);
-        }
+        let mut scene_args = SceneTickArgs {
+            timestamp: last_timestamp,
+            delta: delta,
+            input: &self.input,
+            game_ctx: &mut self.game_ctx,
+            last_scene: None,
+        };
+        tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();
     }
 }

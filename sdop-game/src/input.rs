@@ -1,3 +1,5 @@
+use crate::game_consts;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Button {
     Left,
@@ -34,8 +36,9 @@ pub enum ButtonState {
 
 pub type ButtonStates = [ButtonState; 3];
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Input {
+    temperature: f32,
     states: ButtonStates,
     last_state: ButtonStates,
 }
@@ -43,6 +46,7 @@ pub struct Input {
 impl Default for Input {
     fn default() -> Self {
         Self {
+            temperature: game_consts::ROOM_TEMPTURE,
             states: [ButtonState::Up; 3],
             last_state: [ButtonState::Up; 3],
         }
@@ -52,6 +56,7 @@ impl Default for Input {
 impl Input {
     pub fn new(states: ButtonStates) -> Self {
         Self {
+            temperature: game_consts::ROOM_TEMPTURE,
             states: states,
             last_state: states,
         }
@@ -80,5 +85,13 @@ impl Input {
     pub fn update_state(&mut self, states: ButtonStates) {
         self.last_state = self.states;
         self.states = states;
+    }
+
+    pub fn update_temperature(&mut self, temperature: f32) {
+        self.temperature = temperature;
+    }
+
+    pub fn temperature(&self) -> f32 {
+        self.temperature
     }
 }

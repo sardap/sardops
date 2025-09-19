@@ -12,7 +12,7 @@ use crate::{
     poop::{MAX_POOPS, Poop},
     scene::{SharedSceneOutput, home_scene::HomeSceneData},
     shop::Shop,
-    suiter::{Suiter, SuiterSystem},
+    suiter::SuiterSystem,
 };
 
 pub struct GameContext {
@@ -33,6 +33,7 @@ pub struct GameContext {
     pub egg: Option<SavedEgg>,
     pub suiter_system: SuiterSystem,
     pub sim_extra: Duration,
+    pub sim_rng: fastrand::Rng,
 }
 
 impl GameContext {
@@ -55,6 +56,7 @@ impl GameContext {
             egg: None,
             suiter_system: SuiterSystem::default(),
             sim_extra: Duration::ZERO,
+            sim_rng: fastrand::Rng::with_seed(0),
         }
     }
 

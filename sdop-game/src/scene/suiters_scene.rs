@@ -1,18 +1,12 @@
 use core::time::Duration;
 
-use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
     Button, assets,
     display::{CENTER_X, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    game_consts::RANDOM_NAMES,
-    pet::{
-        ParentInfo, PetName,
-        definition::{PetAnimationSet, PetDefinition},
-        render::PetRender,
-    },
+    pet::{ParentInfo, definition::PetAnimationSet, render::PetRender},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene,
         home_scene::HomeScene,
