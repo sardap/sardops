@@ -21,6 +21,17 @@ include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ItemCategory {
+    Misc,
+    Furniture,
+    PlayThing,
+    Usable,
+    Book,
+    Software,
+    Food,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ItemRarity {
     None,
     Common,
@@ -134,7 +145,7 @@ impl ItemKind {
         };
 
         const C_PROGRAMMING: BookInfo = BookInfo {
-            item: ItemKind::BookNevileWran,
+            item: ItemKind::BookCProgramming,
             length: Duration::from_hours(4),
             chapters: 17,
             open_book: &assets::IMAGE_BOOK_C_OPEN,
@@ -244,7 +255,7 @@ impl ItemKind {
         };
 
         const ODYSSEY: BookInfo = BookInfo {
-            item: ItemKind::BookEpicOfGilgamesh,
+            item: ItemKind::BookHomersOdyssey,
             length: Duration::from_hours(5),
             chapters: 24,
             open_book: &assets::IMAGE_BOOK_ODYSSEY_OPEN,

@@ -1,7 +1,7 @@
 use core::{time::Duration, u8};
 
 use chrono::Timelike;
-use fixedstr::str32;
+use fixedstr::{str_format, str32};
 use glam::Vec2;
 
 use crate::{
@@ -785,6 +785,41 @@ impl Scene for HomeScene {
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
             State::ReadingBook { book } => {
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, 34.),
+                    &"CHAPTER",
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                let current_chapter = args.game_ctx.pet.book_history.get_read(book).chapters();
+                let str = str_format!(
+                    fixedstr::str24,
+                    "{} of {}",
+                    current_chapter + 1,
+                    book.book_info().chapters
+                );
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, 40.),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                let percent_complete = args.game_ctx.home.state_elapsed.as_millis_f32()
+                    / book.book_info().chapter_length().as_millis_f32();
+                let str = str_format!(fixedstr::str24, "{:.0}%", percent_complete * 100.,);
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, 46.),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
                 for word in &args.game_ctx.home.floating_words {
                     if let Some(word) = word {
                         display.render_text_complex(

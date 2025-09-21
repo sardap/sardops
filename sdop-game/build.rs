@@ -1,5 +1,5 @@
 use asefile::AsepriteFile;
-use chrono::{DateTime, Datelike, Days, NaiveDate, NaiveTime};
+use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,6 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
     vec,
 };
 use strum_macros::{Display, EnumString};
@@ -520,6 +519,17 @@ enum RarityEnum {
     Rare,
 }
 
+#[derive(Serialize, Deserialize, Display)]
+pub enum ItemCategory {
+    Misc,
+    Furniture,
+    PlayThing,
+    Usable,
+    Book,
+    Software,
+    Food,
+}
+
 #[derive(Serialize, Deserialize)]
 struct ItemEntry {
     name: String,
@@ -530,6 +540,7 @@ struct ItemEntry {
     desc: String,
     #[serde(default)]
     fishing_odds: f32,
+    category: ItemCategory,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -576,6 +587,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     desc_fn.push_str("pub const fn desc(&self) -> &'static str {\n");
     desc_fn.push_str("return match self {\n");
     desc_fn.push_str("Self::None => \"?????\",\n");
+    let mut category_fn = String::new();
+    category_fn.push_str("pub const fn category(&self) -> ItemCategory {\n");
+    category_fn.push_str("return match self {\n");
+    category_fn.push_str("Self::None => ItemCategory::Misc,\n");
     let mut fishing_chance_def = String::new();
     fishing_chance_def.push_str("pub const FISHING_ITEM_ODDS: &[ItemChance] = &[\n");
 
@@ -598,6 +613,11 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         desc_fn.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.desc));
 
         unique_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.unique));
+
+        category_fn.push_str(&format!(
+            "Self::{} => ItemCategory::{},\n",
+            enum_name, template.category
+        ));
 
         image_fn_def.push_str(&format!(
             "Self::{} => &crate::assets::IMAGE_{},\n",
@@ -641,6 +661,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         from_food_fn.push_str(&format!("{} => Self::{},\n", i, enum_name));
 
+        category_fn.push_str(&format!("Self::{} => ItemCategory::Food,\n", enum_name,));
+
         item_count += 1;
     }
 
@@ -652,6 +674,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     image_fn_def.push_str("}\n}\n");
     from_food_fn.push_str("_ => Self::None\n");
     from_food_fn.push_str("}\n}\n");
+    category_fn.push_str("}}");
     desc_fn.push_str("}\n}\n");
     fishing_chance_def.push_str("];");
 
@@ -666,6 +689,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&image_fn_def);
     items_definitions.push_str(&from_food_fn);
     items_definitions.push_str(&desc_fn);
+    items_definitions.push_str(&category_fn);
     items_definitions.push_str("}");
     items_definitions.push_str(&fishing_chance_def);
 

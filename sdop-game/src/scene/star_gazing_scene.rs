@@ -106,12 +106,12 @@ impl Scene for StarGazingScene {
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let time = args.timestamp.inner().time();
 
-        if (time.hour() > 5 && time.minute() > 30) || (time.hour() < 17 && time.minute() < 30) {
+        if (time.hour() > 5 && time.minute() > 30) || (time.hour() < 18 && time.minute() < 30) {
             display.invert();
 
             display.render_text_complex(
                 Vec2::new(CENTER_X, HEIGHT_F32 - 10.),
-                "SUNNY",
+                "DAYTIME",
                 ComplexRenderOption::new()
                     .with_black()
                     .with_flip()
