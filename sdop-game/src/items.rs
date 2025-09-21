@@ -13,7 +13,7 @@ use crate::{
     furniture::HomeFurnitureKind,
     game_context::GameContext,
     pc::Program,
-    scene::{SceneEnum, fishing_scene},
+    scene::{SceneEnum, fishing_scene, star_gazing_scene},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
@@ -613,7 +613,15 @@ const USE_FISH: UsableItem = UsableItem::new(ItemKind::Fish, |game_ctx| {
 })
 .with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
 
-const ALL_USEABLE_ITEMS: &[UsableItem] = &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH];
+const USE_TELESCOPE: UsableItem = UsableItem::new(ItemKind::Telescope, |_| {
+    UseItemOutput::new().with_scene(SceneEnum::StarGazing(
+        star_gazing_scene::StarGazingScene::new(),
+    ))
+})
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+
+const ALL_USEABLE_ITEMS: &[UsableItem] =
+    &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH, USE_TELESCOPE];
 
 pub struct ItemChance {
     kind: ItemKind,

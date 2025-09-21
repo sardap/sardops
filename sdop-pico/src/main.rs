@@ -212,6 +212,10 @@ async fn main(spawner: Spawner) {
         .into_buffered_graphics_mode();
 
     display.init().unwrap();
+    // loop {
+    //     display.clear(BinaryColor::On).unwrap();
+    //     display.flush().unwrap();
+    // }
 
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_6X10)

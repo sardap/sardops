@@ -3,7 +3,6 @@ use core::{time::Duration, u8};
 use chrono::Timelike;
 use fixedstr::str32;
 use glam::Vec2;
-use strum::IntoEnumIterator;
 
 use crate::{
     Button, WIDTH,
@@ -29,7 +28,7 @@ use crate::{
         game_select::GameSelectScene, heal_scene::HealScene, inventory_scene::InventoryScene,
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
-        shop_scene::ShopScene, suiters_scene::SuitersScene,
+        shop_scene::ShopScene, star_gazing_scene::StarGazingScene, suiters_scene::SuitersScene,
     },
     sprite::{BasicAnimeSprite, Snowflake, Sprite, SpriteRotation},
     temperature::TemperatureLevel,

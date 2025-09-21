@@ -22,6 +22,7 @@ pub mod pet_records_scene;
 pub mod place_furniture_scene;
 pub mod poop_clear_scene;
 pub mod shop_scene;
+pub mod star_gazing_scene;
 pub mod suiters_scene;
 
 use core::time::Duration;
@@ -54,6 +55,7 @@ pub enum SceneEnum {
     EggHatch(egg_hatch::EggHatchScene),
     PetRecords(pet_records_scene::PetRecordsScene),
     Heal(heal_scene::HealScene),
+    StarGazing(star_gazing_scene::StarGazingScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -90,6 +92,7 @@ impl SceneEnum {
             Self::PetRecords(pet_records_scene) => pet_records_scene,
             Self::Heal(heal_scene) => heal_scene,
             Self::EggHatch(egg_hatch) => egg_hatch,
+            Self::StarGazing(star_gazing) => star_gazing,
             Self::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             Self::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             Self::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,

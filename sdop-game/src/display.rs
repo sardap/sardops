@@ -330,7 +330,7 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_circle(&mut self, center: Vec2, radius: i32, white: bool) {
+    pub fn render_circle(&mut self, center: Vec2, radius: i32, white: bool, fill: bool) {
         if radius == 0 {
             return;
         }
@@ -343,14 +343,23 @@ impl GameDisplay {
         let mut err = 0;
 
         while x >= y {
-            self.render_point(cx + x, cy + y, white);
-            self.render_point(cx + y, cy + x, white);
-            self.render_point(cx - y, cy + x, white);
-            self.render_point(cx - x, cy + y, white);
-            self.render_point(cx - x, cy - y, white);
-            self.render_point(cx - y, cy - x, white);
-            self.render_point(cx + y, cy - x, white);
-            self.render_point(cx + x, cy - y, white);
+            if fill {
+                // Draw horizontal lines between symmetric points
+                self.render_hline(cx - x, cx + x, cy + y, white);
+                self.render_hline(cx - x, cx + x, cy - y, white);
+                self.render_hline(cx - y, cx + y, cy + x, white);
+                self.render_hline(cx - y, cx + y, cy - x, white);
+            } else {
+                // Draw just the outline points
+                self.render_point(cx + x, cy + y, white);
+                self.render_point(cx + y, cy + x, white);
+                self.render_point(cx - y, cy + x, white);
+                self.render_point(cx - x, cy + y, white);
+                self.render_point(cx - x, cy - y, white);
+                self.render_point(cx - y, cy - x, white);
+                self.render_point(cx + y, cy - x, white);
+                self.render_point(cx + x, cy - y, white);
+            }
 
             y += 1;
             if err <= 0 {
@@ -360,6 +369,12 @@ impl GameDisplay {
                 x -= 1;
                 err -= 2 * x + 1;
             }
+        }
+    }
+
+    pub fn render_hline(&mut self, x0: i32, x1: i32, y: i32, white: bool) {
+        for x in x0..=x1 {
+            self.render_point(x, y, white);
         }
     }
 
@@ -390,7 +405,7 @@ impl GameDisplay {
 
     pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
         let max_height = {
-            let mut max = u8::MIN;
+            let mut max = u16::MIN;
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
                 if image.size.y > max {

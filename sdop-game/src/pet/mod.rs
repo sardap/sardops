@@ -154,6 +154,7 @@ pub struct PetInstance {
     total_cold_for: Duration,
     cold_for: Duration,
     total_hot_for: Duration,
+    pub seen_alien: bool,
 }
 
 impl PetInstance {
@@ -539,6 +540,7 @@ impl Default for PetInstance {
             cold_for: Duration::ZERO,
             total_cold_for: Duration::ZERO,
             total_hot_for: Duration::ZERO,
+            seen_alien: false,
         }
     }
 }

@@ -1,5 +1,5 @@
 [workspace]
-members = ["sdop-cli", "sdop-game", "sdop-pc", "sdop-save-edit", "sdop-web"]
+members = ["misc/gen_night_sky","sdop-cli", "sdop-game", "sdop-pc", "sdop-save-edit", "sdop-web"]
 exclude = ["sdop-gba", "sdop-pico", "sdop-3ds", "sdop-psp"]
 default-members = ["sdop-pc"]
 resolver = "2"

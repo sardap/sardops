@@ -219,7 +219,7 @@ impl Scene for EvolveScene {
                 // display.render_sprite(&self.to_pet_render);
                 for circle in &self.circles {
                     if let Some(circle) = circle {
-                        display.render_circle(CENTER_VEC, circle.size, true);
+                        display.render_circle(CENTER_VEC, circle.size, true, false);
                     }
                 }
 

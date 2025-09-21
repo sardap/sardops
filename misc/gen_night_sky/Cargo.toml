@@ -1,0 +1,9 @@
+[package]
+name = "gen_night_sky"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+asefile = "0.3.8"
+fastrand = "2.3.0"
+image = "0.25.8"

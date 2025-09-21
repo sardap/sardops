@@ -1,4 +1,5 @@
 use core::{
+    f32::consts::PI,
     ops::{Add, Sub},
     time::Duration,
 };
@@ -7,6 +8,15 @@ use bincode::Encode;
 use const_for::const_for;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use glam::Vec2;
+use libm::Libm;
+use strum_macros::EnumIter;
+
+use crate::{
+    assets::{self, StaticImage},
+    display::{CENTER_VEC, ComplexRender, ComplexRenderOption, Rotation},
+    sprite::{Sprite, SpriteMask, SpriteRotation},
+};
 
 include!(concat!(env!("OUT_DIR"), "/dist_dates.rs"));
 
@@ -45,6 +55,17 @@ impl Timestamp {
     pub fn seed(&self) -> u64 {
         #[allow(deprecated)]
         u64::from_ne_bytes(self.0.timestamp_nanos().to_ne_bytes())
+    }
+
+    pub fn date_seed(&self) -> u64 {
+        let day = self.inner().day() as u8;
+        let month = self.inner().month() as u8;
+        let year = self.inner().year() as u16;
+        let year_bytes = year.to_be_bytes();
+        let year_left = year_bytes[0];
+        let year_right = year_bytes[1];
+
+        u32::from_be_bytes([day, month, year_left, year_right]) as u64
     }
 
     pub fn inner(&self) -> &NaiveDateTime {
@@ -437,5 +458,82 @@ impl SpecialDayUpdater {
         }
 
         None
+    }
+}
+
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum MoonPhase {
+    NewMoon,
+    WaxingCrescent,
+    FirstQuarter,
+    WaxingGibbous,
+    FullMoon,
+    WaningGibbous,
+    LastQuarter,
+    WaningCrescent,
+}
+
+impl Default for MoonPhase {
+    fn default() -> Self {
+        Self::NewMoon
+    }
+}
+
+impl From<f64> for MoonPhase {
+    fn from(v: f64) -> Self {
+        // Multiply into 0..8 and round to nearest phase
+        let idx = libm::floor((v * 8.0) + 0.5) as u8 % 8;
+
+        match idx {
+            0 => MoonPhase::NewMoon,
+            1 => MoonPhase::WaxingCrescent,
+            2 => MoonPhase::FirstQuarter,
+            3 => MoonPhase::WaxingGibbous,
+            4 => MoonPhase::FullMoon,
+            5 => MoonPhase::WaningGibbous,
+            6 => MoonPhase::LastQuarter,
+            7 => MoonPhase::WaningCrescent,
+            _ => MoonPhase::NewMoon,
+        }
+    }
+}
+
+pub struct MoonRender {
+    pub pos: Vec2,
+    pub since_ce: i32,
+}
+
+impl MoonRender {
+    pub fn new(pos: Vec2, age: i32) -> Self {
+        Self { pos, since_ce: age }
+    }
+
+    pub fn frame_index(&self) -> usize {
+        self.since_ce.abs() as usize % assets::FRAMES_MOON_ANIME.len()
+    }
+}
+
+impl Default for MoonRender {
+    fn default() -> Self {
+        Self {
+            pos: Default::default(),
+            since_ce: 0,
+        }
+    }
+}
+
+impl Sprite for MoonRender {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl assets::Image {
+        assets::FRAMES_MOON_ANIME[self.frame_index()].frame
+    }
+}
+
+impl SpriteMask for MoonRender {
+    fn image_mask(&self) -> &impl assets::Image {
+        assets::FRAMES_MOON_ANIME_MASK[self.frame_index()].frame
     }
 }

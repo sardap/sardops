@@ -1,5 +1,14 @@
 [
     ItemEntry(
+        name: "Telescope",
+        cost: 1000,
+        rarity: Rare,
+        image: "telescope",
+        unique: true,
+        desc: "Gaze with wonder at the stars and the moon who knows what you will see up there.",
+        fishing_odds: 0.05,
+    ),
+    ItemEntry(
         name: "tv lcd",
         cost: 1000,
         rarity: Rare,
