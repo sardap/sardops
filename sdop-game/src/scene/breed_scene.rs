@@ -7,11 +7,7 @@ use crate::{
     display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     egg::{EggRender, SavedEgg},
     geo::Rect,
-    pet::{
-        ParentInfo, PetParents, UniquePetId, combine_pid,
-        definition::{PetAnimationSet, PetDefinitionId},
-        render::PetRender,
-    },
+    pet::{ParentInfo, PetParents, combine_pid, definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 

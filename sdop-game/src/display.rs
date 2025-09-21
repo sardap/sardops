@@ -3,10 +3,11 @@ use core::f32;
 use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
+use strum_macros::EnumIter;
 
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
-use crate::sprite::SpriteMask;
+use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
@@ -47,12 +48,18 @@ pub enum PostionMode {
     BottomRight,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum Rotation {
     R0,
     R90,
     R180,
     R270,
+}
+
+impl Default for Rotation {
+    fn default() -> Self {
+        Self::R0
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -323,7 +330,7 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_circle(&mut self, center: Vec2, radius: i32, white: bool) {
+    pub fn render_circle(&mut self, center: Vec2, radius: i32, white: bool, fill: bool) {
         if radius == 0 {
             return;
         }
@@ -336,14 +343,23 @@ impl GameDisplay {
         let mut err = 0;
 
         while x >= y {
-            self.render_point(cx + x, cy + y, white);
-            self.render_point(cx + y, cy + x, white);
-            self.render_point(cx - y, cy + x, white);
-            self.render_point(cx - x, cy + y, white);
-            self.render_point(cx - x, cy - y, white);
-            self.render_point(cx - y, cy - x, white);
-            self.render_point(cx + y, cy - x, white);
-            self.render_point(cx + x, cy - y, white);
+            if fill {
+                // Draw horizontal lines between symmetric points
+                self.render_hline(cx - x, cx + x, cy + y, white);
+                self.render_hline(cx - x, cx + x, cy - y, white);
+                self.render_hline(cx - y, cx + y, cy + x, white);
+                self.render_hline(cx - y, cx + y, cy - x, white);
+            } else {
+                // Draw just the outline points
+                self.render_point(cx + x, cy + y, white);
+                self.render_point(cx + y, cy + x, white);
+                self.render_point(cx - y, cy + x, white);
+                self.render_point(cx - x, cy + y, white);
+                self.render_point(cx - x, cy - y, white);
+                self.render_point(cx - y, cy - x, white);
+                self.render_point(cx + y, cy - x, white);
+                self.render_point(cx + x, cy - y, white);
+            }
 
             y += 1;
             if err <= 0 {
@@ -356,11 +372,22 @@ impl GameDisplay {
         }
     }
 
+    pub fn render_hline(&mut self, x0: i32, x1: i32, y: i32, white: bool) {
+        for x in x0..=x1 {
+            self.render_point(x, y, white);
+        }
+    }
+
     pub fn render_sprite<T: Sprite>(&mut self, sprite: &T)
     where
-        T: RenderSpriteWithMask<T>,
+        T: RenderSpriteWithMask<T> + SpriteWithPostionMode<T> + SpriteWithRotation<T>,
     {
-        T::render_with_mask(self, sprite);
+        T::render_with_mask(
+            self,
+            sprite,
+            T::get_postion_mode(sprite),
+            T::get_rotation(sprite),
+        );
     }
 
     pub fn render_sprites<T: Sprite>(&mut self, sprites: &[Option<T>]) {
@@ -378,7 +405,7 @@ impl GameDisplay {
 
     pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
         let max_height = {
-            let mut max = u8::MIN;
+            let mut max = u16::MIN;
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
                 if image.size.y > max {
@@ -530,11 +557,28 @@ impl GameDisplay {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
-            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 10.)),
+            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
             false,
         );
         self.render_text_complex(
             Vec2::new(0., 0.),
+            &str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_font(&FONT_VARIABLE_SMALL),
+        );
+    }
+
+    pub fn render_temperature(&mut self, temperature: f32) {
+        use fixedstr::{str_format, str16};
+        let str = str_format!(str16, "{:.0}", temperature);
+        let width = str.len() as f32 * 5. + 3.;
+        self.render_rect_solid(
+            Rect::new_top_left(Vec2::new(WIDTH_F32 - width, 0.), Vec2::new(width, 9.)),
+            false,
+        );
+        self.render_text_complex(
+            Vec2::new(WIDTH_F32 - width + 3., 0.),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -773,38 +817,100 @@ pub trait ComplexRender {
     fn render(&self, display: &mut GameDisplay);
 }
 
+pub trait HasPostionMode {}
+impl<T: SpritePostionMode> HasPostionMode for T {}
+
+pub trait SpriteWithPostionMode<T: Sprite> {
+    fn get_postion_mode(sprite: &T) -> PostionMode;
+}
+
+impl<T: Sprite + HasPostionMode + SpritePostionMode> SpriteWithPostionMode<T> for T {
+    fn get_postion_mode(sprite: &T) -> PostionMode {
+        sprite.sprite_postion_mode()
+    }
+}
+
+impl<T: Sprite> SpriteWithPostionMode<T> for T {
+    default fn get_postion_mode(_: &T) -> PostionMode {
+        PostionMode::Center
+    }
+}
+
+pub trait HasRotation {}
+impl<T: SpriteRotation> HasRotation for T {}
+
+pub trait SpriteWithRotation<T: Sprite> {
+    fn get_rotation(sprite: &T) -> Rotation;
+}
+
+impl<T: Sprite + HasRotation + SpriteRotation> SpriteWithRotation<T> for T {
+    fn get_rotation(sprite: &T) -> Rotation {
+        sprite.sprite_rotation()
+    }
+}
+
+impl<T: Sprite> SpriteWithRotation<T> for T {
+    default fn get_rotation(_: &T) -> Rotation {
+        Rotation::R0
+    }
+}
+
 pub trait RenderSpriteWithMask<T: Sprite> {
-    fn render_with_mask(renderer: &mut GameDisplay, sprite: &T);
+    fn render_with_mask(
+        renderer: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    );
 }
 
 pub trait HasMask {}
 impl<T: SpriteMask> HasMask for T {}
 
 impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {
-    fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+    fn render_with_mask(
+        display: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    ) {
         display.render_image_complex(
             sprite.pos().x as i32,
             sprite.pos().y as i32,
             sprite.image(),
-            ComplexRenderOption::new().with_white().with_center(),
+            ComplexRenderOption::new()
+                .with_white()
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
 
         display.render_image_complex(
             sprite.pos().x as i32,
             sprite.pos().y as i32,
             sprite.image_mask(),
-            ComplexRenderOption::new().with_black().with_center(),
+            ComplexRenderOption::new()
+                .with_black()
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
     }
 }
 
 impl<T: Sprite> RenderSpriteWithMask<T> for T {
-    default fn render_with_mask(display: &mut GameDisplay, sprite: &T) {
+    default fn render_with_mask(
+        display: &mut GameDisplay,
+        sprite: &T,
+        pos_mode: PostionMode,
+        rotation: Rotation,
+    ) {
         display.render_image_complex(
             sprite.pos().x as i32,
             sprite.pos().y as i32,
             sprite.image(),
-            ComplexRenderOption::new().with_white().with_center(),
+            ComplexRenderOption::new()
+                .with_white()
+                .with_pos_mode(pos_mode)
+                .with_rotation(rotation),
         );
     }
 }

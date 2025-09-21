@@ -1,13 +1,13 @@
 use core::time::Duration;
 
-use glam::{U8Vec2, Vec2, usize};
+use glam::{U16Vec2, Vec2, usize};
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 
 pub trait Image {
     fn texture<'a>(&'a self) -> &'a [u8];
 
-    fn size<'a>(&'a self) -> &'a U8Vec2;
+    fn size<'a>(&'a self) -> &'a U16Vec2;
 
     fn size_vec2(&self) -> Vec2 {
         let size = self.size();
@@ -17,7 +17,7 @@ pub trait Image {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StaticImage {
-    pub size: U8Vec2,
+    pub size: U16Vec2,
     pub texture: &'static [u8],
 }
 
@@ -32,22 +32,22 @@ impl Image for StaticImage {
         &self.texture
     }
 
-    fn size<'a>(&'a self) -> &'a U8Vec2 {
+    fn size<'a>(&'a self) -> &'a U16Vec2 {
         &self.size
     }
 }
 
 impl StaticImage {
-    pub const fn new(width: u8, height: u8, texture: &'static [u8]) -> Self {
+    pub const fn new(width: u16, height: u16, texture: &'static [u8]) -> Self {
         Self {
-            size: U8Vec2::new(width, height),
+            size: U16Vec2::new(width, height),
             texture: texture,
         }
     }
 }
 
 pub struct DynamicImage<const T: usize> {
-    pub size: U8Vec2,
+    pub size: U16Vec2,
     pub used_length: usize,
     pub texture: [u8; T],
 }
@@ -64,7 +64,7 @@ impl<const T: usize> DynamicImage<T> {
 impl<const T: usize> Default for DynamicImage<T> {
     fn default() -> Self {
         Self {
-            size: U8Vec2::default(),
+            size: U16Vec2::default(),
             used_length: 0,
             texture: [0; T],
         }
@@ -76,7 +76,7 @@ impl<const T: usize> Image for DynamicImage<T> {
         &self.texture[0..self.used_length]
     }
 
-    fn size<'a>(&'a self) -> &'a U8Vec2 {
+    fn size<'a>(&'a self) -> &'a U16Vec2 {
         &self.size
     }
 }

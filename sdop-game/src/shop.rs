@@ -18,16 +18,7 @@ pub struct Shop {
 
 impl Shop {
     pub fn item_set(&self, timestamp: Timestamp) -> ShopItemSet {
-        let day = timestamp.inner().day() as u8;
-        let month = timestamp.inner().month() as u8;
-        let year = timestamp.inner().year() as u16;
-        let year_bytes = year.to_be_bytes();
-        let year_left = year_bytes[0];
-        let year_right = year_bytes[1];
-
-        let seed = u32::from_be_bytes([day, month, year_left, year_right]) as u64;
-
-        let mut rng = fastrand::Rng::with_seed(seed);
+        let mut rng = fastrand::Rng::with_seed(timestamp.date_seed());
 
         let mut result = [ItemKind::None; MAX_SHOP_ITEMS];
         let mut count = 0;

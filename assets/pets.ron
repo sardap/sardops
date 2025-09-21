@@ -116,4 +116,12 @@
             sleep: Some("images/pets/devil_sleep.ase"),
         )
     ),
+    // a bunch of cubes that you get if your guy no programming
+    // A pet that you can only get if evolve while sick
+    // A snowman
+    // A ice cube
+    // A fat sweaty man
+    // A beach unbrella
+    // A alien if they see a UFO
+    // A guy with a big head if your dop reads a lot
 ]

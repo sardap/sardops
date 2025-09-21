@@ -13,12 +13,23 @@ use crate::{
     furniture::HomeFurnitureKind,
     game_context::GameContext,
     pc::Program,
-    scene::{SceneEnum, fishing_scene},
+    scene::{SceneEnum, fishing_scene, star_gazing_scene},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ItemCategory {
+    Misc,
+    Furniture,
+    PlayThing,
+    Usable,
+    Book,
+    Software,
+    Food,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ItemRarity {
@@ -134,7 +145,7 @@ impl ItemKind {
         };
 
         const C_PROGRAMMING: BookInfo = BookInfo {
-            item: ItemKind::BookNevileWran,
+            item: ItemKind::BookCProgramming,
             length: Duration::from_hours(4),
             chapters: 17,
             open_book: &assets::IMAGE_BOOK_C_OPEN,
@@ -244,7 +255,7 @@ impl ItemKind {
         };
 
         const ODYSSEY: BookInfo = BookInfo {
-            item: ItemKind::BookEpicOfGilgamesh,
+            item: ItemKind::BookHomersOdyssey,
             length: Duration::from_hours(5),
             chapters: 24,
             open_book: &assets::IMAGE_BOOK_ODYSSEY_OPEN,
@@ -288,16 +299,19 @@ impl ItemKind {
 impl From<HomeFurnitureKind> for ItemKind {
     fn from(value: HomeFurnitureKind) -> Self {
         match value {
-            HomeFurnitureKind::None => ItemKind::None,
-            HomeFurnitureKind::DigitalClock => ItemKind::DigitalClock,
-            HomeFurnitureKind::AnalogueClock => ItemKind::AnalogueClock,
-            HomeFurnitureKind::FishTank => ItemKind::FishTank,
-            HomeFurnitureKind::InvertroLight => ItemKind::InvetroLight,
-            HomeFurnitureKind::PaintingBranch => ItemKind::PaintingBranch,
-            HomeFurnitureKind::PaintingDude => ItemKind::PaintingDude,
-            HomeFurnitureKind::PaintingMan => ItemKind::PaintingMan,
-            HomeFurnitureKind::PaintingPc => ItemKind::PaintingPc,
-            HomeFurnitureKind::PaintingSun => ItemKind::PaintingSun,
+            HomeFurnitureKind::None => Self::None,
+            HomeFurnitureKind::DigitalClock => Self::DigitalClock,
+            HomeFurnitureKind::AnalogueClock => Self::AnalogueClock,
+            HomeFurnitureKind::ThermometerMercury => Self::ThermometerMercury,
+            HomeFurnitureKind::SpaceHeater => Self::SpaceHeater,
+            HomeFurnitureKind::AirCon => Self::AirConditioner,
+            HomeFurnitureKind::FishTank => Self::FishTank,
+            HomeFurnitureKind::InvertroLight => Self::InvetroLight,
+            HomeFurnitureKind::PaintingBranch => Self::PaintingBranch,
+            HomeFurnitureKind::PaintingDude => Self::PaintingDude,
+            HomeFurnitureKind::PaintingMan => Self::PaintingMan,
+            HomeFurnitureKind::PaintingPc => Self::PaintingPc,
+            HomeFurnitureKind::PaintingSun => Self::PaintingSun,
         }
     }
 }
@@ -610,7 +624,15 @@ const USE_FISH: UsableItem = UsableItem::new(ItemKind::Fish, |game_ctx| {
 })
 .with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
 
-const ALL_USEABLE_ITEMS: &[UsableItem] = &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH];
+const USE_TELESCOPE: UsableItem = UsableItem::new(ItemKind::Telescope, |_| {
+    UseItemOutput::new().with_scene(SceneEnum::StarGazing(
+        star_gazing_scene::StarGazingScene::new(),
+    ))
+})
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+
+const ALL_USEABLE_ITEMS: &[UsableItem] =
+    &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH, USE_TELESCOPE];
 
 pub struct ItemChance {
     kind: ItemKind,

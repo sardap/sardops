@@ -18,6 +18,8 @@ pub enum DeathCause {
     OldAge,
     ToxicShock,
     Leaving,
+    Illness,
+    Hypothermia,
 }
 
 impl DeathCause {
@@ -28,6 +30,8 @@ impl DeathCause {
             DeathCause::OldAge => "Old age",
             DeathCause::ToxicShock => "Toxic shock",
             DeathCause::Leaving => "Left",
+            DeathCause::Illness => "Sickness",
+            DeathCause::Hypothermia => "Hypothermia",
         }
     }
 }
@@ -187,22 +191,27 @@ impl<T> Threshold<T> {
     }
 }
 
-pub fn passed_threshold_chance<T>(
-    rng: &mut fastrand::Rng,
-    values: &[Threshold<T>],
-    elapsed: T,
-) -> bool
+pub fn get_threshold_odds<T>(values: &[Threshold<T>], value: T) -> f32
 where
     T: Ord,
 {
     for threashold in values {
-        if elapsed < threashold.value {
-            if rng.f32() < threashold.odds {
-                return true;
-            }
-            return false;
+        if value < threashold.value {
+            return threashold.odds;
         }
     }
 
-    false
+    return values[values.len() - 1].odds;
+}
+
+pub fn passed_threshold_chance<T>(
+    rng: &mut fastrand::Rng,
+    values: &[Threshold<T>],
+    current: T,
+) -> bool
+where
+    T: Ord,
+{
+    let odds = get_threshold_odds(values, current);
+    rng.f32() < odds
 }
