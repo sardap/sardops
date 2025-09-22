@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 use crate::{
-    assets,
+    assets::{self, StaticImage},
     book::BookInfo,
     food::STARTING_FOOD,
     furniture::HomeFurnitureKind,
@@ -20,7 +20,8 @@ include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// MAKE ITEMS
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum ItemCategory {
     Misc,
     Furniture,
@@ -29,6 +30,32 @@ pub enum ItemCategory {
     Book,
     Software,
     Food,
+}
+
+impl ItemCategory {
+    pub const fn items(&self) -> &'static [ItemKind] {
+        match self {
+            ItemCategory::Misc => &[],
+            ItemCategory::Furniture => &FURNITURE_ITEMS,
+            ItemCategory::PlayThing => &PLAYTHING_ITEMS,
+            ItemCategory::Usable => &USABLE_ITEMS,
+            ItemCategory::Book => &BOOK_ITEMS,
+            ItemCategory::Software => &SOFTWARE_ITEMS,
+            ItemCategory::Food => &FOOD_ITEMS,
+        }
+    }
+
+    pub const fn icon(&self) -> &'static StaticImage {
+        match self {
+            ItemCategory::Misc => &assets::IMAGE_BAG_ICON_FURNITURE,
+            ItemCategory::Furniture => &assets::IMAGE_BAG_ICON_FURNITURE,
+            ItemCategory::PlayThing => &assets::IMAGE_BAG_ICON_PLAYTHING,
+            ItemCategory::Usable => &assets::IMAGE_BAG_ICON_USEABLE,
+            ItemCategory::Book => &assets::IMAGE_BAG_ICON_BOOK,
+            ItemCategory::Software => &assets::IMAGE_BAG_ICON_SOFTWARE,
+            ItemCategory::Food => &assets::IMAGE_BAG_ICON_FOOD,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -358,6 +385,46 @@ macro_rules! items_for_rarity {
 
 items_for_rarity!("common", "COMMON", Common);
 items_for_rarity!("rare", "RARE", Rare);
+
+macro_rules! items_for_category {
+    ($name_lower:tt, $name_upper:tt, $variant:ident) => {
+        paste::paste! {
+            const fn [<count_items_for_category_ $name_lower >]() -> usize {
+                let mut result = 0;
+                const_for!(i in 0..ITEM_COUNT => {
+                    let item = ItemKind::from_repr(i).unwrap();
+                    if matches!(item.category(), ItemCategory::$variant) {
+                        result += 1;
+                    }
+                });
+                result
+            }
+
+            const fn [< items_for_category_ $name_lower >]<const T: usize>() -> [ItemKind; T] {
+                let mut result = [ItemKind::None; T];
+                let mut top = 0;
+                const_for!(i in 0..ITEM_COUNT => {
+                    let item = ItemKind::from_repr(i).unwrap();
+                    if matches!(item.category(), ItemCategory::$variant) {
+                        result[top] = item;
+                        top += 1;
+                    }
+                });
+                result
+            }
+
+            const [< $name_upper _ITEM_COUNT>]: usize = [< count_items_for_category_ $name_lower>]();
+            pub const [< $name_upper _ITEMS>]: [ItemKind; [< $name_upper _ITEM_COUNT>]] = [< items_for_category_ $name_lower>]();
+        }
+    };
+}
+
+items_for_category!("furniture", "FURNITURE", Furniture);
+items_for_category!("plaything", "PLAYTHING", PlayThing);
+items_for_category!("usable", "USABLE", Usable);
+items_for_category!("book", "BOOK", Book);
+items_for_category!("software", "SOFTWARE", Software);
+items_for_category!("food", "FOOD", Food);
 
 const fn all_items_gen() -> [ItemKind; ITEM_COUNT] {
     let mut result = [ItemKind::None; ITEM_COUNT];
