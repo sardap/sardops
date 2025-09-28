@@ -12,6 +12,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_EATING, SONG_FAN_FARE, SongPlayOptions},
 };
 
 #[derive(Clone, Copy)]
@@ -72,6 +73,7 @@ impl Scene for EatScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.pet.digest(&self.food);
     }
 
@@ -84,6 +86,9 @@ impl Scene for EatScene {
             EatSceneState::Intro => {
                 let end_time = self.start_time + EatSceneState::Intro.duration();
                 if args.timestamp > end_time {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_EATING, SongPlayOptions::new().with_effect());
                     self.state = EatSceneState::Eating;
                     self.start_time = args.timestamp;
                 }
@@ -111,6 +116,9 @@ impl Scene for EatScene {
                 }
 
                 if args.timestamp > end_time {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FAN_FARE, SongPlayOptions::new().with_effect());
                     self.state = EatSceneState::Finished;
                     self.start_time = args.timestamp;
                 }

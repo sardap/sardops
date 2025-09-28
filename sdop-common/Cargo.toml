@@ -1,0 +1,11 @@
+[package]
+name = "sdop-common"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+serde = ["dep:serde"]
+
+
+[dependencies]
+serde = { workspace = true, optional = true }

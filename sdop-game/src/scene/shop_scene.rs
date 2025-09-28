@@ -8,6 +8,7 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     shop::ShopItemSet,
+    sounds::{SONG_SHOP, SONG_SHOP_CLOSED, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };
 
@@ -95,10 +96,24 @@ impl Scene for ShopScene {
         }
     }
 
-    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+    fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
+    }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.shop_keeper.anime().tick(args.delta);
+
+        if !args.game_ctx.sound_system.get_playing() {
+            if matches!(self.state, State::Closed) {
+                args.game_ctx
+                    .sound_system
+                    .push_song(SONG_SHOP_CLOSED, SongPlayOptions::new().with_music());
+            } else {
+                args.game_ctx
+                    .sound_system
+                    .push_song(SONG_SHOP, SongPlayOptions::new().with_music());
+            }
+        }
 
         match self.state {
             State::Closed => {

@@ -328,4 +328,25 @@
         desc: "It's like a box of ice that never melts.",
         fishing_odds: 0.05,
     ),
+    ItemEntry(
+        name: "Thermometer Digital",
+        category: Furniture,
+        rarity: Common,
+        cost: 1000,
+        image: "thermometer_digital_display",
+        unique: true,
+        desc: "Get the exact temperature no guess and it's not poisonous!",
+        fishing_odds: 0.05,
+    ),
+    ItemEntry(
+        name: "Calendar",
+        category: Furniture,
+        rarity: Common,
+        cost: 1000,
+        image: "calendar_filled",
+        unique: true,
+        desc: "Always know the date!",
+        fishing_odds: 0.05,
+    ),
+
 ]

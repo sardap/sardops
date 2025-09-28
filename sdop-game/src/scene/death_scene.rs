@@ -19,6 +19,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
+    sounds::{SONG_DEATH, SongPlayOptions},
     sprite::{BasicAnimeSprite, Snowflake, Sprite},
     stomach::StomachRender,
 };
@@ -207,9 +208,14 @@ impl Scene for DeathScene {
                 flake.dir.y = args.game_ctx.rng.i32(5..15) as f32;
             }
         }
+
+        args.game_ctx
+            .sound_system
+            .push_song(SONG_DEATH, SongPlayOptions::new().with_essential());
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.poops = Default::default();
         args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
             &args.game_ctx.pet,

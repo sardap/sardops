@@ -12,6 +12,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_FAN_FARE, SONG_LOST, SongPlayOptions},
 };
 
 enum State {
@@ -52,9 +53,15 @@ impl Scene for MgFanFareScene {
         });
         self.pet_render.pos = CENTER_VEC;
         self.start_time = args.timestamp;
+
+        args.game_ctx.sound_system.push_song(
+            if self.won { SONG_FAN_FARE } else { SONG_LOST },
+            SongPlayOptions::new().with_effect(),
+        );
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.money += self.money;
         args.game_ctx.pet.played_game();
     }

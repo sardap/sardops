@@ -7,6 +7,7 @@ use crate::{
     display::{CENTER_VEC, GameDisplay},
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::SongPlayOptions,
     sprite::Sprite,
 };
 
@@ -110,9 +111,15 @@ impl Scene for EvolveScene {
             let y = rng.i32(-1000..1000) as f32 / 1000.;
             star.dir = Vec2::new(x, y)
         }
+
+        args.game_ctx.sound_system.push_song(
+            crate::sounds::SONG_EVOLVE,
+            SongPlayOptions::new().with_essential(),
+        );
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.pet.evolve(self.to_pet_render.def_id());
     }
 

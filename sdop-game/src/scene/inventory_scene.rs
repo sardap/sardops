@@ -1,67 +1,101 @@
+use core::time::Duration;
+
 use fixedstr::str_format;
 use glam::Vec2;
+use heapless::Vec;
 use strum::IntoEnumIterator;
 
 use crate::{
-    Button,
+    ALL_ITEMS, Button,
+    assets::{self, Image},
     date_utils::DurationExt,
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
+    game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
     geo::Rect,
-    items::{ITEM_COUNT, Inventory, ItemKind},
-    scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
-        home_scene::{self},
-    },
+    items::{ITEM_COUNT, Inventory, ItemCategory, ItemKind},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
-fn change_item(inventory: &Inventory, current: usize, change: i32) -> usize {
-    let start = ((current as isize + change as isize) % ITEM_COUNT as isize).max(0) as usize;
+const SELECTABLE_CATEGORIRES: &[ItemCategory] = &[
+    ItemCategory::Usable,
+    ItemCategory::PlayThing,
+    ItemCategory::Furniture,
+    ItemCategory::Book,
+    ItemCategory::Software,
+    ItemCategory::Food,
+];
 
-    // Bloody no box and type issues
-    if change >= 0 {
-        for (i, item) in ItemKind::iter().skip(start).enumerate() {
-            if inventory.has_item(item) {
-                return start + i;
-            }
-        }
-
-        change_item(inventory, 0, 0)
-    } else {
-        for i in (0..=start).rev() {
-            if inventory.has_item(ItemKind::iter().nth(i).unwrap()) {
-                return i;
-            }
-        }
-
-        change_item(inventory, ITEM_COUNT, -1)
-    }
-}
-
-enum InputState {
+enum State {
+    SelectCategory,
     View,
 }
 
 pub struct InventoryScene {
+    available_cata: Vec<ItemCategory, 10>,
     selected_index: usize,
-    state: InputState,
+    selected_cata: isize,
+    flash_timer: Duration,
+    flash: bool,
+    state: State,
 }
 
 impl InventoryScene {
     pub fn new() -> Self {
         Self {
+            available_cata: Vec::new(),
             selected_index: 0,
-            state: InputState::View,
+            selected_cata: 0,
+            flash_timer: Duration::ZERO,
+            flash: false,
+            state: State::SelectCategory,
+        }
+    }
+
+    fn resolved_cata(&self) -> ItemCategory {
+        *self
+            .available_cata
+            .get(usize::try_from(self.selected_cata).unwrap_or_default())
+            .unwrap_or(&ItemCategory::Book)
+    }
+
+    fn change_item(&self, inventory: &Inventory, current: usize, change: i32) -> usize {
+        let mut all_items = ALL_ITEMS.iter();
+        let items = self.resolved_cata().items();
+
+        let start = ((current as isize + change as isize) % ITEM_COUNT as isize).max(0) as usize;
+
+        // Bloody no box and type issues
+        if change >= 0 {
+            for (i, item) in all_items.skip(start).enumerate() {
+                if items.contains(item) && inventory.has_item(*item) {
+                    return start + i;
+                }
+            }
+
+            self.change_item(inventory, 0, 0)
+        } else {
+            for i in (0..=start).rev() {
+                let item = all_items.nth(i).unwrap();
+                if items.contains(item) && inventory.has_item(*item) {
+                    return i;
+                }
+            }
+
+            self.change_item(inventory, ITEM_COUNT, -1)
         }
     }
 }
 
 impl Scene for InventoryScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        for (i, item) in ItemKind::iter().enumerate() {
-            if args.game_ctx.inventory.has_item(item) {
-                self.selected_index = i;
-                break;
+        for cata in SELECTABLE_CATEGORIRES {
+            if cata
+                .items()
+                .iter()
+                .any(|item| args.game_ctx.inventory.has_item(*item))
+            {
+                let _ = self.available_cata.push(*cata);
             }
         }
     }
@@ -69,19 +103,58 @@ impl Scene for InventoryScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+        self.flash_timer += args.delta;
+        if (!self.flash && self.flash_timer > UI_FLASH_TIMER)
+            || (self.flash && self.flash_timer > UI_FLASHING_TIMER)
+        {
+            self.flash_timer = Duration::ZERO;
+            self.flash = !self.flash;
+        }
+
         let item = ItemKind::iter()
             .nth(self.selected_index)
             .unwrap_or_default();
 
         match self.state {
-            InputState::View => {
+            State::SelectCategory => {
+                let change = if args.input.pressed(Button::Right) {
+                    1
+                } else if args.input.pressed(Button::Left) {
+                    -1
+                } else {
+                    0
+                };
+
+                if change != 0 {
+                    self.flash = true;
+                    self.flash_timer = Duration::ZERO;
+                }
+
+                self.selected_cata += change;
+                if self.selected_cata < -1 {
+                    self.selected_cata = 0;
+                }
+                if self.selected_cata >= self.available_cata.len() as isize {
+                    self.selected_cata = -1;
+                }
+
+                if args.input.pressed(Button::Middle) {
+                    if self.selected_cata <= -1 {
+                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    } else {
+                        self.selected_index = self.change_item(&args.game_ctx.inventory, 0, 0);
+                        self.state = State::View;
+                    }
+                }
+            }
+            State::View => {
                 if args.input.pressed(Button::Right) {
                     self.selected_index =
-                        change_item(&args.game_ctx.inventory, self.selected_index, 1);
+                        self.change_item(&args.game_ctx.inventory, self.selected_index, 1);
                 }
 
                 if args.input.pressed(Button::Left) {
-                    return SceneOutput::new(SceneEnum::Home(home_scene::HomeScene::new()));
+                    self.state = State::SelectCategory;
                 }
 
                 if args.input.pressed(Button::Middle) {
@@ -115,7 +188,45 @@ impl Scene for InventoryScene {
             .unwrap_or_default();
 
         match self.state {
-            InputState::View => {
+            State::SelectCategory => {
+                let mut y = 10.;
+                for (i, cata) in self.available_cata.iter().enumerate() {
+                    let x = if i % 2 == 0 { 5. } else { 37. };
+
+                    display.render_image_complex(
+                        x as i32,
+                        y as i32,
+                        cata.icon(),
+                        ComplexRenderOption::new().with_white(),
+                    );
+
+                    if self.flash && i as isize == self.selected_cata {
+                        let rect =
+                            Rect::new_top_left(Vec2::new(x, y), cata.icon().size_vec2()).grow(4.);
+                        display.render_rect_outline(rect, true);
+                    }
+
+                    if i % 2 != 0 {
+                        y += cata.icon().size.y as f32 + 5.;
+                    }
+                }
+
+                display.render_image_complex(
+                    CENTER_X as i32,
+                    105,
+                    &assets::IMAGE_BACK_SYMBOL,
+                    ComplexRenderOption::new().with_white().with_center(),
+                );
+                if self.flash && self.selected_cata == -1 {
+                    let rect = Rect::new_center(
+                        Vec2::new(CENTER_X, 105.),
+                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    )
+                    .grow(4.);
+                    display.render_rect_outline(rect, true);
+                }
+            }
+            State::View => {
                 let mut y = 10.;
                 {
                     let str =

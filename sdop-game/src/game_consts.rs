@@ -2,6 +2,9 @@ use core::{ops::Range, time::Duration};
 
 use crate::{death::Threshold, money::Money};
 
+pub const UI_FLASH_TIMER: Duration = Duration::from_millis(250);
+pub const UI_FLASHING_TIMER: Duration = Duration::from_millis(500);
+
 pub const ROOM_TEMPTURE: f32 = 25.;
 
 pub const LOW_POWER_THRESHOLD: Duration = Duration::from_mins(1);

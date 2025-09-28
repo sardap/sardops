@@ -1,0 +1,22 @@
+(
+    name: "eating",
+    melody: [
+        (
+            note: A1,
+            duration: 8,
+        ),
+        (
+            note: E1,
+            duration: 8,
+        ),
+        (
+            note: C3,
+            duration: 8,
+        ),
+        (
+            note: B0,
+            duration: 5,
+        ),
+    ],
+    tempo: 85,
+)

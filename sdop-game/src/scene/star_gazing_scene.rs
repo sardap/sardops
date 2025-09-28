@@ -10,6 +10,7 @@ use crate::{
     game_consts::ALIEN_ODDS,
     pet::combine_pid,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_TWINKLE_TWINKLE_LITTLE_STAR, SongPlayOptions},
     sprite::BasicSprite,
 };
 
@@ -77,12 +78,20 @@ impl Scene for StarGazingScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         if self.ufo_visible {
             args.game_ctx.pet.seen_alien = true;
         }
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+        if !args.game_ctx.sound_system.get_playing() {
+            args.game_ctx.sound_system.push_song(
+                SONG_TWINKLE_TWINKLE_LITTLE_STAR,
+                SongPlayOptions::new().with_music(),
+            );
+        }
+
         if args.input.any_pressed() {
             return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
         }
@@ -106,7 +115,7 @@ impl Scene for StarGazingScene {
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let time = args.timestamp.inner().time();
 
-        if (time.hour() > 5 && time.minute() > 30) || (time.hour() < 18 && time.minute() < 30) {
+        if (time.hour() > 5 && time.minute() > 30) && (time.hour() < 18 && time.minute() < 30) {
             display.invert();
 
             display.render_text_complex(

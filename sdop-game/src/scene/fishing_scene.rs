@@ -17,6 +17,7 @@ use crate::{
     money::Money,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };
 
@@ -148,7 +149,9 @@ impl Scene for FishingScene {
         }
     }
 
-    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+    fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
+    }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.fishing_line.anime().tick(args.delta);
@@ -159,8 +162,15 @@ impl Scene for FishingScene {
 
         match self.state {
             State::Waiting { duration } => {
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FISHING_IDLE, SongPlayOptions::new().with_music());
+                }
+
                 if self.state_elasped > duration {
                     self.state_elasped = Duration::ZERO;
+                    args.game_ctx.sound_system.clear_song();
                     if args.game_ctx.rng.f32() < 0.2 {
                         self.pet_render.set_animation(PetAnimationSet::Sad);
                         self.state = State::PullOut;
@@ -171,6 +181,12 @@ impl Scene for FishingScene {
                 }
             }
             State::Pulling => {
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FISHING_PULLING, SongPlayOptions::new().with_music());
+                }
+
                 if args.input.any_pressed() {
                     let current_percent =
                         self.state_elasped.as_secs_f32() / PULL_TIME.as_secs_f32() * 100.;
@@ -235,6 +251,15 @@ impl Scene for FishingScene {
                     );
                     self.state_elasped = Duration::ZERO;
                     self.state = State::FanFare;
+
+                    args.game_ctx.sound_system.push_song(
+                        if self.winning.is_some() {
+                            SONG_FAN_FARE
+                        } else {
+                            SONG_LOST
+                        },
+                        SongPlayOptions::new().with_effect(),
+                    );
                 }
             }
             State::FanFare => {

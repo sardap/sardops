@@ -2,7 +2,6 @@ use core::time::Duration;
 
 use fixedstr::str_format;
 use glam::Vec2;
-use heapless::Vec;
 
 use crate::{
     Button,
@@ -10,13 +9,13 @@ use crate::{
     assets,
     clock::{AnalogueClockKind, AnalogueRenderClock},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, PostionMode,
-        WIDTH_F32,
+        CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, PostionMode, WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_HEAL, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };
 
@@ -84,7 +83,7 @@ impl Scene for HealScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
-        args.game_ctx.pet.cure();
+        args.game_ctx.sound_system.clear_song();
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
@@ -120,6 +119,10 @@ impl Scene for HealScene {
                     if args.game_ctx.pet.heal_cost() > args.game_ctx.money {
                         return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
                     } else {
+                        args.game_ctx.pet.cure();
+                        args.game_ctx
+                            .sound_system
+                            .push_song(SONG_HEAL, SongPlayOptions::new().with_effect());
                         self.state_elapsed = Duration::ZERO;
                         self.state = State::HealingScene;
                     }

@@ -1,17 +1,18 @@
 use core::{time::Duration, u8};
 
-use chrono::Timelike;
+use chrono::{NaiveDate, Timelike};
 use fixedstr::{str_format, str32};
 use glam::Vec2;
+use sdop_common::{MelodyEntry, Note};
 
 use crate::{
-    Button, WIDTH,
+    Button, Song, WIDTH,
     anime::{Anime, HasAnime, MaskedAnimeRender, tick_all_anime},
     assets::{self, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK, Image},
+    calendar::CalendarRender,
     date_utils::DurationExt,
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, Rotation,
-        WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
     },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
@@ -21,16 +22,17 @@ use crate::{
     items::ItemKind,
     pc::{PcKind, PcRender},
     pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
-    poop::{MAX_POOPS, PoopRender, update_poop_renders},
+    poop::{self, MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
-        egg_hatch::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
+        egg_hatch_scene::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
         game_select::GameSelectScene, heal_scene::HealScene, inventory_scene::InventoryScene,
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
-        shop_scene::ShopScene, star_gazing_scene::StarGazingScene, suiters_scene::SuitersScene,
+        shop_scene::ShopScene, suiters_scene::SuitersScene,
     },
-    sprite::{BasicAnimeSprite, Snowflake, Sprite, SpriteRotation},
+    sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions, SoundKind},
+    sprite::{BasicAnimeSprite, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
@@ -52,6 +54,64 @@ enum MenuOption {
     Inventory,
     PlaceFurniture,
     PetRecords,
+}
+
+impl MenuOption {
+    pub fn get_song(&self) -> &'static Song {
+        const MENU_DURATION: i16 = 8;
+        match self {
+            MenuOption::PetInfo => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::C2, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::Breed => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::C3, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::Poop => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::C4, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::Heal => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::C5, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::GameSelect => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::D2, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::FoodSelect => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::D3, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::Shop => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::D4, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::Inventory => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::D5, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::PlaceFurniture => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::E3, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+            MenuOption::PetRecords => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::E4, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
+        }
+    }
 }
 
 fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
@@ -186,6 +246,9 @@ pub struct HomeSceneData {
     shake_duration: Duration,
     shake_right: bool,
     snow_flakes: [Snowflake; 30],
+    last_poop_count: usize,
+    last_is_sick: bool,
+    last_was_hungry: bool,
 }
 
 impl Default for HomeSceneData {
@@ -218,6 +281,9 @@ impl Default for HomeSceneData {
             shake_duration: Duration::ZERO,
             shake_right: false,
             snow_flakes: Default::default(),
+            last_poop_count: 0,
+            last_is_sick: false,
+            last_was_hungry: false,
         }
     }
 }
@@ -267,6 +333,10 @@ fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
 impl Scene for HomeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         if args.game_ctx.home.wonder_end == Duration::ZERO {
+            args.game_ctx.home.last_poop_count = poop_count(&args.game_ctx.poops);
+            args.game_ctx.home.last_is_sick = args.game_ctx.pet.is_ill();
+            args.game_ctx.home.last_was_hungry = args.game_ctx.pet.is_starving();
+
             args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
             args.game_ctx.home.pet_render.pos = args
                 .game_ctx
@@ -321,6 +391,41 @@ impl Scene for HomeScene {
             args.game_ctx.home.change_state(State::Sleeping);
         } else if !should_be_sleeping && matches!(args.game_ctx.home.state, State::Sleeping) {
             args.game_ctx.home.change_state(State::Wondering);
+        }
+
+        // Penidng sounds
+        {
+            let poop_count = poop_count(&args.game_ctx.poops);
+            if args.game_ctx.home.last_poop_count != poop_count {
+                args.game_ctx.home.last_poop_count = poop_count;
+                if poop_count > 0 {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_POOPED, SongPlayOptions::new().with_essential());
+                }
+            }
+        }
+
+        {
+            if args.game_ctx.pet.is_ill() != args.game_ctx.home.last_is_sick {
+                if args.game_ctx.pet.is_ill() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_SICK, SongPlayOptions::new().with_essential());
+                }
+                args.game_ctx.home.last_is_sick = args.game_ctx.pet.is_ill();
+            }
+        }
+
+        {
+            if args.game_ctx.pet.is_starving() != args.game_ctx.home.last_was_hungry {
+                if args.game_ctx.pet.is_starving() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_HUNGRY, SongPlayOptions::new().with_essential());
+                }
+                args.game_ctx.home.last_was_hungry = args.game_ctx.pet.is_starving();
+            }
         }
 
         const EGG_BOUNCE_SPEED: f32 = 3.;
@@ -701,6 +806,10 @@ impl Scene for HomeScene {
         }
 
         if args.input.pressed(Button::Middle) {
+            args.game_ctx.sound_system.push_song(
+                *args.game_ctx.home.options[args.game_ctx.home.selected_index].get_song(),
+                SongPlayOptions::new().with_effect(),
+            );
             match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
                 MenuOption::Breed => {
                     return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(

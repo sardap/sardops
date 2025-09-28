@@ -1,0 +1,38 @@
+(
+    name: "New Pet",
+    melody: [
+        (
+            note: C7,
+            duration: 8,
+        ),
+        (
+            note: E7,
+            duration: 8,
+        ),
+        (
+            note: F7,
+            duration: 8,
+        ),
+        (
+            note: E7,
+            duration: 8,
+        ),
+        (
+            note: C7,
+            duration: 8,
+        ),
+        (
+            note: D7,
+            duration: 8,
+        ),
+        (
+            note: C8,
+            duration: 12,
+        ),
+        (
+            note: C6,
+            duration: 8,
+        ),
+    ],
+    tempo: 65,
+)

@@ -1,0 +1,30 @@
+(
+    name: "Fishing Pulling",
+    melody: [
+        (
+            note: F5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: A5,
+            duration: 8,
+        ),
+        (
+            note: As5,
+            duration: 8,
+        ),
+        (
+            note: C5,
+            duration: 8,
+        ),
+        (
+            note: Cs5,
+            duration: 8,
+        ),
+    ],
+    tempo: 120,
+)

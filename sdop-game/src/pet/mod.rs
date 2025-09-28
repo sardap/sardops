@@ -21,7 +21,8 @@ use crate::{
     money::Money,
     pet::definition::{
         PET_BALLOTEE_ID, PET_BEERIE_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_DEVIL_ID, PET_HUMBIE_ID,
-        PET_PAWN_WHITE_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
+        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition,
+        PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -328,7 +329,7 @@ impl PetInstance {
 
         let mut rng = fastrand::Rng::with_seed(self.upid);
 
-        let mut possible = Vec::<PetDefinitionId, 10>::new();
+        let mut possible = Vec::<PetDefinitionId, 20>::new();
         match self.definition().life_stage {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
@@ -347,6 +348,9 @@ impl PetInstance {
                 }
                 if self.extra_weight > 50. {
                     let _ = possible.push(PET_CKCS_ID);
+                }
+                if self.is_ill() {
+                    let _ = possible.push(PET_SICKO_ID);
                 }
             }
             LifeStage::Adult => {}
@@ -465,6 +469,10 @@ impl PetInstance {
 
     pub fn is_ill(&self) -> bool {
         self.illness.with_ilness > Duration::ZERO
+    }
+
+    pub fn is_starving(&self) -> bool {
+        matches!(self.stomach_mood(), StomachMood::Starving { elapsed: _ })
     }
 
     pub fn heal_cost(&self) -> Money {

@@ -1,7 +1,9 @@
+#![feature(trim_prefix_suffix)]
 use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
+use sdop_common::MelodyEntry;
 use serde::{Deserialize, Serialize};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
@@ -20,6 +22,7 @@ const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
 const PETS_RON_PATH: &str = "../assets/pets.ron";
 const FOODS_RON_PATH: &str = "../assets/foods.ron";
 const ITEMS_RON_PATH: &str = "../assets/items.ron";
+const SOUNDS_PATH: &str = "../assets/sounds";
 
 #[derive(Default)]
 struct ContentOut {
@@ -28,6 +31,7 @@ struct ContentOut {
     food_definitions: String,
     item_definitions: String,
     dates_definitions: String,
+    sounds_definitions: String,
 }
 
 impl ContentOut {
@@ -37,6 +41,7 @@ impl ContentOut {
         self.food_definitions.push_str(&other.food_definitions);
         self.item_definitions.push_str(&other.item_definitions);
         self.dates_definitions.push_str(&other.dates_definitions);
+        self.sounds_definitions.push_str(&other.sounds_definitions);
     }
 }
 
@@ -834,6 +839,47 @@ fn generate_dates() -> ContentOut {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Song {
+    name: String,
+    melody: Vec<MelodyEntry>,
+    tempo: i16,
+}
+
+fn generate_sounds() -> ContentOut {
+    let root_path = PathBuf::from_str(SOUNDS_PATH).unwrap();
+
+    let entries = std::fs::read_dir(&root_path).unwrap();
+
+    let mut sounds_def = String::new();
+
+    for entry in entries.into_iter().filter_map(|i| i.ok()) {
+        let ron_str = fs::read_to_string(entry.path()).unwrap();
+
+        let song: Song = ron::from_str(&ron_str).unwrap();
+        let mut melody_def = String::new();
+
+        for entry in &song.melody {
+            melody_def.push_str(&format!(
+                "MelodyEntry::new(sdop_common::Note::{:?}, {}), ",
+                entry.note, entry.duration
+            ));
+        }
+
+        sounds_def.push_str(&format!(
+            "pub const SONG_{}: Song = Song::new(&[{}], {});",
+            song.name.to_case(Case::UpperSnake),
+            melody_def,
+            song.tempo
+        ));
+    }
+
+    ContentOut {
+        sounds_definitions: sounds_def,
+        ..Default::default()
+    }
+}
+
 fn main() {
     let mut contents = ContentOut::default();
 
@@ -843,6 +889,7 @@ fn main() {
     contents.merge(generate_food_definitions(FOODS_RON_PATH));
     contents.merge(generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH));
     contents.merge(generate_dates());
+    contents.merge(generate_sounds());
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
@@ -886,6 +933,15 @@ fn main() {
     fs::write(&dist_dates_path, contents.dates_definitions).unwrap();
     Command::new("rustfmt")
         .arg(dist_dates_path)
+        .spawn()
+        .expect("Unable to format")
+        .wait()
+        .unwrap();
+
+    let dist_sounds_path = Path::new(&out_dir).join("dist_sounds.rs");
+    fs::write(&dist_sounds_path, contents.sounds_definitions).unwrap();
+    Command::new("rustfmt")
+        .arg(dist_sounds_path)
         .spawn()
         .expect("Unable to format")
         .wait()

@@ -9,6 +9,7 @@ use crate::{
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, update_poop_renders},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene},
+    sounds::{SONG_FAN_FARE, SongPlayOptions},
 };
 
 const WIPE_SPEED: f32 = 20.;
@@ -51,6 +52,7 @@ impl Scene for PoopClearScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.poops = Default::default();
     }
 
@@ -71,6 +73,9 @@ impl Scene for PoopClearScene {
             State::Wiping { x } => {
                 *x += WIPE_SPEED * args.delta.as_secs_f32();
                 if *x > WIDTH_F32 {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FAN_FARE, SongPlayOptions::new().with_effect());
                     self.state = State::Cheering {
                         elapsed: Duration::ZERO,
                     };

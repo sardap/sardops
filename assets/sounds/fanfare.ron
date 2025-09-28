@@ -1,0 +1,98 @@
+(
+    name: "Fan Fare",
+    melody: [
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: C5,
+            duration: 8,
+        ),
+        (
+            note: E5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 2,
+        ),
+        (
+            note: E5,
+            duration: 4,
+        ),
+        (
+            note: G5,
+            duration: 4,
+        ),
+        (
+            note: C6,
+            duration: 2,
+        ),
+        (
+            note: G5,
+            duration: 4,
+        ),
+        (
+            note: E5,
+            duration: 4,
+        ),
+        (
+            note: C5,
+            duration: 2,
+        ),
+        (
+            note: C5,
+            duration: 6,
+        ),
+        (
+            note: D5,
+            duration: 6,
+        ),
+        (
+            note: E5,
+            duration: 6,
+        ),
+        (
+            note: F5,
+            duration: 6,
+        ),
+        (
+            note: G5,
+            duration: 2,
+        ),
+        (
+            note: G5,
+            duration: 6,
+        ),
+        (
+            note: A5,
+            duration: 6,
+        ),
+        (
+            note: B5,
+            duration: 6,
+        ),
+        (
+            note: C6,
+            duration: 6,
+        ),
+        (
+            note: D6,
+            duration: 2,
+        ),
+        (
+            note: G5,
+            duration: 4,
+        ),
+        (
+            note: E5,
+            duration: 4,
+        ),
+        (
+            note: C5,
+            duration: 2,
+        ),
+    ],
+    tempo: 120,
+)

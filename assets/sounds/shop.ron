@@ -1,0 +1,46 @@
+(
+    name: "Shop",
+    melody: [
+        (
+            note: G5,
+            duration: 4,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: F5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 4,
+        ),
+        (
+            note: Rest,
+            duration: 4,
+        ),
+        (
+            note: D5,
+            duration: 4,
+        ),
+        (
+            note: C5,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 4,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+    ],
+    tempo: 85,
+)

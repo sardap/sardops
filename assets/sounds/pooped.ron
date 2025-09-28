@@ -1,0 +1,18 @@
+(
+    name: "pooped",
+    melody: [
+        (
+            note: Cs1,
+            duration: 1,
+        ),
+        (
+            note: Ds1,
+            duration: 4,
+        ),
+        (
+            note: Fs1,
+            duration: 1,
+        ),
+    ],
+    tempo: 100,
+)
