@@ -68,7 +68,7 @@ impl PetRender {
 }
 
 impl Sprite for PetRender {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         &self.pos
     }
 

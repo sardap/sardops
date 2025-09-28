@@ -292,6 +292,7 @@ impl Default for TicTacToeGame {
     }
 }
 
+#[derive(Default)]
 pub struct BestMoveSearch {
     board: Board,
     moves: PossibleMoves,
@@ -301,18 +302,6 @@ pub struct BestMoveSearch {
     depth: i32,
 }
 
-impl Default for BestMoveSearch {
-    fn default() -> Self {
-        Self {
-            board: Default::default(),
-            moves: Default::default(),
-            current_index: Default::default(),
-            best_rating: Default::default(),
-            best_moves: Default::default(),
-            depth: Default::default(),
-        }
-    }
-}
 
 impl BestMoveSearch {
     pub fn new(board: Board, depth: i32) -> Self {

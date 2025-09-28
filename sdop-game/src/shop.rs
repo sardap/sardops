@@ -1,5 +1,4 @@
 use bincode::{Decode, Encode};
-use chrono::Datelike;
 
 use crate::{
     Timestamp,

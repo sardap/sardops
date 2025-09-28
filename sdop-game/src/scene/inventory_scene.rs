@@ -40,6 +40,12 @@ pub struct InventoryScene {
     state: State,
 }
 
+impl Default for InventoryScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InventoryScene {
     pub fn new() -> Self {
         Self {
@@ -158,7 +164,7 @@ impl Scene for InventoryScene {
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if let Some(output) = item.use_item(&mut args.game_ctx) {
+                    if let Some(output) = item.use_item(args.game_ctx) {
                         if let Some(scene) = output.new_scene {
                             return SceneOutput::new(scene);
                         }

@@ -35,6 +35,12 @@ pub struct MgTicTacToeScene {
     post_game_start: Timestamp,
 }
 
+impl Default for MgTicTacToeScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MgTicTacToeScene {
     pub fn new() -> Self {
         Self {
@@ -147,8 +153,8 @@ impl Scene for MgTicTacToeScene {
                             }
                         }
 
-                        if moves.get_bit(self.selected as usize) {
-                            if args.input.pressed(Button::Middle) {
+                        if moves.get_bit(self.selected as usize)
+                            && args.input.pressed(Button::Middle) {
                                 self.game.make_move(Square::new(self.selected as u8));
                                 let thinking_time = args.game_ctx.rng.i32(1000..1500);
                                 self.best_move_search = BestMoveSearch::new(*self.game.board(), 5);
@@ -156,31 +162,26 @@ impl Scene for MgTicTacToeScene {
                                     args.timestamp + Duration::from_millis(thinking_time as u64);
                                 self.change_animations();
                             }
-                        }
 
                         self.flash_duration += args.delta;
                         if self.flash_duration > Duration::from_millis(300) {
                             self.flash_state = !self.flash_state;
                             self.flash_duration = Duration::ZERO;
                         }
+                    } else if args.timestamp < self.thinking_end {
+                        self.best_move_search.step(1);
                     } else {
-                        if args.timestamp < self.thinking_end {
-                            self.best_move_search.step(1);
+                        let moves = if args.game_ctx.rng.i32(0..100) > self.opponent.strength {
+                            self.game.board().possible_moves()
+                        } else if self.best_move_search.best_moves().is_empty() {
+                            self.game.board().possible_moves()
                         } else {
-                            let moves = if args.game_ctx.rng.i32(0..100) > self.opponent.strength {
-                                self.game.board().possible_moves()
-                            } else {
-                                if self.best_move_search.best_moves().is_empty() {
-                                    self.game.board().possible_moves()
-                                } else {
-                                    *self.best_move_search.best_moves()
-                                }
-                            };
-                            self.game.make_move(Square::new(
-                                moves.random_set_bit(&mut args.game_ctx.rng).unwrap() as u8,
-                            ));
-                            self.change_animations();
-                        }
+                            *self.best_move_search.best_moves()
+                        };
+                        self.game.make_move(Square::new(
+                            moves.random_set_bit(&mut args.game_ctx.rng).unwrap() as u8,
+                        ));
+                        self.change_animations();
                     }
 
                     self.first_move = false

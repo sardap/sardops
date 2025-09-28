@@ -134,7 +134,7 @@ impl ComplexRender for GraveStone {
 
         display.render_text_complex(
             Vec2::new(CENTER_X, top),
-            &self.cause.name(),
+            self.cause.name(),
             ComplexRenderOption::new()
                 .with_flip()
                 .with_black()
@@ -201,7 +201,7 @@ where
         }
     }
 
-    return values[values.len() - 1].odds;
+    values[values.len() - 1].odds
 }
 
 pub fn passed_threshold_chance<T>(

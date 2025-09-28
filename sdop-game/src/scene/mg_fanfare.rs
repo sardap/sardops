@@ -91,11 +91,9 @@ impl Scene for MgFanFareScene {
                 self.show_earned = false;
                 self.flash_duration = Duration::ZERO;
             }
-        } else {
-            if self.flash_duration > Duration::from_millis(300) {
-                self.show_earned = true;
-                self.flash_duration = Duration::ZERO;
-            }
+        } else if self.flash_duration > Duration::from_millis(300) {
+            self.show_earned = true;
+            self.flash_duration = Duration::ZERO;
         }
 
         SceneOutput::default()

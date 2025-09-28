@@ -55,6 +55,7 @@ pub const PET_HISTORY_ENTRIES: usize = 20;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
+#[derive(Default)]
 pub struct PetHistory {
     top: usize,
     entires: [Option<PetRecord>; PET_HISTORY_ENTRIES],
@@ -79,7 +80,7 @@ impl PetHistory {
             }
         }
 
-        return None;
+        None
     }
 
     pub fn count(&self) -> usize {
@@ -87,11 +88,3 @@ impl PetHistory {
     }
 }
 
-impl Default for PetHistory {
-    fn default() -> Self {
-        Self {
-            top: 0,
-            entires: Default::default(),
-        }
-    }
-}

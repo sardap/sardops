@@ -1,7 +1,7 @@
 use bincode::{Decode, Encode};
 
 pub const fn bytes_for_bits(n: usize) -> usize {
-    (n + 7) / 8
+    n.div_ceil(8)
 }
 
 #[derive(Encode, Decode, Clone, Copy)]
@@ -14,11 +14,11 @@ impl<const N: usize> BitArray<N> {
         self.data.len() * 8
     }
 
-    pub fn raw<'a>(&'a self) -> &'a [u8; N] {
+    pub fn raw(&self) -> &[u8; N] {
         &self.data
     }
 
-    pub fn raw_mut<'a>(&'a mut self) -> &'a mut [u8; N] {
+    pub fn raw_mut(&mut self) -> &mut [u8; N] {
         &mut self.data
     }
 
@@ -39,7 +39,7 @@ impl<const N: usize> BitArray<N> {
         (self.data[byte_index] & (1 << bit_index)) != 0
     }
 
-    pub fn get_raw<'a>(&'a self) -> &'a [u8] {
+    pub fn get_raw(&self) -> &[u8] {
         &self.data
     }
 

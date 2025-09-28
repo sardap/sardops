@@ -27,10 +27,10 @@ impl Food {
 
     pub fn get_by_id(id: usize) -> &'static Self {
         if id >= FOODS.len() {
-            return &FOODS[0];
+            return FOODS[0];
         }
-        &FOODS[id]
+        FOODS[id]
     }
 }
 
-pub const STARTING_FOOD: &[&'static Food] = &[&FOOD_BISCUIT];
+pub const STARTING_FOOD: &[&Food] = &[&FOOD_BISCUIT];

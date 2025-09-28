@@ -177,7 +177,7 @@ impl Default for Game {
 
 impl Game {
     pub const fn size(&self) -> usize {
-        return ROWS * COLUMNS;
+        ROWS * COLUMNS
     }
 
     pub fn side_to_move(&self) -> Side {
@@ -310,6 +310,7 @@ pub fn square_to_index(column: usize, row: usize) -> usize {
     row * COLUMNS + column
 }
 
+#[derive(Default)]
 pub struct BestMoveSearch {
     board: Game,
     moves: PossibleMoves,
@@ -319,18 +320,6 @@ pub struct BestMoveSearch {
     depth: i32,
 }
 
-impl Default for BestMoveSearch {
-    fn default() -> Self {
-        Self {
-            board: Default::default(),
-            moves: Default::default(),
-            current_index: Default::default(),
-            best_rating: Default::default(),
-            best_moves: Default::default(),
-            depth: Default::default(),
-        }
-    }
-}
 
 impl BestMoveSearch {
     pub fn new(board: Game, depth: i32) -> Self {
@@ -345,7 +334,7 @@ impl BestMoveSearch {
         }
     }
 
-    pub fn best_moves<'a>(&'a self) -> &'a PossibleMoves {
+    pub fn best_moves(&self) -> &PossibleMoves {
         &self.best_moves
     }
 

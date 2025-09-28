@@ -138,13 +138,13 @@ impl Scene for EggHatchScene {
                 const SPEED: f32 = 50.;
 
                 self.egg_shells[0] += Vec2::new(
-                    -1. * SPEED * args.delta.as_secs_f32(),
+                    -SPEED * args.delta.as_secs_f32(),
                     1. * SPEED * args.delta.as_secs_f32(),
                 );
 
                 self.egg_shells[1] += Vec2::new(
                     1. * SPEED * args.delta.as_secs_f32(),
-                    -1. * SPEED * args.delta.as_secs_f32(),
+                    -SPEED * args.delta.as_secs_f32(),
                 );
 
                 if self.egg_shells[0].x < -5. && self.egg_shells[1].x > WIDTH_F32 + 5. {

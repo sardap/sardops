@@ -74,7 +74,7 @@ impl Scene for EatScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
-        args.game_ctx.pet.digest(&self.food);
+        args.game_ctx.pet.digest(self.food);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
@@ -110,7 +110,7 @@ impl Scene for EatScene {
                     }
                     self.last_end = new_end;
                     self.fill_factor = (pet.stomach_filled
-                        + ((self.food.fill_factor * pet.definition().food_multiplier(&self.food))
+                        + ((self.food.fill_factor * pet.definition().food_multiplier(self.food))
                             * complete_percent))
                         .min(pet.definition().stomach_size)
                 }

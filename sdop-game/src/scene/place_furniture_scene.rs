@@ -48,19 +48,12 @@ const SELECT_ARRAY: &[PlaceSelection] = &[
     PlaceSelection::Exit,
 ];
 
+#[derive(Default)]
 struct FurnitureSet {
     kind: HomeFurnitureKind,
     render: HomeFurnitureRender,
 }
 
-impl Default for FurnitureSet {
-    fn default() -> Self {
-        Self {
-            kind: Default::default(),
-            render: Default::default(),
-        }
-    }
-}
 
 enum State {
     SelectingPlace,
@@ -73,6 +66,12 @@ pub struct PlaceFurnitureScene {
     left: FurnitureSet,
     top: FurnitureSet,
     right: FurnitureSet,
+}
+
+impl Default for PlaceFurnitureScene {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PlaceFurnitureScene {

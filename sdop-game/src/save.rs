@@ -19,6 +19,7 @@ use crate::{
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode)]
+#[derive(Default)]
 pub struct SaveFile {
     pub pet: PetInstance,
     pub poops: [Option<Poop>; MAX_POOPS],
@@ -35,24 +36,6 @@ pub struct SaveFile {
     pub sim_rng_seed: u64,
 }
 
-impl Default for SaveFile {
-    fn default() -> Self {
-        Self {
-            pet: Default::default(),
-            poops: Default::default(),
-            money: Default::default(),
-            inventory: Default::default(),
-            shop: Default::default(),
-            pet_records: Default::default(),
-            fish_tank: Default::default(),
-            home_layout: Default::default(),
-            last_timestamp: Default::default(),
-            egg: Default::default(),
-            suiter_system: Default::default(),
-            sim_rng_seed: Default::default(),
-        }
-    }
-}
 
 const BINCODE_CONFIG: bincode::config::Configuration = bincode::config::standard();
 

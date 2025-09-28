@@ -80,6 +80,7 @@ impl Default for OldAge {
     }
 }
 
+#[derive(Default)]
 struct ToxicShock {
     around_poops: [BasicAnimeSprite; 30],
     pet_poops: [BasicAnimeSprite; 10],
@@ -88,14 +89,6 @@ struct ToxicShock {
 const POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 const PET_POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 
-impl Default for ToxicShock {
-    fn default() -> Self {
-        Self {
-            around_poops: [BasicAnimeSprite::default(); 30],
-            pet_poops: [BasicAnimeSprite::default(); 10],
-        }
-    }
-}
 
 struct Illness {
     skull: MaskedAnimeRender,
@@ -240,7 +233,7 @@ impl Scene for DeathScene {
                 DeathCause::LightingStrike => {
                     self.pet_render.set_animation(PetAnimationSet::Sad);
                     self.lighting.clouds.anime().tick(args.delta);
-                    if self.lighting.clouds.anime.frames() == &assets::FRAMES_CLOUDS
+                    if self.lighting.clouds.anime.frames() == assets::FRAMES_CLOUDS
                         && self.lighting.clouds.anime.current_frame_index()
                             == self.lighting.clouds.anime.frames().len() - 1
                     {

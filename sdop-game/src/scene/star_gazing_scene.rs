@@ -26,6 +26,12 @@ pub struct StarGazingScene {
     ufo: BasicSprite,
 }
 
+impl Default for StarGazingScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StarGazingScene {
     pub fn new() -> Self {
         Self {
@@ -46,7 +52,7 @@ impl Scene for StarGazingScene {
 
         let x_offset = (days_since_ce % 365) as usize * 10;
         self.night_sky.size = U16Vec2::new(WIDTH as u16, HEIGHT as u16);
-        const BASE_SKY: &'static StaticImage = &assets::IMAGE_NIGHT_SKY;
+        const BASE_SKY: &StaticImage = &assets::IMAGE_NIGHT_SKY;
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
                 let src_x = (x + x_offset) % BASE_SKY.size.x as usize;

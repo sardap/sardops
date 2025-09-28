@@ -70,7 +70,7 @@ impl Default for SceneEnum {
 }
 
 impl SceneEnum {
-    pub fn get_scene<'a>(&'a mut self) -> &'a mut dyn Scene {
+    pub fn get_scene(&mut self) -> &mut dyn Scene {
         match self {
             Self::NewPet(new_pet_scene) => new_pet_scene,
             Self::Home(home_scene) => home_scene,
@@ -102,6 +102,7 @@ impl SceneEnum {
     }
 }
 
+#[derive(Default)]
 pub struct SceneOutput {
     pub next_scene: Option<SceneEnum>,
 }
@@ -114,13 +115,6 @@ impl SceneOutput {
     }
 }
 
-impl Default for SceneOutput {
-    fn default() -> Self {
-        Self {
-            next_scene: Default::default(),
-        }
-    }
-}
 
 pub struct SceneTickArgs<'a> {
     pub timestamp: Timestamp,
@@ -190,7 +184,7 @@ impl SceneManger {
         self.last_scene = last_scene;
     }
 
-    pub fn scene<'a>(&'a mut self) -> &'a mut dyn Scene {
+    pub fn scene(&mut self) -> &mut dyn Scene {
         self.active_scene.get_scene()
     }
 
@@ -199,18 +193,10 @@ impl SceneManger {
     }
 }
 
+#[derive(Default)]
 pub struct SharedSceneOutput {
     enter_text_out: EnterTextStr,
     date_out: NaiveDate,
     time_out: NaiveTime,
 }
 
-impl Default for SharedSceneOutput {
-    fn default() -> Self {
-        Self {
-            enter_text_out: Default::default(),
-            date_out: Default::default(),
-            time_out: Default::default(),
-        }
-    }
-}

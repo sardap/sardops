@@ -45,6 +45,12 @@ pub struct SongPlayOptions {
     kind: SoundKind,
 }
 
+impl Default for SongPlayOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SongPlayOptions {
     pub const fn new() -> Self {
         Self {
@@ -86,21 +92,13 @@ impl Default for SoundOptions {
     }
 }
 
+#[derive(Default)]
 pub struct SoundSystem {
     pending: Option<Song>,
     playing: bool,
     options: SoundOptions,
 }
 
-impl Default for SoundSystem {
-    fn default() -> Self {
-        Self {
-            pending: None,
-            playing: false,
-            options: Default::default(),
-        }
-    }
-}
 
 impl SoundSystem {
     pub fn push_song(&mut self, song: Song, options: SongPlayOptions) {

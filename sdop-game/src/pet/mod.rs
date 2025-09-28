@@ -110,22 +110,12 @@ pub fn planet_location_from_upid(upid: UniquePetId) -> (&'static str, u8) {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Encode, Decode, Copy, Clone)]
+#[derive(Encode, Decode, Copy, Clone, Default)]
 struct PetIllness {
     since_ilness: Duration,
     with_ilness: Duration,
     #[cfg_attr(feature = "serde", serde(default))]
     cost: Money,
-}
-
-impl Default for PetIllness {
-    fn default() -> Self {
-        Self {
-            since_ilness: Default::default(),
-            with_ilness: Default::default(),
-            cost: 0,
-        }
-    }
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -164,8 +154,7 @@ impl PetInstance {
     }
 
     pub fn digest(&mut self, food: &Food) {
-        self.stomach_filled =
-            self.stomach_filled + food.fill_factor * self.definition().food_multiplier(food);
+        self.stomach_filled += food.fill_factor * self.definition().food_multiplier(food);
         let extra = self.stomach_filled - self.definition().stomach_size;
         if extra > 0. {
             self.stomach_filled = self.definition().stomach_size;
@@ -245,11 +234,11 @@ impl PetInstance {
                 return;
             }
 
-            if let StomachMood::Starving { elapsed } = self.stomach_mood {
-                if passed_threshold_chance(rng, DEATH_STARVE_THRESHOLDS, elapsed) {
-                    self.should_die = Some(DeathCause::Starvation);
-                    return;
-                }
+            if let StomachMood::Starving { elapsed } = self.stomach_mood
+                && passed_threshold_chance(rng, DEATH_STARVE_THRESHOLDS, elapsed)
+            {
+                self.should_die = Some(DeathCause::Starvation);
+                return;
             }
 
             if passed_threshold_chance(rng, OLD_AGE_THRESHOLD, self.age) {
@@ -370,7 +359,7 @@ impl PetInstance {
     }
 
     pub fn stomach_mood(&self) -> StomachMood {
-        return self.stomach_mood;
+        self.stomach_mood
     }
 
     pub fn mood(&self) -> Mood {
@@ -409,7 +398,7 @@ impl PetInstance {
             return Mood::Happy;
         }
 
-        return Mood::Normal;
+        Mood::Normal
     }
 
     pub fn weight(&self) -> f32 {
@@ -554,17 +543,12 @@ impl Default for PetInstance {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq)]
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, Default)]
 pub enum Mood {
+    #[default]
     Normal,
     Sad,
     Happy,
-}
-
-impl Default for Mood {
-    fn default() -> Self {
-        Mood::Normal
-    }
 }
 
 impl Mood {

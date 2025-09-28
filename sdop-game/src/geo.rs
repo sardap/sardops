@@ -1,6 +1,7 @@
 use glam::Vec2;
 
 #[derive(Copy, Clone)]
+#[derive(Default)]
 pub struct Rect {
     // Note is the center
     pub pos: Vec2,
@@ -94,14 +95,6 @@ impl Rect {
     }
 }
 
-impl Default for Rect {
-    fn default() -> Self {
-        Self {
-            pos: Default::default(),
-            size: Default::default(),
-        }
-    }
-}
 
 pub fn vec2_distance(a: Vec2, b: Vec2) -> f32 {
     (a - b).length()

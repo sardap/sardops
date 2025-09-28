@@ -59,6 +59,12 @@ pub struct MgLinkFourScene {
     post_game_start: Timestamp,
 }
 
+impl Default for MgLinkFourScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MgLinkFourScene {
     pub fn new() -> Self {
         Self {
@@ -172,8 +178,8 @@ impl Scene for MgLinkFourScene {
                             }
                         }
 
-                        if moves.get_bit(self.selected as usize) {
-                            if args.input.pressed(Button::Middle) {
+                        if moves.get_bit(self.selected as usize)
+                            && args.input.pressed(Button::Middle) {
                                 self.state = State::Dropping {
                                     dur: Duration::ZERO,
                                     col: self.selected as usize,
@@ -184,31 +190,26 @@ impl Scene for MgLinkFourScene {
                                 self.thinking_end =
                                     args.timestamp + Duration::from_millis(thinking_time as u64);
                             }
-                        }
 
                         self.flash_duration += args.delta;
                         if self.flash_duration > Duration::from_millis(300) {
                             self.flash_state = !self.flash_state;
                             self.flash_duration = Duration::ZERO;
                         }
+                    } else if args.timestamp < self.thinking_end {
+                        self.best_move_search.step(1);
                     } else {
-                        if args.timestamp < self.thinking_end {
-                            self.best_move_search.step(1);
+                        let moves = if args.game_ctx.rng.i32(0..100) > self.opponent.strength {
+                            self.game.possible_moves()
+                        } else if self.best_move_search.best_moves().is_empty() {
+                            self.game.possible_moves()
                         } else {
-                            let moves = if args.game_ctx.rng.i32(0..100) > self.opponent.strength {
-                                self.game.possible_moves()
-                            } else {
-                                if self.best_move_search.best_moves().is_empty() {
-                                    self.game.possible_moves()
-                                } else {
-                                    *self.best_move_search.best_moves()
-                                }
-                            };
-                            self.state = State::Dropping {
-                                dur: Duration::ZERO,
-                                col: moves.random_set_bit(&mut args.game_ctx.rng).unwrap() as usize,
-                            };
-                        }
+                            *self.best_move_search.best_moves()
+                        };
+                        self.state = State::Dropping {
+                            dur: Duration::ZERO,
+                            col: moves.random_set_bit(&mut args.game_ctx.rng).unwrap(),
+                        };
                     }
 
                     self.first_move = false
@@ -292,7 +293,7 @@ impl Scene for MgLinkFourScene {
         display.render_sprite(&self.opponent_pet_render);
 
         for i in 0..self.game.size() {
-            let rect = RECTANGLES[i as usize];
+            let rect = RECTANGLES[i];
             if self.selected == i as isize
                 && self.game.side_to_move() == self.player_side
                 && !matches!(self.state, State::Dropping { dur: _, col: _ })
@@ -311,7 +312,7 @@ impl Scene for MgLinkFourScene {
             let row_count = self.game.get_empty_row(col).unwrap();
             let drop_time = DROP_TIME.mul_f32(row_count as f32 / ROW_COUNT as f32);
             let percent = dur.as_secs_f32() / drop_time.as_secs_f32();
-            let target = RECTANGLES[row_count as usize * COLUMNS + col];
+            let target = RECTANGLES[row_count * COLUMNS + col];
             let start = RECTANGLES[col];
             let diff = target.pos.y - start.pos.y;
             let y = diff * percent + start.pos.y;

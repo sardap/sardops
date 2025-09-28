@@ -69,7 +69,7 @@ impl PcRender {
                 let _ = owned.push(item.program().unwrap_or_default());
             }
         }
-        if owned.len() == 0 {
+        if owned.is_empty() {
             let _ = owned.push(&assets::FRAMES_PC_PROGRAM_OS);
         }
         self.program_anime = Anime::new(rng.choice(owned.iter()).unwrap());

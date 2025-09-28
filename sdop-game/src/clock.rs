@@ -72,7 +72,7 @@ impl AnalogueRenderClock {
 
     pub fn new(kind: AnalogueClockKind, pos: Vec2, now: NaiveTime) -> Self {
         Self {
-            pos: pos,
+            pos,
             hour: now.hour() as u8,
             minutes: now.minute() as u8,
             seconds: now.second() as u8,
@@ -184,7 +184,7 @@ impl DigitalClockRender {
 
     pub fn new(pos: Vec2, now: NaiveTime) -> Self {
         Self {
-            pos: pos,
+            pos,
             hour: now.hour() as u8,
             minutes: now.minute() as u8,
         }

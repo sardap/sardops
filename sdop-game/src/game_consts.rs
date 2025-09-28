@@ -132,7 +132,7 @@ pub const ILLNESS_SINCE_ODDS: &[Threshold<Duration>] = &[
 
 pub const HEALING_COST_RANGE: Range<Money> = 1000..10000;
 
-pub const RANDOM_NAMES: &[&'static str] = &[
+pub const RANDOM_NAMES: &[&str] = &[
     "Abel", "Adam", "Amos", "Cain", "Caleb", "Dan", "David", "Eli", "Esau", "Gad", "Hagar",
     "Isaac", "Jacob", "Japhet", "Jonah", "Job", "Joel", "Judah", "Levi", "Lot", "Micah", "Moab",
     "Nahum", "Noah", "Obed", "Omar", "Perez", "Ruth", "Seth", "Shem", "Uriah", "Zerah", "Zimri",
@@ -140,7 +140,7 @@ pub const RANDOM_NAMES: &[&'static str] = &[
     "Peter", "Silas", "Simon", "Titus",
 ];
 
-pub const SPLACE_LOCATIONS: &[&'static str] = &[
+pub const SPLACE_LOCATIONS: &[&str] = &[
     "TRAPPIST",
     "KEPLER",
     "WASP",

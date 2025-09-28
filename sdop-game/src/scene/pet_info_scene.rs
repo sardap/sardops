@@ -27,6 +27,12 @@ pub struct PetInfoScene {
     parent_renders: [PetRender; 2],
 }
 
+impl Default for PetInfoScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PetInfoScene {
     pub fn new() -> Self {
         Self {

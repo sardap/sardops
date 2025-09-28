@@ -43,9 +43,7 @@ impl PetDefinition {
 
 impl PetDefinition {
     pub fn food_multiplier(&self, _food: &Food) -> f32 {
-        match self.id {
-            _ => 1.,
-        }
+        1.
     }
 
     pub fn poop_time_multiplier(&self) -> f32 {
@@ -63,14 +61,16 @@ impl PetDefinition {
     pub fn get_by_id(id: PetDefinitionId) -> &'static PetDefinition {
         let id = id as usize;
         if id >= PET_DEFINITIONS.len() {
-            return &PET_DEFINITIONS[0];
+            return PET_DEFINITIONS[0];
         }
-        return &PET_DEFINITIONS[id];
+        PET_DEFINITIONS[id]
     }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub enum PetAnimationSet {
+    #[default]
     Normal,
     Happy,
     Sad,
@@ -78,11 +78,6 @@ pub enum PetAnimationSet {
     Sleeping,
 }
 
-impl Default for PetAnimationSet {
-    fn default() -> Self {
-        PetAnimationSet::Normal
-    }
-}
 
 pub struct PetImageSet {
     pub width: i32,
@@ -152,7 +147,7 @@ impl PetImageSet {
             }
         }
 
-        return self.normal;
+        self.normal
     }
 }
 

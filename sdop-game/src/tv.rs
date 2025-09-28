@@ -33,8 +33,8 @@ pub fn get_show_for_time(date_time: &NaiveDateTime) -> Show {
 
 #[derive(Copy, Clone)]
 pub enum TvKind {
-    CRT,
-    LCD,
+    Crt,
+    Lcd,
 }
 
 pub struct TvRender {
@@ -59,8 +59,8 @@ impl TvRender {
 
     fn image(&self) -> &'static StaticImage {
         match self.kind {
-            TvKind::CRT => &assets::IMAGE_TV_CRT,
-            TvKind::LCD => &assets::IMAGE_TV_LCD,
+            TvKind::Crt => &assets::IMAGE_TV_CRT,
+            TvKind::Lcd => &assets::IMAGE_TV_LCD,
         }
     }
 
@@ -88,8 +88,8 @@ impl ComplexRender for TvRender {
         );
 
         let image_offset = match self.kind {
-            TvKind::CRT => Vec2::new(2., -2.),
-            TvKind::LCD => Vec2::new(0., 0.),
+            TvKind::Crt => Vec2::new(2., -2.),
+            TvKind::Lcd => Vec2::new(0., 0.),
         };
 
         display.render_image_complex(

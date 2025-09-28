@@ -34,7 +34,7 @@ struct Star {
 }
 
 impl Sprite for Star {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         &self.pos
     }
 
@@ -170,17 +170,15 @@ impl Scene for EvolveScene {
                     self.circle_spawn_timer = Duration::ZERO;
                 }
 
-                for circle in &mut self.circles {
-                    if let Some(circle) = circle {
-                        circle.duration += args.delta;
-                        if circle.duration > circle.speed {
-                            circle.duration = Duration::ZERO;
-                            circle.size += 1;
-                            if circle.size > 75 {
-                                circle.size = 0;
-                            }
-                            log::info!("{}", circle.size);
+                for circle in self.circles.iter_mut().flatten() {
+                    circle.duration += args.delta;
+                    if circle.duration > circle.speed {
+                        circle.duration = Duration::ZERO;
+                        circle.size += 1;
+                        if circle.size > 75 {
+                            circle.size = 0;
                         }
+                        log::info!("{}", circle.size);
                     }
                 }
             }
@@ -224,10 +222,8 @@ impl Scene for EvolveScene {
             State::Flashing => {}
             State::Circles => {
                 // display.render_sprite(&self.to_pet_render);
-                for circle in &self.circles {
-                    if let Some(circle) = circle {
-                        display.render_circle(CENTER_VEC, circle.size, true, false);
-                    }
+                for circle in self.circles.iter().flatten() {
+                    display.render_circle(CENTER_VEC, circle.size, true, false);
                 }
 
                 if self.invert {

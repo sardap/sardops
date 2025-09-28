@@ -99,7 +99,7 @@ pub struct Garbage {
 }
 
 impl Sprite for Garbage {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         self.sprite.pos()
     }
 

@@ -34,6 +34,12 @@ pub struct PoopClearScene {
     pet_render: PetRender,
 }
 
+impl Default for PoopClearScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PoopClearScene {
     pub fn new() -> Self {
         Self {

@@ -6,6 +6,7 @@ use crate::{
     geo::Rect,
 };
 
+#[derive(Default)]
 pub struct StomachRender {
     pub pos_center: Vec2,
     pub filled: f32,
@@ -17,14 +18,6 @@ impl StomachRender {
     }
 }
 
-impl Default for StomachRender {
-    fn default() -> Self {
-        Self {
-            pos_center: Default::default(),
-            filled: Default::default(),
-        }
-    }
-}
 
 impl ComplexRender for StomachRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
