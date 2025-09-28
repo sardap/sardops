@@ -1,10 +1,10 @@
-use chrono::{Datelike, NaiveDate, NaiveTime, Weekday};
+use chrono::{Datelike, NaiveDate, Weekday};
 use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
     assets,
-    display::{CENTER_VEC, ComplexRender, ComplexRenderOption},
+    display::{ComplexRender, ComplexRenderOption},
     fonts::FONT_VARIABLE_SMALL,
 };
 
@@ -15,7 +15,7 @@ pub struct CalendarRender {
 
 impl CalendarRender {
     pub fn new(pos: Vec2, date: NaiveDate) -> Self {
-        let mut result = Self { date: date, pos };
+        let mut result = Self { date, pos };
 
         result.set_date(date);
 

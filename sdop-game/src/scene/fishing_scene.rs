@@ -66,6 +66,12 @@ const FISHING_ROD_POS_CENTER: Vec2 = Vec2::new(
 
 const PULL_TIME: Duration = Duration::from_millis(5000);
 
+impl Default for FishingScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FishingScene {
     pub fn new() -> Self {
         let fishing_line = MaskedAnimeRender::new(
@@ -191,15 +197,13 @@ impl Scene for FishingScene {
                     let current_percent =
                         self.state_elasped.as_secs_f32() / PULL_TIME.as_secs_f32() * 100.;
 
-                    for entry in &mut self.seq {
-                        if let Some(entry) = entry {
-                            let entry_percent =
-                                entry.elasped.as_secs_f32() / PULL_TIME.as_secs_f32() * 100.;
+                    for entry in self.seq.iter_mut().flatten() {
+                        let entry_percent =
+                            entry.elasped.as_secs_f32() / PULL_TIME.as_secs_f32() * 100.;
 
-                            let delta = (entry_percent - current_percent).abs();
-                            if delta < 5. {
-                                entry.hit = true;
-                            }
+                        let delta = (entry_percent - current_percent).abs();
+                        if delta < 5. {
+                            entry.hit = true;
                         }
                     }
                 }

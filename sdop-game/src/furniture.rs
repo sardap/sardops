@@ -19,7 +19,9 @@ use crate::{
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode, PartialEq, Eq, EnumIter)]
+#[derive(Default)]
 pub enum HomeFurnitureKind {
+    #[default]
     None,
     DigitalClock,
     AnalogueClock,
@@ -67,11 +69,6 @@ impl HomeFurnitureKind {
     }
 }
 
-impl Default for HomeFurnitureKind {
-    fn default() -> Self {
-        Self::None
-    }
-}
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
@@ -103,7 +100,7 @@ impl HomeLayout {
     }
 
     pub fn furniture_present(&self, kind: HomeFurnitureKind) -> bool {
-        [self.left, self.top, self.right].iter().any(|i| *i == kind)
+        [self.left, self.top, self.right].contains(&kind)
     }
 }
 
@@ -118,17 +115,14 @@ impl Default for HomeLayout {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Default)]
 pub enum HomeFurnitureLocation {
+    #[default]
     Top,
     Left,
     Right,
 }
 
-impl Default for HomeFurnitureLocation {
-    fn default() -> Self {
-        Self::Top
-    }
-}
 
 impl HomeFurnitureLocation {
     pub const fn pos(&self) -> Vec2 {
@@ -157,7 +151,9 @@ impl HomeFurnitureLocation {
     }
 }
 
+#[derive(Default)]
 pub enum HomeFurnitureRender {
+    #[default]
     None,
     DigitalClock(DigitalClockRender),
     AnalogueClock(AnalogueRenderClock),
@@ -169,11 +165,6 @@ pub enum HomeFurnitureRender {
     Sprite(BasicSprite),
 }
 
-impl Default for HomeFurnitureRender {
-    fn default() -> Self {
-        Self::None
-    }
-}
 
 impl HomeFurnitureRender {
     pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {

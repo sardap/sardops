@@ -14,6 +14,7 @@ use crate::{
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
+#[derive(Default)]
 pub struct Suiter {
     pub pet_def_id: PetDefinitionId,
     pub upid: UniquePetId,
@@ -21,16 +22,6 @@ pub struct Suiter {
     pub waiting: Duration,
 }
 
-impl Default for Suiter {
-    fn default() -> Self {
-        Self {
-            pet_def_id: Default::default(),
-            upid: Default::default(),
-            name: Default::default(),
-            waiting: Default::default(),
-        }
-    }
-}
 
 impl Suiter {
     pub fn new_random(rng: &mut fastrand::Rng) -> Self {
@@ -45,19 +36,12 @@ impl Suiter {
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
+#[derive(Default)]
 pub struct SuiterSystem {
     pub suiter: Option<Suiter>,
     pub waiting_for_suiter: Duration,
 }
 
-impl Default for SuiterSystem {
-    fn default() -> Self {
-        Self {
-            suiter: Default::default(),
-            waiting_for_suiter: Default::default(),
-        }
-    }
-}
 
 impl SuiterSystem {
     pub fn suiter_waiting(&self) -> bool {

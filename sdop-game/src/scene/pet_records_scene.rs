@@ -7,7 +7,7 @@ use crate::{
     assets::{self, Image},
     date_utils::DurationExt,
     death::DeathCause,
-    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     pet::{planet_location_from_upid, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
@@ -22,6 +22,12 @@ pub struct PetRecordsScene {
     pet_render: PetRender,
     selected: usize,
     state: State,
+}
+
+impl Default for PetRecordsScene {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PetRecordsScene {

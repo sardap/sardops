@@ -1,5 +1,4 @@
 use core::{
-    f32::consts::PI,
     ops::{Add, Sub},
     time::Duration,
 };
@@ -9,19 +8,18 @@ use const_for::const_for;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use glam::Vec2;
-use libm::Libm;
 use strum_macros::EnumIter;
 
 use crate::{
-    assets::{self, StaticImage},
-    display::{CENTER_VEC, ComplexRender, ComplexRenderOption, Rotation},
-    sprite::{Sprite, SpriteMask, SpriteRotation},
+    assets::{self},
+    sprite::{Sprite, SpriteMask},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_dates.rs"));
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub struct Timestamp(pub NaiveDateTime);
 
 impl Timestamp {
@@ -38,11 +36,10 @@ impl Timestamp {
         second: u32,
         nanos: u32,
     ) -> Option<Self> {
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
-            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, second, nanos) {
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
+            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, second, nanos) {
                 return Some(Timestamp(NaiveDateTime::new(date, time)));
             }
-        }
 
         None
     }
@@ -108,11 +105,10 @@ impl<Context> bincode::Decode<Context> for Timestamp {
         let seconds: u32 = bincode::Decode::decode(decoder)?;
         let nano: u32 = bincode::Decode::decode(decoder)?;
 
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
-            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
+            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
                 return Ok(Self(NaiveDateTime::new(date, time)));
             }
-        }
 
         Err(bincode::error::DecodeError::Other("bad date"))
     }
@@ -129,21 +125,15 @@ impl<'de, Context> bincode::BorrowDecode<'de, Context> for Timestamp {
         let seconds: u32 = bincode::Decode::decode(decoder)?;
         let nano: u32 = bincode::Decode::decode(decoder)?;
 
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
-            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
+            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
                 return Ok(Self(NaiveDateTime::new(date, time)));
             }
-        }
 
         Err(bincode::error::DecodeError::Other("bad date"))
     }
 }
 
-impl Default for Timestamp {
-    fn default() -> Self {
-        Self(Default::default())
-    }
-}
 
 impl Sub for Timestamp {
     type Output = Duration;
@@ -441,7 +431,7 @@ impl SpecialDayUpdater {
     }
 
     pub fn special_days(&self) -> &SpecialDays {
-        return &self.special_days;
+        &self.special_days
     }
 
     pub fn is_non_trading_day(&self) -> bool {
@@ -450,11 +440,10 @@ impl SpecialDayUpdater {
 
     pub fn non_trading_day(&self) -> Option<SpecialDayKind> {
         for day in self.special_days {
-            if let Some(day) = day {
-                if !day.is_trading_day() {
+            if let Some(day) = day
+                && !day.is_trading_day() {
                     return Some(day);
                 }
-            }
         }
 
         None
@@ -462,7 +451,9 @@ impl SpecialDayUpdater {
 }
 
 #[derive(Debug, Clone, Copy, EnumIter)]
+#[derive(Default)]
 pub enum MoonPhase {
+    #[default]
     NewMoon,
     WaxingCrescent,
     FirstQuarter,
@@ -473,11 +464,6 @@ pub enum MoonPhase {
     WaningCrescent,
 }
 
-impl Default for MoonPhase {
-    fn default() -> Self {
-        Self::NewMoon
-    }
-}
 
 impl From<f64> for MoonPhase {
     fn from(v: f64) -> Self {
@@ -498,6 +484,7 @@ impl From<f64> for MoonPhase {
     }
 }
 
+#[derive(Default)]
 pub struct MoonRender {
     pub pos: Vec2,
     pub since_ce: i32,
@@ -509,18 +496,10 @@ impl MoonRender {
     }
 
     pub fn frame_index(&self) -> usize {
-        self.since_ce.abs() as usize % assets::FRAMES_MOON_ANIME.len()
+        self.since_ce.unsigned_abs() as usize % assets::FRAMES_MOON_ANIME.len()
     }
 }
 
-impl Default for MoonRender {
-    fn default() -> Self {
-        Self {
-            pos: Default::default(),
-            since_ce: 0,
-        }
-    }
-}
 
 impl Sprite for MoonRender {
     fn pos(&self) -> &Vec2 {

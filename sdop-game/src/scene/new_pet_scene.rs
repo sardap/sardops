@@ -1,4 +1,3 @@
-use core::time::Duration;
 
 use chrono::NaiveDateTime;
 use fixedstr::str_format;
@@ -46,7 +45,7 @@ impl NewPetScene {
             } else {
                 State::EnterName
             },
-            need_timestamp: need_timestamp,
+            need_timestamp,
             upid: upid.unwrap_or_default(),
             parents,
         }
@@ -80,10 +79,10 @@ impl Scene for NewPetScene {
         match self.state {
             State::EnterDate => {
                 self.state = State::EnterName;
-                return SceneOutput::new(SceneEnum::EnterDate(EnterDateScene::new(
+                SceneOutput::new(SceneEnum::EnterDate(EnterDateScene::new(
                     enter_date_scene::Required::DateTime,
                     str_format!(fixedstr::str12, "WHEN IS IT?"),
-                )));
+                )))
             }
             State::EnterName => {
                 if self.need_timestamp {
@@ -94,14 +93,14 @@ impl Scene for NewPetScene {
                 }
 
                 self.state = State::NameEntered;
-                return SceneOutput::new(SceneEnum::EnterText(EnterTextScene::new(
+                SceneOutput::new(SceneEnum::EnterText(EnterTextScene::new(
                     6,
                     str_format!(fixedstr::str12, "ENTER NAME"),
-                    Some(|text| text.len() > 0 && text.chars().any(|c| !c.is_whitespace())),
-                )));
+                    Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
+                )))
             }
             State::NameEntered => {
-                return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                SceneOutput::new(SceneEnum::Home(HomeScene::new()))
             }
         }
     }

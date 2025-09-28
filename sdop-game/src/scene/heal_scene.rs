@@ -40,6 +40,12 @@ pub struct HealScene {
     heal_time: Duration,
 }
 
+impl Default for HealScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HealScene {
     pub fn new() -> Self {
         Self {
@@ -92,7 +98,7 @@ impl Scene for HealScene {
 
         match self.state {
             State::Entering => {
-                const SPEED: f32 = 5.;
+                const SPEED: f32 = 25.;
 
                 self.pet_render.pos.x += SPEED * args.delta.as_secs_f32();
                 if self.pet_render.pos.x > WIDTH_F32 - 46. {

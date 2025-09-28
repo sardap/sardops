@@ -16,7 +16,7 @@ use std::{
 };
 use strum_macros::{Display, EnumString};
 
-const ASSETS_PATH: &'static str = "../assets";
+const ASSETS_PATH: &str = "../assets";
 const IMAGES_MISC_PATH: &str = "../assets/images/misc";
 const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
 const PETS_RON_PATH: &str = "../assets/pets.ron";
@@ -70,7 +70,7 @@ struct ConvertedImage {
 fn compress_image(img: image::RgbaImage, suffix: Option<String>) -> ConvertedImage {
     let width = img.width() as usize;
     let height = img.height() as usize;
-    let bytes_needed = (width * height + 7) / 8;
+    let bytes_needed = (width * height).div_ceil(8);
     let mut compressed_data = vec![0u8; bytes_needed];
     for y in 0..height {
         for x in 0..width {
@@ -84,9 +84,9 @@ fn compress_image(img: image::RgbaImage, suffix: Option<String>) -> ConvertedIma
         }
     }
     ConvertedImage {
-        suffix: suffix,
-        width: width,
-        height: height,
+        suffix,
+        width,
+        height,
         data: compressed_data,
     }
 }
@@ -288,7 +288,6 @@ fn generate_image_code<P: AsRef<Path>>(path: P) -> ContentOut {
         let name = entry
             .path()
             .file_stem()
-            .clone()
             .unwrap()
             .to_str()
             .unwrap()
@@ -325,7 +324,6 @@ fn generate_image_tilesets_code<P: AsRef<Path>>(path: P) -> ContentOut {
         let name = entry
             .path()
             .file_stem()
-            .clone()
             .unwrap()
             .to_str()
             .unwrap()
@@ -417,7 +415,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
 
         if let Some(path) = &template.images.eat {
             let var_name = format!("{}_EAT", pet_var_name);
-            write_image(&mut assets, &var_name, asset_path_base.join(&path));
+            write_image(&mut assets, &var_name, asset_path_base.join(path));
             pet_definitions.push_str(&format!(
                 ".with_eat(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
                 var_name, var_name
@@ -426,7 +424,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
 
         if let Some(path) = &template.images.happy {
             let var_name = format!("{}_HAPPY", pet_var_name);
-            write_image(&mut assets, &var_name, asset_path_base.join(&path));
+            write_image(&mut assets, &var_name, asset_path_base.join(path));
             pet_definitions.push_str(&format!(
                 ".with_happy(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
                 var_name, var_name
@@ -435,7 +433,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
 
         if let Some(path) = &template.images.sad {
             let var_name = format!("{}_SAD", pet_var_name);
-            write_image(&mut assets, &var_name, asset_path_base.join(&path));
+            write_image(&mut assets, &var_name, asset_path_base.join(path));
             pet_definitions.push_str(&format!(
                 ".with_sad(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
                 var_name, var_name
@@ -444,7 +442,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
 
         if let Some(path) = &template.images.sleep {
             let var_name = format!("{}_SLEEP", pet_var_name);
-            write_image(&mut assets, &var_name, asset_path_base.join(&path));
+            write_image(&mut assets, &var_name, asset_path_base.join(path));
             pet_definitions.push_str(&format!(
                 ".with_sleep(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK))",
                 var_name, var_name
@@ -456,16 +454,14 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         pet_vars.push(pet_var_name);
     }
 
-    pet_definitions.push_str(&format!(
-        "const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = ["
-    ));
+    pet_definitions.push_str(&"const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = [".to_string());
     for var in &pet_vars {
         pet_definitions.push_str(&format!("&{}, ", var));
     }
-    pet_definitions.push_str(&format!("];"));
+    pet_definitions.push_str(&"];".to_string());
 
     ContentOut {
-        assets: assets,
+        assets,
         pet_definitions,
         ..Default::default()
     }
@@ -505,15 +501,15 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         food_vars.push(image_normal_var_name);
     }
 
-    food_definitions.push_str(&format!("pub const FOODS: [&'static Food; FOOD_COUNT] = ["));
+    food_definitions.push_str(&"pub const FOODS: [&'static Food; FOOD_COUNT] = [".to_string());
     for var in &food_vars {
         food_definitions.push_str(&format!("&{}, ", var));
     }
     food_definitions.push_str("];");
 
     ContentOut {
-        assets: assets,
-        food_definitions: food_definitions,
+        assets,
+        food_definitions,
         ..Default::default()
     }
 }
@@ -609,7 +605,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         rare_fn_def.push_str(&format!(
             "Self::{} => ItemRarity::{},\n",
             enum_name,
-            template.rarity.to_string()
+            template.rarity
         ));
         cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.cost));
 
@@ -695,7 +691,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&from_food_fn);
     items_definitions.push_str(&desc_fn);
     items_definitions.push_str(&category_fn);
-    items_definitions.push_str("}");
+    items_definitions.push('}');
     items_definitions.push_str(&fishing_chance_def);
 
     ContentOut {
@@ -834,7 +830,7 @@ fn generate_dates() -> ContentOut {
     dates_definitions.push_str("];");
 
     ContentOut {
-        dates_definitions: dates_definitions,
+        dates_definitions,
         ..Default::default()
     }
 }

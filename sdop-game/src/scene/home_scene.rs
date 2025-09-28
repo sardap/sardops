@@ -1,6 +1,6 @@
 use core::{time::Duration, u8};
 
-use chrono::{NaiveDate, Timelike};
+use chrono::Timelike;
 use fixedstr::{str_format, str32};
 use glam::Vec2;
 use sdop_common::{MelodyEntry, Note};
@@ -9,7 +9,6 @@ use crate::{
     Button, Song, WIDTH,
     anime::{Anime, HasAnime, MaskedAnimeRender, tick_all_anime},
     assets::{self, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK, Image},
-    calendar::CalendarRender,
     date_utils::DurationExt,
     display::{
         CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
@@ -22,7 +21,7 @@ use crate::{
     items::ItemKind,
     pc::{PcKind, PcRender},
     pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
-    poop::{self, MAX_POOPS, PoopRender, poop_count, update_poop_renders},
+    poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
         egg_hatch_scene::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
@@ -31,7 +30,7 @@ use crate::{
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, suiters_scene::SuitersScene,
     },
-    sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions, SoundKind},
+    sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
     sprite::{BasicAnimeSprite, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
@@ -116,15 +115,14 @@ impl MenuOption {
 
 fn change_option(options: &[MenuOption], current: usize, change: i32) -> usize {
     let index = current as i32 + change;
-    let index = if index >= options.len() as i32 {
+
+    if index >= options.len() as i32 {
         0usize
     } else if index < 0 {
         options.len() - 1
     } else {
         index as usize
-    };
-
-    index as usize
+    }
 }
 
 const MENU_OPTIONS_COUNT: usize = core::mem::variant_count::<MenuOption>();
@@ -262,7 +260,7 @@ impl Default for HomeSceneData {
             selected_index: 0,
             sleeping_z: BasicAnimeSprite::new(CENTER_VEC, &assets::FRAMES_SLEEPING_Z),
             tv: TvRender::new(
-                TvKind::LCD,
+                TvKind::Lcd,
                 Vec2::new(20., 40.),
                 &assets::FRAMES_TV_SHOW_SPORT,
             ),
@@ -312,6 +310,12 @@ pub struct HomeScene {
     right_render: HomeFurnitureRender,
     egg_render: EggRender,
     egg_bounce: f32,
+}
+
+impl Default for HomeScene {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HomeScene {
@@ -443,13 +447,13 @@ impl Scene for HomeScene {
         );
 
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
-            if let Some(egg) = &args.game_ctx.egg {
-                if egg.hatch {
-                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
-                        *egg,
-                        args.game_ctx.pet.def_id,
-                    )));
-                }
+            if let Some(egg) = &args.game_ctx.egg
+                && egg.hatch
+            {
+                return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
+                    *egg,
+                    args.game_ctx.pet.def_id,
+                )));
             }
 
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
@@ -467,7 +471,7 @@ impl Scene for HomeScene {
             }
         }
 
-        args.game_ctx.home.options = get_options(args.game_ctx.home.state, &args.game_ctx);
+        args.game_ctx.home.options = get_options(args.game_ctx.home.state, args.game_ctx);
 
         if args.input.pressed(Button::Left) {
             args.game_ctx.home.selected_index = change_option(
@@ -546,7 +550,7 @@ impl Scene for HomeScene {
                         let _ = options.push(2);
                     }
 
-                    if options.len() > 0 {
+                    if !options.is_empty() {
                         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
 
                         match option {
@@ -563,11 +567,11 @@ impl Scene for HomeScene {
                             1 => {
                                 let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
                                 if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                                    let _ = kinds.push(TvKind::LCD);
+                                    let _ = kinds.push(TvKind::Lcd);
                                 }
 
                                 if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                                    let _ = kinds.push(TvKind::CRT);
+                                    let _ = kinds.push(TvKind::Crt);
                                 }
                                 args.game_ctx.home.tv.kind =
                                     args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
@@ -671,7 +675,7 @@ impl Scene for HomeScene {
                     args.game_ctx.home.pet_render.pos = Vec2::new(
                         WIDTH_F32 - args.game_ctx.home.pet_render.image().size().x as f32 / 2. - 5.,
                         args.game_ctx.home.tv.pos.y
-                            + args.game_ctx.home.tv.size().y as f32 / 2.
+                            + args.game_ctx.home.tv.size().y / 2.
                             + args.game_ctx.home.pet_render.image().size().y as f32,
                     );
 
@@ -896,7 +900,7 @@ impl Scene for HomeScene {
             State::ReadingBook { book } => {
                 display.render_text_complex(
                     Vec2::new(CENTER_X, 34.),
-                    &"CHAPTER",
+                    "CHAPTER",
                     ComplexRenderOption::new()
                         .with_white()
                         .with_center()
@@ -929,17 +933,15 @@ impl Scene for HomeScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                for word in &args.game_ctx.home.floating_words {
-                    if let Some(word) = word {
-                        display.render_text_complex(
-                            word.pos,
-                            word.text,
-                            ComplexRenderOption::new()
-                                .with_white()
-                                .with_center()
-                                .with_font(&FONT_VARIABLE_SMALL),
-                        );
-                    }
+                for word in args.game_ctx.home.floating_words.iter().flatten() {
+                    display.render_text_complex(
+                        word.pos,
+                        word.text,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
                 }
 
                 display.render_sprite(&args.game_ctx.home.pet_render);
@@ -1034,7 +1036,7 @@ impl Scene for HomeScene {
 
         let select_rect = Rect::new_top_left(
             Vec2::new(
-                SYMBOL_BUFFER + (1 as f32 * (SIZE.x + SYMBOL_BUFFER)) - (SYMBOL_BUFFER),
+                SYMBOL_BUFFER + (1_f32 * (SIZE.x + SYMBOL_BUFFER)) - (SYMBOL_BUFFER),
                 IMAGE_Y_START - (SYMBOL_BUFFER),
             ),
             Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),

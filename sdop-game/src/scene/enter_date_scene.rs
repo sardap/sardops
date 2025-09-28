@@ -104,7 +104,7 @@ impl EnterDateScene {
             },
             need_date: matches!(required, Required::Date) || matches!(required, Required::DateTime),
             need_time: matches!(required, Required::Time) || matches!(required, Required::DateTime),
-            display_text: display_text,
+            display_text,
         }
     }
 }

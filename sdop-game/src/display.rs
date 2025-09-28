@@ -20,17 +20,11 @@ pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
 
 pub type DisplayData = Bitmap<WIDTH, HEIGHT>;
 
+#[derive(Default)]
 pub struct GameDisplay {
     bits: DisplayData,
 }
 
-impl Default for GameDisplay {
-    fn default() -> Self {
-        Self {
-            bits: Default::default(),
-        }
-    }
-}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ColorMode {
@@ -49,18 +43,15 @@ pub enum PostionMode {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, EnumIter)]
+#[derive(Default)]
 pub enum Rotation {
+    #[default]
     R0,
     R90,
     R180,
     R270,
 }
 
-impl Default for Rotation {
-    fn default() -> Self {
-        Self::R0
-    }
-}
 
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
@@ -71,6 +62,12 @@ pub struct ComplexRenderOption {
     font_wrapping_x: Option<i32>,
     rotation: Rotation,
     invert: bool,
+}
+
+impl Default for ComplexRenderOption {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ComplexRenderOption {
@@ -153,11 +150,11 @@ impl ComplexRenderOption {
 
 impl GameDisplay {
     pub fn image_data(&self) -> &[u8] {
-        &self.bits.image_data()
+        self.bits.image_data()
     }
 
     pub fn bmp(&self) -> &[u8] {
-        &self.bits.raw()
+        self.bits.raw()
     }
 
     pub fn clear(&mut self) {
@@ -287,7 +284,7 @@ impl GameDisplay {
 
         // Top and bottom borders
         for (i, x) in (top_left.x as i32..=bottom_right_x as i32).enumerate() {
-            if (i / dash_width) % 2 == 0 {
+            if (i / dash_width).is_multiple_of(2) {
                 self.render_point(x, top_left.y as i32, white); // Top
                 self.render_point(x, bottom_right_y as i32, white); // Bottom
             }
@@ -295,7 +292,7 @@ impl GameDisplay {
 
         // Left and right borders
         for (i, y) in ((top_left.y as i32 + 1)..(bottom_right_y as i32)).enumerate() {
-            if (i / dash_width) % 2 == 0 {
+            if (i / dash_width).is_multiple_of(2) {
                 self.render_point(top_left.x as i32, y, white); // Left
                 self.render_point(bottom_right_x as i32, y, white); // Right
             }
@@ -391,10 +388,8 @@ impl GameDisplay {
     }
 
     pub fn render_sprites<T: Sprite>(&mut self, sprites: &[Option<T>]) {
-        for sprite in sprites {
-            if let Some(sprite) = sprite {
-                self.render_sprite(sprite);
-            }
+        for sprite in sprites.iter().flatten() {
+            self.render_sprite(sprite);
         }
     }
 
@@ -437,7 +432,7 @@ impl GameDisplay {
             PostionMode::BottomRight => todo!(),
         };
 
-        let sub_complex_options = options.clone().with_pos_mode(PostionMode::Bottomleft);
+        let sub_complex_options = options.with_pos_mode(PostionMode::Bottomleft);
         let mut x_offset = 0;
         let mut y_offset = 0;
         for ch in text.chars() {
@@ -511,7 +506,7 @@ impl GameDisplay {
         let cx = center.x as i32;
         let cy = center.y as i32;
 
-        let r2 = (radius * radius) as i32;
+        let r2 = radius * radius;
 
         let (sx, sy) = (libm::cosf(angle_start), libm::sinf(angle_start));
         let (ex, ey) = (libm::cosf(angle_end), libm::sinf(angle_end));
@@ -597,7 +592,7 @@ const PALETTE_SIZE: usize = 8;
 const BMP_OFFSET: usize = BMP_HEADER_SIZE + DIB_HEADER_SIZE + PALETTE_SIZE;
 
 const fn padded_row_bytes(width: usize) -> usize {
-    ((width + 31) / 32) * 4
+    width.div_ceil(32) * 4
 }
 
 pub const fn bmp_file_size(width: usize, height: usize) -> usize {
@@ -658,11 +653,11 @@ where
         Self { data: bmp }
     }
 
-    pub fn raw<'a>(&'a self) -> &'a [u8] {
+    pub fn raw(&self) -> &[u8] {
         &self.data
     }
 
-    pub fn image_data<'a>(&'a self) -> &'a [u8] {
+    pub fn image_data(&self) -> &[u8] {
         &self.data[BMP_OFFSET..]
     }
 

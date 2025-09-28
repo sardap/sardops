@@ -7,6 +7,7 @@ use crate::{
     temperature::TemperatureLevel,
 };
 
+#[derive(Default)]
 pub struct RenderThermometerMercury {
     pub pos: Vec2,
     pub temperature: f32,
@@ -22,14 +23,6 @@ impl RenderThermometerMercury {
     }
 }
 
-impl Default for RenderThermometerMercury {
-    fn default() -> Self {
-        Self {
-            pos: Default::default(),
-            temperature: Default::default(),
-        }
-    }
-}
 
 impl ComplexRender for RenderThermometerMercury {
     fn render(&self, display: &mut crate::display::GameDisplay) {
@@ -57,6 +50,7 @@ impl ComplexRender for RenderThermometerMercury {
     }
 }
 
+#[derive(Default)]
 pub struct RenderThermometerDigital {
     pub pos: Vec2,
     pub temperature: f32,
@@ -72,14 +66,6 @@ impl RenderThermometerDigital {
     }
 }
 
-impl Default for RenderThermometerDigital {
-    fn default() -> Self {
-        Self {
-            pos: Default::default(),
-            temperature: Default::default(),
-        }
-    }
-}
 
 impl ComplexRender for RenderThermometerDigital {
     fn render(&self, display: &mut crate::display::GameDisplay) {

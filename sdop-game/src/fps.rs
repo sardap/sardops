@@ -12,6 +12,12 @@ pub struct FPSCounter {
     last_fps: u32,
 }
 
+impl Default for FPSCounter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FPSCounter {
     pub fn new() -> Self {
         Self {

@@ -14,7 +14,7 @@ enum State {
     SelectChar,
 }
 
-const ENTERABLE_CHARS: &'static str = "abcdefghijklmnopqrstuvwxyz0123456789$ ";
+const ENTERABLE_CHARS: &str = "abcdefghijklmnopqrstuvwxyz0123456789$ ";
 
 pub type EnterTextStr = fixedstr::str32;
 
@@ -44,8 +44,8 @@ impl EnterTextScene {
 
         Self {
             state: State::SelectIndex,
-            display_text: display_text,
-            text: text,
+            display_text,
+            text,
             max_len: max_len.min(31),
             selected_index: 0,
             char_index: 0,
@@ -98,7 +98,7 @@ impl Scene for EnterTextScene {
                     updated = (updated + 1) % ENTERABLE_CHARS.len();
                 }
 
-                self.char_index = updated as usize;
+                self.char_index = updated;
 
                 if args.input.pressed(Button::Middle) {
                     self.text.set(

@@ -12,7 +12,7 @@ use crate::{
 pub const MAX_POOPS: usize = 5;
 
 pub fn poop_count(poops: &[Option<Poop>]) -> usize {
-    return poops.iter().filter(|i| i.is_some()).count();
+    poops.iter().filter(|i| i.is_some()).count()
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -47,7 +47,7 @@ impl PoopRender {
 }
 
 impl Sprite for PoopRender {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         &self.pos
     }
 

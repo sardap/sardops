@@ -42,6 +42,12 @@ pub struct GameSelectScene {
     selected: i32,
 }
 
+impl Default for GameSelectScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameSelectScene {
     pub fn new() -> Self {
         Self {

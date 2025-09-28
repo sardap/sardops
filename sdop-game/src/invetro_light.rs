@@ -35,8 +35,8 @@ impl InvetroLightRender {
         Self {
             pos,
             length,
-            start: start,
-            end: end,
+            start,
+            end,
             rotation: match location {
                 HomeFurnitureLocation::Top => Rotation::R0,
                 HomeFurnitureLocation::Left => Rotation::R90,

@@ -63,7 +63,7 @@ impl Anime {
     pub fn set_random_frame(&mut self, rng: &mut fastrand::Rng) {
         self.current_index = rng.usize(0..self.frames.len());
         self.elapsed = Duration::from_millis(
-            rng.u64(0..self.frames[self.current_index].duration.as_millis() as u64) as u64,
+            rng.u64(0..self.frames[self.current_index].duration.as_millis() as u64),
         )
     }
 
@@ -72,11 +72,11 @@ impl Anime {
     }
 
     pub fn current_frame(&self) -> &'static StaticImage {
-        &self.frames[self.current_index].frame
+        self.frames[self.current_index].frame
     }
 
     pub fn last_frame(&self) -> &'static StaticImage {
-        &self.frames[self.frames.len() - 1].frame
+        self.frames[self.frames.len() - 1].frame
     }
 
     pub fn current_frame_mask(&self) -> Option<&'static StaticImage> {
@@ -101,10 +101,8 @@ pub trait HasAnime {
 }
 
 pub fn tick_all_anime<T: HasAnime>(animes: &mut [Option<T>], delta: Duration) {
-    for i in animes {
-        if let Some(anime) = i {
-            anime.anime().tick(delta);
-        }
+    for anime in animes.iter_mut().flatten() {
+        anime.anime().tick(delta);
     }
 }
 

@@ -57,7 +57,7 @@ impl Input {
     pub fn new(states: ButtonStates) -> Self {
         Self {
             temperature: game_consts::ROOM_TEMPTURE,
-            states: states,
+            states,
             last_state: states,
         }
     }
@@ -67,19 +67,19 @@ impl Input {
     }
 
     pub fn any_pressed(&self) -> bool {
-        return self.pressed(Button::Left)
+        self.pressed(Button::Left)
             || self.pressed(Button::Middle)
-            || self.pressed(Button::Right);
+            || self.pressed(Button::Right)
     }
 
     pub fn pressed(&self, button: Button) -> bool {
-        return self.states[button.index()] == ButtonState::Down
-            && self.last_state[button.index()] == ButtonState::Up;
+        self.states[button.index()] == ButtonState::Down
+            && self.last_state[button.index()] == ButtonState::Up
     }
 
     pub fn released(&self, button: Button) -> bool {
-        return self.states[button.index()] == ButtonState::Up
-            && self.last_state[button.index()] == ButtonState::Down;
+        self.states[button.index()] == ButtonState::Up
+            && self.last_state[button.index()] == ButtonState::Down
     }
 
     pub fn update_state(&mut self, states: ButtonStates) {

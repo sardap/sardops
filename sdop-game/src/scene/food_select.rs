@@ -19,7 +19,7 @@ struct FoodOption {
 }
 
 impl Sprite for FoodOption {
-    fn pos<'a>(&'a self) -> &'a Vec2 {
+    fn pos(&self) -> &Vec2 {
         &self.pos
     }
 
@@ -32,6 +32,12 @@ pub struct FoodSelectScene {
     foods: [Option<FoodOption>; FOOD_COUNT],
     food_count: usize,
     selected: i32,
+}
+
+impl Default for FoodSelectScene {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FoodSelectScene {
@@ -74,7 +80,7 @@ impl Scene for FoodSelectScene {
                 let y = (libm::floorf(food_count as f32 / 2.) * COL_HEIGHT) + 30.;
                 self.foods[food_count] = Some(FoodOption {
                     pos: Vec2::new(x, y),
-                    food: food,
+                    food,
                 });
                 food_count += 1;
             }
@@ -130,12 +136,10 @@ impl Scene for FoodSelectScene {
             );
 
             display.render_rect_outline(RECT, true);
-        } else {
-            if let Some(food_option) = self.foods[self.selected as usize].as_ref() {
-                let selected_rect =
-                    Rect::new_center(food_option.pos.clone(), Vec2::new(COL_WIDTH, COL_HEIGHT));
-                display.render_rect_outline(selected_rect, true);
-            }
+        } else if let Some(food_option) = self.foods[self.selected as usize].as_ref() {
+            let selected_rect =
+                Rect::new_center(food_option.pos, Vec2::new(COL_WIDTH, COL_HEIGHT));
+            display.render_rect_outline(selected_rect, true);
         }
     }
 }

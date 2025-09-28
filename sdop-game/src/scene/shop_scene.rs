@@ -58,6 +58,12 @@ pub struct ShopScene {
     closed_sign: BasicAnimeSprite,
 }
 
+impl Default for ShopScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ShopScene {
     pub fn new() -> Self {
         Self {

@@ -35,7 +35,7 @@ impl HomeFishTank {
             }
         }
 
-        return self.fish.len();
+        self.fish.len()
     }
 }
 

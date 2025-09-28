@@ -97,10 +97,7 @@ impl Game {
     }
 
     pub fn blank(timestamp: Option<Timestamp>) -> Self {
-        let resolved_timestamp = match timestamp {
-            Some(timestamp) => timestamp,
-            None => Timestamp::default(),
-        };
+        let resolved_timestamp = timestamp.unwrap_or_default();
         let mut result = Self::new(resolved_timestamp);
 
         result
@@ -230,7 +227,7 @@ impl Game {
         save.load(&mut self.game_ctx);
         let mut scene_args = SceneTickArgs {
             timestamp: last_timestamp,
-            delta: delta,
+            delta,
             input: &self.input,
             game_ctx: &mut self.game_ctx,
             last_scene: None,
@@ -288,7 +285,7 @@ macro_rules! wrapping_enum {
             pub const VARIANTS: &'static [$name] = &[$($name::$variant),*];
         }
 
-        impl crate::WrappingEnum for $name {
+        impl $crate::WrappingEnum for $name {
             const COUNT: usize = $name::VARIANTS.len();
 
             fn to_index(self) -> usize {

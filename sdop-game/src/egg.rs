@@ -168,7 +168,7 @@ impl EggRender {
 
     pub fn set_pid(&mut self, pid: UniquePetId) {
         let mut dots = [
-            -1 as isize,
+            -1_isize,
             -1,
             -1,
             -1,
@@ -185,7 +185,7 @@ impl EggRender {
             -1,
         ];
 
-        let mut rng = fastrand::Rng::with_seed(pid as u64);
+        let mut rng = fastrand::Rng::with_seed(pid);
 
         for dot in &mut dots {
             if rng.f32() > 0.8 {

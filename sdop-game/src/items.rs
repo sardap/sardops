@@ -478,6 +478,12 @@ pub struct ItemExtra {
     pub enabled: bool,
 }
 
+impl Default for ItemExtra {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ItemExtra {
     pub const fn new() -> Self {
         Self {
@@ -501,19 +507,12 @@ impl ItemExtra {
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
+#[derive(Default)]
 pub struct InventoryEntry {
     pub owned: u32,
     pub item_extra: ItemExtra,
 }
 
-impl Default for InventoryEntry {
-    fn default() -> Self {
-        Self {
-            owned: 0,
-            item_extra: ItemExtra::new(),
-        }
-    }
-}
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
@@ -599,6 +598,7 @@ impl Default for Inventory {
     }
 }
 
+#[derive(Default)]
 pub struct UseItemOutput {
     pub new_scene: Option<SceneEnum>,
     pub consumed: bool,
@@ -623,14 +623,6 @@ impl UseItemOutput {
     }
 }
 
-impl Default for UseItemOutput {
-    fn default() -> Self {
-        Self {
-            new_scene: Default::default(),
-            consumed: false,
-        }
-    }
-}
 
 pub type UseItemFn = fn(game_ctx: &mut GameContext) -> UseItemOutput;
 pub type IsUseableItemFn = fn(game_ctx: &mut GameContext) -> bool;
@@ -644,7 +636,7 @@ pub struct UsableItem {
 impl UsableItem {
     pub const fn new(item: ItemKind, use_fn: UseItemFn) -> Self {
         Self {
-            item: item,
+            item,
             use_fn,
             usable_fn: |_| true,
         }
@@ -715,7 +707,7 @@ impl ItemChance {
 }
 
 pub fn pick_item_from_set(val: f32, chance_set: &[ItemChance]) -> ItemKind {
-    if chance_set.len() == 0 {
+    if chance_set.is_empty() {
         return ItemKind::None;
     }
 

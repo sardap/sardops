@@ -5,9 +5,9 @@ use glam::{U16Vec2, Vec2, usize};
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 
 pub trait Image {
-    fn texture<'a>(&'a self) -> &'a [u8];
+    fn texture(&self) -> &[u8];
 
-    fn size<'a>(&'a self) -> &'a U16Vec2;
+    fn size(&self) -> &U16Vec2;
 
     fn size_vec2(&self) -> Vec2 {
         let size = self.size();
@@ -28,11 +28,11 @@ impl StaticImage {
 }
 
 impl Image for StaticImage {
-    fn texture<'a>(&'a self) -> &'a [u8] {
-        &self.texture
+    fn texture(&self) -> &[u8] {
+        self.texture
     }
 
-    fn size<'a>(&'a self) -> &'a U16Vec2 {
+    fn size(&self) -> &U16Vec2 {
         &self.size
     }
 }
@@ -41,7 +41,7 @@ impl StaticImage {
     pub const fn new(width: u16, height: u16, texture: &'static [u8]) -> Self {
         Self {
             size: U16Vec2::new(width, height),
-            texture: texture,
+            texture,
         }
     }
 }
@@ -72,11 +72,11 @@ impl<const T: usize> Default for DynamicImage<T> {
 }
 
 impl<const T: usize> Image for DynamicImage<T> {
-    fn texture<'a>(&'a self) -> &'a [u8] {
+    fn texture(&self) -> &[u8] {
         &self.texture[0..self.used_length]
     }
 
-    fn size<'a>(&'a self) -> &'a U16Vec2 {
+    fn size(&self) -> &U16Vec2 {
         &self.size
     }
 }
