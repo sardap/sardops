@@ -25,6 +25,7 @@ mod anime;
 mod assets;
 mod bit_array;
 mod book;
+mod calendar;
 mod clock;
 mod date_utils;
 mod death;
@@ -52,6 +53,7 @@ mod save;
 mod scene;
 mod shop;
 mod sim;
+mod sounds;
 mod sprite;
 mod stomach;
 mod suiter;
@@ -66,6 +68,8 @@ pub use crate::game_consts::ROOM_TEMPTURE;
 pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
 pub use crate::save::SaveFile;
+pub use crate::sounds::Song;
+pub use sdop_common::Note;
 
 pub struct Game {
     display: display::GameDisplay,
@@ -233,6 +237,14 @@ impl Game {
         };
         tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();
+    }
+
+    pub fn pull_song(&mut self) -> Option<Song> {
+        self.game_ctx.sound_system.pull_song()
+    }
+
+    pub fn set_playing_song(&mut self, playing: bool) {
+        self.game_ctx.sound_system.set_playing(playing);
     }
 }
 

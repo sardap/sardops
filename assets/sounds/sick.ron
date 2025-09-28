@@ -1,0 +1,30 @@
+(
+    name: "sick",
+    melody: [
+        (
+            note: C3,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: G3,
+            duration: 8,
+        ),
+        (
+            note: A3,
+            duration: 8,
+        ),
+        (
+            note: C2,
+            duration: 8,
+        ),
+        (
+            note: Cs2,
+            duration: 8,
+        ),
+    ],
+    tempo: 100,
+)

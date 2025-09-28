@@ -116,8 +116,20 @@
             sleep: Some("images/pets/devil_sleep.ase"),
         )
     ),
-    // a bunch of cubes that you get if your guy no programming
-    // A pet that you can only get if evolve while sick
+    PetTemplate(
+        name: "Sicko",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/sicko_normal.ase",
+            eat: Some("images/pets/sicko_eat.ase"),
+            happy: Some("images/pets/sicko_happy.ase"),
+            sad: Some("images/pets/sicko_sad.ase"),
+            sleep: Some("images/pets/sicko_sleep.ase"),
+        )
+    ),
+    // a bunch of cubes that you get if your guy knows programming
     // A snowman
     // A ice cube
     // A fat sweaty man

@@ -1,0 +1,130 @@
+(
+    name: "Twinkle Twinkle Little Star",
+    melody: [
+        (
+            note: D1,
+            duration: 8,
+        ),
+        (
+            note: C5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: A5,
+            duration: 8,
+        ),
+        (
+            note: A5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 8,
+        ),
+        (
+            note: C1,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 8,
+        ),
+        (
+            note: C1,
+            duration: 8,
+        ),
+        (
+            note: Ds4,
+            duration: 8,
+        ),
+        (
+            note: Fs3,
+            duration: 8,
+        ),
+        (
+            note: Fs5,
+            duration: 8,
+        ),
+    ],
+    tempo: 85,
+)

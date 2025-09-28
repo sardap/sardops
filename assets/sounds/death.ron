@@ -1,0 +1,38 @@
+(
+    name: "Death",
+    melody: [
+        (
+            note: C3,
+            duration: 8,
+        ),
+        (
+            note: A2,
+            duration: 8,
+        ),
+        (
+            note: G2,
+            duration: 8,
+        ),
+        (
+            note: F2,
+            duration: 8,
+        ),
+        (
+            note: B0,
+            duration: 8,
+        ),
+        (
+            note: Cs2,
+            duration: 8,
+        ),
+        (
+            note: Ds1,
+            duration: 8,
+        ),
+        (
+            note: Ds2,
+            duration: 8,
+        ),
+    ],
+    tempo: 65,
+)

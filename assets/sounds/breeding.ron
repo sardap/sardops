@@ -1,0 +1,42 @@
+(
+    name: "Breeding",
+    melody: [
+        (
+            note: C4,
+            duration: 8,
+        ),
+        (
+            note: Ds4,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+        (
+            note: Ds4,
+            duration: 8,
+        ),
+        (
+            note: C4,
+            duration: 8,
+        ),
+        (
+            note: Rest,
+            duration: 8,
+        ),
+        (
+            note: Gs4,
+            duration: 8,
+        ),
+        (
+            note: As4,
+            duration: 8,
+        ),
+        (
+            note: C4,
+            duration: 8,
+        ),
+    ],
+    tempo: 65,
+)

@@ -1,7 +1,7 @@
 pub mod breed_scene;
 pub mod death_scene;
 pub mod eat_scene;
-pub mod egg_hatch;
+pub mod egg_hatch_scene;
 pub mod enter_date_scene;
 pub mod enter_text_scene;
 pub mod evolve_scene;
@@ -52,7 +52,7 @@ pub enum SceneEnum {
     PlaceFurniture(place_furniture_scene::PlaceFurnitureScene),
     Breed(breed_scene::BreedScene),
     Suiters(suiters_scene::SuitersScene),
-    EggHatch(egg_hatch::EggHatchScene),
+    EggHatch(egg_hatch_scene::EggHatchScene),
     PetRecords(pet_records_scene::PetRecordsScene),
     Heal(heal_scene::HealScene),
     StarGazing(star_gazing_scene::StarGazingScene),

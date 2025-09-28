@@ -14,6 +14,7 @@ use crate::{
         render::PetRender,
     },
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
+    sounds::{SONG_EGG_HATCH, SONG_FAN_FARE, SongPlayOptions},
     sprite::{BasicMaskedSprite, Sprite},
 };
 
@@ -72,6 +73,7 @@ impl Scene for EggHatchScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.egg = None;
         args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
             &args.game_ctx.pet,
@@ -87,6 +89,12 @@ impl Scene for EggHatchScene {
 
         match self.state {
             State::Shaking => {
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_EGG_HATCH, SongPlayOptions::new().with_music());
+                }
+
                 let (range, speed) = if self.state_elapsed < Duration::from_secs(2) {
                     (1., 5.)
                 } else if self.state_elapsed < Duration::from_secs(5) {
@@ -122,6 +130,7 @@ impl Scene for EggHatchScene {
                     self.egg_shells = [self.egg_render.pos, self.egg_render.pos];
                     self.state_elapsed = Duration::ZERO;
                     self.state = State::Explode;
+                    args.game_ctx.sound_system.clear_song();
                 }
             }
             State::Explode => {
@@ -141,6 +150,9 @@ impl Scene for EggHatchScene {
                 if self.egg_shells[0].x < -5. && self.egg_shells[1].x > WIDTH_F32 + 5. {
                     self.state_elapsed = Duration::ZERO;
                     self.state = State::Dancing;
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FAN_FARE, SongPlayOptions::new().with_effect());
                 }
             }
             State::Dancing => {

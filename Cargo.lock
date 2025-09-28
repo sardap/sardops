@@ -3137,6 +3137,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdop-common"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "sdop-game"
 version = "0.1.0"
 dependencies = [
@@ -3157,6 +3164,7 @@ dependencies = [
  "log",
  "paste",
  "ron",
+ "sdop-common",
  "serde",
  "serde-big-array",
  "solar-calendar-events",

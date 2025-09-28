@@ -1,0 +1,74 @@
+(
+    name: "Evolve",
+    melody: [
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: G5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: D5,
+            duration: 8,
+        ),
+        (
+            note: Rest,
+            duration: 4,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: Ds3,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: Ds3,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: G4,
+            duration: 8,
+        ),
+        (
+            note: Ds3,
+            duration: 8,
+        ),
+    ],
+    tempo: 100,
+)

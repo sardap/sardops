@@ -9,6 +9,7 @@ use crate::{
     geo::Rect,
     pet::{ParentInfo, PetParents, combine_pid, definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_BREEDING, SONG_FAN_FARE, SongPlayOptions},
 };
 
 #[derive(PartialEq, Eq)]
@@ -61,6 +62,7 @@ impl Scene for BreedScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
+        args.game_ctx.sound_system.clear_song();
         args.game_ctx.egg = Some(SavedEgg::new(
             combine_pid(self.left.upid(), self.right.upid()),
             Some(PetParents::new([self.left, self.right])),
@@ -103,6 +105,9 @@ impl Scene for BreedScene {
                     self.right_render.pos.x = WIDTH_F32 / 2. + END;
                     self.state_elapsed = Duration::ZERO;
                     self.state = State::Happy;
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_BREEDING, SongPlayOptions::new().with_effect());
                 }
             }
             State::Happy => {
@@ -141,6 +146,10 @@ impl Scene for BreedScene {
                 self.blinds_y -= args.delta.as_secs_f32() * BLINDS_SPEED;
 
                 if self.blinds_y < 0. {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FAN_FARE, SongPlayOptions::new().with_effect());
+
                     self.state_elapsed = Duration::ZERO;
                     self.state = State::Egg;
                 }

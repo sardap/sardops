@@ -1,17 +1,20 @@
 #![no_std]
 #![no_main]
 
-use core::cell::RefCell;
 use core::time::Duration;
 
+mod notes;
+
 use embassy_executor::Spawner;
-use embassy_rp::adc::{Adc, Channel, Config as AdcConfig};
+use embassy_rp::adc::{Adc, Channel as AdcChannel, Config as AdcConfig};
 use embassy_rp::block::ImageDef;
 use embassy_rp::gpio::{Input, Pull};
-use embassy_rp::peripherals::{self, I2C0, I2C1};
+use embassy_rp::peripherals::{self, I2C0};
+use embassy_rp::pwm::{Config as PwmConfig, Pwm, SetDutyCycle};
 use embassy_rp::{self as hal, bind_interrupts};
-use embassy_rp::{adc, gpio, i2c};
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_rp::{adc, i2c};
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, ThreadModeRawMutex};
+use embassy_sync::channel::Channel;
 use embassy_sync::mutex::Mutex;
 use embassy_time::{Instant, Timer};
 use embedded_graphics::mono_font::ascii::FONT_6X10;
@@ -19,12 +22,16 @@ use embedded_graphics::mono_font::MonoTextStyleBuilder;
 use embedded_graphics::pixelcolor::BinaryColor;
 use embedded_graphics::prelude::*;
 use embedded_graphics::text::{Baseline, Text};
+use fixed::types::extra::U4;
 use fixedstr::str_format;
 use sdop_game::SaveFile;
 use ssd1306::mode::{BufferedGraphicsMode, DisplayConfig};
 use ssd1306::prelude::{DisplayRotation, I2CInterface};
 use ssd1306::size::DisplaySize128x64;
 use ssd1306::{I2CDisplayInterface, Ssd1306};
+
+use crate::notes::{freq, get_top};
+
 use {defmt_rtt as _, panic_probe as _};
 
 /// Tell the Boot ROM about our application
@@ -42,7 +49,7 @@ fn adc_reading_to_voltage(reading_12bit: u16) -> f32 {
 fn temp36_c(adc_reading: u16) -> f32 {
     let voltage: f32 = adc_reading_to_voltage(adc_reading);
     let c = (100.0 * voltage) - 50.0;
-    c
+    c - 8.
 }
 
 bind_interrupts!(struct Irqs {
@@ -56,17 +63,59 @@ type Display = Ssd1306<
     BufferedGraphicsMode<DisplaySize128x64>,
 >;
 
+static CHANNEL: Channel<CriticalSectionRawMutex, sdop_game::Song, 2> = Channel::new();
+static SOUND_PLAYING: Mutex<ThreadModeRawMutex, bool> = Mutex::new(false);
+
+#[embassy_executor::task]
+async fn play_sound_task(mut buzzer_b: Pwm<'static>) {
+    let divider = fixed::FixedU16::<U4>::from_num(200.0);
+    let mut cfg = PwmConfig::default();
+    cfg.divider = divider;
+    let receiver = CHANNEL.receiver();
+    loop {
+        {
+            let mut shared = SOUND_PLAYING.lock().await;
+            *shared = false;
+        }
+        let song = receiver.receive().await;
+        {
+            let mut shared = SOUND_PLAYING.lock().await;
+            *shared = true;
+        }
+        for entry in song.melody() {
+            if !receiver.is_empty() {
+                break;
+            }
+
+            let top = notes::get_top(freq(&entry.note), divider.to_num::<f64>());
+            cfg.top = top;
+            buzzer_b.set_config(&cfg);
+
+            let note_duration = song.calc_note_duration(entry.duration);
+            let pause_duration = note_duration / 10; // 10% of note_duration
+
+            buzzer_b.set_duty_cycle_percent(50).unwrap(); // Set duty cycle to 50% to play the note
+
+            Timer::after_millis((note_duration - pause_duration) as u64).await;
+            buzzer_b.set_duty_cycle(0).unwrap(); // Stop tone
+            Timer::after_millis(pause_duration as u64).await;
+        }
+        buzzer_b.set_duty_cycle(0).unwrap();
+    }
+}
+
 static SHARED_TEMPTURE: Mutex<ThreadModeRawMutex, f32> = Mutex::new(sdop_game::ROOM_TEMPTURE);
 
 #[embassy_executor::task]
 async fn tempeture_task(
     mut adc: Adc<'static, embassy_rp::adc::Async>,
-    mut adc_channel: Channel<'static>,
+    mut adc_channel: AdcChannel<'static>,
 ) {
     const HISTORY: usize = 10;
 
     let mut buf = [0u16; HISTORY];
     let mut idx = 0;
+    let start = Instant::now();
 
     loop {
         {
@@ -85,7 +134,7 @@ async fn tempeture_task(
 
             let c = temp36_c(avg_reading as u16);
 
-            {
+            if Instant::now() - start > embassy_time::Duration::from_secs(5) {
                 let mut shared = SHARED_TEMPTURE.lock().await;
                 *shared = c;
             }
@@ -102,6 +151,8 @@ async fn game_task(
     mut right_button: Input<'static>,
     mut display: Display,
 ) {
+    let sender = CHANNEL.sender();
+
     // Load save file
     let save_bytes = include_bytes!("../sdop.sav");
     let save_file = SaveFile::from_bytes(save_bytes).unwrap();
@@ -109,9 +160,6 @@ async fn game_task(
 
     let mut game = sdop_game::Game::new(timestamp);
     SaveFile::load_from_bytes(save_bytes, timestamp, &mut game).unwrap();
-
-    let mut tmp_sum = 0.;
-    let mut tmp_count = 0;
 
     let mut last_time = Instant::now();
     let mut last_save = Instant::now();
@@ -162,6 +210,15 @@ async fn game_task(
         // Game logic
         game.update_input_states(inputs);
         game.tick(delta);
+
+        if let Some(song) = game.pull_song() {
+            sender.send(song).await;
+        }
+        {
+            let playing = SOUND_PLAYING.lock().await;
+            game.set_playing_song(*playing);
+        }
+
         game.refresh_display(delta);
 
         // Draw into display buffer
@@ -187,7 +244,13 @@ async fn main(spawner: Spawner) {
     let mut pins = embassy_rp::init(Default::default());
     // ADC to read the Vout value
     let mut adc = Adc::new(pins.ADC, Irqs, AdcConfig::default());
-    let mut adc_channel_pin26 = Channel::new_pin(pins.PIN_26, Pull::Up);
+    let mut adc_channel_pin26 = AdcChannel::new_pin(pins.PIN_26, Pull::Up);
+
+    let mut buzzer_a = Pwm::new_output_a(
+        pins.PWM_SLICE0,
+        pins.PIN_0,
+        embassy_rp::pwm::Config::default(),
+    );
 
     let mut config = i2c::Config::default();
     // config.frequency = 400_000; // fast mode
@@ -225,6 +288,42 @@ async fn main(spawner: Spawner) {
     let mut count: usize = 0;
     let mut avg: f32 = 0.;
     let mut last = Instant::now();
+
+    // Timer::after_millis(5000).await;
+    // pub const NOTES: &[f64] = &[
+    //     31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 44.0, 46.0, 49.0, 52.0, 55.0, 58.0, 62.0, 65.0, 69.0,
+    //     73.0, 78.0, 82.0, 87.0, 93.0, 98.0, 104.0, 110.0, 117.0, 123.0, 131.0, 139.0, 147.0, 156.0,
+    //     165.0, 175.0, 185.0, 196.0, 208.0, 220.0, 233.0, 247.0, 262.0, 277.0, 294.0, 311.0, 330.0,
+    //     349.0, 370.0, 392.0, 415.0, 440.0, 466.0, 494.0, 523.0, 554.0, 587.0, 622.0, 659.0, 698.0,
+    //     740.0, 784.0, 831.0, 880.0, 932.0, 988.0, 1047.0, 1109.0, 1175.0, 1245.0, 1319.0, 1397.0,
+    //     1480.0, 1568.0, 1661.0, 1760.0, 1865.0, 1976.0, 2093.0, 2217.0, 2349.0, 2489.0, 2637.0,
+    //     2794.0, 2960.0, 3136.0, 3322.0, 3520.0, 3729.0, 3951.0, 4186.0, 4435.0, 4699.0, 4978.0,
+    //     0.0,
+    // ];
+    // let mut index = 0_usize;
+    // let divider = fixed::FixedU16::<U4>::from_num(200.0); // choose a reasonable divider
+    // for note in NOTES {
+    //     let top = get_top_new(*note, divider.to_num::<f64>());
+    //     let mut cfg = PwmConfig::default();
+    //     cfg.top = top;
+    //     cfg.divider = divider;
+    //     buzzer_a.set_config(&cfg);
+    //     // buzzer_b.set_duty_cycle(32768);
+    //     buzzer_a.set_duty_cycle_percent(50).unwrap(); // Set duty cycle to 50% to play the note
+
+    //     // display.clear(BinaryColor::Off).unwrap();
+    //     // let str = str_format!(fixedstr::str12, "{:.2}", note);
+    //     // Text::with_baseline(&str, Point::new(0, 06), text_style, Baseline::Top)
+    //     //     .draw(&mut display)
+    //     //     .unwrap();
+    //     // display.flush().unwrap();
+
+    //     Timer::after_millis(5000).await;
+
+    //     buzzer_a.set_duty_cycle_percent(0).unwrap();
+    //     Timer::after_millis(2000).await;
+    // }
+
     loop {
         display.clear(BinaryColor::Off).unwrap();
         let tmp36_voltage_24bit: u16 = adc.blocking_read(&mut adc_channel_pin26).unwrap();
@@ -234,7 +333,7 @@ async fn main(spawner: Spawner) {
         if Instant::now() - last > embassy_time::Duration::from_secs(2) {
             last = Instant::now();
             if sum > 0. && count > 0 {
-                avg = (libm::fabsf(sum) / count as f32);
+                avg = libm::fabsf(sum) / count as f32;
             }
             sum = 0.;
             count = 0;
@@ -273,10 +372,11 @@ async fn main(spawner: Spawner) {
             break;
         }
 
-        // Timer::after_millis(1).await
+        Timer::after_millis(16).await
     }
 
     spawner.spawn(tempeture_task(adc, adc_channel_pin26).unwrap());
+    spawner.spawn(play_sound_task(buzzer_a).unwrap());
     spawner.spawn(game_task(left_button, middle_button, right_button, display).unwrap());
 }
 

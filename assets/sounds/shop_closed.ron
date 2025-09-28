@@ -1,0 +1,34 @@
+(
+    name: "Shop Closed",
+    melody: [
+        (
+            note: Cs3,
+            duration: 8,
+        ),
+        (
+            note: Cs4,
+            duration: 8,
+        ),
+        (
+            note: E5,
+            duration: 8,
+        ),
+        (
+            note: E2,
+            duration: 8,
+        ),
+        (
+            note: D3,
+            duration: 8,
+        ),
+        (
+            note: D4,
+            duration: 8,
+        ),
+        (
+            note: E4,
+            duration: 8,
+        ),
+    ],
+    tempo: 85,
+)

@@ -1,0 +1,26 @@
+(
+    name: "Lost",
+    melody: [
+        (
+            note: E4,
+            duration: 8,
+        ),
+        (
+            note: E4,
+            duration: 8,
+        ),
+        (
+            note: D2,
+            duration: 4,
+        ),
+        (
+            note: Ds2,
+            duration: 8,
+        ),
+        (
+            note: D1,
+            duration: 4,
+        ),
+    ],
+    tempo: 85,
+)

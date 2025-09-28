@@ -1,0 +1,30 @@
+(
+    name: "Hungry",
+    melody: [
+        (
+            note: A4,
+            duration: 8,
+        ),
+        (
+            note: D4,
+            duration: 8,
+        ),
+        (
+            note: D4,
+            duration: 8,
+        ),
+        (
+            note: Ds4,
+            duration: 8,
+        ),
+        (
+            note: As4,
+            duration: 8,
+        ),
+        (
+            note: A4,
+            duration: 8,
+        ),
+    ],
+    tempo: 100,
+)

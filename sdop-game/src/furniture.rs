@@ -1,4 +1,5 @@
 use bincode::{Decode, Encode};
+use chrono::NaiveDate;
 use glam::Vec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -6,13 +7,14 @@ use strum_macros::EnumIter;
 use crate::{
     ROOM_TEMPTURE,
     assets::{self, Image},
+    calendar::CalendarRender,
     clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
     display::{CENTER_X, ComplexRender, HEIGHT_F32, WIDTH_F32},
     fish_tank::FishTankRender,
     invetro_light::InvetroLightRender,
     scene::{SceneTickArgs, home_scene::HOME_SCENE_TOP_BORDER_RECT},
     sprite::BasicSprite,
-    thermometer::RenderThermometerMercury,
+    thermometer::{RenderThermometerDigital, RenderThermometerMercury},
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -22,10 +24,12 @@ pub enum HomeFurnitureKind {
     DigitalClock,
     AnalogueClock,
     ThermometerMercury,
+    ThermometerDigital,
     SpaceHeater,
     AirCon,
     FishTank,
     InvertroLight,
+    Calendar,
     PaintingBranch,
     PaintingDude,
     PaintingMan,
@@ -40,10 +44,12 @@ impl HomeFurnitureKind {
             Self::DigitalClock => DigitalClockRender::size(),
             Self::AnalogueClock => AnalogueClockKind::Clock21.size(),
             Self::ThermometerMercury => RenderThermometerMercury::size(),
+            Self::ThermometerDigital => RenderThermometerDigital::size(),
             Self::SpaceHeater => assets::IMAGE_SPACE_HEATER.size_vec2(),
             Self::AirCon => assets::IMAGE_AIR_CONDITIONER.size_vec2(),
             Self::FishTank => FishTankRender::size(),
             Self::InvertroLight => InvetroLightRender::size(),
+            Self::Calendar => CalendarRender::size(),
             Self::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
             Self::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
             Self::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
@@ -156,8 +162,10 @@ pub enum HomeFurnitureRender {
     DigitalClock(DigitalClockRender),
     AnalogueClock(AnalogueRenderClock),
     ThermometerMercury(RenderThermometerMercury),
+    ThermometerDigital(RenderThermometerDigital),
     FishTank(FishTankRender),
     InvetroLight(InvetroLightRender),
+    Calendar(CalendarRender),
     Sprite(BasicSprite),
 }
 
@@ -187,6 +195,9 @@ impl HomeFurnitureRender {
             HomeFurnitureKind::ThermometerMercury => HomeFurnitureRender::ThermometerMercury(
                 RenderThermometerMercury::new(pos, ROOM_TEMPTURE),
             ),
+            HomeFurnitureKind::ThermometerDigital => HomeFurnitureRender::ThermometerDigital(
+                RenderThermometerDigital::new(pos, ROOM_TEMPTURE),
+            ),
             HomeFurnitureKind::SpaceHeater => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_SPACE_HEATER))
             }
@@ -196,6 +207,9 @@ impl HomeFurnitureRender {
             HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
             HomeFurnitureKind::InvertroLight => {
                 HomeFurnitureRender::InvetroLight(InvetroLightRender::new(pos, 50, location))
+            }
+            HomeFurnitureKind::Calendar => {
+                HomeFurnitureRender::Calendar(CalendarRender::new(pos, NaiveDate::default()))
             }
             HomeFurnitureKind::PaintingBranch => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_BRANCH))
@@ -221,7 +235,9 @@ impl HomeFurnitureRender {
             Self::DigitalClock(_) => HomeFurnitureKind::DigitalClock.size(),
             Self::AnalogueClock(_) => HomeFurnitureKind::AnalogueClock.size(),
             Self::ThermometerMercury(_) => HomeFurnitureKind::ThermometerMercury.size(),
+            Self::ThermometerDigital(_) => HomeFurnitureKind::ThermometerDigital.size(),
             Self::FishTank(_) => HomeFurnitureKind::FishTank.size(),
+            Self::Calendar(_) => CalendarRender::size(),
             Self::InvetroLight(_) => HomeFurnitureKind::InvertroLight.size(),
             Self::Sprite(basic_sprite) => basic_sprite.image.size_vec2(),
         }
@@ -236,7 +252,12 @@ impl HomeFurnitureRender {
             Self::AnalogueClock(analogue_render_clock) => {
                 analogue_render_clock.update_time(&args.timestamp.inner().time());
             }
-            Self::ThermometerMercury(_) => {}
+            Self::ThermometerMercury(render) => {
+                render.temperature = args.input.temperature();
+            }
+            Self::ThermometerDigital(render) => {
+                render.temperature = args.input.temperature();
+            }
             Self::FishTank(fishtank_render) => {
                 while fishtank_render.fish_count() < args.game_ctx.home_fish_tank.count() {
                     fishtank_render.add_fish(
@@ -246,6 +267,9 @@ impl HomeFurnitureRender {
                 }
 
                 fishtank_render.tick(args.delta, &mut args.game_ctx.rng);
+            }
+            Self::Calendar(calendar) => {
+                calendar.set_date(args.timestamp.inner().date());
             }
             Self::InvetroLight(_) => {}
             Self::Sprite(_) => {}
@@ -266,10 +290,14 @@ impl ComplexRender for HomeFurnitureRender {
             Self::ThermometerMercury(thermometer_mercury_render) => {
                 display.render_complex(thermometer_mercury_render);
             }
+            Self::ThermometerDigital(thermometer_digital_render) => {
+                display.render_complex(thermometer_digital_render);
+            }
             Self::FishTank(fishtank_render) => display.render_complex(fishtank_render),
+            Self::Calendar(calendar_render) => display.render_complex(calendar_render),
+            Self::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
             // We want these to render later so this is a hack
             Self::InvetroLight(_) => {}
-            Self::Sprite(basic_sprite) => display.render_sprite(basic_sprite),
         }
     }
 }
