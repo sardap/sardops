@@ -506,13 +506,11 @@ impl ItemExtra {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Copy, Encode, Decode)]
-#[derive(Default)]
+#[derive(Clone, Copy, Encode, Decode, Default)]
 pub struct InventoryEntry {
     pub owned: u32,
     pub item_extra: ItemExtra,
 }
-
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
@@ -527,23 +525,11 @@ impl Inventory {
     }
 
     pub fn has_any_item(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item != ItemKind::None && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        ItemKind::iter().any(|i| self.has_item(i))
     }
 
     pub fn has_any_furniture(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item.furniture().is_some() && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        FURNITURE_ITEMS.iter().any(|i| self.has_item(*i))
     }
 
     pub fn has_item(&self, item: ItemKind) -> bool {
@@ -572,15 +558,10 @@ impl Inventory {
         entry.owned = updated as u32;
     }
 
-    // SLOW POINT this is called really rarely
     pub fn has_any_enabled_book(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item.is_book() && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        BOOKS
+            .iter()
+            .any(|item| self.has_item(*item) && self.get_entry(*item).item_extra.enabled)
     }
 }
 
@@ -622,7 +603,6 @@ impl UseItemOutput {
         self
     }
 }
-
 
 pub type UseItemFn = fn(game_ctx: &mut GameContext) -> UseItemOutput;
 pub type IsUseableItemFn = fn(game_ctx: &mut GameContext) -> bool;

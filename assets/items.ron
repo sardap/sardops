@@ -348,5 +348,14 @@
         desc: "Always know the date!",
         fishing_odds: 0.05,
     ),
-
+    ItemEntry(
+        name: "MP3 Player",
+        category: PlayThing,
+        rarity: Common,
+        cost: 1000,
+        image: "portable_audio_player_0",
+        unique: true,
+        desc: "Let your dop jam out to some sweet tunes!",
+        fishing_odds: 0.05,
+    ),
 ]

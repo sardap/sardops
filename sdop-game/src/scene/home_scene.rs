@@ -20,7 +20,7 @@ use crate::{
     geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
     pc::{PcKind, PcRender},
-    pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
+    pet::{LifeStage, Mood, definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
@@ -31,13 +31,15 @@ use crate::{
         shop_scene::ShopScene, suiters_scene::SuitersScene,
     },
     sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
-    sprite::{BasicAnimeSprite, Snowflake, Sprite},
+    sprite::{BasicAnimeSprite, BasicMaskedSprite, MusicNote, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
 
 const WONDER_SPEED: f32 = 5.;
+const DANCING_SPEED: f32 = 15.;
 pub const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
+pub const DANCING_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(10., 10.));
 
 pub const GREATER_WONDER_RECT: Rect = WONDER_RECT.grow(50.);
 
@@ -198,6 +200,9 @@ enum State {
     ReadingBook {
         book: ItemKind,
     },
+    PlayingMp3 {
+        jam_end_time: Duration,
+    },
 }
 
 struct Word {
@@ -244,6 +249,7 @@ pub struct HomeSceneData {
     shake_duration: Duration,
     shake_right: bool,
     snow_flakes: [Snowflake; 30],
+    music_notes: [MusicNote; 7],
     last_poop_count: usize,
     last_is_sick: bool,
     last_was_hungry: bool,
@@ -279,6 +285,7 @@ impl Default for HomeSceneData {
             shake_duration: Duration::ZERO,
             shake_right: false,
             snow_flakes: Default::default(),
+            music_notes: Default::default(),
             last_poop_count: 0,
             last_is_sick: false,
             last_was_hungry: false,
@@ -351,6 +358,10 @@ impl Scene for HomeScene {
 
             for flake in &mut args.game_ctx.home.snow_flakes {
                 flake.reset(true, &mut args.game_ctx.rng);
+            }
+
+            for note in &mut args.game_ctx.home.music_notes {
+                note.pos = Vec2::new(-100., -100.);
             }
         }
 
@@ -527,7 +538,7 @@ impl Scene for HomeScene {
                 self.right_render.tick(args);
 
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
-                    let mut options: heapless::Vec<i32, 4> = heapless::Vec::new();
+                    let mut options: heapless::Vec<i32, 10> = heapless::Vec::new();
                     if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
                         && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
                         && args.game_ctx.inventory.has_item(ItemKind::Screen)
@@ -535,7 +546,7 @@ impl Scene for HomeScene {
                     {
                         let _ = options.push(0);
                     }
-                    if args.game_ctx.pet.definition().life_stage == LifeStage::Baby
+                    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
                         && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
                             || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
                     {
@@ -548,6 +559,11 @@ impl Scene for HomeScene {
                         .has_book_to_read(&args.game_ctx.inventory)
                     {
                         let _ = options.push(2);
+                    }
+                    if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
+                        && args.game_ctx.pet.mood() == Mood::Happy
+                    {
+                        let _ = options.push(3);
                     }
 
                     if !options.is_empty() {
@@ -592,6 +608,15 @@ impl Scene for HomeScene {
                                                 inventory,
                                             )
                                             .unwrap_or_default(),
+                                    ),
+                                });
+                            }
+                            3 => {
+                                args.game_ctx.home.pet_render.pos = CENTER_VEC;
+                                args.game_ctx.home.target = CENTER_VEC;
+                                args.game_ctx.home.change_state(State::PlayingMp3 {
+                                    jam_end_time: Duration::from_secs(
+                                        args.game_ctx.rng.u64(60..300),
                                     ),
                                 });
                             }
@@ -790,6 +815,36 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::PlayingMp3 { jam_end_time } => {
+                // Shake a bit
+                let dist =
+                    vec2_distance(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target);
+                if dist.abs() < 1. {
+                    args.game_ctx.home.target =
+                        DANCING_RECT.random_point_inside(&mut args.game_ctx.rng);
+                }
+                args.game_ctx.home.pet_render.pos +=
+                    vec2_direction(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target)
+                        * DANCING_SPEED
+                        * args.delta.as_secs_f32();
+
+                for note in &mut args.game_ctx.home.music_notes {
+                    note.pos += note.dir * args.delta.as_secs_f32();
+                    if note.pos.y < -note.size().y as f32
+                        || note.pos.y > HEIGHT_F32 + note.size().y as f32
+                        || note.pos.x > WIDTH_F32 + note.size().x as f32
+                        || note.pos.x < -(note.size().x as f32)
+                    {
+                        note.reset(args.game_ctx.home.pet_render.pos, &mut args.game_ctx.rng);
+                    }
+                }
+
+                if args.game_ctx.home.state_elapsed > jam_end_time
+                    || args.game_ctx.pet.mood() != Mood::Happy
+                {
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
         }
 
         if matches!(args.game_ctx.home.weather, Weather::Cold)
@@ -864,6 +919,10 @@ impl Scene for HomeScene {
 
         if matches!(args.game_ctx.home.state, State::Wondering)
             || matches!(args.game_ctx.home.state, State::Sleeping)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
         {
             display.render_complex(&self.top_render);
             display.render_complex(&self.left_render);
@@ -955,6 +1014,19 @@ impl Scene for HomeScene {
                         .with_black()
                         .with_center(),
                 );
+            }
+            State::PlayingMp3 { jam_end_time: _ } => {
+                display.render_sprite(&args.game_ctx.home.pet_render);
+                display.render_image_complex(
+                    args.game_ctx.home.pet_render.x2() as i32,
+                    args.game_ctx.home.pet_render.pos.y as i32,
+                    &assets::IMAGE_PORTABLE_AUDIO_PLAYER_0,
+                    ComplexRenderOption::new().with_white().with_black(),
+                );
+
+                for note in &args.game_ctx.home.music_notes {
+                    display.render_sprite(note);
+                }
             }
         }
 
@@ -1048,7 +1120,12 @@ impl Scene for HomeScene {
         }
 
         // No lights if sleeping
-        if matches!(args.game_ctx.home.state, State::Wondering) {
+        if matches!(args.game_ctx.home.state, State::Wondering)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
+        {
             for i in [&self.top_render, &self.right_render, &self.left_render] {
                 if let HomeFurnitureRender::InvetroLight(light) = i {
                     display.render_complex(light);

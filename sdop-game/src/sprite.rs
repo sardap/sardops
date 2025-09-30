@@ -229,3 +229,60 @@ impl Default for Snowflake {
         }
     }
 }
+
+#[derive(Copy, Clone)]
+pub struct MusicNote {
+    pub image: &'static StaticImage,
+    pub pos: Vec2,
+    pub dir: Vec2,
+}
+
+impl MusicNote {
+    pub fn reset(&mut self, center: Vec2, rng: &mut fastrand::Rng) {
+        const NOTES: &[&'static StaticImage] = &[
+            &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
+            &assets::IMAGE_MUSIC_NOTE_CROTCHET,
+            &assets::IMAGE_MUSIC_NOTE_QUAVER,
+            &assets::IMAGE_MUSIC_NOTE_SEMI_QUAVER,
+        ];
+
+        let x_min = center.x as i32 - 5;
+        let x_max = center.x as i32 + 5;
+
+        self.pos = Vec2::new(rng.i32(x_min..x_max) as f32, center.y);
+        self.image = rng.choice(NOTES.iter()).unwrap();
+        let mut y_speed = rng.i32(10..25);
+        if rng.bool() {
+            y_speed = -y_speed;
+        }
+        let mut x_speed = rng.i32(10..25);
+        if rng.bool() {
+            x_speed = -x_speed;
+        }
+        self.dir = Vec2::new(x_speed as f32, y_speed as f32);
+    }
+
+    pub fn size(&self) -> Vec2 {
+        self.image.size.as_vec2()
+    }
+}
+
+impl Sprite for MusicNote {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl Image {
+        self.image
+    }
+}
+
+impl Default for MusicNote {
+    fn default() -> Self {
+        Self {
+            pos: Vec2::new(-100., 0.),
+            image: &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
+            dir: Default::default(),
+        }
+    }
+}
