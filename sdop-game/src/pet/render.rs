@@ -36,10 +36,6 @@ impl PetRender {
         self
     }
 
-    pub fn definition(&self) -> &'static PetDefinition {
-        PetDefinition::get_by_id(self.def_id)
-    }
-
     pub fn def_id(&self) -> PetDefinitionId {
         self.def_id
     }

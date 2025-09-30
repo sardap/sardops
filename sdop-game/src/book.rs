@@ -105,6 +105,10 @@ impl BookHistory {
 
         rng.choice(books.iter()).cloned()
     }
+
+    pub fn compelted_count(&self) -> usize {
+        self.books.iter().filter(|i| i.completed()).count()
+    }
 }
 
 const fn create_book_indexes() -> [usize; ITEM_COUNT] {

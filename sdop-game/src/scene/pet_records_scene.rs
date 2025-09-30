@@ -209,7 +209,8 @@ impl Scene for PetRecordsScene {
                                 .with_center()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        current_y += Y_BUFFER;
+
+                        // current_y += Y_BUFFER;
                     } else {
                         display.render_text_complex(
                             Vec2::new(CENTER_X, current_y),
@@ -229,7 +230,8 @@ impl Scene for PetRecordsScene {
                                 .with_center()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        current_y += Y_BUFFER;
+
+                        // current_y += Y_BUFFER;
                     }
                 }
             }

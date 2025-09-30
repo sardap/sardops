@@ -20,7 +20,11 @@ use crate::{
     geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
     pc::{PcKind, PcRender},
-    pet::{LifeStage, Mood, definition::PetAnimationSet, render::PetRender},
+    pet::{
+        LifeStage, Mood,
+        definition::{PET_BRAINO_ID, PetAnimationSet},
+        render::PetRender,
+    },
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
@@ -311,6 +315,102 @@ impl HomeSceneData {
     }
 }
 
+fn wonder_end(args: &mut SceneTickArgs) {
+    #[derive(Debug, Copy, Clone)]
+    enum Activity {
+        PlayingComputer,
+        WatchTv,
+        ReadBook,
+        ListenMusic,
+    }
+
+    // Just set to 10 who cares you will forget to update the number at some point and cause some issue
+    let mut options: heapless::Vec<Activity, 10> = heapless::Vec::new();
+    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
+        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
+        && args.game_ctx.inventory.has_item(ItemKind::Screen)
+        && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
+        && args.game_ctx.pet.def_id != PET_BRAINO_ID
+    {
+        let _ = options.push(Activity::PlayingComputer);
+    }
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
+        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
+            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
+        && args.game_ctx.pet.def_id != PET_BRAINO_ID
+    {
+        let _ = options.push(Activity::WatchTv);
+    }
+    if args
+        .game_ctx
+        .pet
+        .book_history
+        .has_book_to_read(&args.game_ctx.inventory)
+    {
+        let _ = options.push(Activity::ReadBook);
+    }
+    if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
+        && args.game_ctx.pet.mood() == Mood::Happy
+    {
+        let _ = options.push(Activity::ListenMusic);
+    }
+
+    if !options.is_empty() {
+        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
+
+        match option {
+            Activity::PlayingComputer => {
+                args.game_ctx.home.change_state(State::PlayingComputer {
+                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
+                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
+                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
+                    )),
+                    program_run_time: Duration::ZERO,
+                });
+            }
+            Activity::WatchTv => {
+                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
+                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                    let _ = kinds.push(TvKind::Lcd);
+                }
+
+                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                    let _ = kinds.push(TvKind::Crt);
+                }
+                args.game_ctx.home.tv.kind =
+                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
+
+                args.game_ctx.home.change_state(State::WatchingTv {
+                    last_checked: u8::MAX,
+                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                });
+            }
+            Activity::ReadBook => {
+                let book_history = &args.game_ctx.pet.book_history;
+                let inventory = &args.game_ctx.inventory;
+                args.game_ctx.home.change_state(State::ReadingBook {
+                    book: book_history.get_reading_book(inventory).unwrap_or(
+                        book_history
+                            .pick_random_unread_book(&mut args.game_ctx.rng, inventory)
+                            .unwrap_or_default(),
+                    ),
+                });
+            }
+            Activity::ListenMusic => {
+                args.game_ctx.home.pet_render.pos = CENTER_VEC;
+                args.game_ctx.home.target = CENTER_VEC;
+                args.game_ctx.home.change_state(State::PlayingMp3 {
+                    jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
+                });
+            }
+            _ => {}
+        }
+    }
+
+    args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+}
+
 pub struct HomeScene {
     left_render: HomeFurnitureRender,
     top_render: HomeFurnitureRender,
@@ -538,93 +638,7 @@ impl Scene for HomeScene {
                 self.right_render.tick(args);
 
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
-                    let mut options: heapless::Vec<i32, 10> = heapless::Vec::new();
-                    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
-                        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
-                        && args.game_ctx.inventory.has_item(ItemKind::Screen)
-                        && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
-                    {
-                        let _ = options.push(0);
-                    }
-                    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
-                        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
-                            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
-                    {
-                        let _ = options.push(1);
-                    }
-                    if args
-                        .game_ctx
-                        .pet
-                        .book_history
-                        .has_book_to_read(&args.game_ctx.inventory)
-                    {
-                        let _ = options.push(2);
-                    }
-                    if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
-                        && args.game_ctx.pet.mood() == Mood::Happy
-                    {
-                        let _ = options.push(3);
-                    }
-
-                    if !options.is_empty() {
-                        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
-
-                        match option {
-                            0 => {
-                                args.game_ctx.home.change_state(State::PlayingComputer {
-                                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
-                                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
-                                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
-                                    )),
-                                    program_run_time: Duration::ZERO,
-                                });
-                            }
-                            1 => {
-                                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
-                                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                                    let _ = kinds.push(TvKind::Lcd);
-                                }
-
-                                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                                    let _ = kinds.push(TvKind::Crt);
-                                }
-                                args.game_ctx.home.tv.kind =
-                                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
-
-                                args.game_ctx.home.change_state(State::WatchingTv {
-                                    last_checked: u8::MAX,
-                                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                                });
-                            }
-                            2 => {
-                                let book_history = &args.game_ctx.pet.book_history;
-                                let inventory = &args.game_ctx.inventory;
-                                args.game_ctx.home.change_state(State::ReadingBook {
-                                    book: book_history.get_reading_book(inventory).unwrap_or(
-                                        book_history
-                                            .pick_random_unread_book(
-                                                &mut args.game_ctx.rng,
-                                                inventory,
-                                            )
-                                            .unwrap_or_default(),
-                                    ),
-                                });
-                            }
-                            3 => {
-                                args.game_ctx.home.pet_render.pos = CENTER_VEC;
-                                args.game_ctx.home.target = CENTER_VEC;
-                                args.game_ctx.home.change_state(State::PlayingMp3 {
-                                    jam_end_time: Duration::from_secs(
-                                        args.game_ctx.rng.u64(60..300),
-                                    ),
-                                });
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+                    wonder_end(args);
                 }
 
                 args.game_ctx

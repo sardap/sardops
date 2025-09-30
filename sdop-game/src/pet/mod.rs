@@ -20,9 +20,9 @@ use crate::{
     items::{Inventory, ItemKind},
     money::Money,
     pet::definition::{
-        PET_BALLOTEE_ID, PET_BEERIE_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_DEVIL_ID, PET_HUMBIE_ID,
-        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition,
-        PetDefinitionId,
+        PET_BALLOTEE_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT,
+        PET_DEVIL_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_WAS_GAURD_ID,
+        PetAnimationSet, PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -318,7 +318,7 @@ impl PetInstance {
 
         let mut rng = fastrand::Rng::with_seed(self.upid);
 
-        let mut possible = Vec::<PetDefinitionId, 20>::new();
+        let mut possible = Vec::<PetDefinitionId, PET_COUNT>::new();
         match self.definition().life_stage {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
@@ -340,6 +340,9 @@ impl PetInstance {
                 }
                 if self.is_ill() {
                     let _ = possible.push(PET_SICKO_ID);
+                }
+                if self.book_history.compelted_count() >= 3 {
+                    let _ = possible.push(PET_BRAINO_ID);
                 }
             }
             LifeStage::Adult => {}

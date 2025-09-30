@@ -362,7 +362,7 @@ impl Scene for HealScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                current_y += 7.;
+                // current_y += 7.;
             }
             State::LeavingRoom => {
                 display.render_complex(&self.clock);

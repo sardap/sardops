@@ -6,7 +6,7 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::Rect,
-    items::{FURNITURE_ITEMS, ITEM_COUNT, ItemKind},
+    items::{FURNITURE_ITEMS, ItemKind},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 

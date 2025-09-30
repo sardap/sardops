@@ -129,6 +129,20 @@
             sleep: Some("images/pets/sicko_sleep.ase"),
         )
     ),
+    PetTemplate(
+        name: "Braino",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/big_brain_normal.ase",
+            eat: Some("images/pets/big_brain_eat.ase"),
+            happy: Some("images/pets/big_brain_happy.ase"),
+            sad: Some("images/pets/big_brain_sad.ase"),
+            sleep: Some("images/pets/big_brain_sleep.ase"),
+        )
+    ),
+
     // a bunch of cubes that you get if your guy knows programming
     // A snowman
     // A ice cube
