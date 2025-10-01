@@ -820,7 +820,9 @@ impl Scene for HomeScene {
                     BOOK_POS.y - book.book_info().open_book.size.y as f32 / 2.,
                 );
 
-                if args.game_ctx.home.state_elapsed > book.book_info().chapter_length() {
+                if args.game_ctx.home.state_elapsed
+                    > book.book_info().chapter_length(args.game_ctx.pet.def_id)
+                {
                     args.game_ctx
                         .pet
                         .book_history
@@ -995,7 +997,10 @@ impl Scene for HomeScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
                 let percent_complete = args.game_ctx.home.state_elapsed.as_millis_f32()
-                    / book.book_info().chapter_length().as_millis_f32();
+                    / book
+                        .book_info()
+                        .chapter_length(args.game_ctx.pet.def_id)
+                        .as_millis_f32();
                 let str = str_format!(fixedstr::str24, "{:.0}%", percent_complete * 100.,);
                 display.render_text_complex(
                     Vec2::new(CENTER_X, 46.),

@@ -7,6 +7,7 @@ use bincode::{Decode, Encode};
 use crate::{
     assets::StaticImage,
     items::{BOOK_COUNT, ITEM_COUNT, Inventory, ItemKind},
+    pet::definition::{PET_BRAINO_ID, PetDefinitionId},
 };
 
 pub struct BookInfo {
@@ -18,12 +19,16 @@ pub struct BookInfo {
 }
 
 impl BookInfo {
-    pub const fn chapter_length(&self) -> Duration {
+    pub fn chapter_length(&self, def_id: PetDefinitionId) -> Duration {
         Duration::from_micros(
             (self.length.as_micros() as u64)
                 .checked_div(self.chapters as u64)
                 .unwrap_or(0),
         )
+        .mul_f32(match def_id {
+            PET_BRAINO_ID => 2.,
+            _ => 1.,
+        })
     }
 }
 

@@ -498,6 +498,10 @@ impl PetInstance {
 
             odds += get_threshold_odds(ILLNESS_SINCE_ODDS, self.illness.since_ilness);
 
+            if self.def_id == PET_SICKO_ID {
+                odds *= 0.5;
+            }
+
             if rng.f32() < odds {
                 self.illness.cost = (rng.i32(HEALING_COST_RANGE) as f32
                     * match self.definition().life_stage {
