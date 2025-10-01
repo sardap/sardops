@@ -85,6 +85,7 @@ impl Scene for HealScene {
             -(self.pet_render.anime.current_frame().size.x as f32 / 2.),
             HEIGHT_F32 - (self.pet_render.anime.current_frame().size.y as f32 / 2.),
         );
+        self.pet_render.pos_mode = PostionMode::Center;
         self.heal_time = Duration::from_millis(args.game_ctx.rng.u64(30000..120000));
     }
 

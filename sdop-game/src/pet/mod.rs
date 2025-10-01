@@ -21,8 +21,9 @@ use crate::{
     money::Money,
     pet::definition::{
         PET_BALLOTEE_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT,
-        PET_DEVIL_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID,
-        PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
+        PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE, PET_ICE_CUBE_ID, PET_PAWN_WHITE_ID,
+        PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition,
+        PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -325,12 +326,25 @@ impl PetInstance {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
                 let _ = possible.push(PET_PAWN_WHITE_ID);
+                if self.total_cold_for > Duration::ZERO {
+                    let _ = possible.push(PET_ICE_CUBE_ID);
+                }
             }
             LifeStage::Child => {
                 let _ = possible.push(PET_BEERIE_ID);
                 let _ = possible.push(PET_WAS_GAURD_ID);
-                let _ = possible.push(PET_BALLOTEE_ID);
                 let _ = possible.push(PET_DEVIL_ID);
+                if self
+                    .book_history
+                    .get_read(ItemKind::BookNevileWran)
+                    .completed()
+                    || self
+                        .book_history
+                        .get_read(ItemKind::BookVic19811992)
+                        .completed()
+                {
+                    let _ = possible.push(PET_BALLOTEE_ID);
+                }
                 if inv.has_item(ItemKind::PersonalComputer)
                     && inv.has_item(ItemKind::Screen)
                     && inv.has_item(ItemKind::Keyboard)

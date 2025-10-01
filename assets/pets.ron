@@ -155,9 +155,20 @@
             sleep: Some("images/pets/snowman_sleep.ase"),
         )
     ),
+    PetTemplate(
+        name: "Ice Cube",
+        life_stage: Child,
+        stomach_size: 30,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/ice_cube_normal.ase",
+            eat: Some("images/pets/ice_cube_eat.ase"),
+            happy: Some("images/pets/ice_cube_happy.ase"),
+            sad: Some("images/pets/ice_cube_sad.ase"),
+            sleep: Some("images/pets/ice_cube_sleep.ase"),
+        )
+    ),
     // a bunch of cubes that you get if your guy knows programming
-    // A snowman
-    // A ice cube
     // A fat sweaty man
     // A beach unbrella
     // A alien if they see a UFO
