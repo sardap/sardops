@@ -21,8 +21,8 @@ use crate::{
     money::Money,
     pet::definition::{
         PET_BALLOTEE_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT,
-        PET_DEVIL_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_WAS_GAURD_ID,
-        PetAnimationSet, PetDefinition, PetDefinitionId,
+        PET_DEVIL_ID, PET_HUMBIE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID,
+        PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -256,7 +256,9 @@ impl PetInstance {
                 return;
             }
 
-            if passed_threshold_chance(rng, DEATH_BY_HYPOTHERMIA_THRESHOLD, self.cold_for) {
+            if self.def_id != PET_SNOWMAN_ID
+                && passed_threshold_chance(rng, DEATH_BY_HYPOTHERMIA_THRESHOLD, self.cold_for)
+            {
                 self.should_die = Some(DeathCause::Hypothermia);
                 return;
             }
@@ -343,6 +345,9 @@ impl PetInstance {
                 }
                 if self.book_history.compelted_count() >= 3 {
                     let _ = possible.push(PET_BRAINO_ID);
+                }
+                if self.total_cold_for > Duration::from_hours(1) {
+                    let _ = possible.push(PET_SNOWMAN_ID);
                 }
             }
             LifeStage::Adult => {}
