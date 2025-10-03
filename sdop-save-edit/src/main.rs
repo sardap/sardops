@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use sdop_game::{ALL_ITEMS, SaveFile};
 
 #[derive(Parser, Debug)]

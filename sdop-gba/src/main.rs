@@ -10,7 +10,6 @@ use agb::{
     display::{bitmap3::Bitmap3, busy_wait_for_vblank},
     input::{Button, ButtonController},
 };
-use gba_clock::Clock;
 use time::{Date, Month, PrimitiveDateTime, Time};
 
 const BASE_WIDTH: u32 = sdop_game::WIDTH as u32;
@@ -47,67 +46,45 @@ fn buttons_to_input(controller: &ButtonController) -> sdop_game::ButtonStates {
 fn entry(mut _gba: agb::Gba) -> ! {
     let mut game = sdop_game::Game::blank(None);
 
-    let current_time = PrimitiveDateTime::new(
-        Date::from_calendar_date(2001, Month::March, 21).expect("invalid date"),
-        Time::from_hms(11, 30, 0).expect("invalid time"),
-    );
-    let clock = Clock::new(current_time).expect("could not communicate with the RTC");
-
     let mut button_controller = ButtonController::new();
     let mut bitmap_gfx = unsafe { Bitmap3::new() };
 
     bitmap_gfx.clear(0x7C00);
 
-    let mut last_frame = clock.read_datetime().unwrap();
-    let mut frames = 0;
     loop {
-        let now = clock.read_datetime().unwrap();
-        let delta = core::time::Duration::from_nanos((now - last_frame).whole_nanoseconds() as u64);
-        if delta > Duration::from_secs(1) {
-            agb::println!("Tick {:?}", frames as f32 / 60.);
-            last_frame = now;
-            frames = 0;
-        }
-        frames += 1;
-
         button_controller.update();
 
         game.update_input_states(buttons_to_input(&button_controller));
         game.tick(FRAME_TIME_MS);
-        game.refresh_display(FRAME_TIME_MS);
+        // game.refresh_display(FRAME_TIME_MS);
 
-        const SCALE: usize = 1;
-        for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
-            let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
-            let y = byte_index / (sdop_game::WIDTH as usize / 8);
-            for bit_index in 0..8 {
-                let x = start_x + bit_index;
+        // for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
+        //     let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
+        //     let y = byte_index / (sdop_game::WIDTH as usize / 8);
+        //     for bit_index in 0..8 {
+        //         let x = start_x + bit_index;
 
-                let rotated_x = x;
-                let rotated_y = sdop_game::HEIGHT - 1 - y;
+        //         let rotated_x = x;
+        //         let rotated_y = sdop_game::HEIGHT - 1 - y;
 
-                let screen_x = (rotated_x * SCALE) as i32 + OFFSET_X as i32;
-                let screen_y = (rotated_y * SCALE) as i32 + OFFSET_Y as i32;
+        //         let screen_x = rotated_x as i32 + OFFSET_X as i32;
+        //         let screen_y = rotated_y as i32 + OFFSET_Y as i32;
 
-                if screen_x >= 0
-                    && screen_x + 2 < SCREEN_WIDTH as i32
-                    && screen_y >= 0
-                    && screen_y + 2 < SCREEN_HEIGHT as i32
-                {
-                    let screen_x = screen_x;
-                    let screen_y = screen_y;
+        //         if screen_x >= 0
+        //             && screen_x + 2 < SCREEN_WIDTH as i32
+        //             && screen_y >= 0
+        //             && screen_y + 2 < SCREEN_HEIGHT as i32
+        //         {
+        //             let screen_x = screen_x;
+        //             let screen_y = screen_y;
 
-                    let is_set = (byte_value >> (7 - bit_index)) & 1 == 1;
-                    let value = if is_set { 0xFFFF } else { 0x0000 };
+        //             let is_set = (byte_value >> (7 - bit_index)) & 1 == 1;
+        //             let value = if is_set { 0xFFFF } else { 0x0000 };
 
-                    for dy in 0..SCALE {
-                        for dx in 0..SCALE {
-                            bitmap_gfx.draw_point(screen_x, screen_y, value);
-                        }
-                    }
-                }
-            }
-        }
+        //             bitmap_gfx.draw_point(screen_x, screen_y, value);
+        //         }
+        //     }
+        // }
 
         busy_wait_for_vblank();
     }

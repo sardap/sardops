@@ -168,18 +168,19 @@ pub fn main() {
 
         let since_save = last_save_time.elapsed();
         if since_save > Duration::from_secs(1)
-            && let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game) {
-                match save {
-                    Ok(bytes) => {
-                        let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-                        let _ = fs.write_all(&bytes);
-                        last_save_time = Instant::now();
-                    }
-                    Err(err) => {
-                        panic!("Error wirting save {}", err);
-                    }
+            && let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game)
+        {
+            match save {
+                Ok(bytes) => {
+                    let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+                    let _ = fs.write_all(&bytes);
+                    last_save_time = Instant::now();
+                }
+                Err(err) => {
+                    panic!("Error wirting save {}", err);
                 }
             }
+        }
 
         // Frame timing - only sleep if we have time left in the frame
         let frame_elapsed = last_frame_time.elapsed();

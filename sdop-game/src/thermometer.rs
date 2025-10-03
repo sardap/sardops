@@ -23,7 +23,6 @@ impl RenderThermometerMercury {
     }
 }
 
-
 impl ComplexRender for RenderThermometerMercury {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         display.render_image_complex(
@@ -65,7 +64,6 @@ impl RenderThermometerDigital {
         assets::IMAGE_THERMOMETER_DIGITAL.size_vec2()
     }
 }
-
 
 impl ComplexRender for RenderThermometerDigital {
     fn render(&self, display: &mut crate::display::GameDisplay) {

@@ -631,12 +631,19 @@ impl Scene for HomeScene {
             Weather::Hot => {}
         }
 
+        if matches!(args.game_ctx.home.state, State::Wondering)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
+        {
+            self.top_render.tick(args);
+            self.left_render.tick(args);
+            self.right_render.tick(args);
+        }
+
         match args.game_ctx.home.state {
             State::Wondering => {
-                self.top_render.tick(args);
-                self.left_render.tick(args);
-                self.right_render.tick(args);
-
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
                     wonder_end(args);
                 }

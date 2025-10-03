@@ -20,7 +20,6 @@ include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
 
-// MAKE ITEMS
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum ItemCategory {
     Misc,

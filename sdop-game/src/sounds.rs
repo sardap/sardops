@@ -99,7 +99,6 @@ pub struct SoundSystem {
     options: SoundOptions,
 }
 
-
 impl SoundSystem {
     pub fn push_song(&mut self, song: Song, options: SongPlayOptions) {
         match options.kind {

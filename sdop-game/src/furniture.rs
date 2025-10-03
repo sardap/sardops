@@ -18,8 +18,7 @@ use crate::{
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Copy, Encode, Decode, PartialEq, Eq, EnumIter)]
-#[derive(Default)]
+#[derive(Clone, Copy, Encode, Decode, PartialEq, Eq, EnumIter, Default)]
 pub enum HomeFurnitureKind {
     #[default]
     None,
@@ -69,7 +68,6 @@ impl HomeFurnitureKind {
     }
 }
 
-
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct HomeLayout {
@@ -114,15 +112,13 @@ impl Default for HomeLayout {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 pub enum HomeFurnitureLocation {
     #[default]
     Top,
     Left,
     Right,
 }
-
 
 impl HomeFurnitureLocation {
     pub const fn pos(&self) -> Vec2 {
@@ -164,7 +160,6 @@ pub enum HomeFurnitureRender {
     Calendar(CalendarRender),
     Sprite(BasicSprite),
 }
-
 
 impl HomeFurnitureRender {
     pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {

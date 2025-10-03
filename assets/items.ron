@@ -80,7 +80,7 @@
     ),
     ItemEntry(
         name: "Fish",
-        category: Usable,
+        category: Furniture,
         rarity: Common,
         cost: 1000,
         image: "fish_item",

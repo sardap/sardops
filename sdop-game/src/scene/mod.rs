@@ -115,7 +115,6 @@ impl SceneOutput {
     }
 }
 
-
 pub struct SceneTickArgs<'a> {
     pub timestamp: Timestamp,
     pub delta: Duration,
@@ -199,4 +198,3 @@ pub struct SharedSceneOutput {
     date_out: NaiveDate,
     time_out: NaiveTime,
 }
-

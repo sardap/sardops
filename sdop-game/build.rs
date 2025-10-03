@@ -454,7 +454,8 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         pet_vars.push(pet_var_name);
     }
 
-    pet_definitions.push_str(&"const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = [".to_string());
+    pet_definitions
+        .push_str(&"const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = [".to_string());
     for var in &pet_vars {
         pet_definitions.push_str(&format!("&{}, ", var));
     }
@@ -604,8 +605,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
         rare_fn_def.push_str(&format!(
             "Self::{} => ItemRarity::{},\n",
-            enum_name,
-            template.rarity
+            enum_name, template.rarity
         ));
         cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.cost));
 
