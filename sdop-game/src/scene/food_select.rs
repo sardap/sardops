@@ -137,8 +137,7 @@ impl Scene for FoodSelectScene {
 
             display.render_rect_outline(RECT, true);
         } else if let Some(food_option) = self.foods[self.selected as usize].as_ref() {
-            let selected_rect =
-                Rect::new_center(food_option.pos, Vec2::new(COL_WIDTH, COL_HEIGHT));
+            let selected_rect = Rect::new_center(food_option.pos, Vec2::new(COL_WIDTH, COL_HEIGHT));
             display.render_rect_outline(selected_rect, true);
         }
     }

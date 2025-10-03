@@ -320,7 +320,6 @@ pub struct BestMoveSearch {
     depth: i32,
 }
 
-
 impl BestMoveSearch {
     pub fn new(board: Game, depth: i32) -> Self {
         let moves = board.possible_moves();

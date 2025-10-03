@@ -1,4 +1,3 @@
-
 use chrono::NaiveDateTime;
 use fixedstr::str_format;
 
@@ -99,9 +98,7 @@ impl Scene for NewPetScene {
                     Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
                 )))
             }
-            State::NameEntered => {
-                SceneOutput::new(SceneEnum::Home(HomeScene::new()))
-            }
+            State::NameEntered => SceneOutput::new(SceneEnum::Home(HomeScene::new())),
         }
     }
 

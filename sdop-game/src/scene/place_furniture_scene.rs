@@ -6,7 +6,7 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::Rect,
-    items::{ITEM_COUNT, ItemKind},
+    items::{FURNITURE_ITEMS, ItemKind},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
@@ -53,7 +53,6 @@ struct FurnitureSet {
     kind: HomeFurnitureKind,
     render: HomeFurnitureRender,
 }
-
 
 enum State {
     SelectingPlace,
@@ -134,30 +133,21 @@ impl Scene for PlaceFurnitureScene {
                 };
 
                 let mut dirty = false;
-                if args.input.pressed(Button::Left) {
-                    for _ in 0..ITEM_COUNT {
-                        selected.kind = selected.kind.change(-1);
-                        if args
-                            .game_ctx
-                            .inventory
-                            .has_item(ItemKind::from(selected.kind))
-                        {
+                if args.input.pressed(Button::Left) || args.input.pressed(Button::Right) {
+                    let dir = if args.input.pressed(Button::Left) {
+                        -1
+                    } else {
+                        1
+                    };
+
+                    for _ in 0..FURNITURE_ITEMS.len() {
+                        selected.kind = selected.kind.change(dir);
+                        let item = ItemKind::from(selected.kind);
+                        if item == ItemKind::None || args.game_ctx.inventory.has_item(item) {
                             break;
                         }
                     }
-                    dirty = true;
-                }
-                if args.input.pressed(Button::Right) {
-                    for _ in 0..ITEM_COUNT {
-                        selected.kind = selected.kind.change(1);
-                        if args
-                            .game_ctx
-                            .inventory
-                            .has_item(ItemKind::from(selected.kind))
-                        {
-                            break;
-                        }
-                    }
+
                     dirty = true;
                 }
 

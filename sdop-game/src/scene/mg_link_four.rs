@@ -179,17 +179,18 @@ impl Scene for MgLinkFourScene {
                         }
 
                         if moves.get_bit(self.selected as usize)
-                            && args.input.pressed(Button::Middle) {
-                                self.state = State::Dropping {
-                                    dur: Duration::ZERO,
-                                    col: self.selected as usize,
-                                };
-                                // should start thinking as soon as it's dropping
-                                let thinking_time = args.game_ctx.rng.i32(2000..4000);
-                                self.best_move_search = BestMoveSearch::new(self.game, 3);
-                                self.thinking_end =
-                                    args.timestamp + Duration::from_millis(thinking_time as u64);
-                            }
+                            && args.input.pressed(Button::Middle)
+                        {
+                            self.state = State::Dropping {
+                                dur: Duration::ZERO,
+                                col: self.selected as usize,
+                            };
+                            // should start thinking as soon as it's dropping
+                            let thinking_time = args.game_ctx.rng.i32(2000..4000);
+                            self.best_move_search = BestMoveSearch::new(self.game, 3);
+                            self.thinking_end =
+                                args.timestamp + Duration::from_millis(thinking_time as u64);
+                        }
 
                         self.flash_duration += args.delta;
                         if self.flash_duration > Duration::from_millis(300) {

@@ -196,8 +196,8 @@ impl Game {
         self.display.clear();
         let scene = self.scene_manger.scene();
         scene.render(&mut self.display, &mut scene_args);
-        self.display.render_fps(&self.fps);
-        self.display.render_temperature(self.input().temperature());
+        // self.display.render_fps(&self.fps);
+        // self.display.render_temperature(self.input().temperature());
         self.fps.update(delta);
     }
 

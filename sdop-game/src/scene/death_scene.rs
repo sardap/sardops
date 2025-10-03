@@ -89,7 +89,6 @@ struct ToxicShock {
 const POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 const PET_POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 
-
 struct Illness {
     skull: MaskedAnimeRender,
 }

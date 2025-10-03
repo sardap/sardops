@@ -360,12 +360,6 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "deranged"
-version = "0.3.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
-
-[[package]]
-name = "deranged"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c9e6a11ca8224451684bc0d7d5a7adbf8f2fd6887261a1cfc3c0432f9d4068e"
@@ -479,16 +473,6 @@ checksum = "2e57e16b3fe8ff4364c0661fdaac543fb38b29ea9bc9c2f45612d90adf931d2b"
 dependencies = [
  "hashbrown",
  "ttf-parser",
-]
-
-[[package]]
-name = "gba_clock"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c0c30bad3957410d76f92236e92f6ed9f7aa2b39eed83197cf4a519acacf6e3"
-dependencies = [
- "deranged 0.3.11",
- "time",
 ]
 
 [[package]]
@@ -882,7 +866,6 @@ name = "sdop-gba"
 version = "0.1.0"
 dependencies = [
  "agb",
- "gba_clock",
  "sdop-game",
  "time",
 ]
@@ -1027,7 +1010,7 @@ version = "0.3.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a7619e19bc266e0f9c5e6686659d394bc57973859340060a69221e57dbc0c40"
 dependencies = [
- "deranged 0.4.0",
+ "deranged",
  "num-conv",
  "powerfmt",
  "time-core",

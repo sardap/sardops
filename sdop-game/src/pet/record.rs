@@ -54,8 +54,7 @@ impl PetRecord {
 pub const PET_HISTORY_ENTRIES: usize = 20;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Copy, Encode, Decode)]
-#[derive(Default)]
+#[derive(Clone, Copy, Encode, Decode, Default)]
 pub struct PetHistory {
     top: usize,
     entires: [Option<PetRecord>; PET_HISTORY_ENTRIES],
@@ -87,4 +86,3 @@ impl PetHistory {
         self.top
     }
 }
-

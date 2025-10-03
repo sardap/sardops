@@ -25,7 +25,6 @@ pub struct GameDisplay {
     bits: DisplayData,
 }
 
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ColorMode {
     None,
@@ -42,8 +41,7 @@ pub enum PostionMode {
     BottomRight,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, EnumIter)]
-#[derive(Default)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumIter, Default)]
 pub enum Rotation {
     #[default]
     R0,
@@ -51,7 +49,6 @@ pub enum Rotation {
     R180,
     R270,
 }
-
 
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
