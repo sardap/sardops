@@ -122,9 +122,9 @@ async fn play_sound_task(mut buzzer_b: Pwm<'static>) {
 
             buzzer_b.set_duty_cycle_percent(50).unwrap(); // Set duty cycle to 50% to play the note
 
-            Timer::after_millis((note_duration - pause_duration) as u64).await;
+            Timer::after_millis((note_duration - pause_duration).as_millis() as u64).await;
             buzzer_b.set_duty_cycle(0).unwrap(); // Stop tone
-            Timer::after_millis(pause_duration as u64).await;
+            Timer::after_millis(pause_duration.as_millis() as u64).await;
         }
         buzzer_b.set_duty_cycle(0).unwrap();
     }

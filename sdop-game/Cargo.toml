@@ -5,7 +5,7 @@ edition = "2024"
 
 [features]
 serde = ["dep:serde", "fixedstr/serde", "chrono/serde", "sdop-common/serde", "dep:serde-big-array"]
-
+notes = []
 
 [dependencies]
 sdop-common = { path= "../sdop-common" }

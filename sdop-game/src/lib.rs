@@ -49,6 +49,8 @@ mod items;
 mod link_four;
 mod math;
 mod money;
+#[cfg(feature = "notes")]
+mod notes;
 mod particle_system;
 mod pc;
 mod pet;
@@ -71,6 +73,8 @@ pub use crate::display::{HEIGHT, WIDTH};
 pub use crate::game_consts::ROOM_TEMPTURE;
 pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
+#[cfg(feature = "notes")]
+pub use crate::notes::note_sound_file;
 pub use crate::save::{SAVE_SIZE, SaveFile};
 pub use crate::sounds::Song;
 pub use sdop_common::Note;
