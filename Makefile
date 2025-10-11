@@ -11,7 +11,7 @@ SDOP_PICO_DIR := ./sdop-pico
 SDOP_SAVE_EDIT := ./sdop-save-edit
 
 .PHONY: build_all
-build_all: build_gba build_3ds build_psp build_linux_x86 build_wasm build_pico
+build_all: build_gba build_3ds build_psp build_linux_x86 build_wasm build_pico build_save_editor_linux_x86
 
 .PHONY: make_output
 make_output:
@@ -52,6 +52,11 @@ build_wasm: make_output
 build_pico: make_output
 	cd $(SDOP_PICO_DIR) && cargo build --release --target=thumbv8m.main-none-eabihf
 	@zip $(ZIP_OPTIONS) $(OUTPUT_DIR)/sdop_pico.zip $(SDOP_PICO_DIR)/target/thumbv8m.main-none-eabihf/release/sdop-pico
+
+.PHONY: build_save_editor_linux_x86
+build_save_editor_linux_x86: make_output
+	cd $(SDOP_SAVE_EDIT) && cargo build --release --target=x86_64-unknown-linux-gnu
+	@zip $(ZIP_OPTIONS) $(OUTPUT_DIR)/sdop_save_editor_linux_x86.zip ./target/x86_64-unknown-linux-gnu/release/sdop-save-edit
 
 .PHONY: clean
 clean:

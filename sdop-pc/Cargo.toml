@@ -7,5 +7,6 @@ edition = "2024"
 env_logger = "0.11.8"
 log = "0.4.27"
 sdl2 = { version = "0.38.0", features = ["image"] }
-sdop-game = { path = "../sdop-game" }
+sdop-game = { path = "../sdop-game", features = ["notes"] }
 chrono = { git = "https://github.com/sardap/chrono" }
+rodio = { version = "0.21.0", features = ["symphonia-all"] }

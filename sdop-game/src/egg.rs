@@ -168,21 +168,7 @@ impl EggRender {
 
     pub fn set_pid(&mut self, pid: UniquePetId) {
         let mut dots = [
-            -1_isize,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
+            -1_isize, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         ];
 
         let mut rng = fastrand::Rng::with_seed(pid);

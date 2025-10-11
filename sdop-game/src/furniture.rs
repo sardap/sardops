@@ -6,6 +6,8 @@ use strum_macros::EnumIter;
 
 use crate::{
     ROOM_TEMPTURE,
+    alarm::AlarmRender,
+    anime::HasAnime,
     assets::{self, Image},
     calendar::CalendarRender,
     clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
@@ -18,13 +20,13 @@ use crate::{
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Copy, Encode, Decode, PartialEq, Eq, EnumIter)]
-#[derive(Default)]
+#[derive(Clone, Copy, Encode, Decode, PartialEq, Eq, EnumIter, Default)]
 pub enum HomeFurnitureKind {
     #[default]
     None,
     DigitalClock,
     AnalogueClock,
+    Alarm,
     ThermometerMercury,
     ThermometerDigital,
     SpaceHeater,
@@ -45,6 +47,7 @@ impl HomeFurnitureKind {
             Self::None => Vec2::ZERO,
             Self::DigitalClock => DigitalClockRender::size(),
             Self::AnalogueClock => AnalogueClockKind::Clock21.size(),
+            Self::Alarm => AlarmRender::size(),
             Self::ThermometerMercury => RenderThermometerMercury::size(),
             Self::ThermometerDigital => RenderThermometerDigital::size(),
             Self::SpaceHeater => assets::IMAGE_SPACE_HEATER.size_vec2(),
@@ -68,7 +71,6 @@ impl HomeFurnitureKind {
         Self::iter().nth(next as usize).unwrap_or_default()
     }
 }
-
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
@@ -114,15 +116,13 @@ impl Default for HomeLayout {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 pub enum HomeFurnitureLocation {
     #[default]
     Top,
     Left,
     Right,
 }
-
 
 impl HomeFurnitureLocation {
     pub const fn pos(&self) -> Vec2 {
@@ -157,6 +157,7 @@ pub enum HomeFurnitureRender {
     None,
     DigitalClock(DigitalClockRender),
     AnalogueClock(AnalogueRenderClock),
+    Alarm(AlarmRender),
     ThermometerMercury(RenderThermometerMercury),
     ThermometerDigital(RenderThermometerDigital),
     FishTank(FishTankRender),
@@ -164,7 +165,6 @@ pub enum HomeFurnitureRender {
     Calendar(CalendarRender),
     Sprite(BasicSprite),
 }
-
 
 impl HomeFurnitureRender {
     pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {
@@ -183,6 +183,7 @@ impl HomeFurnitureRender {
             HomeFurnitureKind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
                 AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
             ),
+            HomeFurnitureKind::Alarm => HomeFurnitureRender::Alarm(AlarmRender::new(pos)),
             HomeFurnitureKind::ThermometerMercury => HomeFurnitureRender::ThermometerMercury(
                 RenderThermometerMercury::new(pos, ROOM_TEMPTURE),
             ),
@@ -225,6 +226,7 @@ impl HomeFurnitureRender {
             Self::None => Vec2::ZERO,
             Self::DigitalClock(_) => HomeFurnitureKind::DigitalClock.size(),
             Self::AnalogueClock(_) => HomeFurnitureKind::AnalogueClock.size(),
+            Self::Alarm(_) => AlarmRender::size(),
             Self::ThermometerMercury(_) => HomeFurnitureKind::ThermometerMercury.size(),
             Self::ThermometerDigital(_) => HomeFurnitureKind::ThermometerDigital.size(),
             Self::FishTank(_) => HomeFurnitureKind::FishTank.size(),
@@ -242,6 +244,10 @@ impl HomeFurnitureRender {
             }
             Self::AnalogueClock(analogue_render_clock) => {
                 analogue_render_clock.update_time(&args.timestamp.inner().time());
+            }
+            Self::Alarm(render) => {
+                render.anime().tick(args.delta);
+                render.set_rining(args.game_ctx.alarm.should_be_rining());
             }
             Self::ThermometerMercury(render) => {
                 render.temperature = args.input.temperature();
@@ -277,6 +283,9 @@ impl ComplexRender for HomeFurnitureRender {
             }
             Self::AnalogueClock(analogue_render_clock) => {
                 display.render_complex(analogue_render_clock)
+            }
+            Self::Alarm(render) => {
+                display.render_sprite(render);
             }
             Self::ThermometerMercury(thermometer_mercury_render) => {
                 display.render_complex(thermometer_mercury_render);

@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use bincode::{Decode, Encode};
 use sdop_common::MelodyEntry;
 
@@ -25,12 +27,12 @@ impl Song {
         self.melody
     }
 
-    pub fn calc_note_duration(&self, divider: i16) -> u32 {
+    pub fn calc_note_duration(&self, divider: i16) -> Duration {
         if divider > 0 {
-            self.whole_note / divider as u32
+            Duration::from_millis((self.whole_note / divider as u32) as u64)
         } else {
             let duration = self.whole_note / divider.unsigned_abs() as u32;
-            (duration as f64 * 1.5) as u32
+            Duration::from_millis((duration as f64 * 1.5) as u64)
         }
     }
 }
@@ -98,7 +100,6 @@ pub struct SoundSystem {
     playing: bool,
     options: SoundOptions,
 }
-
 
 impl SoundSystem {
     pub fn push_song(&mut self, song: Song, options: SongPlayOptions) {

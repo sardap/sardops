@@ -13,15 +13,13 @@ use crate::{
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Encode, Decode, Copy, Clone)]
-#[derive(Default)]
+#[derive(Encode, Decode, Copy, Clone, Default)]
 pub struct Suiter {
     pub pet_def_id: PetDefinitionId,
     pub upid: UniquePetId,
     pub name: PetName,
     pub waiting: Duration,
 }
-
 
 impl Suiter {
     pub fn new_random(rng: &mut fastrand::Rng) -> Self {
@@ -35,13 +33,11 @@ impl Suiter {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Encode, Decode, Copy, Clone)]
-#[derive(Default)]
+#[derive(Encode, Decode, Copy, Clone, Default)]
 pub struct SuiterSystem {
     pub suiter: Option<Suiter>,
     pub waiting_for_suiter: Duration,
 }
-
 
 impl SuiterSystem {
     pub fn suiter_waiting(&self) -> bool {

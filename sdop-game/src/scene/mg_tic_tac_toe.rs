@@ -154,14 +154,15 @@ impl Scene for MgTicTacToeScene {
                         }
 
                         if moves.get_bit(self.selected as usize)
-                            && args.input.pressed(Button::Middle) {
-                                self.game.make_move(Square::new(self.selected as u8));
-                                let thinking_time = args.game_ctx.rng.i32(1000..1500);
-                                self.best_move_search = BestMoveSearch::new(*self.game.board(), 5);
-                                self.thinking_end =
-                                    args.timestamp + Duration::from_millis(thinking_time as u64);
-                                self.change_animations();
-                            }
+                            && args.input.pressed(Button::Middle)
+                        {
+                            self.game.make_move(Square::new(self.selected as u8));
+                            let thinking_time = args.game_ctx.rng.i32(1000..1500);
+                            self.best_move_search = BestMoveSearch::new(*self.game.board(), 5);
+                            self.thinking_end =
+                                args.timestamp + Duration::from_millis(thinking_time as u64);
+                            self.change_animations();
+                        }
 
                         self.flash_duration += args.delta;
                         if self.flash_duration > Duration::from_millis(300) {

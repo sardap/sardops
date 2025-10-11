@@ -129,11 +129,58 @@
             sleep: Some("images/pets/sicko_sleep.ase"),
         )
     ),
+    PetTemplate(
+        name: "Braino",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/big_brain_normal.ase",
+            eat: Some("images/pets/big_brain_eat.ase"),
+            happy: Some("images/pets/big_brain_happy.ase"),
+            sad: Some("images/pets/big_brain_sad.ase"),
+            sleep: Some("images/pets/big_brain_sleep.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "Snowman",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/snowman_normal.ase",
+            eat: Some("images/pets/snowman_eat.ase"),
+            happy: Some("images/pets/snowman_happy.ase"),
+            sad: Some("images/pets/snowman_sad.ase"),
+            sleep: Some("images/pets/snowman_sleep.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "Ice Cube",
+        life_stage: Child,
+        stomach_size: 30,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/ice_cube_normal.ase",
+            eat: Some("images/pets/ice_cube_eat.ase"),
+            happy: Some("images/pets/ice_cube_happy.ase"),
+            sad: Some("images/pets/ice_cube_sad.ase"),
+            sleep: Some("images/pets/ice_cube_sleep.ase"),
+        )
+    ),
+    PetTemplate(
+        name: "Beach Unbrella",
+        life_stage: Adult,
+        stomach_size: 60,
+        base_weight: 200,
+        images: PetImageSet(
+            normal: "images/pets/beach_umbrella_normal.ase",
+            eat: Some("images/pets/beach_umbrella_eat.ase"),
+            happy: Some("images/pets/beach_umbrella_happy.ase"),
+            sad: Some("images/pets/beach_umbrella_sad.ase"),
+            sleep: Some("images/pets/beach_umbrella_sleep.ase"),
+        )
+    ),
     // a bunch of cubes that you get if your guy knows programming
-    // A snowman
-    // A ice cube
-    // A fat sweaty man
-    // A beach unbrella
     // A alien if they see a UFO
-    // A guy with a big head if your dop reads a lot
 ]

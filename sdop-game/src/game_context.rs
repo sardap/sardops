@@ -2,6 +2,7 @@ use core::time::Duration;
 
 use crate::{
     Timestamp,
+    alarm::AlarmState,
     date_utils::SpecialDayUpdater,
     egg::SavedEgg,
     fish_tank::HomeFishTank,
@@ -36,6 +37,7 @@ pub struct GameContext {
     pub sound_system: SoundSystem,
     pub sim_extra: Duration,
     pub sim_rng: fastrand::Rng,
+    pub alarm: AlarmState,
 }
 
 impl GameContext {
@@ -60,6 +62,7 @@ impl GameContext {
             sound_system: Default::default(),
             sim_extra: Duration::ZERO,
             sim_rng: fastrand::Rng::with_seed(0),
+            alarm: AlarmState::default(),
         }
     }
 

@@ -67,9 +67,7 @@ impl Input {
     }
 
     pub fn any_pressed(&self) -> bool {
-        self.pressed(Button::Left)
-            || self.pressed(Button::Middle)
-            || self.pressed(Button::Right)
+        self.pressed(Button::Left) || self.pressed(Button::Middle) || self.pressed(Button::Right)
     }
 
     pub fn pressed(&self, button: Button) -> bool {

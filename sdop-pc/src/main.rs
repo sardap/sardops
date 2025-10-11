@@ -6,9 +6,11 @@ use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use sdl2::sys::True;
 use sdop_game::ButtonStates;
 use sdop_game::SaveFile;
 use sdop_game::Timestamp;
+use std::io::Cursor;
 use std::io::Read;
 use std::io::Write;
 use std::time::{Duration, Instant};
@@ -17,6 +19,22 @@ const BASE_WIDTH: u32 = sdop_game::WIDTH as u32;
 const BASE_HEIGHT: u32 = sdop_game::HEIGHT as u32;
 
 const SAVE_FILE_NAME: &str = "sdop.sav";
+
+struct ActiveSong {
+    song: sdop_game::Song,
+    elasped: Duration,
+    current: usize,
+}
+
+impl ActiveSong {
+    pub fn new(song: sdop_game::Song) -> Self {
+        Self {
+            song,
+            elasped: Duration::ZERO,
+            current: 0,
+        }
+    }
+}
 
 pub fn timestamp() -> Timestamp {
     Timestamp::new(chrono::Local::now().naive_local())
@@ -70,6 +88,13 @@ pub fn main() {
     canvas.clear();
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
+
+    let stream_handle = rodio::OutputStreamBuilder::open_default_stream().unwrap();
+    let sink = rodio::Sink::connect_new(stream_handle.mixer());
+    sink.set_volume(2.);
+    let mut playing_song = false;
+
+    let mut active_song = None;
 
     const TARGET_FPS: u64 = 60;
     const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / TARGET_FPS);
@@ -141,6 +166,7 @@ pub fn main() {
                 _ => {}
             }
         }
+        game.set_playing_song(playing_song);
         game.set_sim_time_scale(time_scale);
         game.update_input_states(input);
 
@@ -168,24 +194,56 @@ pub fn main() {
 
         let since_save = last_save_time.elapsed();
         if since_save > Duration::from_secs(1)
-            && let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game) {
-                match save {
-                    Ok(bytes) => {
-                        let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-                        let _ = fs.write_all(&bytes);
-                        last_save_time = Instant::now();
-                    }
-                    Err(err) => {
-                        panic!("Error wirting save {}", err);
-                    }
+            && let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game)
+        {
+            match save {
+                Ok(bytes) => {
+                    let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+                    let _ = fs.write_all(&bytes);
+                    last_save_time = Instant::now();
+                }
+                Err(err) => {
+                    panic!("Error wirting save {}", err);
                 }
             }
+        }
+
+        // Sound
+        if let Some(song) = game.pull_song() {
+            sink.clear();
+            active_song = Some(ActiveSong::new(song));
+        }
+
+        // Tick song
+        if let Some(active) = &mut active_song {
+            playing_song = true;
+            if let Some(current) = active.song.melody().get(active.current) {
+                let duration = active.song.calc_note_duration(current.duration);
+                active.elasped += delta;
+                if active.elasped < duration {
+                    if sink.empty() {
+                        let curosr = Cursor::new(sdop_game::note_sound_file(&current.note));
+                        let decoder = rodio::Decoder::try_from(curosr).unwrap();
+                        sink.append(decoder);
+                        sink.play();
+                    }
+                } else {
+                    sink.clear();
+                    active.current += 1;
+                    active.elasped = Duration::ZERO;
+                }
+            } else {
+                active_song = None;
+            }
+        } else {
+            playing_song = false;
+        }
 
         // Frame timing - only sleep if we have time left in the frame
         let frame_elapsed = last_frame_time.elapsed();
         if frame_elapsed < FRAME_TIME {
             let sleep_time = FRAME_TIME - frame_elapsed;
-            std::thread::sleep(sleep_time);
+            // std::thread::sleep(sleep_time);
         }
     }
 }

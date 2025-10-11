@@ -15,12 +15,16 @@ use crate::{
     },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
-    furniture::{HomeFurnitureLocation, HomeFurnitureRender},
+    furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     game_context::GameContext,
     geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
     pc::{PcKind, PcRender},
-    pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
+    pet::{
+        LifeStage, Mood,
+        definition::{PET_BRAINO_ID, PetAnimationSet},
+        render::PetRender,
+    },
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
@@ -29,15 +33,18 @@ use crate::{
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, suiters_scene::SuitersScene,
+        weekday_select_scene::WeekdaySelectScene,
     },
-    sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
-    sprite::{BasicAnimeSprite, Snowflake, Sprite},
+    sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
+    sprite::{BasicAnimeSprite, MusicNote, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
 
 const WONDER_SPEED: f32 = 5.;
+const DANCING_SPEED: f32 = 15.;
 pub const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
+pub const DANCING_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(10., 10.));
 
 pub const GREATER_WONDER_RECT: Rect = WONDER_RECT.grow(50.);
 
@@ -198,6 +205,10 @@ enum State {
     ReadingBook {
         book: ItemKind,
     },
+    PlayingMp3 {
+        jam_end_time: Duration,
+    },
+    Alarm,
 }
 
 struct Word {
@@ -244,6 +255,7 @@ pub struct HomeSceneData {
     shake_duration: Duration,
     shake_right: bool,
     snow_flakes: [Snowflake; 30],
+    music_notes: [MusicNote; 7],
     last_poop_count: usize,
     last_is_sick: bool,
     last_was_hungry: bool,
@@ -279,6 +291,7 @@ impl Default for HomeSceneData {
             shake_duration: Duration::ZERO,
             shake_right: false,
             snow_flakes: Default::default(),
+            music_notes: Default::default(),
             last_poop_count: 0,
             last_is_sick: false,
             last_was_hungry: false,
@@ -302,6 +315,102 @@ impl HomeSceneData {
         self.state = new_state;
         self.state_elapsed = Duration::ZERO;
     }
+}
+
+fn wonder_end(args: &mut SceneTickArgs) {
+    #[derive(Debug, Copy, Clone)]
+    enum Activity {
+        PlayingComputer,
+        WatchTv,
+        ReadBook,
+        ListenMusic,
+    }
+
+    // Just set to 10 who cares you will forget to update the number at some point and cause some issue
+    let mut options: heapless::Vec<Activity, 10> = heapless::Vec::new();
+    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
+        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
+        && args.game_ctx.inventory.has_item(ItemKind::Screen)
+        && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
+        && args.game_ctx.pet.def_id != PET_BRAINO_ID
+    {
+        let _ = options.push(Activity::PlayingComputer);
+    }
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
+        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
+            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
+        && args.game_ctx.pet.def_id != PET_BRAINO_ID
+    {
+        let _ = options.push(Activity::WatchTv);
+    }
+    if args
+        .game_ctx
+        .pet
+        .book_history
+        .has_book_to_read(&args.game_ctx.inventory)
+    {
+        let _ = options.push(Activity::ReadBook);
+    }
+    if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
+        && args.game_ctx.pet.mood() == Mood::Happy
+    {
+        let _ = options.push(Activity::ListenMusic);
+    }
+
+    if !options.is_empty() {
+        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
+
+        match option {
+            Activity::PlayingComputer => {
+                args.game_ctx.home.change_state(State::PlayingComputer {
+                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
+                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
+                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
+                    )),
+                    program_run_time: Duration::ZERO,
+                });
+            }
+            Activity::WatchTv => {
+                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
+                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
+                    let _ = kinds.push(TvKind::Lcd);
+                }
+
+                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
+                    let _ = kinds.push(TvKind::Crt);
+                }
+                args.game_ctx.home.tv.kind =
+                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
+
+                args.game_ctx.home.change_state(State::WatchingTv {
+                    last_checked: u8::MAX,
+                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
+                });
+            }
+            Activity::ReadBook => {
+                let book_history = &args.game_ctx.pet.book_history;
+                let inventory = &args.game_ctx.inventory;
+                args.game_ctx.home.change_state(State::ReadingBook {
+                    book: book_history.get_reading_book(inventory).unwrap_or(
+                        book_history
+                            .pick_random_unread_book(&mut args.game_ctx.rng, inventory)
+                            .unwrap_or_default(),
+                    ),
+                });
+            }
+            Activity::ListenMusic => {
+                args.game_ctx.home.pet_render.pos = CENTER_VEC;
+                args.game_ctx.home.target = CENTER_VEC;
+                args.game_ctx.home.change_state(State::PlayingMp3 {
+                    jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
+                });
+            }
+            _ => {}
+        }
+    }
+
+    args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
 }
 
 pub struct HomeScene {
@@ -351,6 +460,10 @@ impl Scene for HomeScene {
 
             for flake in &mut args.game_ctx.home.snow_flakes {
                 flake.reset(true, &mut args.game_ctx.rng);
+            }
+
+            for note in &mut args.game_ctx.home.music_notes {
+                note.pos = Vec2::new(-100., -100.);
             }
         }
 
@@ -473,21 +586,6 @@ impl Scene for HomeScene {
 
         args.game_ctx.home.options = get_options(args.game_ctx.home.state, args.game_ctx);
 
-        if args.input.pressed(Button::Left) {
-            args.game_ctx.home.selected_index = change_option(
-                &args.game_ctx.home.options,
-                args.game_ctx.home.selected_index,
-                -1,
-            );
-        }
-        if args.input.pressed(Button::Right) {
-            args.game_ctx.home.selected_index = change_option(
-                &args.game_ctx.home.options,
-                args.game_ctx.home.selected_index,
-                1,
-            );
-        }
-
         if args.game_ctx.pet.is_ill() {
             args.game_ctx.home.skull.pos = args.game_ctx.home.pet_render.pos
                 - Vec2::new(
@@ -520,86 +618,22 @@ impl Scene for HomeScene {
             Weather::Hot => {}
         }
 
+        if matches!(args.game_ctx.home.state, State::Wondering)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
+            || matches!(args.game_ctx.home.state, State::Alarm)
+        {
+            self.top_render.tick(args);
+            self.left_render.tick(args);
+            self.right_render.tick(args);
+        }
+
         match args.game_ctx.home.state {
             State::Wondering => {
-                self.top_render.tick(args);
-                self.left_render.tick(args);
-                self.right_render.tick(args);
-
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
-                    let mut options: heapless::Vec<i32, 4> = heapless::Vec::new();
-                    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
-                        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
-                        && args.game_ctx.inventory.has_item(ItemKind::Screen)
-                        && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
-                    {
-                        let _ = options.push(0);
-                    }
-                    if args.game_ctx.pet.definition().life_stage == LifeStage::Baby
-                        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
-                            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
-                    {
-                        let _ = options.push(1);
-                    }
-                    if args
-                        .game_ctx
-                        .pet
-                        .book_history
-                        .has_book_to_read(&args.game_ctx.inventory)
-                    {
-                        let _ = options.push(2);
-                    }
-
-                    if !options.is_empty() {
-                        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
-
-                        match option {
-                            0 => {
-                                args.game_ctx.home.change_state(State::PlayingComputer {
-                                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
-                                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
-                                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
-                                    )),
-                                    program_run_time: Duration::ZERO,
-                                });
-                            }
-                            1 => {
-                                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
-                                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                                    let _ = kinds.push(TvKind::Lcd);
-                                }
-
-                                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                                    let _ = kinds.push(TvKind::Crt);
-                                }
-                                args.game_ctx.home.tv.kind =
-                                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
-
-                                args.game_ctx.home.change_state(State::WatchingTv {
-                                    last_checked: u8::MAX,
-                                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                                });
-                            }
-                            2 => {
-                                let book_history = &args.game_ctx.pet.book_history;
-                                let inventory = &args.game_ctx.inventory;
-                                args.game_ctx.home.change_state(State::ReadingBook {
-                                    book: book_history.get_reading_book(inventory).unwrap_or(
-                                        book_history
-                                            .pick_random_unread_book(
-                                                &mut args.game_ctx.rng,
-                                                inventory,
-                                            )
-                                            .unwrap_or_default(),
-                                    ),
-                                });
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
+                    wonder_end(args);
                 }
 
                 args.game_ctx
@@ -781,7 +815,9 @@ impl Scene for HomeScene {
                     BOOK_POS.y - book.book_info().open_book.size.y as f32 / 2.,
                 );
 
-                if args.game_ctx.home.state_elapsed > book.book_info().chapter_length() {
+                if args.game_ctx.home.state_elapsed
+                    > book.book_info().chapter_length(args.game_ctx.pet.def_id)
+                {
                     args.game_ctx
                         .pet
                         .book_history
@@ -790,6 +826,64 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::PlayingMp3 { jam_end_time } => {
+                // Shake a bit
+                let dist =
+                    vec2_distance(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target);
+                if dist.abs() < 1. {
+                    args.game_ctx.home.target =
+                        DANCING_RECT.random_point_inside(&mut args.game_ctx.rng);
+                }
+                args.game_ctx.home.pet_render.pos +=
+                    vec2_direction(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target)
+                        * DANCING_SPEED
+                        * args.delta.as_secs_f32();
+
+                for note in &mut args.game_ctx.home.music_notes {
+                    note.pos += note.dir * args.delta.as_secs_f32();
+                    if note.pos.y < -note.size().y as f32
+                        || note.pos.y > HEIGHT_F32 + note.size().y as f32
+                        || note.pos.x > WIDTH_F32 + note.size().x as f32
+                        || note.pos.x < -(note.size().x as f32)
+                    {
+                        note.reset(args.game_ctx.home.pet_render.pos, &mut args.game_ctx.rng);
+                    }
+                }
+
+                if args.game_ctx.home.state_elapsed > jam_end_time
+                    || args.game_ctx.pet.mood() != Mood::Happy
+                {
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
+            State::Alarm => {
+                args.game_ctx
+                    .home
+                    .pet_render
+                    .set_animation(PetAnimationSet::Sad);
+                args.game_ctx.home.pet_render.pos = CENTER_VEC;
+
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_ALARM, SongPlayOptions::new().with_essential());
+                }
+
+                if !args.game_ctx.alarm.should_be_rining() {
+                    args.game_ctx.sound_system.clear_song();
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
+        }
+
+        if !matches!(args.game_ctx.home.state, State::Alarm)
+            && args.game_ctx.alarm.should_be_rining()
+            && args
+                .game_ctx
+                .home_layout
+                .furniture_present(HomeFurnitureKind::Alarm)
+        {
+            args.game_ctx.home.change_state(State::Alarm);
         }
 
         if matches!(args.game_ctx.home.weather, Weather::Cold)
@@ -809,45 +903,68 @@ impl Scene for HomeScene {
             } * args.delta.as_secs_f32();
         }
 
-        if args.input.pressed(Button::Middle) {
-            args.game_ctx.sound_system.push_song(
-                *args.game_ctx.home.options[args.game_ctx.home.selected_index].get_song(),
-                SongPlayOptions::new().with_effect(),
-            );
-            match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
-                MenuOption::Breed => {
-                    return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
-                        args.game_ctx.suiter_system.suiter.unwrap_or_default(),
-                    )));
-                }
-                MenuOption::Poop => {
-                    return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
-                }
-                MenuOption::PetInfo => {
-                    return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
-                }
-                MenuOption::GameSelect => {
-                    return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
-                }
-                MenuOption::FoodSelect => {
-                    return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
-                }
-                MenuOption::Shop => {
-                    return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
-                }
-                MenuOption::Inventory => {
-                    return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
-                }
-                MenuOption::PlaceFurniture => {
-                    return SceneOutput::new(SceneEnum::PlaceFurniture(PlaceFurnitureScene::new()));
-                }
-                MenuOption::PetRecords => {
-                    return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
-                }
-                MenuOption::Heal => {
-                    return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
-                }
-            };
+        if matches!(args.game_ctx.home.state, State::Alarm) {
+            if args.input.any_pressed() {
+                args.game_ctx.alarm.ack();
+            }
+        } else {
+            if args.input.pressed(Button::Left) {
+                args.game_ctx.home.selected_index = change_option(
+                    &args.game_ctx.home.options,
+                    args.game_ctx.home.selected_index,
+                    -1,
+                );
+            }
+            if args.input.pressed(Button::Right) {
+                args.game_ctx.home.selected_index = change_option(
+                    &args.game_ctx.home.options,
+                    args.game_ctx.home.selected_index,
+                    1,
+                );
+            }
+
+            if args.input.pressed(Button::Middle) {
+                args.game_ctx.sound_system.push_song(
+                    *args.game_ctx.home.options[args.game_ctx.home.selected_index].get_song(),
+                    SongPlayOptions::new().with_effect(),
+                );
+                match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
+                    MenuOption::Breed => {
+                        return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
+                            args.game_ctx.suiter_system.suiter.unwrap_or_default(),
+                        )));
+                    }
+                    MenuOption::Poop => {
+                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
+                    }
+                    MenuOption::PetInfo => {
+                        return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
+                    }
+                    MenuOption::GameSelect => {
+                        return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
+                    }
+                    MenuOption::FoodSelect => {
+                        return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
+                    }
+                    MenuOption::Shop => {
+                        return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
+                    }
+                    MenuOption::Inventory => {
+                        return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
+                    }
+                    MenuOption::PlaceFurniture => {
+                        return SceneOutput::new(SceneEnum::PlaceFurniture(
+                            PlaceFurnitureScene::new(),
+                        ));
+                    }
+                    MenuOption::PetRecords => {
+                        return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
+                    }
+                    MenuOption::Heal => {
+                        return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
+                    }
+                };
+            }
         }
 
         SceneOutput::default()
@@ -864,6 +981,11 @@ impl Scene for HomeScene {
 
         if matches!(args.game_ctx.home.state, State::Wondering)
             || matches!(args.game_ctx.home.state, State::Sleeping)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
+            || matches!(args.game_ctx.home.state, State::Alarm)
         {
             display.render_complex(&self.top_render);
             display.render_complex(&self.left_render);
@@ -922,7 +1044,10 @@ impl Scene for HomeScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
                 let percent_complete = args.game_ctx.home.state_elapsed.as_millis_f32()
-                    / book.book_info().chapter_length().as_millis_f32();
+                    / book
+                        .book_info()
+                        .chapter_length(args.game_ctx.pet.def_id)
+                        .as_millis_f32();
                 let str = str_format!(fixedstr::str24, "{:.0}%", percent_complete * 100.,);
                 display.render_text_complex(
                     Vec2::new(CENTER_X, 46.),
@@ -955,6 +1080,22 @@ impl Scene for HomeScene {
                         .with_black()
                         .with_center(),
                 );
+            }
+            State::PlayingMp3 { jam_end_time: _ } => {
+                display.render_sprite(&args.game_ctx.home.pet_render);
+                display.render_image_complex(
+                    args.game_ctx.home.pet_render.x2() as i32,
+                    args.game_ctx.home.pet_render.pos.y as i32,
+                    &assets::IMAGE_PORTABLE_AUDIO_PLAYER_0,
+                    ComplexRenderOption::new().with_white().with_black(),
+                );
+
+                for note in &args.game_ctx.home.music_notes {
+                    display.render_sprite(note);
+                }
+            }
+            State::Alarm => {
+                display.render_sprite(&args.game_ctx.home.pet_render);
             }
         }
 
@@ -1048,7 +1189,13 @@ impl Scene for HomeScene {
         }
 
         // No lights if sleeping
-        if matches!(args.game_ctx.home.state, State::Wondering) {
+        if matches!(args.game_ctx.home.state, State::Wondering)
+            || matches!(
+                args.game_ctx.home.state,
+                State::PlayingMp3 { jam_end_time: _ }
+            )
+            || matches!(args.game_ctx.home.state, State::Alarm)
+        {
             for i in [&self.top_render, &self.right_render, &self.left_render] {
                 if let HomeFurnitureRender::InvetroLight(light) = i {
                     display.render_complex(light);

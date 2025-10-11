@@ -13,14 +13,13 @@ use crate::{
     furniture::HomeFurnitureKind,
     game_context::GameContext,
     pc::Program,
-    scene::{SceneEnum, fishing_scene, star_gazing_scene},
+    scene::{SceneEnum, alarm_set_scene::AlarmSetScene, fishing_scene, star_gazing_scene},
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
 
-// MAKE ITEMS
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
 pub enum ItemCategory {
     Misc,
@@ -92,21 +91,6 @@ impl ItemKind {
         }
 
         None
-    }
-
-    pub const fn furniture(&self) -> Option<HomeFurnitureKind> {
-        Some(match self {
-            ItemKind::AnalogueClock => HomeFurnitureKind::AnalogueClock,
-            ItemKind::DigitalClock => HomeFurnitureKind::DigitalClock,
-            ItemKind::FishTank => HomeFurnitureKind::FishTank,
-            ItemKind::PaintingBranch => HomeFurnitureKind::PaintingBranch,
-            ItemKind::PaintingDude => HomeFurnitureKind::PaintingDude,
-            ItemKind::PaintingMan => HomeFurnitureKind::PaintingMan,
-            ItemKind::PaintingPc => HomeFurnitureKind::PaintingPc,
-            ItemKind::PaintingSun => HomeFurnitureKind::PaintingSun,
-            ItemKind::InvetroLight => HomeFurnitureKind::InvertroLight,
-            _ => return None,
-        })
     }
 
     pub const fn program(&self) -> Option<Program> {
@@ -329,6 +313,7 @@ impl From<HomeFurnitureKind> for ItemKind {
             HomeFurnitureKind::None => Self::None,
             HomeFurnitureKind::DigitalClock => Self::DigitalClock,
             HomeFurnitureKind::AnalogueClock => Self::AnalogueClock,
+            HomeFurnitureKind::Alarm => Self::Alarm,
             HomeFurnitureKind::ThermometerMercury => Self::ThermometerMercury,
             HomeFurnitureKind::ThermometerDigital => Self::ThermometerDigital,
             HomeFurnitureKind::SpaceHeater => Self::SpaceHeater,
@@ -506,13 +491,11 @@ impl ItemExtra {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Copy, Encode, Decode)]
-#[derive(Default)]
+#[derive(Clone, Copy, Encode, Decode, Default)]
 pub struct InventoryEntry {
     pub owned: u32,
     pub item_extra: ItemExtra,
 }
-
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Encode, Decode)]
@@ -527,23 +510,11 @@ impl Inventory {
     }
 
     pub fn has_any_item(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item != ItemKind::None && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        ItemKind::iter().any(|i| self.has_item(i))
     }
 
     pub fn has_any_furniture(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item.furniture().is_some() && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        FURNITURE_ITEMS.iter().any(|i| self.has_item(*i))
     }
 
     pub fn has_item(&self, item: ItemKind) -> bool {
@@ -572,15 +543,10 @@ impl Inventory {
         entry.owned = updated as u32;
     }
 
-    // SLOW POINT this is called really rarely
     pub fn has_any_enabled_book(&self) -> bool {
-        for item in ItemKind::iter() {
-            if item.is_book() && self.has_item(item) {
-                return true;
-            }
-        }
-
-        false
+        BOOKS
+            .iter()
+            .any(|item| self.has_item(*item) && self.get_entry(*item).item_extra.enabled)
     }
 }
 
@@ -622,7 +588,6 @@ impl UseItemOutput {
         self
     }
 }
-
 
 pub type UseItemFn = fn(game_ctx: &mut GameContext) -> UseItemOutput;
 pub type IsUseableItemFn = fn(game_ctx: &mut GameContext) -> bool;
@@ -692,8 +657,18 @@ const USE_TELESCOPE: UsableItem = UsableItem::new(ItemKind::Telescope, |_| {
 })
 .with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
 
-const ALL_USEABLE_ITEMS: &[UsableItem] =
-    &[USE_SHOP_UPGRADE, USE_FISHING_ROD, USE_FISH, USE_TELESCOPE];
+const USE_ALARM: UsableItem = UsableItem::new(ItemKind::Alarm, |_| {
+    UseItemOutput::new().with_scene(SceneEnum::AlarmSet(AlarmSetScene::new()))
+})
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+
+const ALL_USEABLE_ITEMS: &[UsableItem] = &[
+    USE_SHOP_UPGRADE,
+    USE_FISHING_ROD,
+    USE_FISH,
+    USE_TELESCOPE,
+    USE_ALARM,
+];
 
 pub struct ItemChance {
     kind: ItemKind,

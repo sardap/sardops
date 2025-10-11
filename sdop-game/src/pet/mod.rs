@@ -20,9 +20,10 @@ use crate::{
     items::{Inventory, ItemKind},
     money::Money,
     pet::definition::{
-        PET_BALLOTEE_ID, PET_BEERIE_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_DEVIL_ID, PET_HUMBIE_ID,
-        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition,
-        PetDefinitionId,
+        PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID,
+        PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE_ID,
+        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet,
+        PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -256,7 +257,9 @@ impl PetInstance {
                 return;
             }
 
-            if passed_threshold_chance(rng, DEATH_BY_HYPOTHERMIA_THRESHOLD, self.cold_for) {
+            if self.def_id != PET_SNOWMAN_ID
+                && passed_threshold_chance(rng, DEATH_BY_HYPOTHERMIA_THRESHOLD, self.cold_for)
+            {
                 self.should_die = Some(DeathCause::Hypothermia);
                 return;
             }
@@ -318,17 +321,30 @@ impl PetInstance {
 
         let mut rng = fastrand::Rng::with_seed(self.upid);
 
-        let mut possible = Vec::<PetDefinitionId, 20>::new();
+        let mut possible = Vec::<PetDefinitionId, PET_COUNT>::new();
         match self.definition().life_stage {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
                 let _ = possible.push(PET_PAWN_WHITE_ID);
+                if self.total_cold_for > Duration::ZERO {
+                    let _ = possible.push(PET_ICE_CUBE_ID);
+                }
             }
             LifeStage::Child => {
                 let _ = possible.push(PET_BEERIE_ID);
                 let _ = possible.push(PET_WAS_GAURD_ID);
-                let _ = possible.push(PET_BALLOTEE_ID);
                 let _ = possible.push(PET_DEVIL_ID);
+                if self
+                    .book_history
+                    .get_read(ItemKind::BookNevileWran)
+                    .completed()
+                    || self
+                        .book_history
+                        .get_read(ItemKind::BookVic19811992)
+                        .completed()
+                {
+                    let _ = possible.push(PET_BALLOTEE_ID);
+                }
                 if inv.has_item(ItemKind::PersonalComputer)
                     && inv.has_item(ItemKind::Screen)
                     && inv.has_item(ItemKind::Keyboard)
@@ -340,6 +356,15 @@ impl PetInstance {
                 }
                 if self.is_ill() {
                     let _ = possible.push(PET_SICKO_ID);
+                }
+                if self.book_history.compelted_count() >= 3 {
+                    let _ = possible.push(PET_BRAINO_ID);
+                }
+                if self.total_cold_for > Duration::from_hours(1) {
+                    let _ = possible.push(PET_SNOWMAN_ID);
+                }
+                if self.total_hot_for > Duration::from_hours(1) {
+                    let _ = possible.push(PET_BEACH_UNBRELLA_ID);
                 }
             }
             LifeStage::Adult => {}
@@ -494,6 +519,10 @@ impl PetInstance {
             };
 
             odds += get_threshold_odds(ILLNESS_SINCE_ODDS, self.illness.since_ilness);
+
+            if self.def_id == PET_SICKO_ID {
+                odds *= 0.5;
+            }
 
             if rng.f32() < odds {
                 self.illness.cost = (rng.i32(HEALING_COST_RANGE) as f32

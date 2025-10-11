@@ -5,6 +5,7 @@ use bincode::{
 
 use crate::{
     Game, Timestamp,
+    alarm::{AlarmConfig, AlarmState},
     egg::SavedEgg,
     fish_tank::HomeFishTank,
     furniture::HomeLayout,
@@ -18,8 +19,7 @@ use crate::{
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Encode, Decode)]
-#[derive(Default)]
+#[derive(Encode, Decode, Default)]
 pub struct SaveFile {
     pub pet: PetInstance,
     pub poops: [Option<Poop>; MAX_POOPS],
@@ -32,14 +32,13 @@ pub struct SaveFile {
     pub last_timestamp: Timestamp,
     pub egg: Option<SavedEgg>,
     pub suiter_system: SuiterSystem,
-    #[cfg_attr(feature = "serde", serde(default))]
     pub sim_rng_seed: u64,
+    pub alarm: AlarmConfig,
 }
-
 
 const BINCODE_CONFIG: bincode::config::Configuration = bincode::config::standard();
 
-const SAVE_SIZE: usize = size_of::<SaveFile>();
+pub const SAVE_SIZE: usize = size_of::<SaveFile>();
 
 impl SaveFile {
     pub fn generate(timestamp: Timestamp, game_ctx: &GameContext) -> Self {
@@ -56,6 +55,7 @@ impl SaveFile {
             suiter_system: game_ctx.suiter_system,
             last_timestamp: timestamp,
             sim_rng_seed: game_ctx.sim_rng.get_seed(),
+            alarm: *game_ctx.alarm.config(),
         }
     }
 
@@ -71,6 +71,7 @@ impl SaveFile {
         game_ctx.suiter_system = self.suiter_system;
         game_ctx.egg = self.egg;
         game_ctx.sim_rng = fastrand::Rng::with_seed(self.sim_rng_seed);
+        game_ctx.alarm = AlarmState::new(self.alarm);
     }
 
     pub const fn size() -> usize {

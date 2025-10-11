@@ -18,7 +18,6 @@ impl StomachRender {
     }
 }
 
-
 impl ComplexRender for StomachRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};

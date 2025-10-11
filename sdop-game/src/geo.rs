@@ -1,7 +1,6 @@
 use glam::Vec2;
 
-#[derive(Copy, Clone)]
-#[derive(Default)]
+#[derive(Copy, Clone, Default)]
 pub struct Rect {
     // Note is the center
     pub pos: Vec2,
@@ -24,6 +23,31 @@ impl Rect {
         // Move pos to center
         let center_pos = Vec2::new(pos.x + size.x / 2., pos.y + size.y / 2.);
 
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_left(pos: Vec2, size: Vec2) -> Self {
+        // Move pos to center
+        let center_pos = Vec2::new(pos.x + size.x / 2., pos.y - size.y / 2.);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_right(pos: Vec2, size: Vec2) -> Self {
+        let center_pos = Vec2::new(pos.x - size.x / 2., pos.y - size.y / 2.);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_top_right(pos: Vec2, size: Vec2) -> Self {
+        let center_pos = Vec2::new(pos.x - size.x / 2., pos.y + size.y / 2.);
         Self {
             pos: center_pos,
             size,
@@ -94,7 +118,6 @@ impl Rect {
         self
     }
 }
-
 
 pub fn vec2_distance(a: Vec2, b: Vec2) -> f32 {
     (a - b).length()

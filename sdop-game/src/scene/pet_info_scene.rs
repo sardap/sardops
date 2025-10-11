@@ -196,12 +196,11 @@ impl Scene for PetInfoScene {
                             .with_font(&fonts::FONT_VARIABLE_SMALL),
                     );
 
-                    current_y += Y_BUFFER;
+                    // current_y += Y_BUFFER;
                 }
             }
             State::Parents => {
                 const Y_BUFFER: f32 = 6.;
-                const TEXT_X_INDENT: f32 = TEXT_X_OFFSET + 6.;
                 let mut current_y = Y_BUFFER;
 
                 display.render_text_complex(

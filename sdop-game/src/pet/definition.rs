@@ -67,8 +67,7 @@ impl PetDefinition {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub enum PetAnimationSet {
     #[default]
     Normal,
@@ -77,7 +76,6 @@ pub enum PetAnimationSet {
     Eat,
     Sleeping,
 }
-
 
 pub struct PetImageSet {
     pub width: i32,

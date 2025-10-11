@@ -1,0 +1,14 @@
+(
+    name: "Error",
+    melody: [
+        (
+            note: A3,
+            duration: 8,
+        ),
+        (
+            note: A1,
+            duration: 6,
+        ),
+    ],
+    tempo: 160,
+)

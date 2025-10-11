@@ -4,7 +4,7 @@ pub const fn bytes_for_bits(n: usize) -> usize {
     n.div_ceil(8)
 }
 
-#[derive(Encode, Decode, Clone, Copy)]
+#[derive(Encode, Decode, Copy, Clone)]
 pub struct BitArray<const N: usize> {
     data: [u8; N],
 }

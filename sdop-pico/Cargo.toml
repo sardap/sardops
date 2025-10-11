@@ -39,4 +39,5 @@ embassy-rp = { git = "https://github.com/embassy-rs/embassy", rev = "c6371d7", f
 ] }
 embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "c6371d7" }
 embassy-sync = { git = "https://github.com/embassy-rs/embassy", rev = "c6371d7" }
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy", rev = "c6371d7" }
 fixed = "1.29.0"
