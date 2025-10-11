@@ -20,10 +20,10 @@ use crate::{
     items::{Inventory, ItemKind},
     money::Money,
     pet::definition::{
-        PET_BALLOTEE_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT,
-        PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE, PET_ICE_CUBE_ID, PET_PAWN_WHITE_ID,
-        PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet, PetDefinition,
-        PetDefinitionId,
+        PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID,
+        PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE_ID,
+        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet,
+        PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
     temperature::TemperatureLevel,
@@ -362,6 +362,9 @@ impl PetInstance {
                 }
                 if self.total_cold_for > Duration::from_hours(1) {
                     let _ = possible.push(PET_SNOWMAN_ID);
+                }
+                if self.total_hot_for > Duration::from_hours(1) {
+                    let _ = possible.push(PET_BEACH_UNBRELLA_ID);
                 }
             }
             LifeStage::Adult => {}

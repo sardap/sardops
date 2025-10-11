@@ -1,3 +1,4 @@
+pub mod alarm_set_scene;
 pub mod breed_scene;
 pub mod death_scene;
 pub mod eat_scene;
@@ -24,10 +25,11 @@ pub mod poop_clear_scene;
 pub mod shop_scene;
 pub mod star_gazing_scene;
 pub mod suiters_scene;
+pub mod weekday_select_scene;
 
 use core::time::Duration;
 
-use chrono::{NaiveDate, NaiveTime};
+use chrono::{NaiveDate, NaiveTime, WeekdaySet};
 
 use crate::{
     Timestamp, display::GameDisplay, game_context::GameContext, input::Input,
@@ -49,6 +51,7 @@ pub enum SceneEnum {
     Inventory(inventory_scene::InventoryScene),
     EnterText(enter_text_scene::EnterTextScene),
     EnterDate(enter_date_scene::EnterDateScene),
+    WeekDaySelect(weekday_select_scene::WeekdaySelectScene),
     PlaceFurniture(place_furniture_scene::PlaceFurnitureScene),
     Breed(breed_scene::BreedScene),
     Suiters(suiters_scene::SuitersScene),
@@ -56,6 +59,7 @@ pub enum SceneEnum {
     PetRecords(pet_records_scene::PetRecordsScene),
     Heal(heal_scene::HealScene),
     StarGazing(star_gazing_scene::StarGazingScene),
+    AlarmSet(alarm_set_scene::AlarmSetScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -85,6 +89,7 @@ impl SceneEnum {
             Self::Inventory(inventory) => inventory,
             Self::EnterText(enter_text) => enter_text,
             Self::EnterDate(enter_date) => enter_date,
+            Self::WeekDaySelect(weekday_select) => weekday_select,
             Self::Evovle(evovle_scene) => evovle_scene,
             Self::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
             Self::Breed(breed_scene) => breed_scene,
@@ -93,6 +98,7 @@ impl SceneEnum {
             Self::Heal(heal_scene) => heal_scene,
             Self::EggHatch(egg_hatch) => egg_hatch,
             Self::StarGazing(star_gazing) => star_gazing,
+            Self::AlarmSet(alarm) => alarm,
             Self::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
             Self::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
             Self::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
@@ -163,6 +169,7 @@ impl SceneManger {
             self.first_loop = false;
         }
 
+        // This is crashing on GBA maybe stack overflow?
         if let Some(next_scene) = self.next_scene.take() {
             let mut old_scene = core::mem::replace(&mut self.active_scene, next_scene);
             old_scene.get_scene().teardown(game_ctx);
@@ -197,4 +204,5 @@ pub struct SharedSceneOutput {
     enter_text_out: EnterTextStr,
     date_out: NaiveDate,
     time_out: NaiveTime,
+    weekday_out: WeekdaySet,
 }

@@ -358,4 +358,14 @@
         desc: "Let your dop jam out to some sweet tunes!",
         fishing_odds: 0.05,
     ),
+    ItemEntry(
+        name: "Alarm",
+        category: Furniture,
+        rarity: Common,
+        cost: 1000,
+        image: "alarm_0",
+        unique: false,
+        desc: "Set a time and make a noise! You must have some kind of clock placed to have it work.",
+        fishing_odds: 0.05,
+    ),
 ]

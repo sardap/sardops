@@ -17,10 +17,14 @@ use crate::{
     game_context::GameContext,
     input::Input,
     pet::definition::PET_BABIES,
-    scene::{RenderArgs, SceneEnum, SceneManger, SceneTickArgs, new_pet_scene::NewPetScene},
+    scene::{
+        RenderArgs, SceneEnum, SceneManger, SceneTickArgs, home_scene::HomeScene,
+        new_pet_scene::NewPetScene,
+    },
     sim::tick_sim,
 };
 
+mod alarm;
 mod anime;
 mod assets;
 mod bit_array;
@@ -67,7 +71,7 @@ pub use crate::display::{HEIGHT, WIDTH};
 pub use crate::game_consts::ROOM_TEMPTURE;
 pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
-pub use crate::save::SaveFile;
+pub use crate::save::{SAVE_SIZE, SaveFile};
 pub use crate::sounds::Song;
 pub use sdop_common::Note;
 
@@ -131,6 +135,7 @@ impl Game {
     pub fn low_power(&self) -> bool {
         matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_))
             && self.since_input > LOW_POWER_THRESHOLD
+            && !self.game_ctx.alarm.should_be_rining()
     }
 
     pub fn tick(&mut self, delta: Duration) {
@@ -149,6 +154,8 @@ impl Game {
             self.since_input += delta;
             self.game_ctx.rng.bool();
         }
+
+        self.game_ctx.alarm.tick(&timestamp);
 
         let mut scene_args = SceneTickArgs {
             timestamp,
@@ -174,6 +181,11 @@ impl Game {
 
         if let Some(next) = output.next_scene {
             self.scene_manger.set_next(next);
+        } else if self.since_input > Duration::from_mins(5)
+            && !matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_))
+        {
+            self.scene_manger
+                .set_next(SceneEnum::Home(HomeScene::new()));
         }
 
         if matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_)) {

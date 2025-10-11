@@ -107,6 +107,16 @@ impl EnterDateScene {
             display_text,
         }
     }
+
+    pub fn with_time(mut self, time: NaiveTime) -> Self {
+        self.time = time;
+        self
+    }
+
+    pub fn with_date(mut self, date: NaiveDate) -> Self {
+        self.date = date;
+        self
+    }
 }
 
 impl Scene for EnterDateScene {

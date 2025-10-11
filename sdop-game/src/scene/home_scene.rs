@@ -15,7 +15,7 @@ use crate::{
     },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
-    furniture::{HomeFurnitureLocation, HomeFurnitureRender},
+    furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     game_context::GameContext,
     geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
@@ -33,9 +33,10 @@ use crate::{
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
         shop_scene::ShopScene, suiters_scene::SuitersScene,
+        weekday_select_scene::WeekdaySelectScene,
     },
-    sounds::{SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
-    sprite::{BasicAnimeSprite, BasicMaskedSprite, MusicNote, Snowflake, Sprite},
+    sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
+    sprite::{BasicAnimeSprite, MusicNote, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
@@ -207,6 +208,7 @@ enum State {
     PlayingMp3 {
         jam_end_time: Duration,
     },
+    Alarm,
 }
 
 struct Word {
@@ -584,21 +586,6 @@ impl Scene for HomeScene {
 
         args.game_ctx.home.options = get_options(args.game_ctx.home.state, args.game_ctx);
 
-        if args.input.pressed(Button::Left) {
-            args.game_ctx.home.selected_index = change_option(
-                &args.game_ctx.home.options,
-                args.game_ctx.home.selected_index,
-                -1,
-            );
-        }
-        if args.input.pressed(Button::Right) {
-            args.game_ctx.home.selected_index = change_option(
-                &args.game_ctx.home.options,
-                args.game_ctx.home.selected_index,
-                1,
-            );
-        }
-
         if args.game_ctx.pet.is_ill() {
             args.game_ctx.home.skull.pos = args.game_ctx.home.pet_render.pos
                 - Vec2::new(
@@ -636,6 +623,7 @@ impl Scene for HomeScene {
                 args.game_ctx.home.state,
                 State::PlayingMp3 { jam_end_time: _ }
             )
+            || matches!(args.game_ctx.home.state, State::Alarm)
         {
             self.top_render.tick(args);
             self.left_render.tick(args);
@@ -868,6 +856,34 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::Alarm => {
+                args.game_ctx
+                    .home
+                    .pet_render
+                    .set_animation(PetAnimationSet::Sad);
+                args.game_ctx.home.pet_render.pos = CENTER_VEC;
+
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_ALARM, SongPlayOptions::new().with_essential());
+                }
+
+                if !args.game_ctx.alarm.should_be_rining() {
+                    args.game_ctx.sound_system.clear_song();
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
+        }
+
+        if !matches!(args.game_ctx.home.state, State::Alarm)
+            && args.game_ctx.alarm.should_be_rining()
+            && args
+                .game_ctx
+                .home_layout
+                .furniture_present(HomeFurnitureKind::Alarm)
+        {
+            args.game_ctx.home.change_state(State::Alarm);
         }
 
         if matches!(args.game_ctx.home.weather, Weather::Cold)
@@ -887,45 +903,68 @@ impl Scene for HomeScene {
             } * args.delta.as_secs_f32();
         }
 
-        if args.input.pressed(Button::Middle) {
-            args.game_ctx.sound_system.push_song(
-                *args.game_ctx.home.options[args.game_ctx.home.selected_index].get_song(),
-                SongPlayOptions::new().with_effect(),
-            );
-            match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
-                MenuOption::Breed => {
-                    return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
-                        args.game_ctx.suiter_system.suiter.unwrap_or_default(),
-                    )));
-                }
-                MenuOption::Poop => {
-                    return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
-                }
-                MenuOption::PetInfo => {
-                    return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
-                }
-                MenuOption::GameSelect => {
-                    return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
-                }
-                MenuOption::FoodSelect => {
-                    return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
-                }
-                MenuOption::Shop => {
-                    return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
-                }
-                MenuOption::Inventory => {
-                    return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
-                }
-                MenuOption::PlaceFurniture => {
-                    return SceneOutput::new(SceneEnum::PlaceFurniture(PlaceFurnitureScene::new()));
-                }
-                MenuOption::PetRecords => {
-                    return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
-                }
-                MenuOption::Heal => {
-                    return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
-                }
-            };
+        if matches!(args.game_ctx.home.state, State::Alarm) {
+            if args.input.any_pressed() {
+                args.game_ctx.alarm.ack();
+            }
+        } else {
+            if args.input.pressed(Button::Left) {
+                args.game_ctx.home.selected_index = change_option(
+                    &args.game_ctx.home.options,
+                    args.game_ctx.home.selected_index,
+                    -1,
+                );
+            }
+            if args.input.pressed(Button::Right) {
+                args.game_ctx.home.selected_index = change_option(
+                    &args.game_ctx.home.options,
+                    args.game_ctx.home.selected_index,
+                    1,
+                );
+            }
+
+            if args.input.pressed(Button::Middle) {
+                args.game_ctx.sound_system.push_song(
+                    *args.game_ctx.home.options[args.game_ctx.home.selected_index].get_song(),
+                    SongPlayOptions::new().with_effect(),
+                );
+                match args.game_ctx.home.options[args.game_ctx.home.selected_index] {
+                    MenuOption::Breed => {
+                        return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
+                            args.game_ctx.suiter_system.suiter.unwrap_or_default(),
+                        )));
+                    }
+                    MenuOption::Poop => {
+                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
+                    }
+                    MenuOption::PetInfo => {
+                        return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
+                    }
+                    MenuOption::GameSelect => {
+                        return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
+                    }
+                    MenuOption::FoodSelect => {
+                        return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
+                    }
+                    MenuOption::Shop => {
+                        return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
+                    }
+                    MenuOption::Inventory => {
+                        return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
+                    }
+                    MenuOption::PlaceFurniture => {
+                        return SceneOutput::new(SceneEnum::PlaceFurniture(
+                            PlaceFurnitureScene::new(),
+                        ));
+                    }
+                    MenuOption::PetRecords => {
+                        return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
+                    }
+                    MenuOption::Heal => {
+                        return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
+                    }
+                };
+            }
         }
 
         SceneOutput::default()
@@ -946,6 +985,7 @@ impl Scene for HomeScene {
                 args.game_ctx.home.state,
                 State::PlayingMp3 { jam_end_time: _ }
             )
+            || matches!(args.game_ctx.home.state, State::Alarm)
         {
             display.render_complex(&self.top_render);
             display.render_complex(&self.left_render);
@@ -1054,6 +1094,9 @@ impl Scene for HomeScene {
                     display.render_sprite(note);
                 }
             }
+            State::Alarm => {
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
         }
 
         display.render_sprites(&args.game_ctx.home.poops);
@@ -1151,6 +1194,7 @@ impl Scene for HomeScene {
                 args.game_ctx.home.state,
                 State::PlayingMp3 { jam_end_time: _ }
             )
+            || matches!(args.game_ctx.home.state, State::Alarm)
         {
             for i in [&self.top_render, &self.right_render, &self.left_render] {
                 if let HomeFurnitureRender::InvetroLight(light) = i {

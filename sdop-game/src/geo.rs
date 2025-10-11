@@ -29,6 +29,31 @@ impl Rect {
         }
     }
 
+    pub const fn new_bottom_left(pos: Vec2, size: Vec2) -> Self {
+        // Move pos to center
+        let center_pos = Vec2::new(pos.x + size.x / 2., pos.y - size.y / 2.);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_right(pos: Vec2, size: Vec2) -> Self {
+        let center_pos = Vec2::new(pos.x - size.x / 2., pos.y - size.y / 2.);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_top_right(pos: Vec2, size: Vec2) -> Self {
+        let center_pos = Vec2::new(pos.x - size.x / 2., pos.y + size.y / 2.);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
     pub const fn pos_top_left(&self) -> Vec2 {
         let x_top_left = self.pos.x - self.size.x / 2.;
         let y_top_left = self.pos.y - self.size.y / 2.;

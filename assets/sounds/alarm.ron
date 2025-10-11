@@ -1,0 +1,110 @@
+(
+    name: "alarm",
+    melody: [
+        (
+            note: Gs4,
+            duration: 8,
+        ),
+        (
+            note: A4,
+            duration: 12,
+        ),
+        (
+            note: B4,
+            duration: 12,
+        ),
+        (
+            note: Cs4,
+            duration: 12,
+        ),
+        (
+            note: D4,
+            duration: 12,
+        ),
+        (
+            note: E4,
+            duration: 12,
+        ),
+        (
+            note: Fs4,
+            duration: 12,
+        ),
+        (
+            note: Gs4,
+            duration: 12,
+        ),
+        (
+            note: Cs4,
+            duration: 12,
+        ),
+        (
+            note: Gs4,
+            duration: 12,
+        ),
+        (
+            note: A4,
+            duration: 12,
+        ),
+        (
+            note: B4,
+            duration: 12,
+        ),
+        (
+            note: Cs4,
+            duration: 12,
+        ),
+        (
+            note: D4,
+            duration: 12,
+        ),
+        (
+            note: E4,
+            duration: 12,
+        ),
+        (
+            note: Fs4,
+            duration: 12,
+        ),
+        (
+            note: Gs4,
+            duration: 12,
+        ),
+        (
+            note: Gs3,
+            duration: 12,
+        ),
+        (
+            note: A3,
+            duration: 12,
+        ),
+        (
+            note: B3,
+            duration: 12,
+        ),
+        (
+            note: Cs3,
+            duration: 12,
+        ),
+        (
+            note: D3,
+            duration: 12,
+        ),
+        (
+            note: E3,
+            duration: 12,
+        ),
+        (
+            note: Fs3,
+            duration: 12,
+        ),
+        (
+            note: Gs3,
+            duration: 12,
+        ),
+        (
+            note: Rest,
+            duration: 8,
+        ),
+    ],
+    tempo: 90,
+)

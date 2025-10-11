@@ -395,7 +395,12 @@ impl GameDisplay {
         self.render_text_complex(top_left, text, DEFAULT_RENDER);
     }
 
-    pub fn render_text_complex(&mut self, pos: Vec2, text: &str, options: ComplexRenderOption) {
+    pub fn render_text_complex(
+        &mut self,
+        pos: Vec2,
+        text: &str,
+        options: ComplexRenderOption,
+    ) -> f32 {
         let max_height = {
             let mut max = u16::MIN;
             for ch in text.chars() {
@@ -451,6 +456,8 @@ impl GameDisplay {
             );
             x_offset += image.size.x as i32 + options.font.between_spacing;
         }
+
+        x_offset as f32
     }
 
     pub fn render_stomach(&mut self, pos_center: Vec2, filled: f32) {
@@ -809,7 +816,7 @@ pub trait ComplexRender {
     fn render(&self, display: &mut GameDisplay);
 }
 
-pub trait HasPostionMode {}
+trait HasPostionMode {}
 impl<T: SpritePostionMode> HasPostionMode for T {}
 
 pub trait SpriteWithPostionMode<T: Sprite> {
@@ -828,7 +835,7 @@ impl<T: Sprite> SpriteWithPostionMode<T> for T {
     }
 }
 
-pub trait HasRotation {}
+trait HasRotation {}
 impl<T: SpriteRotation> HasRotation for T {}
 
 pub trait SpriteWithRotation<T: Sprite> {
@@ -856,7 +863,7 @@ pub trait RenderSpriteWithMask<T: Sprite> {
     );
 }
 
-pub trait HasMask {}
+trait HasMask {}
 impl<T: SpriteMask> HasMask for T {}
 
 impl<T: Sprite + HasMask + SpriteMask> RenderSpriteWithMask<T> for T {

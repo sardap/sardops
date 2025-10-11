@@ -51,40 +51,46 @@ fn entry(mut _gba: agb::Gba) -> ! {
 
     bitmap_gfx.clear(0x7C00);
 
+    let mut color = 0x0;
+
     loop {
         button_controller.update();
 
         game.update_input_states(buttons_to_input(&button_controller));
         game.tick(FRAME_TIME_MS);
-        // game.refresh_display(FRAME_TIME_MS);
+        game.refresh_display(FRAME_TIME_MS);
 
-        // for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
-        //     let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
-        //     let y = byte_index / (sdop_game::WIDTH as usize / 8);
-        //     for bit_index in 0..8 {
-        //         let x = start_x + bit_index;
+        // color += 1;
 
-        //         let rotated_x = x;
-        //         let rotated_y = sdop_game::HEIGHT - 1 - y;
+        // bitmap_gfx.clear(color);
 
-        //         let screen_x = rotated_x as i32 + OFFSET_X as i32;
-        //         let screen_y = rotated_y as i32 + OFFSET_Y as i32;
+        for (byte_index, byte_value) in game.get_display_image_data().iter().enumerate() {
+            let start_x = (byte_index % (sdop_game::WIDTH as usize / 8)) * 8;
+            let y = byte_index / (sdop_game::WIDTH as usize / 8);
+            for bit_index in 0..8 {
+                let x = start_x + bit_index;
 
-        //         if screen_x >= 0
-        //             && screen_x + 2 < SCREEN_WIDTH as i32
-        //             && screen_y >= 0
-        //             && screen_y + 2 < SCREEN_HEIGHT as i32
-        //         {
-        //             let screen_x = screen_x;
-        //             let screen_y = screen_y;
+                let rotated_x = x;
+                let rotated_y = sdop_game::HEIGHT - 1 - y;
 
-        //             let is_set = (byte_value >> (7 - bit_index)) & 1 == 1;
-        //             let value = if is_set { 0xFFFF } else { 0x0000 };
+                let screen_x = rotated_x as i32 + OFFSET_X as i32;
+                let screen_y = rotated_y as i32 + OFFSET_Y as i32;
 
-        //             bitmap_gfx.draw_point(screen_x, screen_y, value);
-        //         }
-        //     }
-        // }
+                if screen_x >= 0
+                    && screen_x + 2 < SCREEN_WIDTH as i32
+                    && screen_y >= 0
+                    && screen_y + 2 < SCREEN_HEIGHT as i32
+                {
+                    let screen_x = screen_x;
+                    let screen_y = screen_y;
+
+                    let is_set = (byte_value >> (7 - bit_index)) & 1 == 1;
+                    let value = if is_set { 0xFFFF } else { 0x0000 };
+
+                    bitmap_gfx.draw_point(screen_x, screen_y, value);
+                }
+            }
+        }
 
         busy_wait_for_vblank();
     }

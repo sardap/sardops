@@ -3,34 +3,45 @@
 
 use core::time::Duration;
 
+mod fram;
 mod notes;
 
 use embassy_executor::Spawner;
-use embassy_rp::adc::{Adc, Channel as AdcChannel, Config as AdcConfig};
-use embassy_rp::block::ImageDef;
-use embassy_rp::gpio::{Input, Pull};
-use embassy_rp::peripherals::{self, I2C0};
-use embassy_rp::pwm::{Config as PwmConfig, Pwm, SetDutyCycle};
-use embassy_rp::{self as hal, bind_interrupts};
-use embassy_rp::{adc, i2c};
-use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, ThreadModeRawMutex};
-use embassy_sync::channel::Channel;
-use embassy_sync::mutex::Mutex;
+use embassy_rp::{
+    self as hal, adc,
+    adc::{Adc, Channel as AdcChannel, Config as AdcConfig},
+    bind_interrupts,
+    block::ImageDef,
+    gpio::{Input, Level, Output, Pull},
+    i2c,
+    peripherals::{self, I2C0, SPI0},
+    pwm::{Config as PwmConfig, Pwm, SetDutyCycle},
+    spi::Spi,
+};
+use embassy_sync::{
+    blocking_mutex::raw::{CriticalSectionRawMutex, ThreadModeRawMutex},
+    channel::Channel,
+    mutex::Mutex,
+};
 use embassy_time::{Instant, Timer};
-use embedded_graphics::mono_font::ascii::FONT_6X10;
-use embedded_graphics::mono_font::MonoTextStyleBuilder;
-use embedded_graphics::pixelcolor::BinaryColor;
-use embedded_graphics::prelude::*;
-use embedded_graphics::text::{Baseline, Text};
+use embedded_graphics::{
+    mono_font::ascii::FONT_6X10,
+    mono_font::MonoTextStyleBuilder,
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::{Baseline, Text},
+};
 use fixed::types::extra::U4;
 use fixedstr::str_format;
-use sdop_game::SaveFile;
-use ssd1306::mode::{BufferedGraphicsMode, DisplayConfig};
-use ssd1306::prelude::{DisplayRotation, I2CInterface};
-use ssd1306::size::DisplaySize128x64;
-use ssd1306::{I2CDisplayInterface, Ssd1306};
+use sdop_game::{SaveFile, Timestamp};
+use ssd1306::{
+    mode::{BufferedGraphicsMode, DisplayConfig},
+    prelude::{DisplayRotation, I2CInterface},
+    size::DisplaySize128x64,
+    I2CDisplayInterface, Ssd1306,
+};
 
-use crate::notes::{freq, get_top};
+use crate::notes::freq;
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -62,6 +73,21 @@ type Display = Ssd1306<
     DisplaySize128x64,
     BufferedGraphicsMode<DisplaySize128x64>,
 >;
+
+static PENDING_SAVE: Channel<CriticalSectionRawMutex, sdop_game::SaveFile, 1> = Channel::new();
+
+#[embassy_executor::task]
+async fn save_task(mut spi: Spi<'static, SPI0, embassy_rp::spi::Async>, mut cs: Output<'static>) {
+    loop {
+        let save = PENDING_SAVE.receive().await;
+
+        if let Ok(save_bytes) = save.to_bytes() {
+            fram::write(&mut spi, &mut cs, sdop_game::SAVE_SIZE as u16, &save_bytes)
+                .await
+                .unwrap();
+        }
+    }
+}
 
 static CHANNEL: Channel<CriticalSectionRawMutex, sdop_game::Song, 2> = Channel::new();
 static SOUND_PLAYING: Mutex<ThreadModeRawMutex, bool> = Mutex::new(false);
@@ -146,20 +172,32 @@ async fn tempeture_task(
 
 #[embassy_executor::task]
 async fn game_task(
-    mut left_button: Input<'static>,
-    mut middle_button: Input<'static>,
-    mut right_button: Input<'static>,
+    left_button: Input<'static>,
+    middle_button: Input<'static>,
+    right_button: Input<'static>,
     mut display: Display,
+    mut spi: Spi<'static, SPI0, embassy_rp::spi::Async>,
+    mut cs: Output<'static>,
+    save_file: Option<SaveFile>,
 ) {
     let sender = CHANNEL.sender();
 
-    // Load save file
-    let save_bytes = include_bytes!("../sdop.sav");
-    let save_file = SaveFile::from_bytes(save_bytes).unwrap();
-    let mut timestamp = save_file.last_timestamp;
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
+        .text_color(BinaryColor::On)
+        .build();
 
-    let mut game = sdop_game::Game::new(timestamp);
-    SaveFile::load_from_bytes(save_bytes, timestamp, &mut game).unwrap();
+    // Probably need some enter time screen seperated from the game that I can loop though
+
+    // Load save file
+    let (mut game, mut timestamp) = if let Some(save) = save_file {
+        let timestamp = save.last_timestamp;
+        let mut game = sdop_game::Game::new(timestamp);
+        game.load_save(timestamp, save);
+        (game, timestamp)
+    } else {
+        (sdop_game::Game::blank(None), Timestamp::default())
+    };
 
     let mut last_time = Instant::now();
     let mut last_save = Instant::now();
@@ -193,11 +231,19 @@ async fn game_task(
         ];
 
         // Save every 5s
-        if Duration::from_micros((loop_start - last_save).as_micros()) > Duration::from_secs(5) {
+        if (loop_start - last_save) > embassy_time::Duration::from_secs(60) {
             last_save = loop_start;
             if let Some(save) = game.get_save(timestamp) {
-                // TODO: persist save
-                let _ = save;
+                if let Ok(save_bytes) = save.to_bytes() {
+                    if let Err(err) =
+                        fram::write(&mut spi, &mut cs, fram::SDOP_SAVE_ADDR, &save_bytes).await
+                    {
+                        loop {
+                            display.clear(BinaryColor::Off);
+                            display.flush().unwrap();
+                        }
+                    }
+                }
             }
         }
 
@@ -223,6 +269,12 @@ async fn game_task(
 
         // Draw into display buffer
         game.drawable(|c| c).draw(&mut display).unwrap();
+
+        let str = str_format!(fixedstr::str32, "{}", (loop_start - last_save).as_secs());
+        Text::with_baseline(&str, Point::new(40, 06), text_style, Baseline::Top)
+            .draw(&mut display)
+            .unwrap();
+
         display.flush().unwrap();
 
         // Target FPS pacing
@@ -244,11 +296,11 @@ async fn main(spawner: Spawner) {
     let mut pins = embassy_rp::init(Default::default());
     // ADC to read the Vout value
     let mut adc = Adc::new(pins.ADC, Irqs, AdcConfig::default());
-    let mut adc_channel_pin26 = AdcChannel::new_pin(pins.PIN_26, Pull::Up);
+    let mut adc_channel_pin26 = AdcChannel::new_pin(pins.PIN_27, Pull::Up);
 
     let mut buzzer_a = Pwm::new_output_a(
-        pins.PWM_SLICE0,
-        pins.PIN_0,
+        pins.PWM_SLICE6,
+        pins.PIN_28,
         embassy_rp::pwm::Config::default(),
     );
 
@@ -262,67 +314,103 @@ async fn main(spawner: Spawner) {
     let i2c0 = i2c::I2c::new_async(pins.I2C0, scl, sda, Irqs, config);
     let interface = I2CDisplayInterface::new(i2c0);
 
-    let mut left_button = Input::new(pins.PIN_13, Pull::None);
-    let mut middle_button = Input::new(pins.PIN_12, Pull::None);
-    let mut right_button = Input::new(pins.PIN_11, Pull::None);
+    let left_button = Input::new(pins.PIN_26, Pull::None);
+    let middle_button = Input::new(pins.PIN_15, Pull::None);
+    let right_button = Input::new(pins.PIN_14, Pull::None);
 
-    // Make sure all the buttons are in a good state
-    while left_button.is_low() && middle_button.is_low() && right_button.is_low() {
-        Timer::after_millis(10).await;
-    }
+    let fram_sck = pins.PIN_6;
+    let fram_miso = pins.PIN_0;
+    let fram_mosi = pins.PIN_3;
+    let fram_cs = pins.PIN_2;
+
+    // SPI setup
+    let cfg = embassy_rp::spi::Config::default();
+
+    // Create the SPI peripheral
+    let mut spi = Spi::new(
+        pins.SPI0,
+        fram_sck,
+        fram_mosi,
+        fram_miso,
+        pins.DMA_CH0,
+        pins.DMA_CH1,
+        cfg,
+    );
+    // Chip Select pin
+    let mut cs = Output::new(fram_cs, Level::High);
 
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate270)
         .into_buffered_graphics_mode();
 
     display.init().unwrap();
-    // loop {
-    //     display.clear(BinaryColor::On).unwrap();
-    //     display.flush().unwrap();
-    // }
 
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
+
+    // Make sure all the buttons are in a good state
+    loop {
+        display.clear(BinaryColor::Off).unwrap();
+        let str = str_format!(
+            fixedstr::str12,
+            "{}, {}, {}",
+            left_button.is_high() as u8,
+            middle_button.is_high() as u8,
+            right_button.is_high() as u8
+        );
+        Text::with_baseline(&str, Point::new(0, 06), text_style, Baseline::Top)
+            .draw(&mut display)
+            .unwrap();
+        display.flush().unwrap();
+        Timer::after_millis(100).await;
+        if left_button.is_high() && middle_button.is_high() && right_button.is_high() {
+            break;
+        }
+    }
+
+    enum SaveMode {
+        Clear,
+        Restore,
+        Load,
+    }
+    let save_mode = {
+        let mut save_mode = SaveMode::Load;
+        loop {
+            display.clear(BinaryColor::On).unwrap();
+            display.flush().unwrap();
+            if left_button.is_low() && right_button.is_low() {
+                save_mode = SaveMode::Clear;
+                break;
+            } else if left_button.is_low() {
+                save_mode = SaveMode::Restore;
+                break;
+            } else if middle_button.is_low() {
+                break;
+            }
+        }
+
+        save_mode
+    };
+
+    // Load Save
+    let save_file = match save_mode {
+        SaveMode::Clear => None,
+        SaveMode::Restore => SaveFile::from_bytes(include_bytes!("../sdop.sav")).ok(),
+        SaveMode::Load => {
+            let mut buf = [0u8; sdop_game::SAVE_SIZE];
+            fram::read(&mut spi, &mut cs, fram::SDOP_SAVE_ADDR, &mut buf)
+                .await
+                .unwrap();
+
+            SaveFile::from_bytes(&buf).ok()
+        }
+    };
+
     let mut sum: f32 = 0.;
     let mut count: usize = 0;
     let mut avg: f32 = 0.;
     let mut last = Instant::now();
-
-    // Timer::after_millis(5000).await;
-    // pub const NOTES: &[f64] = &[
-    //     31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 44.0, 46.0, 49.0, 52.0, 55.0, 58.0, 62.0, 65.0, 69.0,
-    //     73.0, 78.0, 82.0, 87.0, 93.0, 98.0, 104.0, 110.0, 117.0, 123.0, 131.0, 139.0, 147.0, 156.0,
-    //     165.0, 175.0, 185.0, 196.0, 208.0, 220.0, 233.0, 247.0, 262.0, 277.0, 294.0, 311.0, 330.0,
-    //     349.0, 370.0, 392.0, 415.0, 440.0, 466.0, 494.0, 523.0, 554.0, 587.0, 622.0, 659.0, 698.0,
-    //     740.0, 784.0, 831.0, 880.0, 932.0, 988.0, 1047.0, 1109.0, 1175.0, 1245.0, 1319.0, 1397.0,
-    //     1480.0, 1568.0, 1661.0, 1760.0, 1865.0, 1976.0, 2093.0, 2217.0, 2349.0, 2489.0, 2637.0,
-    //     2794.0, 2960.0, 3136.0, 3322.0, 3520.0, 3729.0, 3951.0, 4186.0, 4435.0, 4699.0, 4978.0,
-    //     0.0,
-    // ];
-    // let mut index = 0_usize;
-    // let divider = fixed::FixedU16::<U4>::from_num(200.0); // choose a reasonable divider
-    // for note in NOTES {
-    //     let top = get_top_new(*note, divider.to_num::<f64>());
-    //     let mut cfg = PwmConfig::default();
-    //     cfg.top = top;
-    //     cfg.divider = divider;
-    //     buzzer_a.set_config(&cfg);
-    //     // buzzer_b.set_duty_cycle(32768);
-    //     buzzer_a.set_duty_cycle_percent(50).unwrap(); // Set duty cycle to 50% to play the note
-
-    //     // display.clear(BinaryColor::Off).unwrap();
-    //     // let str = str_format!(fixedstr::str12, "{:.2}", note);
-    //     // Text::with_baseline(&str, Point::new(0, 06), text_style, Baseline::Top)
-    //     //     .draw(&mut display)
-    //     //     .unwrap();
-    //     // display.flush().unwrap();
-
-    //     Timer::after_millis(5000).await;
-
-    //     buzzer_a.set_duty_cycle_percent(0).unwrap();
-    //     Timer::after_millis(2000).await;
-    // }
 
     loop {
         display.clear(BinaryColor::Off).unwrap();
@@ -377,7 +465,19 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(tempeture_task(adc, adc_channel_pin26).unwrap());
     spawner.spawn(play_sound_task(buzzer_a).unwrap());
-    spawner.spawn(game_task(left_button, middle_button, right_button, display).unwrap());
+    // spawner.spawn(save_task(spi, cs).unwrap());
+    spawner.spawn(
+        game_task(
+            left_button,
+            middle_button,
+            right_button,
+            display,
+            spi,
+            cs,
+            save_file,
+        )
+        .unwrap(),
+    );
 }
 
 // Program metadata for `picotool info`.
