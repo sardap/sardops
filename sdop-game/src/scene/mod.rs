@@ -22,6 +22,7 @@ pub mod pet_info_scene;
 pub mod pet_records_scene;
 pub mod place_furniture_scene;
 pub mod poop_clear_scene;
+pub mod settings_scene;
 pub mod shop_scene;
 pub mod star_gazing_scene;
 pub mod suiters_scene;
@@ -36,7 +37,60 @@ use crate::{
     scene::enter_text_scene::EnterTextStr,
 };
 
-pub enum SceneEnum {
+#[macro_export]
+macro_rules! define_scence_enum {
+    (
+        $enum_name:ident {
+            $($variant:ident($scene_ty:ty)),+ $(,)?
+        }
+    ) => {
+        pub enum $enum_name {
+            $(
+                $variant($scene_ty),
+            )+
+        }
+
+        impl $enum_name {
+            #[inline(always)]
+            pub fn setup(&mut self, args: &mut SceneTickArgs) {
+                match self {
+                    $(
+                        Self::$variant(inner) => inner.setup(args),
+                    )+
+                }
+            }
+
+            #[inline(always)]
+            pub fn teardown(&mut self, args: &mut SceneTickArgs) {
+                match self {
+                    $(
+                        Self::$variant(inner) => inner.teardown(args),
+                    )+
+                }
+            }
+
+            #[inline(always)]
+            pub fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+                match self {
+                    $(
+                        Self::$variant(inner) => inner.tick(args),
+                    )+
+                }
+            }
+
+            #[inline(always)]
+            pub fn render(&mut self, display: &mut GameDisplay, args: &mut RenderArgs) {
+                match self {
+                    $(
+                        Self::$variant(inner) => inner.render(display, args),
+                    )+
+                }
+            }
+        }
+    };
+}
+
+define_scence_enum!(SceneEnum {
     NewPet(new_pet_scene::NewPetScene),
     Home(home_scene::HomeScene),
     Eat(eat_scene::EatScene),
@@ -60,51 +114,17 @@ pub enum SceneEnum {
     Heal(heal_scene::HealScene),
     StarGazing(star_gazing_scene::StarGazingScene),
     AlarmSet(alarm_set_scene::AlarmSetScene),
+    Settings(settings_scene::SettingsScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
     MgTicLinkFour(mg_link_four::MgLinkFourScene),
     MgWeightLift(mg_weight_lift::MgWeightLift),
-}
+});
 
 impl Default for SceneEnum {
     fn default() -> Self {
         Self::Home(home_scene::HomeScene::new())
-    }
-}
-
-impl SceneEnum {
-    pub fn get_scene(&mut self) -> &mut dyn Scene {
-        match self {
-            Self::NewPet(new_pet_scene) => new_pet_scene,
-            Self::Home(home_scene) => home_scene,
-            Self::Eat(eat_scene) => eat_scene,
-            Self::GameSelect(game_select_scene) => game_select_scene,
-            Self::FoodSelect(food_select_scene) => food_select_scene,
-            Self::PetInfo(pet_info) => pet_info,
-            Self::PoopClear(poop_clear_scene) => poop_clear_scene,
-            Self::Shop(shop_scene) => shop_scene,
-            Self::Death(death) => death,
-            Self::Fishing(fishing) => fishing,
-            Self::Inventory(inventory) => inventory,
-            Self::EnterText(enter_text) => enter_text,
-            Self::EnterDate(enter_date) => enter_date,
-            Self::WeekDaySelect(weekday_select) => weekday_select,
-            Self::Evovle(evovle_scene) => evovle_scene,
-            Self::PlaceFurniture(place_furniture_scene) => place_furniture_scene,
-            Self::Breed(breed_scene) => breed_scene,
-            Self::Suiters(suiters_scene) => suiters_scene,
-            Self::PetRecords(pet_records_scene) => pet_records_scene,
-            Self::Heal(heal_scene) => heal_scene,
-            Self::EggHatch(egg_hatch) => egg_hatch,
-            Self::StarGazing(star_gazing) => star_gazing,
-            Self::AlarmSet(alarm) => alarm,
-            Self::MgDogeEm(mg_doge_em_scene) => mg_doge_em_scene,
-            Self::MgFanFare(mg_fan_fare_scene) => mg_fan_fare_scene,
-            Self::MgTicTacToe(mg_tic_tac_toe_scene) => mg_tic_tac_toe_scene,
-            Self::MgTicLinkFour(mg_link_four_scene) => mg_link_four_scene,
-            Self::MgWeightLift(mg_weight_lift_scene) => mg_weight_lift_scene,
-        }
     }
 }
 
@@ -165,16 +185,16 @@ impl Default for SceneManger {
 impl SceneManger {
     pub fn tick(&mut self, game_ctx: &mut SceneTickArgs) {
         if self.first_loop {
-            self.active_scene.get_scene().setup(game_ctx);
+            self.active_scene.setup(game_ctx);
             self.first_loop = false;
         }
 
         // This is crashing on GBA maybe stack overflow?
         if let Some(next_scene) = self.next_scene.take() {
             let mut old_scene = core::mem::replace(&mut self.active_scene, next_scene);
-            old_scene.get_scene().teardown(game_ctx);
+            old_scene.teardown(game_ctx);
             self.last_scene = Some(old_scene);
-            self.active_scene.get_scene().setup(game_ctx);
+            self.active_scene.setup(game_ctx);
         }
     }
 
@@ -190,12 +210,12 @@ impl SceneManger {
         self.last_scene = last_scene;
     }
 
-    pub fn scene(&mut self) -> &mut dyn Scene {
-        self.active_scene.get_scene()
-    }
-
     pub fn scene_enum(&self) -> &SceneEnum {
         &self.active_scene
+    }
+
+    pub fn scene_enum_mut(&mut self) -> &mut SceneEnum {
+        &mut self.active_scene
     }
 }
 

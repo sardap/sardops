@@ -207,7 +207,8 @@ impl Scene for PlaceFurnitureScene {
                     let rect: Rect = Rect::new_center(
                         Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
-                    );
+                    )
+                    .grow(2.);
                     display.render_rect_outline(rect, true);
                 }
             }

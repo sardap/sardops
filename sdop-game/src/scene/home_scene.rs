@@ -32,7 +32,7 @@ use crate::{
         game_select::GameSelectScene, heal_scene::HealScene, inventory_scene::InventoryScene,
         pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
-        shop_scene::ShopScene, suiters_scene::SuitersScene,
+        settings_scene::SettingsScene, shop_scene::ShopScene, suiters_scene::SuitersScene,
         weekday_select_scene::WeekdaySelectScene,
     },
     sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
@@ -60,6 +60,7 @@ enum MenuOption {
     Inventory,
     PlaceFurniture,
     PetRecords,
+    Settings,
 }
 
 impl MenuOption {
@@ -116,6 +117,11 @@ impl MenuOption {
                 const SONG: Song = Song::new(MELODY, 85);
                 &SONG
             }
+            MenuOption::Settings => {
+                const MELODY: &[MelodyEntry] = &[MelodyEntry::new(Note::D3, MENU_DURATION)];
+                const SONG: Song = Song::new(MELODY, 85);
+                &SONG
+            }
         }
     }
 }
@@ -139,6 +145,7 @@ type MenuOptions = heapless::Vec<MenuOption, MENU_OPTIONS_COUNT>;
 fn get_options(state: State, game_ctx: &GameContext) -> MenuOptions {
     let mut result = heapless::Vec::new();
     let _ = result.push(MenuOption::PetInfo);
+    let _ = result.push(MenuOption::Settings);
     if game_ctx.suiter_system.suiter_waiting() {
         let _ = result.push(MenuOption::Breed);
     }
@@ -963,6 +970,9 @@ impl Scene for HomeScene {
                     MenuOption::Heal => {
                         return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
                     }
+                    MenuOption::Settings => {
+                        return SceneOutput::new(SceneEnum::Settings(SettingsScene::new()));
+                    }
                 };
             }
         }
@@ -1160,6 +1170,7 @@ impl Scene for HomeScene {
                 MenuOption::PlaceFurniture => &assets::IMAGE_SYMBOL_PLACE_FURNITURE,
                 MenuOption::PetRecords => &assets::IMAGE_SYMBOL_RECORDS,
                 MenuOption::Heal => &assets::IMAGE_SYMBOL_HEALTHCARE,
+                MenuOption::Settings => &assets::IMAGE_SYMBOL_SETTINGS,
             };
             let x = if args.game_ctx.home.selected_index > 0 {
                 let x_index = i as i32 - args.game_ctx.home.selected_index as i32 + 1;

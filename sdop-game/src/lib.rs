@@ -176,7 +176,7 @@ impl Game {
         let last_scene = self.scene_manger.take_last_scene();
         scene_args.last_scene = last_scene;
 
-        let scene = self.scene_manger.scene();
+        let scene = self.scene_manger.scene_enum_mut();
 
         let output = scene.tick(&mut scene_args);
 
@@ -210,7 +210,7 @@ impl Game {
         };
 
         self.display.clear();
-        let scene = self.scene_manger.scene();
+        let scene = self.scene_manger.scene_enum_mut();
         scene.render(&mut self.display, &mut scene_args);
         // self.display.render_fps(&self.fps);
         // self.display.render_temperature(self.input().temperature());

@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use sdop_common::Note;
 
 const NOTE_A1: &[u8] = include_bytes!("../../assets/notes/NOTE_A1.ogg");
