@@ -87,7 +87,7 @@ impl Default for AlarmConfig {
 impl AlarmConfig {
     pub fn should_trigger(&self, current: &Timestamp) -> bool {
         match self {
-            AlarmConfig::None => todo!(),
+            AlarmConfig::None => {}
             AlarmConfig::Time {
                 days,
                 time: target_time,
