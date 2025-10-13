@@ -150,4 +150,8 @@ impl SoundSystem {
     pub fn sound_options_mut(&mut self) -> &mut SoundOptions {
         &mut self.options
     }
+
+    pub fn set_sound_options(&mut self, options: SoundOptions) {
+        self.options = options;
+    }
 }

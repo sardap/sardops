@@ -13,7 +13,10 @@ use crate::{
     furniture::HomeFurnitureKind,
     game_context::GameContext,
     pc::Program,
-    scene::{SceneEnum, alarm_set_scene::AlarmSetScene, fishing_scene, star_gazing_scene},
+    scene::{
+        SceneEnum, alarm_set_scene::AlarmSetScene, credits_scene::CreditsScene, fishing_scene,
+        star_gazing_scene,
+    },
 };
 
 include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
@@ -662,12 +665,17 @@ const USE_ALARM: UsableItem = UsableItem::new(ItemKind::Alarm, |_| {
 })
 .with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
 
+const USE_CREDITS: UsableItem = UsableItem::new(ItemKind::CreditsScroll, |_| {
+    UseItemOutput::new().with_scene(SceneEnum::Credits(CreditsScene::new()))
+});
+
 const ALL_USEABLE_ITEMS: &[UsableItem] = &[
     USE_SHOP_UPGRADE,
     USE_FISHING_ROD,
     USE_FISH,
     USE_TELESCOPE,
     USE_ALARM,
+    USE_CREDITS,
 ];
 
 pub struct ItemChance {

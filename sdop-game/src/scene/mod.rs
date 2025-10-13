@@ -1,5 +1,6 @@
 pub mod alarm_set_scene;
 pub mod breed_scene;
+pub mod credits_scene;
 pub mod death_scene;
 pub mod eat_scene;
 pub mod egg_hatch_scene;
@@ -115,6 +116,7 @@ define_scence_enum!(SceneEnum {
     StarGazing(star_gazing_scene::StarGazingScene),
     AlarmSet(alarm_set_scene::AlarmSetScene),
     Settings(settings_scene::SettingsScene),
+    Credits(credits_scene::CreditsScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
