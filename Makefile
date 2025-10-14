@@ -8,6 +8,8 @@ SDOP_PC_DIR := ./sdop-pc
 SDOP_WEB_DIR := ./sdop-web
 SDOP_PSP_DIR := ./sdop-psp
 SDOP_PICO_DIR := ./sdop-pico
+SDOP_C_DIR := ./sdop-c
+SDOP_PS2_DIR := ./sdop-c-test
 SDOP_SAVE_EDIT := ./sdop-save-edit
 
 .PHONY: build_all
@@ -52,6 +54,14 @@ build_wasm: make_output
 build_pico: make_output
 	cd $(SDOP_PICO_DIR) && cargo build --release --target=thumbv8m.main-none-eabihf
 	@zip $(ZIP_OPTIONS) $(OUTPUT_DIR)/sdop_pico.zip $(SDOP_PICO_DIR)/target/thumbv8m.main-none-eabihf/release/sdop-pico
+
+target/release/libsdop_c.a target/release/libsdop_c.d target/release/libsdop_c.so: $(SDOP_C_DIR)/src/lib.rs
+	cd $(SDOP_C_DIR) && cargo build --release
+
+.PHONY: build_sdop_c_test
+build_sdop_c_test: make_output target/release/libsdop_c.a
+	cd $(SDOP_PS2_DIR) && gcc main.c ../target/release/libsdop_c.a -o ../build/sdop_c_test
+
 
 .PHONY: build_save_editor_linux_x86
 build_save_editor_linux_x86: make_output
