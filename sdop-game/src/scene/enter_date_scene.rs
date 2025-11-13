@@ -3,12 +3,13 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    Button, assets,
+    assets,
     date_utils::{END_YEAR, START_YEAR},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
+    Button,
 };
 
 enum State {

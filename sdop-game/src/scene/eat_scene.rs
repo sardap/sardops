@@ -3,16 +3,16 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
     assets::{DynamicImage, IMAGE_STOMACH_MASK},
-    display::{CENTER_VEC, CENTER_X, GameDisplay},
+    display::{GameDisplay, CENTER_VEC, CENTER_X},
     food::Food,
     pet::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
-    sounds::{SONG_EATING, SONG_FAN_FARE, SongPlayOptions},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    sounds::{SongPlayOptions, SONG_EATING, SONG_FAN_FARE},
+    Timestamp,
 };
 
 #[derive(Clone, Copy)]

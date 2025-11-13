@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use glam::{U16Vec2, Vec2, usize};
+use glam::{usize, U16Vec2, Vec2};
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 

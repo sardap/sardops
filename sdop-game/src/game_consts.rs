@@ -17,6 +17,8 @@ pub const EVOLVE_CHECK_INTERVERAL: Duration = Duration::from_mins(1);
 
 pub const ALIEN_ODDS: f32 = 0.05;
 
+pub const STARTING_FILLED: f32 = 10.;
+
 const HOUR: Duration = Duration::from_hours(1);
 const DAY: Duration = Duration::from_days(1);
 

@@ -656,7 +656,7 @@ dependencies = [
  "embedded-io-async",
  "futures-core",
  "futures-sink",
- "heapless 0.8.0",
+ "heapless",
 ]
 
 [[package]]
@@ -688,7 +688,7 @@ version = "0.3.0"
 source = "git+https://github.com/embassy-rs/embassy?rev=c6371d7#c6371d7a9b828297eae43e61440f4cc0af7a3979"
 dependencies = [
  "embassy-executor-timer-queue",
- "heapless 0.8.0",
+ "heapless",
 ]
 
 [[package]]
@@ -792,7 +792,7 @@ checksum = "a1132a10f327a9dff9d0629124e8b26cb2b3a930ab3dfedbadd295c107955e92"
 dependencies = [
  "byteorder",
  "embedded-hal 1.0.0",
- "heapless 0.8.0",
+ "heapless",
  "log",
 ]
 
@@ -1009,16 +1009,6 @@ name = "heapless"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
-dependencies = [
- "hash32",
- "stable_deref_trait",
-]
-
-[[package]]
-name = "heapless"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1edcd5a338e64688fbdcb7531a846cfd3476a54784dcb918a0844682bc7ada5"
 dependencies = [
  "hash32",
  "stable_deref_trait",
@@ -1752,7 +1742,7 @@ dependencies = [
  "fastrand",
  "fixedstr",
  "glam",
- "heapless 0.9.1",
+ "heapless",
  "image",
  "libm",
  "log",
@@ -1764,6 +1754,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "tinybmp",
+ "walkdir",
 ]
 
 [[package]]

@@ -1,8 +1,11 @@
-#![feature(const_option_ops)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![cfg_attr(feature = "2025", feature(duration_constructors_lite))]
+#![feature(unsigned_is_multiple_of)]
 #![feature(specialization)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
-#![feature(duration_constructors_lite)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
@@ -18,8 +21,8 @@ use crate::{
     input::Input,
     pet::definition::PET_BABIES,
     scene::{
-        RenderArgs, SceneEnum, SceneManger, SceneTickArgs, home_scene::HomeScene,
-        new_pet_scene::NewPetScene,
+        home_scene::HomeScene, new_pet_scene::NewPetScene, RenderArgs, SceneEnum, SceneManger,
+        SceneTickArgs,
     },
     sim::tick_sim,
 };
@@ -75,7 +78,7 @@ pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
 #[cfg(feature = "notes")]
 pub use crate::notes::note_sound_file;
-pub use crate::save::{SAVE_SIZE, SaveFile};
+pub use crate::save::{SaveFile, SAVE_SIZE};
 pub use crate::sounds::Song;
 pub use sdop_common::Note;
 
@@ -212,9 +215,9 @@ impl Game {
         self.display.clear();
         let scene = self.scene_manger.scene_enum_mut();
         scene.render(&mut self.display, &mut scene_args);
-        // self.display.render_fps(&self.fps);
+        self.display.render_fps(&self.fps);
         // self.display.render_temperature(self.input().temperature());
-        self.fps.update(delta);
+        // self.fps.update(delta);
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {
@@ -239,7 +242,7 @@ impl Game {
 
     pub fn load_save(&mut self, timestamp: Timestamp, save: SaveFile) {
         let last_timestamp = save.last_timestamp;
-        let delta = timestamp - last_timestamp;
+        let delta = (timestamp - last_timestamp).min(Duration::from_days(7));
         save.load(&mut self.game_ctx);
         let mut scene_args = SceneTickArgs {
             timestamp: last_timestamp,

@@ -1,7 +1,7 @@
 use glam::Vec2;
 
 use crate::{
-    assets::{IMAGE_STOMACH_MASK, Image},
+    assets::{Image, IMAGE_STOMACH_MASK},
     display::{ComplexRender, ComplexRenderOption},
     geo::Rect,
 };

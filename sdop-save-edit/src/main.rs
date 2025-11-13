@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::{Parser, Subcommand};
-use sdop_game::{ALL_ITEMS, SaveFile};
+use sdop_game::{SaveFile, ALL_ITEMS};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]

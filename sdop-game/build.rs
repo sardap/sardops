@@ -1,4 +1,3 @@
-#![feature(trim_prefix_suffix)]
 use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
@@ -15,6 +14,7 @@ use std::{
     vec,
 };
 use strum_macros::{Display, EnumString};
+use walkdir::WalkDir;
 
 const ASSETS_PATH: &str = "../assets";
 const IMAGES_MISC_PATH: &str = "../assets/images/misc";
@@ -532,9 +532,14 @@ pub enum ItemCategory {
     Food,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize)]
 struct ItemEntry {
     name: String,
+    category: ItemCategory,
     cost: i32,
     rarity: RarityEnum,
     image: String,
@@ -542,7 +547,8 @@ struct ItemEntry {
     desc: String,
     #[serde(default)]
     fishing_odds: f32,
-    category: ItemCategory,
+    #[serde(default = "default_true")]
+    in_shop: bool,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -944,5 +950,11 @@ fn main() {
         .unwrap();
 
     println!("cargo::rerun-if-changed=build.rs");
-    println!("cargo::rerun-if-changed=assets");
+    for entry in WalkDir::new(ASSETS_PATH) {
+        if let Ok(entry) = entry {
+            if entry.file_type().is_file() {
+                println!("cargo:rerun-if-changed={}", entry.path().display());
+            }
+        }
+    }
 }

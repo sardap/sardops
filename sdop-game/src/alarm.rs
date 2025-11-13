@@ -5,11 +5,11 @@ use chrono::{Datelike, NaiveTime, TimeDelta, WeekdaySet};
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
     anime::{Anime, HasAnime},
     assets::{FRAMES_ALARM, FRAMES_ALARM_MASK, IMAGE_ALARM_0},
     bit_array::bytes_for_bits,
     sprite::{Sprite, SpriteMask},
+    Timestamp,
 };
 
 pub struct AlarmRender {
@@ -133,11 +133,11 @@ impl AlarmState {
     }
 
     pub fn tick(&mut self, time: &Timestamp) {
-        if let Some(triggered_time) = self.triggered_time
-            && *time - triggered_time > Duration::from_mins(3)
-        {
-            self.triggered_time = None;
-            self.acked = false;
+        if let Some(triggered_time) = self.triggered_time {
+            if *time - triggered_time > Duration::from_mins(3) {
+                self.triggered_time = None;
+                self.acked = false;
+            }
         }
 
         if self.config.should_trigger(time) && !self.acked {

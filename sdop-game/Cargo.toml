@@ -1,11 +1,12 @@
 [package]
 name = "sdop-game"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [features]
 serde = ["dep:serde", "fixedstr/serde", "chrono/serde", "sdop-common/serde", "dep:serde-big-array"]
 notes = []
+2025 = []
 
 [dependencies]
 sdop-common = { path= "../sdop-common" }
@@ -22,13 +23,13 @@ strum_macros = { version = "0.27", default-features = false }
 libm = { version = "0.2", default-features = false }
 embedded-graphics = { version = "0.8.1", default-features = false }
 tinybmp = "0.6.0"
-chrono = { git = "https://github.com/sardap/chrono", default-features = false, features = ["bincode"] }
+chrono = { workspace = true }
 const_for = "0.1.5"
 casey = "0.4.2"
 paste = "1.0.15"
 serde = { workspace = true, optional = true }
 serde-big-array = { version = "0.5", optional = true }
-heapless = "0.9.1"
+heapless = "0.8.0"
 
 [build-dependencies]
 sdop-common = { path = "../sdop-common", features = ["serde"] }
@@ -42,3 +43,4 @@ strum_macros = { version = "0.27" }
 computus = { version = "1.1.0", features = ["chrono"] }
 chrono = { git = "https://github.com/sardap/chrono" }
 solar-calendar-events = { git = "https://github.com/sardap/solar-calendar-events" }
+walkdir = "2"

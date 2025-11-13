@@ -1,12 +1,12 @@
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use chrono::DateTime;
 use chrono::Utc;
 use euclid::Box2D;
 use euclid::Point2D;
-use flate2::Compression;
 use flate2::write::GzDecoder;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use log::Level;
 use notan::draw::*;
 use notan::prelude::*;

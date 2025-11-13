@@ -4,7 +4,7 @@ use std::{
 };
 
 use asefile::AsepriteFile;
-use image::{RgbaImage, imageops};
+use image::{imageops, RgbaImage};
 
 const WIDTH: u32 = 365 * 10;
 const HEIGHT: u32 = 128;

@@ -1,11 +1,11 @@
 use core::f32;
 
 use embedded_graphics::prelude::*;
-use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
+use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
 use glam::Vec2;
 use strum_macros::EnumIter;
 
-use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
+use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
 use crate::fps::FPSCounter;
 use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
@@ -553,7 +553,7 @@ impl GameDisplay {
     }
 
     pub fn render_fps(&mut self, fps: &FPSCounter) {
-        use fixedstr::{str_format, str16};
+        use fixedstr::{str16, str_format};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
             Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
@@ -569,7 +569,7 @@ impl GameDisplay {
     }
 
     pub fn render_temperature(&mut self, temperature: f32) {
-        use fixedstr::{str_format, str16};
+        use fixedstr::{str16, str_format};
         let str = str_format!(str16, "{:.0}", temperature);
         let width = str.len() as f32 * 5. + 3.;
         self.render_rect_solid(
@@ -782,6 +782,67 @@ where
     }
 }
 
+pub struct VerticalPixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    image_data: &'a [u8],
+    index: usize,
+    convert: fn(BinaryColor) -> C,
+    scale: u32,
+}
+
+impl<'a, C> VerticalPixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    pub fn new(image_data: &'a [u8], convert: fn(BinaryColor) -> C, scale: u32) -> Self {
+        Self {
+            image_data,
+            index: 0,
+            convert,
+            scale: scale,
+        }
+    }
+}
+
+impl<'a, C> Iterator for VerticalPixelIterator<'a, C>
+where
+    C: PixelColor,
+{
+    type Item = C;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let total_pixels = WIDTH * HEIGHT;
+        if self.index >= total_pixels {
+            return None;
+        }
+
+        // Compute coordinates in vertical order
+        let screen_y = self.index % HEIGHT; // iterate down the column first
+        let screen_x = self.index / HEIGHT; // then move right to the next column
+
+        // Apply the vertical rotation logic
+        let rotated_x = screen_y;
+        let rotated_y = WIDTH - 1 - screen_x;
+
+        let x = rotated_x;
+        let y = rotated_y;
+
+        let byte_index = (y * WIDTH + x) / 8;
+        let bit_index = x % 8;
+
+        let color = if (self.image_data[byte_index] >> (7 - bit_index)) & 1 == 1 {
+            BinaryColor::On
+        } else {
+            BinaryColor::Off
+        };
+
+        self.index += 1;
+        Some((self.convert)(color))
+    }
+}
+
 pub struct DrawDisplay<'a, C> {
     image_data: &'a [u8],
     convert: fn(BinaryColor) -> C,
@@ -808,7 +869,10 @@ where
         D: DrawTarget<Color = C>,
     {
         let area = Rectangle::new(Point::new(0, 0), Size::new(WIDTH as u32, HEIGHT as u32));
-        target.fill_contiguous(&area, PixelIterator::new(self.image_data, self.convert))
+        target.fill_contiguous(
+            &area,
+            VerticalPixelIterator::new(self.image_data, self.convert, 1),
+        )
     }
 }
 

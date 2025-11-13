@@ -1,7 +1,7 @@
 use crate::{
     display::GameDisplay,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, inventory_scene::InventoryScene,
+        inventory_scene::InventoryScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
 };
 

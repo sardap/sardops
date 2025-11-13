@@ -3,15 +3,15 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    Button,
     assets::{self, Image},
     date_utils::DurationExt,
     death::DeathCause,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
     pet::{planet_location_from_upid, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
+    Button,
 };
 
 enum State {

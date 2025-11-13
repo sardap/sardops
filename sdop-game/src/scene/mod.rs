@@ -34,8 +34,8 @@ use core::time::Duration;
 use chrono::{NaiveDate, NaiveTime, WeekdaySet};
 
 use crate::{
-    Timestamp, display::GameDisplay, game_context::GameContext, input::Input,
-    scene::enter_text_scene::EnterTextStr,
+    display::GameDisplay, game_context::GameContext, input::Input,
+    scene::enter_text_scene::EnterTextStr, Timestamp,
 };
 
 #[macro_export]

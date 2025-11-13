@@ -3,12 +3,12 @@ use core::time::Duration;
 use bincode::{Decode, Encode};
 
 use crate::{
-    Timestamp,
     death::DeathCause,
     pet::{
-        PetInstance, PetName, PetParents, UniquePetId,
         definition::{PetDefinition, PetDefinitionId},
+        PetInstance, PetName, PetParents, UniquePetId,
     },
+    Timestamp,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -72,10 +72,10 @@ impl PetHistory {
 
     pub fn get_by_upid(&self, upid: UniquePetId) -> Option<&PetRecord> {
         for entry in &self.entires {
-            if let Some(entry) = entry
-                && entry.upid == upid
-            {
-                return Some(entry);
+            if let Some(entry) = entry {
+                if entry.upid == upid {
+                    return Some(entry);
+                }
             }
         }
 

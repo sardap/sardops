@@ -3,13 +3,14 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    Button, assets,
+    assets,
     date_utils::{END_YEAR, START_YEAR},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
-    sounds::{SONG_ERROR, SongPlayOptions},
+    sounds::{SongPlayOptions, SONG_ERROR},
+    Button,
 };
 
 enum FieldOption {
@@ -162,7 +163,7 @@ impl Scene for WeekdaySelectScene {
                 .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        let mut y = 50.;
+        let y = 50.;
 
         const BUFFER_X: f32 = 5.;
         const GAP_X: f32 = 20.;

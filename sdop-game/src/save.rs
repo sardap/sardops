@@ -1,10 +1,9 @@
 use bincode::{
-    Decode, Encode,
     error::{DecodeError, EncodeError},
+    Decode, Encode,
 };
 
 use crate::{
-    Game, Timestamp,
     alarm::{AlarmConfig, AlarmState},
     egg::SavedEgg,
     fish_tank::HomeFishTank,
@@ -12,11 +11,12 @@ use crate::{
     game_context::GameContext,
     items::Inventory,
     money::Money,
-    pet::{PetInstance, record::PetHistory},
-    poop::{MAX_POOPS, Poop},
+    pet::{record::PetHistory, PetInstance},
+    poop::{Poop, MAX_POOPS},
     shop::Shop,
     sounds::SoundOptions,
     suiter::SuiterSystem,
+    Game, Timestamp,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

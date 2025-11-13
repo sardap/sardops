@@ -4,20 +4,20 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    Button, Timestamp,
     assets::{self, Image},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32},
     fonts::FONT_VARIABLE_SMALL,
     game_context::GameContext,
     geo::Rect,
     pet::definition::PET_BABIES,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         home_scene::HomeScene,
         new_pet_scene::NewPetScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     sounds::{SoundKind, SoundOptions},
+    Button, Timestamp,
 };
 
 enum State {

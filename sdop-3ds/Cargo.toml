@@ -1,11 +1,11 @@
 [package]
 name = "sdop-3ds"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 bincode = "2.0.1"
 chrono = { git = "https://github.com/sardap/chrono" }
 ctru-rs = { git = "https://github.com/Rust3DS/ctru-rs" }
 ctru-sys = { git = "https://github.com/Rust3DS/ctru-rs" }
-sdop-game = { path = "../sdop-game" }
+sdop-game = { path = "../sdop-game", features = ["2025"] }

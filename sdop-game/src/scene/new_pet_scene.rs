@@ -2,16 +2,17 @@ use chrono::NaiveDateTime;
 use fixedstr::str_format;
 
 use crate::{
-    Timestamp,
     display::GameDisplay,
-    pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
+    game_consts::STARTING_FILLED,
+    pet::{definition::PetDefinitionId, gen_pid, PetInstance, PetName, PetParents, UniquePetId},
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
         home_scene::HomeScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sounds::{SONG_NEW_PET, SongPlayOptions},
+    sounds::{SongPlayOptions, SONG_NEW_PET},
+    Timestamp,
 };
 
 #[derive(Clone)]
@@ -71,6 +72,7 @@ impl Scene for NewPetScene {
         args.game_ctx.pet.born = args.timestamp;
         args.game_ctx.pet.name =
             str_format!(PetName, "{}", args.game_ctx.shared_out.enter_text_out);
+        args.game_ctx.pet.stomach_filled = STARTING_FILLED;
         args.game_ctx.sim_rng = fastrand::Rng::with_seed(args.game_ctx.pet.upid);
     }
 

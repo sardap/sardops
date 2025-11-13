@@ -1,44 +1,44 @@
 use core::{time::Duration, u8};
 
 use chrono::Timelike;
-use fixedstr::{str_format, str32};
+use fixedstr::{str32, str_format};
 use glam::Vec2;
 use sdop_common::{MelodyEntry, Note};
 
 use crate::{
-    Button, Song, WIDTH,
-    anime::{Anime, HasAnime, MaskedAnimeRender, tick_all_anime},
-    assets::{self, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK, Image},
+    anime::{tick_all_anime, Anime, HasAnime, MaskedAnimeRender},
+    assets::{self, Image, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK},
     date_utils::DurationExt,
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
+        ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
     },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     game_context::GameContext,
-    geo::{Rect, vec2_direction, vec2_distance},
+    geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
     pc::{PcKind, PcRender},
     pet::{
-        LifeStage, Mood,
-        definition::{PET_BRAINO_ID, PetAnimationSet},
+        definition::{PetAnimationSet, PET_BRAINO_ID},
         render::PetRender,
+        LifeStage, Mood,
     },
-    poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
+    poop::{poop_count, update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, death_scene::DeathScene,
-        egg_hatch_scene::EggHatchScene, evolve_scene::EvolveScene, food_select::FoodSelectScene,
-        game_select::GameSelectScene, heal_scene::HealScene, inventory_scene::InventoryScene,
-        pet_info_scene::PetInfoScene, pet_records_scene::PetRecordsScene,
-        place_furniture_scene::PlaceFurnitureScene, poop_clear_scene::PoopClearScene,
-        settings_scene::SettingsScene, shop_scene::ShopScene, suiters_scene::SuitersScene,
-        weekday_select_scene::WeekdaySelectScene,
+        death_scene::DeathScene, egg_hatch_scene::EggHatchScene, evolve_scene::EvolveScene,
+        food_select::FoodSelectScene, game_select::GameSelectScene, heal_scene::HealScene,
+        inventory_scene::InventoryScene, pet_info_scene::PetInfoScene,
+        pet_records_scene::PetRecordsScene, place_furniture_scene::PlaceFurnitureScene,
+        poop_clear_scene::PoopClearScene, settings_scene::SettingsScene, shop_scene::ShopScene,
+        suiters_scene::SuitersScene, weekday_select_scene::WeekdaySelectScene, RenderArgs, Scene,
+        SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
+    sounds::{SongPlayOptions, SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK},
     sprite::{BasicAnimeSprite, MusicNote, Snowflake, Sprite},
     temperature::TemperatureLevel,
-    tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
+    tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
+    Button, Song, WIDTH,
 };
 
 const WONDER_SPEED: f32 = 5.;
@@ -413,7 +413,6 @@ fn wonder_end(args: &mut SceneTickArgs) {
                     jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
                 });
             }
-            _ => {}
         }
     }
 
@@ -567,13 +566,13 @@ impl Scene for HomeScene {
         );
 
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
-            if let Some(egg) = &args.game_ctx.egg
-                && egg.hatch
-            {
-                return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
-                    *egg,
-                    args.game_ctx.pet.def_id,
-                )));
+            if let Some(egg) = &args.game_ctx.egg {
+                if egg.hatch {
+                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
+                        *egg,
+                        args.game_ctx.pet.def_id,
+                    )));
+                }
             }
 
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {

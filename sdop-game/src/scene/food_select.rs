@@ -1,16 +1,17 @@
 use glam::Vec2;
 
 use crate::{
-    HEIGHT, assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    food::{self, FOOD_COUNT, Food},
+    assets,
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, WIDTH_F32},
+    food::{self, Food, FOOD_COUNT},
     geo::Rect,
     items::ItemKind,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene,
-        home_scene::HomeScene,
+        eat_scene::EatScene, home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput,
+        SceneTickArgs,
     },
     sprite::Sprite,
+    HEIGHT,
 };
 
 struct FoodOption {

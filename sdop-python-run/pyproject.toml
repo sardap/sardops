@@ -1,0 +1,13 @@
+[project]
+name = "sdop-python-run"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pygame>=2.6.1",
+    "sdop-py",
+]
+
+[tool.uv.sources]
+sdop-py = { path = "../target/wheels/sdop_py-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl" }

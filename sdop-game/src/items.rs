@@ -14,8 +14,8 @@ use crate::{
     game_context::GameContext,
     pc::Program,
     scene::{
-        SceneEnum, alarm_set_scene::AlarmSetScene, credits_scene::CreditsScene, fishing_scene,
-        star_gazing_scene,
+        alarm_set_scene::AlarmSetScene, credits_scene::CreditsScene, fishing_scene,
+        star_gazing_scene, SceneEnum,
     },
 };
 
@@ -626,13 +626,13 @@ impl UsableItem {
     }
 }
 
-const USE_SHOP_UPGRADE: UsableItem = UsableItem::new(ItemKind::ShopUpgrade, |game_ctx| {
-    game_ctx
-        .shop
-        .set_item_count(game_ctx.shop.get_item_count() + 1);
+// const USE_SHOP_UPGRADE: UsableItem = UsableItem::new(ItemKind::ShopUpgrade, |game_ctx| {
+//     game_ctx
+//         .shop
+//         .set_item_count(game_ctx.shop.get_item_count() + 1);
 
-    UseItemOutput::new().with_consumed()
-});
+//     UseItemOutput::new().with_consumed()
+// });
 
 const USE_FISHING_ROD: UsableItem = UsableItem::new(ItemKind::FishingRod, |game_ctx| {
     let mut result =
@@ -670,7 +670,7 @@ const USE_CREDITS: UsableItem = UsableItem::new(ItemKind::CreditsScroll, |_| {
 });
 
 const ALL_USEABLE_ITEMS: &[UsableItem] = &[
-    USE_SHOP_UPGRADE,
+    // USE_SHOP_UPGRADE,
     USE_FISHING_ROD,
     USE_FISH,
     USE_TELESCOPE,

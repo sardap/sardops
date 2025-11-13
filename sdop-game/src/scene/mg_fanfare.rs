@@ -1,18 +1,18 @@
 use core::time::Duration;
 
-use fixedstr::{str_format, str32};
+use fixedstr::{str32, str_format};
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
-    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
     money::Money,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
-    sounds::{SONG_FAN_FARE, SONG_LOST, SongPlayOptions},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    sounds::{SongPlayOptions, SONG_FAN_FARE, SONG_LOST},
+    Timestamp,
 };
 
 enum State {

@@ -4,43 +4,43 @@ use glam::Vec2;
 use crate::{
     anime::HasAnime,
     assets,
-    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
-    sounds::{SONG_SHOP, SONG_SHOP_CLOSED, SongPlayOptions},
+    sounds::{SongPlayOptions, SONG_SHOP, SONG_SHOP_CLOSED},
     sprite::BasicAnimeSprite,
 };
 
 const OPEN_TIMES: [[NaiveTime; 2]; 7] = [
     // Monday
     [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
     ],
     [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
     ],
     [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
     ],
     // Sat
     [
-        NaiveTime::from_hms_opt(11, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
     ],
     [
-        NaiveTime::from_hms_opt(11, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
         NaiveTime::from_hms_opt(15, 00, 00).unwrap(),
     ],
 ];

@@ -6,8 +6,8 @@ use bincode::{Decode, Encode};
 
 use crate::{
     assets::StaticImage,
-    items::{BOOK_COUNT, ITEM_COUNT, Inventory, ItemKind},
-    pet::definition::{PET_BRAINO_ID, PetDefinitionId},
+    items::{Inventory, ItemKind, BOOK_COUNT, ITEM_COUNT},
+    pet::definition::{PetDefinitionId, PET_BRAINO_ID},
 };
 
 pub struct BookInfo {
