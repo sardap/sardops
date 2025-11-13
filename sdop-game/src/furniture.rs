@@ -5,18 +5,18 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    ROOM_TEMPTURE,
     alarm::AlarmRender,
     anime::HasAnime,
     assets::{self, Image},
     calendar::CalendarRender,
     clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
-    display::{CENTER_X, ComplexRender, HEIGHT_F32, WIDTH_F32},
+    display::{ComplexRender, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fish_tank::FishTankRender,
     invetro_light::InvetroLightRender,
-    scene::{SceneTickArgs, home_scene::HOME_SCENE_TOP_BORDER_RECT},
+    scene::{home_scene::HOME_SCENE_TOP_BORDER_RECT, SceneTickArgs},
     sprite::BasicSprite,
     thermometer::{RenderThermometerDigital, RenderThermometerMercury},
+    ROOM_TEMPTURE,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

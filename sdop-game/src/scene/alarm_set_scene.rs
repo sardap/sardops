@@ -5,10 +5,10 @@ use crate::{
     alarm::AlarmConfig,
     display::GameDisplay,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         home_scene::HomeScene,
         weekday_select_scene::WeekdaySelectScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
 };
 
@@ -38,15 +38,15 @@ impl Scene for AlarmSetScene {
     fn setup(&mut self, _args: &mut SceneTickArgs) {}
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
-        if let Some(days) = self.days
-            && let Some(time) = self.time
-        {
-            args.game_ctx
-                .alarm
-                .set_config(crate::alarm::AlarmConfig::Time {
-                    days: days,
-                    time: time,
-                });
+        if let Some(days) = self.days {
+            if let Some(time) = self.time {
+                args.game_ctx
+                    .alarm
+                    .set_config(crate::alarm::AlarmConfig::Time {
+                        days: days,
+                        time: time,
+                    });
+            }
         }
     }
 

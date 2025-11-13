@@ -1,11 +1,11 @@
 [package]
 name = "sdop-psp"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 chrono = { git = "https://github.com/sardap/chrono", default-features = false }
-sdop-game = { path = "../sdop-game" }
+sdop-game = { path = "../sdop-game", features = ["2025"] }
 psp = { version = "0.3.12", features = ["embedded-graphics"] }
 embedded-graphics = { version = "0.8.1", features = ["fixed_point"] }
 tinybmp = "0.6.0"

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "An example generated using the simple template"
 authors = ["sardap <paul@sarda.dev>"]
 license = "MIT"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 sdop-game = { path = "../sdop-game" }

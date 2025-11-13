@@ -3,14 +3,14 @@ use std::time::Duration;
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
-    DefaultTerminal, Frame,
     layout::{Constraint, Layout, Rect},
     style::Color,
     symbols::Marker,
     widgets::{
-        Widget,
         canvas::{Canvas, Rectangle},
+        Widget,
     },
+    DefaultTerminal, Frame,
 };
 use sdop_game::{Game, Timestamp};
 

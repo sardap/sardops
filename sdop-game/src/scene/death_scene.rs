@@ -10,16 +10,16 @@ use crate::{
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
+        ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
     },
     geo::Rect,
     pet::{
-        definition::{PET_BABIES, PetAnimationSet, PetDefinitionId},
+        definition::{PetAnimationSet, PetDefinitionId, PET_BABIES},
         record::PetRecord,
         render::PetRender,
     },
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
-    sounds::{SONG_DEATH, SongPlayOptions},
+    scene::{new_pet_scene::NewPetScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    sounds::{SongPlayOptions, SONG_DEATH},
     sprite::{BasicAnimeSprite, Snowflake, Sprite},
     stomach::StomachRender,
 };

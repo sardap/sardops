@@ -1,0 +1,16 @@
+[package]
+name = "sdop-c"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+
+[dependencies]
+sdop-game = { path = "../sdop-game" }
+chrono = { git = "https://github.com/sardap/chrono", default-features = false, features = ["bincode"] }
+
+
+[build-dependencies]
+cbindgen = "0.29.0"

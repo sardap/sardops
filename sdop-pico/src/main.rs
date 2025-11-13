@@ -281,12 +281,18 @@ async fn game_task(
         let target_fps: u64 = if game.low_power() { 5 } else { 60 };
         let frame_time: Duration = Duration::from_nanos(1_000_000_000 / target_fps);
 
+        // Always give oxygen to other tasks
+        Timer::after_micros(10).await;
         let frame_delta = Duration::from_micros((Instant::now() - last_time).as_micros());
         if frame_delta < frame_time {
-            let sleep_time = frame_time - frame_delta;
-            Timer::after_micros((sleep_time.as_micros() as u64).max(10)).await;
-        } else {
-            Timer::after_micros(10).await;
+            let mut sleep_time = (frame_time - frame_delta).as_micros();
+            while sleep_time > 0 {
+                Timer::after_micros(100.min(sleep_time) as u64).await;
+                if left_button.is_high() || middle_button.is_high() || right_button.is_high() {
+                    break;
+                }
+                sleep_time = sleep_time.checked_sub(100).unwrap_or(0);
+            }
         }
     }
 }

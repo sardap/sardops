@@ -1,0 +1,28 @@
+[package]
+name = "sdop-psvita"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = { git = "https://github.com/sardap/chrono", default-features = false, features = [ "now", "clock" ] }
+sdl2 = { version = "0.35.2", features = ["use-pkgconfig", "image"] }
+sdop-game = { path = "../sdop-game", features = ["2025"] }
+embedded-graphics = { version = "0.8.1", features = ["fixed_point"] }
+tinybmp = "0.6.0"
+fixedstr = "0.5.9"
+
+[package.metadata.vita]
+title_id = "SARDOPS01"
+title_name = "Sardops"
+assets = "static"
+build_std = "std,panic_unwind"
+vita_strip_flags = ["-g"]
+vita_make_fself_flags = ["-s"]
+vita_mksfoex_flags = ["-d", "ATTRIBUTE2=12"]
+
+[package.metadata.vita.profile.dev]
+# Strips symbols from the vita elf in dev profile. Optional, default is false
+strip_symbols = true
+[package.metadata.vita.profile.release]
+# Strips symbols from the vita elf in release profile. Optional, default is true
+strip_symbols = true

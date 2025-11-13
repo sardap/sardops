@@ -3,3 +3,5 @@ target/
 build/
 n64-heart-rust/
 sdop-sav.ron
+c_headers/
+sdop-c-example/sdop

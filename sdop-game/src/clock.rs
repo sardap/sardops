@@ -2,8 +2,8 @@ use chrono::{NaiveTime, Timelike};
 use glam::Vec2;
 
 use crate::{
-    assets::{self, IMAGE_DIGITAL_CLOCK_EMPTY, StaticImage},
-    display::{CENTER_VEC, ComplexRender, ComplexRenderOption},
+    assets::{self, StaticImage, IMAGE_DIGITAL_CLOCK_EMPTY},
+    display::{ComplexRender, ComplexRenderOption, CENTER_VEC},
 };
 
 pub enum AnalogueClockKind {

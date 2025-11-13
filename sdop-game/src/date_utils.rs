@@ -35,10 +35,10 @@ impl Timestamp {
         second: u32,
         nanos: u32,
     ) -> Option<Self> {
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
-            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, second, nanos)
-        {
-            return Some(Timestamp(NaiveDateTime::new(date, time)));
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
+            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, second, nanos) {
+                return Some(Timestamp(NaiveDateTime::new(date, time)));
+            }
         }
 
         None
@@ -105,10 +105,10 @@ impl<Context> bincode::Decode<Context> for Timestamp {
         let seconds: u32 = bincode::Decode::decode(decoder)?;
         let nano: u32 = bincode::Decode::decode(decoder)?;
 
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
-            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano)
-        {
-            return Ok(Self(NaiveDateTime::new(date, time)));
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
+            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
+                return Ok(Self(NaiveDateTime::new(date, time)));
+            }
         }
 
         Err(bincode::error::DecodeError::Other("bad date"))
@@ -126,10 +126,10 @@ impl<'de, Context> bincode::BorrowDecode<'de, Context> for Timestamp {
         let seconds: u32 = bincode::Decode::decode(decoder)?;
         let nano: u32 = bincode::Decode::decode(decoder)?;
 
-        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
-            && let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano)
-        {
-            return Ok(Self(NaiveDateTime::new(date, time)));
+        if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
+            if let Some(time) = NaiveTime::from_hms_nano_opt(hour, miniute, seconds, nano) {
+                return Ok(Self(NaiveDateTime::new(date, time)));
+            }
         }
 
         Err(bincode::error::DecodeError::Other("bad date"))
@@ -441,10 +441,10 @@ impl SpecialDayUpdater {
 
     pub fn non_trading_day(&self) -> Option<SpecialDayKind> {
         for day in self.special_days {
-            if let Some(day) = day
-                && !day.is_trading_day()
-            {
-                return Some(day);
+            if let Some(day) = day {
+                if !day.is_trading_day() {
+                    return Some(day);
+                }
             }
         }
 

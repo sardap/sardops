@@ -1,8 +1,8 @@
 use bincode::{Decode, Encode};
 
 use crate::{
+    items::{ItemCategory, ItemKind, COMMON_ITEMS, RARE_ITEMS},
     Timestamp,
-    items::{COMMON_ITEMS, ItemCategory, ItemKind, RARE_ITEMS},
 };
 
 const MAX_SHOP_ITEMS: usize = 20;

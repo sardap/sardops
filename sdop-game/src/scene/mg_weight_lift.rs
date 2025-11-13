@@ -4,20 +4,20 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    Button,
     assets::{self, Image},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32,
+        ComplexRenderOption, GameDisplay, Rotation, CENTER_VEC, CENTER_X, CENTER_Y, WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
-    input::{ALL_BUTTONS, random_button},
+    input::{random_button, ALL_BUTTONS},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
+    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::{BasicMaskedSprite, Sprite},
+    Button,
 };
 
 enum State {

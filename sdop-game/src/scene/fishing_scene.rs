@@ -1,24 +1,24 @@
 use core::time::Duration;
 
-use fixedstr::{str_format, str32};
+use fixedstr::{str32, str_format};
 use glam::Vec2;
 
 use crate::{
-    Button,
     anime::{HasAnime, MaskedAnimeRender},
     assets::{
         self, FRAMES_FISHING_POND_MOVING, IMAGE_FISHING_POND_LINE_MASK_0, IMAGE_FISHING_POND_STILL,
     },
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     input::random_button,
-    items::{FISHING_ITEM_ODDS, ItemKind, pick_item_from_set},
+    items::{pick_item_from_set, ItemKind, FISHING_ITEM_ODDS},
     money::Money,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
-    sounds::{SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST, SongPlayOptions},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    sounds::{SongPlayOptions, SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST},
     sprite::BasicAnimeSprite,
+    Button,
 };
 
 struct HitSeqEntry {
@@ -36,7 +36,9 @@ enum State {
     FanFare,
 }
 
+#[derive(PartialEq, Eq)]
 enum Winning {
+    Garbage,
     Item(ItemKind),
     Money(Money),
 }
@@ -52,6 +54,7 @@ pub struct FishingScene {
     fishing_line_item: MaskedAnimeRender,
     fishing_line_nothing: MaskedAnimeRender,
     winning: Option<Winning>,
+    garbage: MaskedAnimeRender,
 }
 
 const FISHING_POND_POS_CENTER: Vec2 = Vec2::new(
@@ -110,6 +113,11 @@ impl FishingScene {
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_NOTHIN_MASK,
             ),
             winning: None,
+            garbage: MaskedAnimeRender::new(
+                Vec2::new(CENTER_X, 20.),
+                &assets::FRAMES_GARBAGE,
+                &assets::FRAMES_GARBAGE_MASK,
+            ),
         }
     }
 }
@@ -164,6 +172,7 @@ impl Scene for FishingScene {
         self.fishing_line_pulled.anime().tick(args.delta);
         self.fishing_pond_moving.anime().tick(args.delta);
         self.pet_render.tick(args.delta);
+        self.garbage.anime().tick(args.delta);
         self.state_elasped += args.delta;
 
         match self.state {
@@ -217,7 +226,10 @@ impl Scene for FishingScene {
                     let possible = self.seq.iter().filter(|i| i.is_some()).count() as f32;
                     let percent = if hits == 0. { 0.05 } else { possible / hits };
                     if args.game_ctx.rng.f32() < percent {
-                        self.winning = Some(if args.game_ctx.rng.f32() < 0.5 {
+                        let percent = args.game_ctx.rng.f32();
+                        self.winning = Some(if percent < 0.6 {
+                            Winning::Garbage
+                        } else if percent < 0.7 {
                             Winning::Money(args.game_ctx.rng.i32(100..5000))
                         } else {
                             Winning::Item(pick_item_from_set(
@@ -229,11 +241,13 @@ impl Scene for FishingScene {
                         self.winning = None;
                     }
 
-                    self.pet_render.set_animation(if self.winning.is_some() {
-                        PetAnimationSet::Happy
-                    } else {
-                        PetAnimationSet::Sad
-                    });
+                    self.pet_render.set_animation(
+                        if self.winning.is_some() && self.winning != Some(Winning::Garbage) {
+                            PetAnimationSet::Happy
+                        } else {
+                            PetAnimationSet::Sad
+                        },
+                    );
 
                     self.state_elasped = Duration::ZERO;
                     self.state = State::PullOut;
@@ -257,7 +271,7 @@ impl Scene for FishingScene {
                     self.state = State::FanFare;
 
                     args.game_ctx.sound_system.push_song(
-                        if self.winning.is_some() {
+                        if self.winning.is_some() && self.winning != Some(Winning::Garbage) {
                             SONG_FAN_FARE
                         } else {
                             SONG_LOST
@@ -270,6 +284,7 @@ impl Scene for FishingScene {
                 if self.state_elasped > Duration::from_secs(5) {
                     if let Some(winnigs) = self.winning.take() {
                         match winnigs {
+                            Winning::Garbage => {}
                             Winning::Item(item_kind) => {
                                 args.game_ctx.inventory.add_item(item_kind, 1);
                             }
@@ -354,6 +369,9 @@ impl Scene for FishingScene {
             State::FanFare => {
                 if let Some(winnings) = &self.winning {
                     match winnings {
+                        Winning::Garbage => {
+                            display.render_complex(&self.garbage);
+                        }
                         Winning::Item(item_kind) => {
                             display.render_image_complex(
                                 (item_kind.image().size.x as f32 / 2.) as i32,

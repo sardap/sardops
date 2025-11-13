@@ -4,9 +4,8 @@ use bincode::{Decode, Encode};
 use heapless::Vec;
 
 use crate::{
-    Timestamp,
     book::BookHistory,
-    death::{DeathCause, get_threshold_odds, passed_threshold_chance},
+    death::{get_threshold_odds, passed_threshold_chance, DeathCause},
     food::Food,
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
@@ -20,13 +19,14 @@ use crate::{
     items::{Inventory, ItemKind},
     money::Money,
     pet::definition::{
-        PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID,
-        PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE_ID,
-        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet,
-        PetDefinition, PetDefinitionId,
+        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID,
+        PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID,
+        PET_HUMBIE_ID, PET_ICE_CUBE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID,
+        PET_WAS_GAURD_ID,
     },
-    poop::{Poop, poop_count},
+    poop::{poop_count, Poop},
     temperature::TemperatureLevel,
+    Timestamp,
 };
 
 pub mod definition;
@@ -235,11 +235,11 @@ impl PetInstance {
                 return;
             }
 
-            if let StomachMood::Starving { elapsed } = self.stomach_mood
-                && passed_threshold_chance(rng, DEATH_STARVE_THRESHOLDS, elapsed)
-            {
-                self.should_die = Some(DeathCause::Starvation);
-                return;
+            if let StomachMood::Starving { elapsed } = self.stomach_mood {
+                if passed_threshold_chance(rng, DEATH_STARVE_THRESHOLDS, elapsed) {
+                    self.should_die = Some(DeathCause::Starvation);
+                    return;
+                }
             }
 
             if passed_threshold_chance(rng, OLD_AGE_THRESHOLD, self.age) {

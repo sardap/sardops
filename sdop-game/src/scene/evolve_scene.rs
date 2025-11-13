@@ -3,12 +3,13 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    Timestamp, assets,
-    display::{CENTER_VEC, GameDisplay},
+    assets,
+    display::{GameDisplay, CENTER_VEC},
     pet::{definition::PetDefinitionId, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sounds::SongPlayOptions,
     sprite::Sprite,
+    Timestamp,
 };
 
 struct ExpandingCircle {

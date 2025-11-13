@@ -78,10 +78,10 @@ impl SongPlayOptions {
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
-struct SoundOptions {
-    play_music: bool,
-    play_effect: bool,
-    play_essential: bool,
+pub struct SoundOptions {
+    pub play_music: bool,
+    pub play_effect: bool,
+    pub play_essential: bool,
 }
 
 impl Default for SoundOptions {
@@ -141,5 +141,17 @@ impl SoundSystem {
 
     pub fn get_playing(&self) -> bool {
         self.playing
+    }
+
+    pub fn sound_options(&self) -> &SoundOptions {
+        &self.options
+    }
+
+    pub fn sound_options_mut(&mut self) -> &mut SoundOptions {
+        &mut self.options
+    }
+
+    pub fn set_sound_options(&mut self, options: SoundOptions) {
+        self.options = options;
     }
 }

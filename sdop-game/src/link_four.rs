@@ -1,6 +1,6 @@
 use crate::{
     assets::{self, StaticImage},
-    bit_array::{BitArray, bytes_for_bits},
+    bit_array::{bytes_for_bits, BitArray},
 };
 
 const ROWS: usize = 6;

@@ -1,13 +1,13 @@
 use glam::Vec2;
 
 use crate::{
-    Button,
     assets::{self, Image},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::Rect,
-    items::{FURNITURE_ITEMS, ItemKind},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    items::{ItemKind, FURNITURE_ITEMS},
+    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    Button,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -207,7 +207,8 @@ impl Scene for PlaceFurnitureScene {
                     let rect: Rect = Rect::new_center(
                         Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
-                    );
+                    )
+                    .grow(2.);
                     display.render_rect_outline(rect, true);
                 }
             }

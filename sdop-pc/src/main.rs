@@ -6,7 +6,6 @@ use sdl2::image::LoadTexture;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::sys::True;
 use sdop_game::ButtonStates;
 use sdop_game::SaveFile;
 use sdop_game::Timestamp;
@@ -99,8 +98,9 @@ pub fn main() {
     const TARGET_FPS: u64 = 60;
     const FRAME_TIME: Duration = Duration::from_nanos(1_000_000_000 / TARGET_FPS);
     let mut last_frame_time = Instant::now();
-
     let mut last_save_time = Instant::now();
+
+    let texture_creator = canvas.texture_creator();
 
     let mut input: ButtonStates = [sdop_game::ButtonState::Up; 3];
     'running: loop {
@@ -174,7 +174,6 @@ pub fn main() {
 
         game.tick(delta);
         game.refresh_display(delta);
-        let texture_creator = canvas.texture_creator();
         let texture = texture_creator
             .load_texture_bytes(game.get_display_bmp())
             .unwrap();
@@ -193,17 +192,17 @@ pub fn main() {
         canvas.present();
 
         let since_save = last_save_time.elapsed();
-        if since_save > Duration::from_secs(1)
-            && let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game)
-        {
-            match save {
-                Ok(bytes) => {
-                    let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
-                    let _ = fs.write_all(&bytes);
-                    last_save_time = Instant::now();
-                }
-                Err(err) => {
-                    panic!("Error wirting save {}", err);
+        if let Some(save) = SaveFile::gen_save_bytes(timestamp(), &game) {
+            if since_save > Duration::from_secs(1) {
+                match save {
+                    Ok(bytes) => {
+                        let mut fs = std::fs::File::create(SAVE_FILE_NAME).unwrap();
+                        let _ = fs.write_all(&bytes);
+                        last_save_time = Instant::now();
+                    }
+                    Err(err) => {
+                        panic!("Error wirting save {}", err);
+                    }
                 }
             }
         }
@@ -243,7 +242,7 @@ pub fn main() {
         let frame_elapsed = last_frame_time.elapsed();
         if frame_elapsed < FRAME_TIME {
             let sleep_time = FRAME_TIME - frame_elapsed;
-            // std::thread::sleep(sleep_time);
+            std::thread::sleep(sleep_time);
         }
     }
 }

@@ -2,11 +2,11 @@ use bincode::{Decode, Encode};
 use glam::Vec2;
 
 use crate::{
-    Timestamp,
     anime::{Anime, HasAnime},
     assets,
     scene::home_scene::WONDER_RECT,
     sprite::Sprite,
+    Timestamp,
 };
 
 pub const MAX_POOPS: usize = 5;
