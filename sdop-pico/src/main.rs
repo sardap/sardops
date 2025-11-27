@@ -230,10 +230,9 @@ async fn game_task(
             },
         ];
 
-        // Save every 5s
         if (loop_start - last_save) > embassy_time::Duration::from_secs(60) {
             last_save = loop_start;
-            if let Some(save) = game.get_save(timestamp) {
+            if let Some(save) = game.get_save(game.get_time()) {
                 if let Ok(save_bytes) = save.to_bytes() {
                     if let Err(err) =
                         fram::write(&mut spi, &mut cs, fram::SDOP_SAVE_ADDR, &save_bytes).await

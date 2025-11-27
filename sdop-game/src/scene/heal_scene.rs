@@ -138,8 +138,11 @@ impl Scene for HealScene {
             State::HealingScene => {
                 self.clock.update_time(&args.timestamp.inner().time());
                 self.hopstial_screen.anime().tick(args.delta);
-                self.pet_render.pos = Vec2::new(CENTER_X, HOPITAL_FLOOR_Y);
                 self.pet_render.set_animation(PetAnimationSet::Sleeping);
+                self.pet_render.pos = Vec2::new(
+                    CENTER_X,
+                    HOPITAL_FLOOR_Y - (self.pet_render.anime.current_frame().size.y as f32) / 2.,
+                );
 
                 if self.state_elapsed > self.heal_time {
                     self.state = State::LeavingRoom;

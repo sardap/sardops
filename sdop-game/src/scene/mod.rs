@@ -130,6 +130,27 @@ impl Default for SceneEnum {
     }
 }
 
+impl SceneEnum {
+    pub fn should_quit_on_idle(&self) -> bool {
+        match self {
+            SceneEnum::Eat(_)
+            | SceneEnum::GameSelect(_)
+            | SceneEnum::FoodSelect(_)
+            | SceneEnum::PetInfo(_)
+            | SceneEnum::Shop(_)
+            | SceneEnum::Fishing(_)
+            | SceneEnum::Inventory(_)
+            | SceneEnum::Suiters(_)
+            | SceneEnum::Heal(_)
+            | SceneEnum::StarGazing(_)
+            | SceneEnum::AlarmSet(_)
+            | SceneEnum::Settings(_)
+            | SceneEnum::Credits(_) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct SceneOutput {
     pub next_scene: Option<SceneEnum>,

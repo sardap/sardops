@@ -1,98 +1,50 @@
 (
-    name: "Fan Fare",
+    name: "fan_fare",
     melody: [
         (
-            note: G4,
-            duration: 8,
-        ),
-        (
-            note: C5,
-            duration: 8,
-        ),
-        (
-            note: E5,
-            duration: 8,
-        ),
-        (
-            note: G5,
-            duration: 2,
-        ),
-        (
-            note: E5,
-            duration: 4,
-        ),
-        (
-            note: G5,
-            duration: 4,
-        ),
-        (
-            note: C6,
-            duration: 2,
-        ),
-        (
-            note: G5,
-            duration: 4,
-        ),
-        (
-            note: E5,
-            duration: 4,
-        ),
-        (
-            note: C5,
-            duration: 2,
-        ),
-        (
-            note: C5,
+            note: Cs5,
             duration: 6,
         ),
         (
-            note: D5,
-            duration: 6,
+            note: Cs5,
+            duration: 12,
         ),
         (
-            note: E5,
-            duration: 6,
+            note: Cs5,
+            duration: 13,
+        ),
+        (
+            note: Rest,
+            duration: 8,
+        ),
+        (
+            note: Gs4,
+            duration: 5,
+        ),
+        (
+            note: As4,
+            duration: 5,
+        ),
+        (
+            note: Cs5,
+            duration: 16,
+        ),
+        (
+            note: Ds5,
+            duration: 12,
         ),
         (
             note: F5,
-            duration: 6,
+            duration: 16,
         ),
         (
-            note: G5,
-            duration: 2,
+            note: Ds5,
+            duration: 5,
         ),
         (
-            note: G5,
-            duration: 6,
-        ),
-        (
-            note: A5,
-            duration: 6,
-        ),
-        (
-            note: B5,
-            duration: 6,
-        ),
-        (
-            note: C6,
-            duration: 6,
-        ),
-        (
-            note: D6,
-            duration: 2,
-        ),
-        (
-            note: G5,
-            duration: 4,
-        ),
-        (
-            note: E5,
-            duration: 4,
-        ),
-        (
-            note: C5,
-            duration: 2,
+            note: Cs5,
+            duration: 3,
         ),
     ],
-    tempo: 120,
+    tempo: 85,
 )
