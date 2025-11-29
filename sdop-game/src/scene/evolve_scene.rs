@@ -4,10 +4,10 @@ use glam::Vec2;
 
 use crate::{
     assets,
-    display::{GameDisplay, CENTER_VEC},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC},
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sounds::SongPlayOptions,
+    sounds::{SongPlayOptions, SoundOptions, SONG_FAN_FARE_LONG},
     sprite::Sprite,
     Timestamp,
 };
@@ -121,7 +121,9 @@ impl Scene for EvolveScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
-        args.game_ctx.pet.evolve(self.to_pet_render.def_id());
+        args.game_ctx
+            .pet
+            .evolve(self.to_pet_render.def_id(), args.timestamp);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
@@ -138,6 +140,13 @@ impl Scene for EvolveScene {
         if self.flash_timer > Duration::from_millis(300).mul_f32(self.flash_speed) {
             self.show_from = !self.show_from;
             self.flash_timer = Duration::ZERO;
+        }
+
+        if !matches!(self.state, State::Complete) {
+            args.game_ctx.sound_system.push_song(
+                crate::sounds::SONG_EVOLVE,
+                SongPlayOptions::new().with_essential(),
+            );
         }
 
         match self.state {
@@ -186,6 +195,9 @@ impl Scene for EvolveScene {
             State::White => {
                 if args.timestamp - self.start_time > Duration::from_secs(12) {
                     self.state = State::Complete;
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_FAN_FARE_LONG, SongPlayOptions::new().with_music());
                 }
             }
             State::Complete => {

@@ -12,7 +12,19 @@ pub type ShopItemSet = [ItemKind; MAX_SHOP_ITEMS];
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, Encode, Decode)]
 pub struct Shop {
-    item_count: u32,
+    cata_0: u32,
+    cata_1: u32,
+    cata_2: u32,
+}
+
+impl Default for Shop {
+    fn default() -> Self {
+        Self {
+            cata_0: 2,
+            cata_1: 2,
+            cata_2: 1,
+        }
+    }
 }
 
 impl Shop {
@@ -25,7 +37,7 @@ impl Shop {
         let counts = [
             (
                 &[ItemCategory::Furniture, ItemCategory::Usable] as &[ItemCategory],
-                2,
+                self.cata_0,
             ),
             (
                 &[
@@ -33,9 +45,9 @@ impl Shop {
                     ItemCategory::Book,
                     ItemCategory::Software,
                 ] as &[ItemCategory],
-                2,
+                self.cata_1,
             ),
-            (&[ItemCategory::Food] as &[ItemCategory], 1),
+            (&[ItemCategory::Food] as &[ItemCategory], self.cata_2),
         ];
 
         for (catas, count) in counts {
@@ -49,7 +61,7 @@ impl Shop {
                 for cata in catas {
                     if next < max + cata.items().len() {
                         let item = cata.items()[next - max];
-                        if !result.contains(&item) {
+                        if !result.contains(&item) && item != ItemKind::RecipeBiscuit {
                             result[top] = item;
                             top += 1;
                             added += 1;
@@ -69,16 +81,10 @@ impl Shop {
     }
 
     pub fn get_item_count(&self) -> u32 {
-        self.item_count
+        self.cata_0
     }
 
     pub fn set_item_count(&mut self, item_count: u32) {
-        self.item_count = item_count;
-    }
-}
-
-impl Default for Shop {
-    fn default() -> Self {
-        Self { item_count: 2 }
+        self.cata_0 = item_count;
     }
 }

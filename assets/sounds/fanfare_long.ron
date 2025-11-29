@@ -106,5 +106,5 @@
             duration: 4,
         ),
     ],
-    tempo: 85,
+    tempo: 60,
 )

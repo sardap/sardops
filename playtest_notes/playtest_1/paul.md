@@ -17,16 +17,21 @@
 -  
 
 ### Issues / Bugs
--  Sardop is sad on start
--  Repeat buzz for poo every so offten
-- Store opens too late
-- never sell bisuct in store
-- Not clear in store when you buy something
-- Not clear in store if you can aford something
-- Need to play fanfare after evolve is complete 
-- Need some sort of quick expoloration minigame send your guy off to do something
-- Remove tic tac toe
-- Hostpial bed is too low
+- [X] Sardop is sad on start
+- [X] Repeat buzz for poo every so offten
+- [X] Store opens too late
+- [X] never sell bisuct in store
+- [X] Not clear in store when you buy something
+- [X] Not clear in store if you can aford something
+- [X] Need to play fanfare after evolve is complete 
+- [ ] Set bed time range 
+- [X] Poop too much way too much
+- [X] Fish are unqiue for some reason
+- [X] Life stage history
+- [ ] Don't allow duplicate furintiuice unless mutiple owned
+- [ ] Is ready disabled book if all are disabled (books should be enabled by default)
+- [ ] Need some sort of quick expoloration minigame send your guy off to do something
+- [ ] Remove tic tac toe
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

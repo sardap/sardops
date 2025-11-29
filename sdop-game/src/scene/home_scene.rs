@@ -38,7 +38,7 @@ use crate::{
     sprite::{BasicAnimeSprite, MusicNote, Snowflake, Sprite},
     temperature::TemperatureLevel,
     tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
-    Button, Song, WIDTH,
+    Button, Song, Timestamp, WIDTH,
 };
 
 const WONDER_SPEED: f32 = 5.;
@@ -264,6 +264,7 @@ pub struct HomeSceneData {
     snow_flakes: [Snowflake; 30],
     music_notes: [MusicNote; 7],
     last_poop_count: usize,
+    last_poop_sound: Timestamp,
     last_is_sick: bool,
     last_was_hungry: bool,
 }
@@ -300,6 +301,7 @@ impl Default for HomeSceneData {
             snow_flakes: Default::default(),
             music_notes: Default::default(),
             last_poop_count: 0,
+            last_poop_sound: Timestamp::default(),
             last_is_sick: false,
             last_was_hungry: false,
         }
@@ -519,7 +521,12 @@ impl Scene for HomeScene {
         // Penidng sounds
         {
             let poop_count = poop_count(&args.game_ctx.poops);
-            if args.game_ctx.home.last_poop_count != poop_count {
+            if args.game_ctx.home.last_poop_count != poop_count
+                || (args.game_ctx.home.last_poop_count > 0
+                    && args.timestamp - args.game_ctx.home.last_poop_sound
+                        > Duration::from_hours(1))
+            {
+                args.game_ctx.home.last_poop_sound = args.timestamp;
                 args.game_ctx.home.last_poop_count = poop_count;
                 if poop_count > 0 {
                     args.game_ctx
@@ -1130,13 +1137,19 @@ impl Scene for HomeScene {
 
         const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.size.y as i32 + 1;
         display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
-        let age_str = fixedstr::str_format!(str32, "{:.0}", pet.age.as_mins());
-        display.render_text(
+        let hours = pet.age.as_hours() as i32;
+        let days = hours / 24;
+        let hours = hours % 24;
+        let str = str_format!(str32, "{}d{}h", days, hours);
+        display.render_text_complex(
             Vec2::new(
-                STOMACH_END_X as f32 + assets::IMAGE_AGE_SYMBOL.size.x as f32,
-                -1.,
+                STOMACH_END_X as f32 + assets::IMAGE_AGE_SYMBOL.size.x as f32 + 2.,
+                1.,
             ),
-            &age_str,
+            &str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_font(&FONT_VARIABLE_SMALL),
         );
 
         let money_str = fixedstr::str_format!(str32, "${}", args.game_ctx.money);

@@ -15,6 +15,7 @@ pub const WIDTH_F32: f32 = WIDTH as f32;
 pub const HEIGHT: usize = 128;
 pub const HEIGHT_F32: f32 = HEIGHT as f32;
 pub const CENTER_X: f32 = WIDTH_F32 / 2.;
+pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
 
@@ -296,7 +297,6 @@ impl GameDisplay {
         }
     }
 
-    #[allow(dead_code)]
     pub fn render_line(&mut self, start: Vec2, end: Vec2, white: bool) {
         let (mut x0, mut y0) = (start.x as i32, start.y as i32);
         let (x1, y1) = (end.x as i32, end.y as i32);

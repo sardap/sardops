@@ -47,7 +47,7 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
             pet.tick_death(delta, &mut args.game_ctx.sim_rng, sleeping, poop_count);
             pet.tick_evolve(delta, &args.game_ctx.inventory);
             pet.tick_illness(&mut args.game_ctx.sim_rng, delta);
-            if pet.should_poop(sleeping) {
+            if pet.should_poop(&mut args.game_ctx.sim_rng, sleeping) {
                 add_poop(&mut args.game_ctx.poops, args.timestamp);
             }
             args.game_ctx

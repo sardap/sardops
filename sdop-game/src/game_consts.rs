@@ -1,5 +1,7 @@
 use core::{ops::Range, time::Duration};
 
+use chrono::NaiveTime;
+
 use crate::{death::Threshold, money::Money};
 
 pub const UI_FLASH_TIMER: Duration = Duration::from_millis(250);
@@ -196,4 +198,37 @@ pub const SPLACE_LOCATIONS: &[&str] = &[
     "APOGEE",
     "MACHO",
     "WISE",
+];
+
+pub const SHOP_OPEN_TIMES: [[NaiveTime; 2]; 7] = [
+    // Monday
+    [
+        NaiveTime::from_hms_opt(8, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
+    ],
+    [
+        NaiveTime::from_hms_opt(8, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
+    ],
+    [
+        NaiveTime::from_hms_opt(8, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
+    ],
+    [
+        NaiveTime::from_hms_opt(8, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
+    ],
+    [
+        NaiveTime::from_hms_opt(8, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
+    ],
+    // Sat
+    [
+        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
+    ],
+    [
+        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
+        NaiveTime::from_hms_opt(15, 00, 00).unwrap(),
+    ],
 ];

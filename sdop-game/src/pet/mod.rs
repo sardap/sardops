@@ -1,7 +1,11 @@
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use fastrand::Rng;
 use heapless::Vec;
+use strum::EnumCount;
+use strum_macros::{EnumCount, EnumIter};
 
 use crate::{
     book::BookHistory,
@@ -35,6 +39,8 @@ pub mod render;
 
 pub type PetName = fixedstr::str7;
 
+const POOP_SPAWN_MAGIC_NUMBER: Duration = Duration::from_days(7);
+
 pub fn random_name(rng: &mut fastrand::Rng) -> PetName {
     let mut result = PetName::new();
 
@@ -49,6 +55,59 @@ pub fn random_name(rng: &mut fastrand::Rng) -> PetName {
 pub enum StomachMood {
     Full { elapsed: Duration },
     Starving { elapsed: Duration },
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+pub struct LifeStageHistoryEntry {
+    pub def_id: PetDefinitionId,
+    pub when: Timestamp,
+}
+
+const DEFAULT_LIFE_STAGE_ENTRY: LifeStageHistoryEntry = LifeStageHistoryEntry {
+    def_id: 0,
+    when: Timestamp::new(NaiveDateTime::new(
+        NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+        NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+    )),
+};
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Encode, Decode, Copy, Clone)]
+pub struct LifeStageHistory {
+    history: [Option<LifeStageHistoryEntry>; LifeStage::COUNT],
+}
+
+impl LifeStageHistory {
+    pub fn new() -> Self {
+        Self {
+            history: Default::default(),
+        }
+    }
+
+    pub fn add_def(&mut self, def_id: PetDefinitionId, when: Timestamp) {
+        let entry = LifeStageHistoryEntry { def_id, when };
+
+        match PetDefinition::get_by_id(def_id).life_stage {
+            LifeStage::Baby => self.history[0] = Some(entry),
+            LifeStage::Child => self.history[1] = Some(entry),
+            LifeStage::Adult => self.history[2] = Some(entry),
+        }
+    }
+
+    pub fn get_last(&self) -> &LifeStageHistoryEntry {
+        for entry in self.history.iter().rev() {
+            if let Some(entry) = entry {
+                return entry;
+            }
+        }
+
+        &DEFAULT_LIFE_STAGE_ENTRY
+    }
+
+    pub fn inner(&self) -> &[Option<LifeStageHistoryEntry>; LifeStage::COUNT] {
+        &self.history
+    }
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -132,13 +191,14 @@ pub struct PetInstance {
     pub total_starve_time: Duration,
     pub stomach_filled: f32,
     pub extra_weight: f32,
-    pub since_poop: Duration,
+    pub until_poop: Duration,
     pub since_game: Duration,
     pub since_death_check: Duration,
     pub since_evolve_check: Duration,
     pub should_die: Option<DeathCause>,
     should_evolve: Option<PetDefinitionId>,
     pub parents: Option<PetParents>,
+    pub life_stage_history: LifeStageHistory,
     mood: Mood,
     should_breed: bool,
     pub book_history: BookHistory,
@@ -206,7 +266,7 @@ impl PetInstance {
             return;
         }
 
-        self.since_poop += delta;
+        self.until_poop = self.until_poop.checked_sub(delta).unwrap_or_default();
     }
 
     pub fn tick_since_game(&mut self, delta: Duration, sleep: bool) {
@@ -280,14 +340,18 @@ impl PetInstance {
         self.should_die = Some(DeathCause::Leaving);
     }
 
-    pub fn should_poop(&mut self, sleeping: bool) -> bool {
-        if !sleeping
-            && self
-                .since_poop
-                .mul_f32(self.definition().poop_time_multiplier())
-                > POOP_INTERVNAL
-        {
-            self.since_poop = Duration::ZERO;
+    fn get_next_poop_duration(&self, rng: &mut Rng) -> Duration {
+        let range = self.definition().poop_interval_range();
+        Duration::from_millis(rng.u64(range.start.as_millis() as u64..range.end.as_millis() as u64))
+    }
+
+    pub fn should_poop(&mut self, rng: &mut Rng, sleeping: bool) -> bool {
+        if self.until_poop > POOP_SPAWN_MAGIC_NUMBER {
+            self.until_poop = self.get_next_poop_duration(rng);
+        }
+
+        if !sleeping && self.until_poop <= Duration::ZERO {
+            self.until_poop = self.get_next_poop_duration(rng);
             return true;
         }
 
@@ -377,10 +441,11 @@ impl PetInstance {
         self.should_evolve
     }
 
-    pub fn evolve(&mut self, next: PetDefinitionId) {
+    pub fn evolve(&mut self, next: PetDefinitionId, timestamp: Timestamp) {
         self.life_stage_age = Duration::ZERO;
         self.def_id = next;
         self.should_evolve = None;
+        self.life_stage_history.add_def(next, timestamp);
     }
 
     pub fn stomach_mood(&self) -> StomachMood {
@@ -539,9 +604,10 @@ impl PetInstance {
 
 impl Default for PetInstance {
     fn default() -> Self {
+        let def_id = crate::pet::definition::PET_BLOB_ID;
         Self {
             upid: 0,
-            def_id: crate::pet::definition::PET_BLOB_ID,
+            def_id,
             name: fixedstr::str_format!(PetName, "AAAAAAAA"),
             born: Timestamp::default(),
             age: Duration::ZERO,
@@ -552,13 +618,14 @@ impl Default for PetInstance {
             total_starve_time: Duration::ZERO,
             stomach_filled: 0.,
             extra_weight: 0.,
-            since_poop: Duration::ZERO,
+            until_poop: POOP_SPAWN_MAGIC_NUMBER * 2,
             since_game: Duration::ZERO,
             since_death_check: Duration::ZERO,
             since_evolve_check: Duration::ZERO,
             should_evolve: None,
             should_die: None,
             parents: None,
+            life_stage_history: LifeStageHistory::new(),
             mood: Mood::Normal,
             should_breed: false,
             book_history: Default::default(),
@@ -590,9 +657,28 @@ impl Mood {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumIter, EnumCount)]
 pub enum LifeStage {
     Baby,
     Child,
     Adult,
+}
+
+impl LifeStage {
+    pub fn from_index(index: usize) -> Self {
+        match index {
+            0 => Self::Baby,
+            1 => Self::Child,
+            2 => Self::Adult,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            LifeStage::Baby => "BABY",
+            LifeStage::Child => "CHILD",
+            LifeStage::Adult => "ADULT",
+        }
+    }
 }

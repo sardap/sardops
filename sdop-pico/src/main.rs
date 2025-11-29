@@ -269,11 +269,6 @@ async fn game_task(
         // Draw into display buffer
         game.drawable(|c| c).draw(&mut display).unwrap();
 
-        let str = str_format!(fixedstr::str32, "{}", (loop_start - last_save).as_secs());
-        Text::with_baseline(&str, Point::new(40, 06), text_style, Baseline::Top)
-            .draw(&mut display)
-            .unwrap();
-
         display.flush().unwrap();
 
         // Target FPS pacing
