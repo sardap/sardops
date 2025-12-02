@@ -74,7 +74,7 @@
         rarity: Common,
         cost: 1000,
         image: "fish_item",
-        unique: true,
+        unique: false,
         desc: "A fish for a Fish Tank. Fish tank not included.",
         fishing_odds: 0.8,
     ),

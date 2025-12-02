@@ -2,13 +2,13 @@
     name: "Error",
     melody: [
         (
-            note: A3,
-            duration: 8,
+            note: Ds5,
+            duration: 10,
         ),
         (
-            note: A1,
-            duration: 6,
+            note: Cs3,
+            duration: 8,
         ),
     ],
-    tempo: 160,
+    tempo: 66,
 )

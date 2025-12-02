@@ -1,49 +1,23 @@
+use core::time::Duration;
+
 use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
 use glam::Vec2;
 
 use crate::{
     anime::HasAnime,
-    assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X},
+    assets::{self, Image},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y},
     fonts::FONT_VARIABLE_SMALL,
+    game_consts::SHOP_OPEN_TIMES,
+    geo::Rect,
+    particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs},
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
-    sounds::{SongPlayOptions, SONG_SHOP, SONG_SHOP_CLOSED},
+    sounds::{self, SongPlayOptions, SONG_SHOP, SONG_SHOP_CLOSED},
     sprite::BasicAnimeSprite,
 };
 
-const OPEN_TIMES: [[NaiveTime; 2]; 7] = [
-    // Monday
-    [
-        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
-    ],
-    [
-        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
-    ],
-    [
-        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(19, 00, 00).unwrap(),
-    ],
-    [
-        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
-    ],
-    [
-        NaiveTime::from_hms_opt(9, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(21, 00, 00).unwrap(),
-    ],
-    // Sat
-    [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(17, 00, 00).unwrap(),
-    ],
-    [
-        NaiveTime::from_hms_opt(10, 00, 00).unwrap(),
-        NaiveTime::from_hms_opt(15, 00, 00).unwrap(),
-    ],
-];
+const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(500);
 
 enum State {
     Closed,
@@ -56,6 +30,8 @@ pub struct ShopScene {
     state: State,
     shop_keeper: BasicAnimeSprite,
     closed_sign: BasicAnimeSprite,
+    sign_shake_remaning: Duration,
+    particle_system: ParticleSystem<50, 1>,
 }
 
 impl Default for ShopScene {
@@ -77,6 +53,8 @@ impl ShopScene {
                 CENTER_VEC + Vec2::new(0., -7.),
                 &assets::FRAMES_SHOP_SIGN_CLOSED,
             ),
+            sign_shake_remaning: Duration::ZERO,
+            particle_system: ParticleSystem::default(),
         }
     }
 
@@ -93,7 +71,7 @@ impl Scene for ShopScene {
             .anime()
             .set_random_frame(&mut args.game_ctx.rng);
 
-        let opening_times = OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
+        let opening_times = SHOP_OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
         if args.timestamp.inner().time() < opening_times[0]
             || args.timestamp.inner().time() > opening_times[1]
             || args.game_ctx.speical_days.is_non_trading_day()
@@ -109,17 +87,15 @@ impl Scene for ShopScene {
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.shop_keeper.anime().tick(args.delta);
 
-        if !args.game_ctx.sound_system.get_playing() {
-            if matches!(self.state, State::Closed) {
-                args.game_ctx
-                    .sound_system
-                    .push_song(SONG_SHOP_CLOSED, SongPlayOptions::new().with_music());
-            } else {
-                args.game_ctx
-                    .sound_system
-                    .push_song(SONG_SHOP, SongPlayOptions::new().with_music());
-            }
-        }
+        self.sign_shake_remaning = self
+            .sign_shake_remaning
+            .checked_sub(args.delta)
+            .unwrap_or_default();
+
+        self.particle_system.tick(&mut ParticleTickArgs::new(
+            args.delta,
+            &mut args.game_ctx.rng,
+        ));
 
         match self.state {
             State::Closed => {
@@ -127,16 +103,30 @@ impl Scene for ShopScene {
                 if args.input.any_pressed() {
                     return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
                 }
-                let opening_times = OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
+                let opening_times =
+                    SHOP_OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
                 if args.timestamp.inner().time() > opening_times[0]
                     && args.timestamp.inner().time() < opening_times[1]
                     && !args.game_ctx.speical_days.is_non_trading_day()
                 {
                     self.state = State::ShopKeeper;
                 }
+
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_SHOP_CLOSED, SongPlayOptions::new().with_music());
+                }
             }
             State::ShopKeeper => {
+                if !args.game_ctx.sound_system.get_playing() {
+                    args.game_ctx
+                        .sound_system
+                        .push_song(SONG_SHOP, SongPlayOptions::new().with_music());
+                }
+
                 if args.input.pressed(crate::Button::Right) {
+                    args.game_ctx.sound_system.clear_song();
                     self.state = State::Selected(0);
                 }
                 if args.input.pressed(crate::Button::Left) {
@@ -145,12 +135,40 @@ impl Scene for ShopScene {
             }
             State::Selected(selected) => {
                 let current = self.for_sale[selected];
-                if args.input.pressed(crate::Button::Middle)
-                    && args.game_ctx.money > current.cost()
-                    && !(current.unique() && args.game_ctx.inventory.has_item(current))
-                {
-                    args.game_ctx.inventory.add_item(current, 1);
-                    args.game_ctx.money -= current.cost();
+                if args.input.pressed(crate::Button::Middle) {
+                    if args.game_ctx.money > current.cost()
+                        && !(current.unique() && args.game_ctx.inventory.has_item(current))
+                    {
+                        args.game_ctx.inventory.add_item(current, 1);
+                        args.game_ctx.money -= current.cost();
+                        args.game_ctx.sound_system.push_song(
+                            sounds::SONG_BUY_CHIME,
+                            SongPlayOptions::new().with_effect(),
+                        );
+                        self.particle_system.run_once_spwaner(
+                            |args| {
+                                Some((
+                                    ParticleTemplate::new(
+                                        Duration::from_millis(1000)..Duration::from_millis(2000),
+                                        Rect::new_top_left(
+                                            Vec2::new(10., 80.),
+                                            Vec2::new(40., 40.),
+                                        ),
+                                        Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
+                                        &[&assets::IMAGE_MONEY_PARTICLE],
+                                    ),
+                                    20,
+                                ))
+                            },
+                            &mut ParticleTickArgs::new(args.delta, &mut args.game_ctx.rng),
+                        );
+                        self.sign_shake_remaning = SIGN_SHAKE_DURATION;
+                    } else {
+                        args.game_ctx
+                            .sound_system
+                            .push_song(sounds::SONG_ERROR, SongPlayOptions::new().with_effect());
+                        self.sign_shake_remaning = SIGN_SHAKE_DURATION;
+                    }
                 }
 
                 let mut selected = selected as isize;
@@ -206,7 +224,7 @@ impl Scene for ShopScene {
                     );
                 } else {
                     const X_OFFSET: f32 = 8.;
-                    for (i, time) in OPEN_TIMES.iter().enumerate() {
+                    for (i, time) in SHOP_OPEN_TIMES.iter().enumerate() {
                         let day = chrono::Weekday::try_from(i as u8).unwrap();
                         let open = time[0];
                         let closed = time[1];
@@ -298,7 +316,7 @@ impl Scene for ShopScene {
                     None => NaiveDate::MAX,
                 };
                 // Set time to open
-                let open_time = OPEN_TIMES[tomrrow.weekday() as usize][0];
+                let open_time = SHOP_OPEN_TIMES[tomrrow.weekday() as usize][0];
                 let tomrrow = NaiveDateTime::new(tomrrow, open_time);
                 let mut midnight_in = tomrrow - *args.timestamp.inner();
                 let hours = midnight_in.num_hours();
@@ -326,23 +344,8 @@ impl Scene for ShopScene {
             State::Selected(selected) => {
                 const BUFFER_Y: f32 = 8.;
                 let item = self.for_sale[selected];
-                let mut y = 20.;
+                let mut y = 4.;
                 let str = fixedstr::str_format!(fixedstr::str12, "BANK ${}", args.game_ctx.money);
-                display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_center()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += BUFFER_Y + 3.;
-                let str = fixedstr::str_format!(
-                    fixedstr::str12,
-                    "#{} OWN {}",
-                    selected + 1,
-                    args.game_ctx.inventory.item_count(item)
-                );
                 display.render_text_complex(
                     Vec2::new(CENTER_X, y),
                     &str,
@@ -370,36 +373,40 @@ impl Scene for ShopScene {
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += item.image().size.y as f32;
                 display.render_image_complex(
                     CENTER_X as i32,
-                    y as i32,
+                    (y + 30.) as i32,
                     item.image(),
                     ComplexRenderOption::new().with_white().with_center(),
                 );
-                y = 100.;
-                if item.unique() && args.game_ctx.inventory.has_item(item) {
+                y = 80.;
+                let own_count = args.game_ctx.inventory.item_count(item);
+                if !item.unique() {
+                    let str = fixedstr::str_format!(fixedstr::str12, "OWN {}", own_count);
                     display.render_text_complex(
                         Vec2::new(CENTER_X, y),
-                        "ALREADY OWN",
+                        &str,
                         ComplexRenderOption::new()
                             .with_center()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
+                    y += BUFFER_Y;
+                }
+                if item.unique() && own_count > 0 {
+                    display.render_image_center(
+                        CENTER_X_I32
+                            + if self.sign_shake_remaning > Duration::ZERO {
+                                args.game_ctx.rng.i32(-3..=3)
+                            } else {
+                                0
+                            },
+                        (y + assets::IMAGE_ALREADY_OWN_SIGN.size_vec2().y / 2.) as i32,
+                        &assets::IMAGE_ALREADY_OWN_SIGN,
+                    );
                 } else {
                     let too_much = args.game_ctx.money < item.cost();
                     if too_much {
-                        let str = fixedstr::str_format!(fixedstr::str12, "TOO MUCH $");
-                        display.render_text_complex(
-                            Vec2::new(CENTER_X, y),
-                            &str,
-                            ComplexRenderOption::new()
-                                .with_center()
-                                .with_white()
-                                .with_font(&FONT_VARIABLE_SMALL),
-                        );
-                        y += 10.;
                         let str = fixedstr::str_format!(
                             fixedstr::str12,
                             "NEED ${}",
@@ -416,21 +423,33 @@ impl Scene for ShopScene {
                         y += 10.;
                     }
 
-                    let str = if !too_much {
-                        fixedstr::str_format!(fixedstr::str12, "BUY")
+                    if !too_much {
+                        display.render_image_center(
+                            CENTER_X_I32
+                                + if self.sign_shake_remaning > Duration::ZERO {
+                                    args.game_ctx.rng.i32(-3..=3)
+                                } else {
+                                    0
+                                },
+                            (y + assets::IMAGE_BUY_SIGN.size_vec2().y / 2.) as i32,
+                            &assets::IMAGE_BUY_SIGN,
+                        );
                     } else {
-                        fixedstr::str_format!(fixedstr::str12, "CAN'T BUY")
+                        display.render_image_center(
+                            CENTER_X_I32
+                                + if self.sign_shake_remaning > Duration::ZERO {
+                                    args.game_ctx.rng.i32(-3..=3)
+                                } else {
+                                    0
+                                },
+                            (y + assets::IMAGE_CANT_BUY_SIGN.size_vec2().y / 2.) as i32,
+                            &assets::IMAGE_CANT_BUY_SIGN,
+                        );
                     };
-                    display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_center()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
                 }
             }
         }
+
+        display.render_complex(&self.particle_system);
     }
 }

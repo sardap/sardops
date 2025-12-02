@@ -15,6 +15,7 @@ pub const WIDTH_F32: f32 = WIDTH as f32;
 pub const HEIGHT: usize = 128;
 pub const HEIGHT_F32: f32 = HEIGHT as f32;
 pub const CENTER_X: f32 = WIDTH_F32 / 2.;
+pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
 
@@ -296,7 +297,6 @@ impl GameDisplay {
         }
     }
 
-    #[allow(dead_code)]
     pub fn render_line(&mut self, start: Vec2, end: Vec2, white: bool) {
         let (mut x0, mut y0) = (start.x as i32, start.y as i32);
         let (x1, y1) = (end.x as i32, end.y as i32);
@@ -782,67 +782,6 @@ where
     }
 }
 
-pub struct VerticalPixelIterator<'a, C>
-where
-    C: PixelColor,
-{
-    image_data: &'a [u8],
-    index: usize,
-    convert: fn(BinaryColor) -> C,
-    scale: u32,
-}
-
-impl<'a, C> VerticalPixelIterator<'a, C>
-where
-    C: PixelColor,
-{
-    pub fn new(image_data: &'a [u8], convert: fn(BinaryColor) -> C, scale: u32) -> Self {
-        Self {
-            image_data,
-            index: 0,
-            convert,
-            scale: scale,
-        }
-    }
-}
-
-impl<'a, C> Iterator for VerticalPixelIterator<'a, C>
-where
-    C: PixelColor,
-{
-    type Item = C;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let total_pixels = WIDTH * HEIGHT;
-        if self.index >= total_pixels {
-            return None;
-        }
-
-        // Compute coordinates in vertical order
-        let screen_y = self.index % HEIGHT; // iterate down the column first
-        let screen_x = self.index / HEIGHT; // then move right to the next column
-
-        // Apply the vertical rotation logic
-        let rotated_x = screen_y;
-        let rotated_y = WIDTH - 1 - screen_x;
-
-        let x = rotated_x;
-        let y = rotated_y;
-
-        let byte_index = (y * WIDTH + x) / 8;
-        let bit_index = x % 8;
-
-        let color = if (self.image_data[byte_index] >> (7 - bit_index)) & 1 == 1 {
-            BinaryColor::On
-        } else {
-            BinaryColor::Off
-        };
-
-        self.index += 1;
-        Some((self.convert)(color))
-    }
-}
-
 pub struct DrawDisplay<'a, C> {
     image_data: &'a [u8],
     convert: fn(BinaryColor) -> C,
@@ -869,10 +808,7 @@ where
         D: DrawTarget<Color = C>,
     {
         let area = Rectangle::new(Point::new(0, 0), Size::new(WIDTH as u32, HEIGHT as u32));
-        target.fill_contiguous(
-            &area,
-            VerticalPixelIterator::new(self.image_data, self.convert, 1),
-        )
+        target.fill_contiguous(&area, PixelIterator::new(self.image_data, self.convert))
     }
 }
 

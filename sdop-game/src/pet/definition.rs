@@ -1,3 +1,5 @@
+use core::{ops::Range, time::Duration};
+
 use chrono::Timelike;
 
 use crate::{
@@ -46,16 +48,21 @@ impl PetDefinition {
         1.
     }
 
-    pub fn poop_time_multiplier(&self) -> f32 {
-        1.
+    pub const fn poop_interval_range(&self) -> Range<Duration> {
+        match self.life_stage {
+            LifeStage::Baby => (Duration::from_mins(30))..(Duration::from_mins(90)),
+            LifeStage::Child => (Duration::from_mins(90))..(Duration::from_hours(3)),
+            LifeStage::Adult => (Duration::from_mins(150))..(Duration::from_hours(4)),
+        }
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
-        if timestamp.inner().hour() >= 22 || timestamp.inner().hour() < 6 {
-            return true;
+        let hour = timestamp.inner().hour();
+        match self.life_stage {
+            LifeStage::Baby => false,
+            LifeStage::Child => hour >= 21 || hour <= 8,
+            LifeStage::Adult => hour >= 22 || hour <= 8,
         }
-
-        false
     }
 
     pub fn get_by_id(id: PetDefinitionId) -> &'static PetDefinition {

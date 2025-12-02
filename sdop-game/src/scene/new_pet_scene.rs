@@ -74,6 +74,10 @@ impl Scene for NewPetScene {
             str_format!(PetName, "{}", args.game_ctx.shared_out.enter_text_out);
         args.game_ctx.pet.stomach_filled = STARTING_FILLED;
         args.game_ctx.sim_rng = fastrand::Rng::with_seed(args.game_ctx.pet.upid);
+        args.game_ctx
+            .pet
+            .life_stage_history
+            .add_def(self.def_id, args.timestamp);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {

@@ -22,7 +22,7 @@ include!(concat!(env!("OUT_DIR"), "/dist_dates.rs"));
 pub struct Timestamp(pub NaiveDateTime);
 
 impl Timestamp {
-    pub fn new(date_time: NaiveDateTime) -> Self {
+    pub const fn new(date_time: NaiveDateTime) -> Self {
         Self(date_time)
     }
 

@@ -950,11 +950,5 @@ fn main() {
         .unwrap();
 
     println!("cargo::rerun-if-changed=build.rs");
-    for entry in WalkDir::new(ASSETS_PATH) {
-        if let Ok(entry) = entry {
-            if entry.file_type().is_file() {
-                println!("cargo:rerun-if-changed={}", entry.path().display());
-            }
-        }
-    }
+    println!("cargo::rerun-if-changed={}", ASSETS_PATH);
 }

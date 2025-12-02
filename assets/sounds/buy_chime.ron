@@ -1,0 +1,14 @@
+(
+    name: "buy_chime",
+    melody: [
+        (
+            note: E3,
+            duration: 8,
+        ),
+        (
+            note: F4,
+            duration: 8,
+        ),
+    ],
+    tempo: 125,
+)

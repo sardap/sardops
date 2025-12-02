@@ -153,7 +153,7 @@ impl Game {
         // Make random more random
         if self.input.any_pressed() {
             self.since_input = Duration::ZERO;
-            let count = self.game_ctx.rng.u128(0..10);
+            let count = self.game_ctx.rng.u8(0..10);
             for _ in 0..count {
                 self.game_ctx.rng.bool();
             }
@@ -189,7 +189,7 @@ impl Game {
         if let Some(next) = output.next_scene {
             self.scene_manger.set_next(next);
         } else if self.since_input > Duration::from_mins(5)
-            && !matches!(self.scene_manger.scene_enum(), SceneEnum::Home(_))
+            && self.scene_manger.scene_enum().should_quit_on_idle()
         {
             self.scene_manger
                 .set_next(SceneEnum::Home(HomeScene::new()));
@@ -217,7 +217,7 @@ impl Game {
         scene.render(&mut self.display, &mut scene_args);
         self.display.render_fps(&self.fps);
         // self.display.render_temperature(self.input().temperature());
-        // self.fps.update(delta);
+        self.fps.update(delta);
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {
@@ -253,6 +253,10 @@ impl Game {
         };
         tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();
+    }
+
+    pub fn get_time(&self) -> Timestamp {
+        self.last_time
     }
 
     pub fn pull_song(&mut self) -> Option<Song> {

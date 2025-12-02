@@ -6,7 +6,7 @@ use crate::{
     death::DeathCause,
     pet::{
         definition::{PetDefinition, PetDefinitionId},
-        PetInstance, PetName, PetParents, UniquePetId,
+        LifeStageHistory, PetInstance, PetName, PetParents, UniquePetId,
     },
     Timestamp,
 };
@@ -22,6 +22,7 @@ pub struct PetRecord {
     pub extra_weight: f32,
     pub died_of: DeathCause,
     pub parents: Option<PetParents>,
+    pub stage_history: LifeStageHistory,
 }
 
 impl PetRecord {
@@ -39,6 +40,7 @@ impl PetRecord {
             extra_weight: pet_instance.extra_weight,
             died_of: cause_of_death,
             parents: pet_instance.parents,
+            stage_history: pet_instance.life_stage_history,
         }
     }
 

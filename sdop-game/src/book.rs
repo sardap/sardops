@@ -53,7 +53,7 @@ impl BookRead {
         self.chapters >= info.chapters
     }
 
-    pub fn compelte_chapter(&mut self) {
+    pub fn complete_chapter(&mut self) {
         self.chapters = self.chapters.checked_add(1).unwrap_or_default();
     }
 }
@@ -111,7 +111,7 @@ impl BookHistory {
         rng.choice(books.iter()).cloned()
     }
 
-    pub fn compelted_count(&self) -> usize {
+    pub fn completed_count(&self) -> usize {
         self.books.iter().filter(|i| i.completed()).count()
     }
 }

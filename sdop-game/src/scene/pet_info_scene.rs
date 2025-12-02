@@ -1,13 +1,14 @@
 use chrono::Datelike;
 use fixedstr::{str32, str_format};
 use glam::Vec2;
+use strum::{EnumCount, IntoEnumIterator};
 
 use crate::{
     assets::{self, Image},
     date_utils::DurationExt,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_X_I32},
     fonts,
-    pet::{definition::PetAnimationSet, render::PetRender},
+    pet::{definition::PetAnimationSet, render::PetRender, LifeStage},
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sprite::Sprite,
     Button,
@@ -16,15 +17,17 @@ use crate::{
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum State {
     Main,
+    LifeStages,
     Parents,
 }
 
-const STATE_ORDER: &[State] = &[State::Main, State::Parents];
+const STATE_ORDER: &[State] = &[State::Main, State::LifeStages, State::Parents];
 
 pub struct PetInfoScene {
     state: State,
     pet_render: PetRender,
     parent_renders: [PetRender; 2],
+    life_stages_renders: [Option<PetRender>; LifeStage::COUNT],
 }
 
 impl Default for PetInfoScene {
@@ -39,6 +42,7 @@ impl PetInfoScene {
             state: State::Main,
             pet_render: PetRender::default(),
             parent_renders: Default::default(),
+            life_stages_renders: Default::default(),
         }
     }
 
@@ -62,6 +66,23 @@ impl Scene for PetInfoScene {
         for parent in &mut self.parent_renders {
             parent.set_animation(PetAnimationSet::Normal);
         }
+
+        for (i, entry) in args
+            .game_ctx
+            .pet
+            .life_stage_history
+            .inner()
+            .iter()
+            .enumerate()
+        {
+            if let Some(entry) = entry {
+                let mut render = PetRender::new(entry.def_id);
+                render.anime.set_random_frame(&mut args.game_ctx.rng);
+                self.life_stages_renders[i] = Some(render);
+            } else {
+                break;
+            }
+        }
     }
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
@@ -74,7 +95,13 @@ impl Scene for PetInfoScene {
         }
 
         for parent in &mut self.parent_renders {
-            parent.anime.tick(args.delta);
+            parent.tick(args.delta);
+        }
+
+        for life_stage_render in self.life_stages_renders.iter_mut() {
+            if let Some(pet_render) = life_stage_render {
+                pet_render.tick(args.delta);
+            }
         }
 
         if args.input.pressed(Button::Right) {
@@ -197,6 +224,44 @@ impl Scene for PetInfoScene {
                     );
 
                     // current_y += Y_BUFFER;
+                }
+            }
+            State::LifeStages => {
+                const Y_BUFFER: f32 = 6.;
+                let mut current_y = 1.;
+
+                for (index, pet_render) in self
+                    .life_stages_renders
+                    .iter()
+                    .filter_map(|i| *i)
+                    .enumerate()
+                {
+                    let life_stage_history =
+                        args.game_ctx.pet.life_stage_history.inner()[index].unwrap();
+                    let life_stage = LifeStage::from_index(index);
+                    let str = str_format!(
+                        fixedstr::str32,
+                        "{}: {}/{:0>2}/{:0>2}",
+                        life_stage.name(),
+                        life_stage_history.when.inner().year() - 2000,
+                        life_stage_history.when.inner().month(),
+                        life_stage_history.when.inner().day()
+                    );
+                    display.render_text_complex(
+                        Vec2::new(2., current_y),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&fonts::FONT_VARIABLE_SMALL),
+                    );
+                    current_y += Y_BUFFER + 1. + pet_render.image().size_vec2().y / 2.;
+                    display.render_image_complex(
+                        CENTER_X_I32,
+                        current_y as i32,
+                        pet_render.image(),
+                        ComplexRenderOption::new().with_white().with_center(),
+                    );
+                    current_y += pet_render.image().size_vec2().y / 2. + Y_BUFFER;
                 }
             }
             State::Parents => {
