@@ -97,9 +97,9 @@ impl Scene for PlaceFurnitureScene {
     }
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
-        args.game_ctx.home_layout.left = self.left.kind;
-        args.game_ctx.home_layout.top = self.top.kind;
-        args.game_ctx.home_layout.right = self.right.kind;
+        // args.game_ctx.home_layout.left = self.left.kind;
+        // args.game_ctx.home_layout.top = self.top.kind;
+        // args.game_ctx.home_layout.right = self.right.kind;
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
@@ -143,7 +143,15 @@ impl Scene for PlaceFurnitureScene {
                     for _ in 0..FURNITURE_ITEMS.len() {
                         selected.kind = selected.kind.change(dir);
                         let item = ItemKind::from(selected.kind);
-                        if item == ItemKind::None || args.game_ctx.inventory.has_item(item) {
+                        if item == ItemKind::None
+                            || (args.game_ctx.inventory.get_entry(item).owned
+                                - if args.game_ctx.home_layout.furniture_present(selected.kind) {
+                                    1
+                                } else {
+                                    0
+                                })
+                                > 0
+                        {
                             break;
                         }
                     }
@@ -152,6 +160,13 @@ impl Scene for PlaceFurnitureScene {
                 }
 
                 if dirty {
+                    match self.selected {
+                        PlaceSelection::Left => args.game_ctx.home_layout.left = selected.kind,
+                        PlaceSelection::Top => args.game_ctx.home_layout.top = selected.kind,
+                        PlaceSelection::Right => args.game_ctx.home_layout.right = selected.kind,
+                        PlaceSelection::Exit => unreachable!(),
+                    };
+
                     selected.render = HomeFurnitureRender::new(
                         self.selected.to_location().unwrap_or_default(),
                         selected.kind,

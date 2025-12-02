@@ -835,7 +835,7 @@ impl Scene for HomeScene {
                         .pet
                         .book_history
                         .get_mut_read(book)
-                        .compelte_chapter();
+                        .complete_chapter();
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }

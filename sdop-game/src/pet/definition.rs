@@ -57,11 +57,12 @@ impl PetDefinition {
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
-        if timestamp.inner().hour() >= 22 || timestamp.inner().hour() < 7 {
-            return true;
+        let hour = timestamp.inner().hour();
+        match self.life_stage {
+            LifeStage::Baby => false,
+            LifeStage::Child => hour >= 21 || hour <= 8,
+            LifeStage::Adult => hour >= 22 || hour <= 8,
         }
-
-        false
     }
 
     pub fn get_by_id(id: PetDefinitionId) -> &'static PetDefinition {

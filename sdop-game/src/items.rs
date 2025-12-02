@@ -462,7 +462,6 @@ pub const MAX_OWNED: i32 = 1000000;
 #[derive(Clone, Copy, Encode, Decode)]
 pub struct ItemExtra {
     uses: i8,
-    #[cfg_attr(feature = "serde", serde(default))]
     pub enabled: bool,
 }
 
@@ -476,7 +475,7 @@ impl ItemExtra {
     pub const fn new() -> Self {
         Self {
             uses: 0,
-            enabled: false,
+            enabled: true,
         }
     }
 

@@ -421,7 +421,7 @@ impl PetInstance {
                 if self.is_ill() {
                     let _ = possible.push(PET_SICKO_ID);
                 }
-                if self.book_history.compelted_count() >= 3 {
+                if self.book_history.completed_count() >= 3 {
                     let _ = possible.push(PET_BRAINO_ID);
                 }
                 if self.total_cold_for > Duration::from_hours(1) {
