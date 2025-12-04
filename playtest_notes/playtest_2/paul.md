@@ -19,10 +19,10 @@
 ### Issues / Bugs
 - [X] Babies shouldn't read
 - [X] can use telescope during the day
+- [X] Should just have a gone out sign which disables games and stuff
 - [ ] Need more than a single baby dop
 - [ ] Need an idle of the dop looking though the telescope
 - [ ] OMG I SAW THE UFO
-- [ ] Should just have a gone out sign which disables games and stuff
 - [ ] Eating animations are too slow
 - [ ] Food size should affect how long it takes to eat
 - [ ] Credits should do something

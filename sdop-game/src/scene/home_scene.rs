@@ -4,10 +4,15 @@ use chrono::Timelike;
 use fixedstr::{str32, str_format};
 use glam::Vec2;
 use sdop_common::{MelodyEntry, Note};
+use strum::EnumCount;
+use strum_macros::EnumCount;
 
 use crate::{
     anime::{tick_all_anime, Anime, HasAnime, MaskedAnimeRender},
-    assets::{self, Image, FRAMES_SKULL, FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK},
+    assets::{
+        self, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
+        FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK,
+    },
     date_utils::DurationExt,
     display::{
         ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
@@ -169,8 +174,10 @@ fn get_options(state: State, game_ctx: &GameContext) -> MenuOptions {
     }
 
     if state != State::Sleeping {
-        let _ = result.push(MenuOption::GameSelect);
-        let _ = result.push(MenuOption::FoodSelect);
+        if !matches!(state, State::GoneOut { outing_end_time: _ }) {
+            let _ = result.push(MenuOption::GameSelect);
+            let _ = result.push(MenuOption::FoodSelect);
+        }
         let _ = result.push(MenuOption::Shop);
     }
 
@@ -216,6 +223,9 @@ enum State {
         jam_end_time: Duration,
     },
     Alarm,
+    GoneOut {
+        outing_end_time: Duration,
+    },
 }
 
 struct Word {
@@ -267,6 +277,7 @@ pub struct HomeSceneData {
     last_poop_sound: Timestamp,
     last_is_sick: bool,
     last_was_hungry: bool,
+    gone_out_sign: MaskedAnimeRender,
 }
 
 impl Default for HomeSceneData {
@@ -304,6 +315,11 @@ impl Default for HomeSceneData {
             last_poop_sound: Timestamp::default(),
             last_is_sick: false,
             last_was_hungry: false,
+            gone_out_sign: MaskedAnimeRender::new(
+                CENTER_VEC,
+                &FRAMES_GONE_OUT_SIGN,
+                &FRAMES_GONE_OUT_SIGN_MASK,
+            ),
         }
     }
 }
@@ -327,16 +343,19 @@ impl HomeSceneData {
 }
 
 fn wonder_end(args: &mut SceneTickArgs) {
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, EnumCount)]
     enum Activity {
         PlayingComputer,
         WatchTv,
         ReadBook,
         ListenMusic,
+        GoOut,
     }
+    const ACTIVITY_COUNT: usize = Activity::COUNT;
 
     // Just set to 10 who cares you will forget to update the number at some point and cause some issue
-    let mut options: heapless::Vec<Activity, 10> = heapless::Vec::new();
+    let mut options: heapless::Vec<Activity, 15> = heapless::Vec::new();
+
     if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
         && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
         && args.game_ctx.inventory.has_item(ItemKind::Screen)
@@ -366,6 +385,15 @@ fn wonder_end(args: &mut SceneTickArgs) {
     {
         let _ = options.push(Activity::ListenMusic);
     }
+
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
+        && args.game_ctx.pet.mood() == Mood::Happy
+    {
+        let _ = options.push(Activity::GoOut);
+    }
+
+    options.clear();
+    let _ = options.push(Activity::GoOut);
 
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
@@ -414,6 +442,12 @@ fn wonder_end(args: &mut SceneTickArgs) {
                 args.game_ctx.home.target = CENTER_VEC;
                 args.game_ctx.home.change_state(State::PlayingMp3 {
                     jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
+                });
+            }
+            Activity::GoOut => {
+                args.game_ctx.home.change_state(State::GoneOut {
+                    outing_end_time: Duration::from_mins(args.game_ctx.rng.u64(5..10))
+                        + Duration::from_millis(args.game_ctx.rng.u64(0..60000)),
                 });
             }
         }
@@ -519,7 +553,7 @@ impl Scene for HomeScene {
             args.game_ctx.home.change_state(State::Wondering);
         }
 
-        // Penidng sounds
+        // Pending sounds
         {
             let poop_count = poop_count(&args.game_ctx.poops);
             if args.game_ctx.home.last_poop_count != poop_count
@@ -888,6 +922,13 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::GoneOut { outing_end_time } => {
+                args.game_ctx.home.gone_out_sign.anime().tick(args.delta);
+
+                if args.game_ctx.home.state_elapsed > outing_end_time {
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
         }
 
         if !matches!(args.game_ctx.home.state, State::Alarm)
@@ -1009,7 +1050,12 @@ impl Scene for HomeScene {
             display.render_complex(&self.right_render);
         }
 
-        if args.game_ctx.pet.is_ill() {
+        if args.game_ctx.pet.is_ill()
+            && !matches!(
+                args.game_ctx.home.state,
+                State::GoneOut { outing_end_time: _ }
+            )
+        {
             display.render_complex(&args.game_ctx.home.skull);
         }
 
@@ -1113,6 +1159,9 @@ impl Scene for HomeScene {
             }
             State::Alarm => {
                 display.render_sprite(&args.game_ctx.home.pet_render);
+            }
+            State::GoneOut { outing_end_time } => {
+                display.render_complex(&args.game_ctx.home.gone_out_sign);
             }
         }
 
