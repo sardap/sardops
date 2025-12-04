@@ -352,11 +352,12 @@ fn wonder_end(args: &mut SceneTickArgs) {
     {
         let _ = options.push(Activity::WatchTv);
     }
-    if args
-        .game_ctx
-        .pet
-        .book_history
-        .has_book_to_read(&args.game_ctx.inventory)
+    if !matches!(args.game_ctx.pet.definition().life_stage, LifeStage::Baby)
+        && args
+            .game_ctx
+            .pet
+            .book_history
+            .has_book_to_read(&args.game_ctx.inventory)
     {
         let _ = options.push(Activity::ReadBook);
     }

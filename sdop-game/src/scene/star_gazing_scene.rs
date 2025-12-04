@@ -1,12 +1,15 @@
 use chrono::{Datelike, Timelike};
 use glam::{U16Vec2, Vec2};
+use log::info;
 
 use crate::{
-    assets::{self, DynamicImage, StaticImage},
+    assets::{
+        self, DynamicImage, StaticImage, IMAGE_NIGHT_SKY_0, IMAGE_NIGHT_SKY_1, IMAGE_NIGHT_SKY_2,
+    },
     date_utils::MoonRender,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    game_consts::ALIEN_ODDS,
+    game_consts::{ALIEN_ODDS, TELESCOPE_RANGE},
     pet::combine_pid,
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sounds::{SongPlayOptions, SONG_TWINKLE_TWINKLE_LITTLE_STAR},
@@ -50,24 +53,9 @@ impl Scene for StarGazingScene {
         self.moon_render.pos = CENTER_VEC;
         self.moon_render.since_ce = days_since_ce;
 
-        let x_offset = (days_since_ce % 365) as usize * 10;
         self.night_sky.size = U16Vec2::new(WIDTH as u16, HEIGHT as u16);
-        const BASE_SKY: &StaticImage = &assets::IMAGE_NIGHT_SKY;
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                let src_x = (x + x_offset) % BASE_SKY.size.x as usize;
-                let base_index = y * BASE_SKY.size.x as usize + src_x;
-                let dst_index = y * WIDTH + x;
 
-                let flag =
-                    ((BASE_SKY.texture[base_index / 8] >> (base_index % 8)) & 1) << (dst_index % 8);
-                self.night_sky.texture[dst_index / 8] =
-                    (self.night_sky.texture[dst_index / 8] & !(1 << (dst_index % 8))) | flag;
-            }
-        }
         self.night_sky.used_length = NIGHT_SKY_SIZE;
-
-        // let date_seed = args.timestamp.inner().date()
 
         let seed = combine_pid(args.game_ctx.pet.upid, args.timestamp.date_seed());
         let mut rng = fastrand::Rng::with_seed(seed);
@@ -80,6 +68,26 @@ impl Scene for StarGazingScene {
                 if self.ufo_left { WIDTH_F32 + 20. } else { -20. },
                 args.game_ctx.rng.i32(0..HEIGHT as i32) as f32,
             )
+        }
+
+        let days_since_ce = days_since_ce as f32;
+        for (i, base_sky) in [
+            (10.0, IMAGE_NIGHT_SKY_0),
+            (3.0, IMAGE_NIGHT_SKY_1),
+            (0.25, IMAGE_NIGHT_SKY_2),
+        ] {
+            let x_offset = libm::floorf(days_since_ce * i) as usize % 365;
+            for y in 0..HEIGHT {
+                for x in 0..WIDTH {
+                    let src_x = (x + x_offset) % base_sky.size.x as usize;
+                    let base_index = y * base_sky.size.x as usize + src_x;
+                    let dst_index = y * WIDTH + x;
+
+                    let bit_value = (base_sky.texture[base_index / 8] >> (base_index % 8)) & 1;
+                    let flag = bit_value << (dst_index % 8);
+                    self.night_sky.texture[dst_index / 8] |= flag;
+                }
+            }
         }
     }
 
@@ -121,7 +129,7 @@ impl Scene for StarGazingScene {
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let time = args.timestamp.inner().time();
 
-        if (time.hour() > 5 && time.minute() > 30) && (time.hour() < 18 && time.minute() < 30) {
+        if time.ge(&TELESCOPE_RANGE.start) && time.le(&TELESCOPE_RANGE.end) {
             display.invert();
 
             display.render_text_complex(

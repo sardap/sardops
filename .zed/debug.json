@@ -11,7 +11,7 @@
     "request": "launch",
     "adapter": "CodeLLDB",
     "env": {
-      "RUST_LOG": "debug"
+      "RUST_LOG": "sdop_game=debug"
     }
   }
 ]

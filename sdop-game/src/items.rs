@@ -657,12 +657,15 @@ const USE_TELESCOPE: UsableItem = UsableItem::new(ItemKind::Telescope, |_| {
         star_gazing_scene::StarGazingScene::new(),
     ))
 })
-.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::Telescope));
 
 const USE_ALARM: UsableItem = UsableItem::new(ItemKind::Alarm, |_| {
     UseItemOutput::new().with_scene(SceneEnum::AlarmSet(AlarmSetScene::new()))
 })
-.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+.with_is_usable_fn(|game_ctx| {
+    game_ctx.inventory.has_item(ItemKind::AnalogueClock)
+        || game_ctx.inventory.has_item(ItemKind::DigitalClock)
+});
 
 const USE_CREDITS: UsableItem = UsableItem::new(ItemKind::CreditsScroll, |_| {
     UseItemOutput::new().with_scene(SceneEnum::Credits(CreditsScene::new()))
