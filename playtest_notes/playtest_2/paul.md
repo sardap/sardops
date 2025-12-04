@@ -20,11 +20,11 @@
 - [X] Babies shouldn't read
 - [X] can use telescope during the day
 - [X] Should just have a gone out sign which disables games and stuff
-- [ ] Need more than a single baby dop
+- [X] Need more than a single baby dop
+- [X] Food size should affect how long it takes to eat
+- [X] Eating animations are too slow
 - [ ] Need an idle of the dop looking though the telescope
 - [ ] OMG I SAW THE UFO
-- [ ] Eating animations are too slow
-- [ ] Food size should affect how long it takes to eat
 - [ ] Credits should do something
 - [ ] Need some sort of quick expoloration minigame send your guy off to do something
 - [ ] Remove tic tac toe

@@ -98,11 +98,14 @@ impl Scene for NewPetScene {
                 }
 
                 self.state = State::NameEntered;
-                SceneOutput::new(SceneEnum::EnterText(EnterTextScene::new(
-                    6,
-                    str_format!(fixedstr::str12, "ENTER NAME"),
-                    Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
-                )))
+                SceneOutput::new(SceneEnum::EnterText(
+                    EnterTextScene::new(
+                        6,
+                        str_format!(fixedstr::str12, "ENTER NAME"),
+                        Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
+                    )
+                    .with_show_pet(self.def_id),
+                ))
             }
             State::NameEntered => SceneOutput::new(SceneEnum::Home(HomeScene::new())),
         }

@@ -13,6 +13,19 @@
         )
     ),
     PetTemplate(
+        name: "log",
+        life_stage: Baby,
+        stomach_size: 20,
+        base_weight: 100,
+        images: PetImageSet(
+            normal: "images/pets/log_normal.ase",
+            eat: Some("images/pets/log_eat.ase"),
+            happy: Some("images/pets/log_happy.ase"),
+            sad: Some("images/pets/log_sad.ase"),
+            sleep: Some("images/pets/log_sleep.ase"),
+        )
+    ),
+    PetTemplate(
         name: "pawn white",
         life_stage: Child,
         stomach_size: 40,
