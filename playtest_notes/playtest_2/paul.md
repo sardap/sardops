@@ -26,8 +26,10 @@
 - [ ] Need an idle of the dop looking though the telescope
 - [ ] OMG I SAW THE UFO
 - [ ] Credits should do something
+- [ ] Dream bubbles
 - [ ] Need some sort of quick expoloration minigame send your guy off to do something
 - [ ] Remove tic tac toe
+- [ ] Get sick too much
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

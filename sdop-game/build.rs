@@ -14,7 +14,6 @@ use std::{
     vec,
 };
 use strum_macros::{Display, EnumString};
-use walkdir::WalkDir;
 
 const ASSETS_PATH: &str = "../assets";
 const IMAGES_MISC_PATH: &str = "../assets/images/misc";
