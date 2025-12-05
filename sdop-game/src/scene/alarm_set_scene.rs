@@ -1,4 +1,4 @@
-use chrono::{NaiveTime, Weekday, WeekdaySet};
+use chrono::{NaiveTime, WeekdaySet};
 use fixedstr::str_format;
 
 use crate::{
@@ -24,6 +24,12 @@ pub struct AlarmSetScene {
     days: Option<WeekdaySet>,
 }
 
+impl Default for AlarmSetScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AlarmSetScene {
     pub fn new() -> Self {
         Self {
@@ -43,8 +49,8 @@ impl Scene for AlarmSetScene {
                 args.game_ctx
                     .alarm
                     .set_config(crate::alarm::AlarmConfig::Time {
-                        days: days,
-                        time: time,
+                        days,
+                        time,
                     });
             }
         }

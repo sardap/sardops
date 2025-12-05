@@ -1,7 +1,7 @@
 use bincode::{Decode, Encode};
 
 use crate::{
-    items::{ItemCategory, ItemKind, COMMON_ITEMS, RARE_ITEMS},
+    items::{ItemCategory, ItemKind},
     Timestamp,
 };
 

@@ -453,12 +453,11 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         pet_vars.push(pet_var_name);
     }
 
-    pet_definitions
-        .push_str(&"const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = [".to_string());
+    pet_definitions.push_str("const PET_DEFINITIONS: [&'static PetDefinition; PET_COUNT] = [");
     for var in &pet_vars {
         pet_definitions.push_str(&format!("&{}, ", var));
     }
-    pet_definitions.push_str(&"];".to_string());
+    pet_definitions.push_str("];");
 
     ContentOut {
         assets,
@@ -501,7 +500,7 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         food_vars.push(image_normal_var_name);
     }
 
-    food_definitions.push_str(&"pub const FOODS: [&'static Food; FOOD_COUNT] = [".to_string());
+    food_definitions.push_str("pub const FOODS: [&'static Food; FOOD_COUNT] = [");
     for var in &food_vars {
         food_definitions.push_str(&format!("&{}, ", var));
     }
@@ -722,7 +721,7 @@ fn get_date_of_n_day_in_month(
         if date.weekday() == weekday {
             n -= 1;
         }
-        if n <= 0 {
+        if n == 0 {
             return date;
         }
         date = date.checked_add_days(chrono::Days::new(1)).unwrap();

@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-// #![allow(unused_imports)]
 #![cfg_attr(feature = "2025", feature(duration_constructors_lite))]
 #![feature(unsigned_is_multiple_of)]
 #![feature(specialization)]
@@ -228,7 +227,7 @@ impl Game {
         self.display.bmp()
     }
 
-    pub fn drawable<'a, C>(&'a self, convert: ConvertFn<C>) -> DrawDisplay<'a, C> {
+    pub fn drawable<C>(&self, convert: ConvertFn<C>) -> DrawDisplay<'_, C> {
         DrawDisplay::new(self.get_display_image_data(), convert)
     }
 

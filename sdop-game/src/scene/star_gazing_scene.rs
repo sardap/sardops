@@ -1,10 +1,9 @@
-use chrono::{Datelike, Timelike};
+use chrono::Datelike;
 use glam::{U16Vec2, Vec2};
-use log::info;
 
 use crate::{
     assets::{
-        self, DynamicImage, StaticImage, IMAGE_NIGHT_SKY_0, IMAGE_NIGHT_SKY_1, IMAGE_NIGHT_SKY_2,
+        self, DynamicImage, IMAGE_NIGHT_SKY_0, IMAGE_NIGHT_SKY_1, IMAGE_NIGHT_SKY_2,
     },
     date_utils::MoonRender,
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, HEIGHT_F32, WIDTH_F32},

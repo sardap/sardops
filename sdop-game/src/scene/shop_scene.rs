@@ -1,12 +1,12 @@
 use core::time::Duration;
 
-use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, TimeDelta, Timelike};
 use glam::Vec2;
 
 use crate::{
     anime::HasAnime,
     assets::{self, Image},
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y},
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_X_I32},
     fonts::FONT_VARIABLE_SMALL,
     game_consts::SHOP_OPEN_TIMES,
     geo::Rect,

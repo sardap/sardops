@@ -7,16 +7,13 @@ use crate::{
     assets::{self, Image},
     display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32},
     fonts::FONT_VARIABLE_SMALL,
-    game_context::GameContext,
     geo::Rect,
-    pet::definition::PET_BABIES,
     scene::{
         enter_date_scene::{self, EnterDateScene},
         home_scene::HomeScene,
-        new_pet_scene::NewPetScene,
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sounds::{SoundKind, SoundOptions},
+    sounds::SoundOptions,
     Button, Timestamp,
 };
 
@@ -79,6 +76,12 @@ pub struct SettingsScene {
     state: State,
 }
 
+impl Default for SettingsScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SettingsScene {
     pub fn new() -> Self {
         Self {
@@ -101,17 +104,13 @@ impl Scene for SettingsScene {
                 if args.input.pressed(Button::Left) {
                     self.option = Option::iter()
                         .rev()
-                        .skip_while(|o| *o != self.option)
-                        .skip(1)
-                        .next()
+                        .skip_while(|o| *o != self.option).nth(1)
                         .unwrap_or(Option::Back);
                 }
 
                 if args.input.pressed(Button::Right) {
                     self.option = Option::iter()
-                        .skip_while(|o| *o != self.option)
-                        .skip(1)
-                        .next()
+                        .skip_while(|o| *o != self.option).nth(1)
                         .unwrap_or(Option::Sound);
                 }
 
@@ -131,17 +130,13 @@ impl Scene for SettingsScene {
                 if args.input.pressed(Button::Left) {
                     self.sound_selected = SoundSelection::iter()
                         .rev()
-                        .skip_while(|o| *o != self.sound_selected)
-                        .skip(1)
-                        .next()
+                        .skip_while(|o| *o != self.sound_selected).nth(1)
                         .unwrap_or(SoundSelection::Back);
                 }
 
                 if args.input.pressed(Button::Right) {
                     self.sound_selected = SoundSelection::iter()
-                        .skip_while(|o| *o != self.sound_selected)
-                        .skip(1)
-                        .next()
+                        .skip_while(|o| *o != self.sound_selected).nth(1)
                         .unwrap_or(SoundSelection::Music);
                 }
 

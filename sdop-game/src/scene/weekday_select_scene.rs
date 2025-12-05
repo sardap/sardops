@@ -1,10 +1,9 @@
-use chrono::{Datelike, Days, Months, NaiveDate, NaiveTime, Timelike, Weekday, WeekdaySet};
+use chrono::{Weekday, WeekdaySet};
 use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
     assets,
-    date_utils::{END_YEAR, START_YEAR},
     display::{ComplexRenderOption, GameDisplay, CENTER_X},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,

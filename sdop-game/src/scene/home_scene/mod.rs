@@ -6,13 +6,11 @@ use core::{time::Duration, u8};
 use chrono::Timelike;
 use fixedstr::{str32, str_format};
 use glam::Vec2;
-use log::info;
-use sdop_common::{MelodyEntry, Note};
 use strum::EnumCount;
 use strum_macros::EnumCount;
 
 use crate::{
-    anime::{tick_all_anime, Anime, HasAnime, MaskedAnimeRender},
+    anime::{tick_all_anime, HasAnime, MaskedAnimeRender},
     assets::{
         self, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
         FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK,
@@ -24,7 +22,6 @@ use crate::{
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    game_context::GameContext,
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
     pc::{PcKind, PcRender},
@@ -50,14 +47,13 @@ use crate::{
         settings_scene::SettingsScene,
         shop_scene::ShopScene,
         suiters_scene::SuitersScene,
-        weekday_select_scene::WeekdaySelectScene,
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     sounds::{SongPlayOptions, SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK},
-    sprite::{BasicAnimeSprite, MusicNote, Snowflake, Sprite},
+    sprite::{BasicAnimeSprite, MusicNote, Sprite},
     temperature::TemperatureLevel,
     tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
-    Button, Song, Timestamp, WIDTH,
+    Button, Timestamp, WIDTH,
 };
 
 const WONDER_SPEED: f32 = 5.;
@@ -504,7 +500,7 @@ impl Scene for HomeScene {
         args.game_ctx.home.weather.tick(
             args.delta,
             &mut args.game_ctx.rng,
-            TemperatureLevel::from(args.input.temperature()).into(),
+            TemperatureLevel::from(args.input.temperature()),
         );
 
         if matches!(args.game_ctx.home.state, State::Wondering)
@@ -730,10 +726,10 @@ impl Scene for HomeScene {
 
                 for note in &mut args.game_ctx.home.music_notes {
                     note.pos += note.dir * args.delta.as_secs_f32();
-                    if note.pos.y < -note.size().y as f32
-                        || note.pos.y > HEIGHT_F32 + note.size().y as f32
-                        || note.pos.x > WIDTH_F32 + note.size().x as f32
-                        || note.pos.x < -(note.size().x as f32)
+                    if note.pos.y < { -note.size().y }
+                        || note.pos.y > HEIGHT_F32 + note.size().y
+                        || note.pos.x > WIDTH_F32 + note.size().x
+                        || note.pos.x < -{ note.size().x }
                     {
                         note.reset(args.game_ctx.home.pet_render.pos, &mut args.game_ctx.rng);
                     }

@@ -18,7 +18,7 @@ use crate::{
         DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE,
         HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS,
         ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS,
-        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
+        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -76,6 +76,12 @@ const DEFAULT_LIFE_STAGE_ENTRY: LifeStageHistoryEntry = LifeStageHistoryEntry {
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct LifeStageHistory {
     history: [Option<LifeStageHistoryEntry>; LifeStage::COUNT],
+}
+
+impl Default for LifeStageHistory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LifeStageHistory {

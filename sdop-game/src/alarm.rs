@@ -7,7 +7,6 @@ use glam::Vec2;
 use crate::{
     anime::{Anime, HasAnime},
     assets::{FRAMES_ALARM, FRAMES_ALARM_MASK, IMAGE_ALARM_0},
-    bit_array::bytes_for_bits,
     sprite::{Sprite, SpriteMask},
     Timestamp,
 };

@@ -4,10 +4,10 @@ use glam::Vec2;
 
 use crate::{
     assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC},
+    display::{GameDisplay, CENTER_VEC},
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sounds::{SongPlayOptions, SoundOptions, SONG_FAN_FARE_LONG},
+    sounds::{SongPlayOptions, SONG_FAN_FARE_LONG},
     sprite::Sprite,
     Timestamp,
 };

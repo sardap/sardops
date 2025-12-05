@@ -7,6 +7,12 @@ use crate::{
 
 pub struct CreditsScene {}
 
+impl Default for CreditsScene {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CreditsScene {
     pub fn new() -> Self {
         Self {}

@@ -60,8 +60,8 @@ impl PetDefinition {
         let hour = timestamp.inner().hour();
         match self.life_stage {
             LifeStage::Baby => false,
-            LifeStage::Child => hour >= 21 || hour < 8,
-            LifeStage::Adult => hour >= 22 || hour < 7,
+            LifeStage::Child => !(8..21).contains(&hour),
+            LifeStage::Adult => !(7..22).contains(&hour),
         }
     }
 

@@ -1,7 +1,7 @@
 use chrono::Datelike;
 use fixedstr::{str32, str_format};
 use glam::Vec2;
-use strum::{EnumCount, IntoEnumIterator};
+use strum::EnumCount;
 
 use crate::{
     assets::{self, Image},
@@ -98,10 +98,8 @@ impl Scene for PetInfoScene {
             parent.tick(args.delta);
         }
 
-        for life_stage_render in self.life_stages_renders.iter_mut() {
-            if let Some(pet_render) = life_stage_render {
-                pet_render.tick(args.delta);
-            }
+        for life_stage_render in self.life_stages_renders.iter_mut().flatten() {
+            life_stage_render.tick(args.delta);
         }
 
         if args.input.pressed(Button::Right) {

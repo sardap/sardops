@@ -12,7 +12,6 @@ use crate::{
     },
     scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
     sounds::{SongPlayOptions, SONG_EATING, SONG_FAN_FARE},
-    Timestamp,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]

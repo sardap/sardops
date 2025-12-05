@@ -743,7 +743,7 @@ where
     }
 }
 
-impl<'a, C> Iterator for PixelIterator<'a, C>
+impl<C> Iterator for PixelIterator<'_, C>
 where
     C: PixelColor,
 {
@@ -796,7 +796,7 @@ impl<'a, C> DrawDisplay<'a, C> {
     }
 }
 
-impl<'a, C> Drawable for DrawDisplay<'a, C>
+impl<C> Drawable for DrawDisplay<'_, C>
 where
     C: PixelColor + 'static,
 {
