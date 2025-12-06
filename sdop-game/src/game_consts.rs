@@ -233,5 +233,5 @@ pub const SHOP_OPEN_TIMES: [[NaiveTime; 2]; 7] = [
     ],
 ];
 
-pub const TELESCOPE_RANGE: Range<NaiveTime> =
+pub const TELESCOPE_USE_RANGE: Range<NaiveTime> =
     NaiveTime::from_hms_opt(5, 30, 0).unwrap()..NaiveTime::from_hms_opt(20, 30, 0).unwrap();

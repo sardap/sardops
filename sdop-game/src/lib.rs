@@ -51,6 +51,7 @@ mod items;
 mod link_four;
 mod math;
 mod money;
+mod night_sky;
 #[cfg(feature = "notes")]
 mod notes;
 mod particle_system;

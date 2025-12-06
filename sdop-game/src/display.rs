@@ -17,6 +17,7 @@ pub const HEIGHT_F32: f32 = HEIGHT as f32;
 pub const CENTER_X: f32 = WIDTH_F32 / 2.;
 pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
+pub const CENTER_Y_I32: i32 = (HEIGHT_F32 / 2.) as i32;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
 
 pub type DisplayData = Bitmap<WIDTH, HEIGHT>;

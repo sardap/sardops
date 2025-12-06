@@ -3,7 +3,7 @@ mod weather;
 
 use core::{time::Duration, u8};
 
-use chrono::Timelike;
+use chrono::{Datelike, Timelike};
 use fixedstr::{str32, str_format};
 use glam::Vec2;
 use strum::EnumCount;
@@ -12,18 +12,21 @@ use strum_macros::EnumCount;
 use crate::{
     anime::{tick_all_anime, HasAnime, MaskedAnimeRender},
     assets::{
-        self, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
-        FRAMES_SKULL_MASK, IMAGE_STOMACH_MASK,
+        self, DynamicImage, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
+        FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
     },
-    date_utils::DurationExt,
+    date_utils::{time_in_range, DurationExt},
     display::{
         ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
     },
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
+    game_consts::TELESCOPE_USE_RANGE,
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
+    night_sky::generate_night_sky_image,
+    particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
     pc::{PcKind, PcRender},
     pet::{
         definition::{PetAnimationSet, PET_BRAINO_ID},
@@ -103,6 +106,9 @@ enum State {
     GoneOut {
         outing_end_time: Duration,
     },
+    Telescope {
+        end_time: Duration,
+    },
 }
 
 struct Word {
@@ -134,6 +140,7 @@ pub struct HomeSceneData {
     last_is_sick: bool,
     last_was_hungry: bool,
     gone_out_sign: MaskedAnimeRender,
+    telescope: MaskedAnimeRender,
 }
 
 impl Default for HomeSceneData {
@@ -173,6 +180,11 @@ impl Default for HomeSceneData {
                 &FRAMES_GONE_OUT_SIGN,
                 &FRAMES_GONE_OUT_SIGN_MASK,
             ),
+            telescope: MaskedAnimeRender::new(
+                CENTER_VEC,
+                &FRAMES_TELESCOPE_HOME,
+                &FRAMES_TELESCOPE_HOME_MASK,
+            ),
         }
     }
 }
@@ -203,6 +215,7 @@ fn wonder_end(args: &mut SceneTickArgs) {
         ReadBook,
         ListenMusic,
         GoOut,
+        Telescope,
     }
     const ACTIVITY_COUNT: usize = Activity::COUNT;
 
@@ -242,6 +255,12 @@ fn wonder_end(args: &mut SceneTickArgs) {
         && args.game_ctx.pet.mood() == Mood::Happy
     {
         let _ = options.push(Activity::GoOut);
+    }
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
+        && args.game_ctx.inventory.has_item(ItemKind::Telescope)
+        && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
+    {
+        let _ = options.push(Activity::Telescope);
     }
 
     options.clear();
@@ -302,11 +321,58 @@ fn wonder_end(args: &mut SceneTickArgs) {
                         + Duration::from_millis(args.game_ctx.rng.u64(0..60000)),
                 });
             }
+            Activity::Telescope => {
+                args.game_ctx.home.change_state(State::Telescope {
+                    end_time: Duration::from_mins(args.game_ctx.rng.u64(1..10))
+                        + Duration::from_secs(args.game_ctx.rng.u64(1..60)),
+                });
+            }
         }
     }
 
     args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
 }
+
+const STAR_SPAWNER: Spawner = Spawner::new(
+    "star",
+    SpawnTrigger::timer_range(Duration::from_secs(1)..Duration::from_secs(10)),
+    |args| {
+        const LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
+            Duration::from_secs(10)..Duration::from_secs(20),
+            Rect::new_top_left(
+                Vec2::new(
+                    HOME_SCENE_TOP_AREA_RECT.x2() + 20.,
+                    HOME_SCENE_TOP_AREA_RECT.y2(),
+                ),
+                Vec2::new(1., 20.),
+            ),
+            Vec2::new(-50.0, -2.0)..Vec2::new(-20.0, 2.0),
+            &[&assets::IMAGE_SHOOTING_STAR],
+        );
+        const RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
+            Duration::from_secs(1)..Duration::from_secs(10),
+            Rect::new_top_left(
+                Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2()),
+                Vec2::new(1., 20.),
+            ),
+            Vec2::new(20.0, -2.0)..Vec2::new(50.0, 2.0),
+            &[&assets::IMAGE_SHOOTING_STAR],
+        );
+
+        return (
+            if args.rng.bool() {
+                &LEFT_STAR
+            } else {
+                &RIGHT_STAR
+            },
+            1,
+        );
+    },
+);
+
+const NIGHT_SKY_HEIGHT: usize = 30;
+
+type PartialNightSky = DynamicImage<{ WIDTH * NIGHT_SKY_HEIGHT / 8 }>;
 
 pub struct HomeScene {
     left_render: HomeFurnitureRender,
@@ -314,6 +380,8 @@ pub struct HomeScene {
     right_render: HomeFurnitureRender,
     egg_render: EggRender,
     egg_bounce: f32,
+    particle_system: ParticleSystem<20, 2>,
+    night_sky: PartialNightSky,
 }
 
 impl Default for HomeScene {
@@ -330,6 +398,8 @@ impl HomeScene {
             right_render: HomeFurnitureRender::None,
             egg_render: Default::default(),
             egg_bounce: 0.,
+            particle_system: ParticleSystem::default(),
+            night_sky: PartialNightSky::default(),
         }
     }
 }
@@ -360,6 +430,11 @@ impl Scene for HomeScene {
             }
 
             args.game_ctx.home.options = MenuOptions::new(args.game_ctx.home.state, args.game_ctx);
+
+            generate_night_sky_image::<NIGHT_SKY_HEIGHT>(
+                &mut self.night_sky,
+                args.timestamp.inner().num_days_from_ce(),
+            )
         }
 
         self.egg_render.pos = Vec2::new(
@@ -387,6 +462,11 @@ impl Scene for HomeScene {
             .home
             .pet_render
             .set_def_id(args.game_ctx.pet.def_id);
+
+        self.particle_system.tick(&mut ParticleTickArgs {
+            delta: args.delta,
+            rng: &mut args.game_ctx.rng,
+        });
 
         update_poop_renders(&mut args.game_ctx.home.poops, &args.game_ctx.poops);
 
@@ -503,13 +583,10 @@ impl Scene for HomeScene {
             TemperatureLevel::from(args.input.temperature()),
         );
 
-        if matches!(args.game_ctx.home.state, State::Wondering)
-            || matches!(
-                args.game_ctx.home.state,
-                State::PlayingMp3 { jam_end_time: _ }
-            )
-            || matches!(args.game_ctx.home.state, State::Alarm)
-        {
+        if matches!(
+            args.game_ctx.home.state,
+            State::Wondering | State::PlayingMp3 { jam_end_time: _ } | State::Alarm
+        ) {
             self.top_render.tick(args);
             self.left_render.tick(args);
             self.right_render.tick(args);
@@ -766,6 +843,17 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::Telescope { end_time } => {
+                args.game_ctx.home.telescope.pos = Vec2::new(15., 80.);
+                args.game_ctx.home.pet_render.pos = Vec2::new(45., 85.);
+
+                args.game_ctx.home.telescope.anime().tick(args.delta);
+
+                if args.game_ctx.home.state_elapsed > end_time {
+                    self.particle_system.remove_spawner(STAR_SPAWNER.name);
+                    args.game_ctx.home.change_state(State::Wondering);
+                }
+            }
         }
 
         if !matches!(args.game_ctx.home.state, State::Alarm)
@@ -855,14 +943,13 @@ impl Scene for HomeScene {
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
-        if matches!(args.game_ctx.home.state, State::Wondering)
-            || matches!(args.game_ctx.home.state, State::Sleeping)
-            || matches!(
-                args.game_ctx.home.state,
-                State::PlayingMp3 { jam_end_time: _ }
-            )
-            || matches!(args.game_ctx.home.state, State::Alarm)
-        {
+        if matches!(
+            args.game_ctx.home.state,
+            State::Wondering
+                | State::Sleeping
+                | State::PlayingMp3 { jam_end_time: _ }
+                | State::Alarm
+        ) {
             display.render_complex(&self.top_render);
             display.render_complex(&self.left_render);
             display.render_complex(&self.right_render);
@@ -981,11 +1068,24 @@ impl Scene for HomeScene {
             State::GoneOut { outing_end_time } => {
                 display.render_complex(&args.game_ctx.home.gone_out_sign);
             }
+            State::Telescope { end_time } => {
+                display.render_image_complex(
+                    0,
+                    HOME_SCENE_TOP_AREA_RECT.y2() as i32,
+                    &self.night_sky,
+                    ComplexRenderOption::new().with_white(),
+                );
+
+                display.render_complex(&args.game_ctx.home.telescope);
+                display.render_sprite(&args.game_ctx.home.pet_render);
+            }
         }
 
         display.render_sprites(&args.game_ctx.home.poops);
 
         display.render_complex(&args.game_ctx.home.weather);
+
+        display.render_complex(&self.particle_system);
 
         let pet = &args.game_ctx.pet;
 
@@ -1032,13 +1132,10 @@ impl Scene for HomeScene {
         }
 
         // No lights if sleeping
-        if matches!(args.game_ctx.home.state, State::Wondering)
-            || matches!(
-                args.game_ctx.home.state,
-                State::PlayingMp3 { jam_end_time: _ }
-            )
-            || matches!(args.game_ctx.home.state, State::Alarm)
-        {
+        if matches!(
+            args.game_ctx.home.state,
+            State::Wondering | State::PlayingMp3 { jam_end_time: _ } | State::Alarm
+        ) {
             for i in [&self.top_render, &self.right_render, &self.left_render] {
                 if let HomeFurnitureRender::InvetroLight(light) = i {
                     display.render_complex(light);

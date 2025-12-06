@@ -145,20 +145,16 @@ impl Scene for ShopScene {
                             sounds::SONG_BUY_CHIME,
                             SongPlayOptions::new().with_effect(),
                         );
-                        self.particle_system.run_once_spwaner(
+                        self.particle_system.run_once_spawner(
                             |args| {
-                                Some((
-                                    ParticleTemplate::new(
-                                        Duration::from_millis(1000)..Duration::from_millis(2000),
-                                        Rect::new_top_left(
-                                            Vec2::new(10., 80.),
-                                            Vec2::new(40., 40.),
-                                        ),
-                                        Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
-                                        &[&assets::IMAGE_MONEY_PARTICLE],
-                                    ),
-                                    20,
-                                ))
+                                const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
+                                    Duration::from_millis(1000)..Duration::from_millis(2000),
+                                    Rect::new_top_left(Vec2::new(10., 80.), Vec2::new(40., 40.)),
+                                    Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
+                                    &[&assets::IMAGE_MONEY_PARTICLE],
+                                );
+
+                                (&TEMPLATE, 20)
                             },
                             &mut ParticleTickArgs::new(args.delta, &mut args.game_ctx.rng),
                         );
