@@ -106,9 +106,9 @@ pub const BREED_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
 ];
 
 pub const SUITER_SHOW_UP_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
-    Threshold::new(Duration::from_hours(2), sim_tick_odds_per_hour(0.05)),
-    Threshold::new(Duration::from_hours(5), sim_tick_odds_per_hour(0.1)),
-    Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.2)),
+    Threshold::new(Duration::from_hours(2), sim_tick_odds_per_hour(0.1)),
+    Threshold::new(Duration::from_hours(5), sim_tick_odds_per_hour(0.2)),
+    Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.3)),
 ];
 
 pub const SUITER_LEAVE_ODDS: f32 = sim_tick_odds_per_hour(0.25);

@@ -1,5 +1,7 @@
+
 use crate::{
-    display::GameDisplay,
+    display::{ComplexRenderOption, GameDisplay, CENTER_VEC},
+    fonts::FONT_VARIABLE_SMALL,
     scene::{
         inventory_scene::InventoryScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
@@ -32,5 +34,16 @@ impl Scene for CreditsScene {
         SceneOutput::default()
     }
 
-    fn render(&self, _display: &mut GameDisplay, _args: &mut RenderArgs) {}
+    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
+        display.render_text_complex(
+            CENTER_VEC,
+            "CREDITS TBD",
+            ComplexRenderOption::new()
+                .with_white()
+                .with_center()
+                .with_font(&FONT_VARIABLE_SMALL),
+        );
+
+        display.invert();
+    }
 }

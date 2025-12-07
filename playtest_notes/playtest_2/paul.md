@@ -23,9 +23,9 @@
 - [X] Need more than a single baby dop
 - [X] Food size should affect how long it takes to eat
 - [X] Eating animations are too slow
-- [ ] Need an idle of the dop looking though the telescope
-- [ ] OMG I SAW THE UFO
-- [ ] Credits should do something
+- [X] Need an idle of the dop looking though the telescope
+- [X] OMG I SAW THE UFO
+- [X] Credits should do something
 - [ ] Dream bubbles
 - [ ] Need some sort of quick expoloration minigame send your guy off to do something
 - [ ] Remove tic tac toe

@@ -1,3 +1,4 @@
+mod activity;
 mod menu_options;
 mod weather;
 
@@ -6,8 +7,6 @@ use core::{time::Duration, u8};
 use chrono::{Datelike, Timelike};
 use fixedstr::{str32, str_format};
 use glam::Vec2;
-use strum::EnumCount;
-use strum_macros::EnumCount;
 
 use crate::{
     anime::{tick_all_anime, HasAnime, MaskedAnimeRender},
@@ -15,24 +14,20 @@ use crate::{
         self, DynamicImage, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
     },
-    date_utils::{time_in_range, DurationExt},
+    date_utils::DurationExt,
     display::{
         ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
     },
+    dream_bubble::DreamBubble,
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    game_consts::TELESCOPE_USE_RANGE,
     geo::{vec2_direction, vec2_distance, Rect},
     items::ItemKind,
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
     pc::{PcKind, PcRender},
-    pet::{
-        definition::{PetAnimationSet, PET_BRAINO_ID},
-        render::PetRender,
-        LifeStage, Mood,
-    },
+    pet::{definition::PetAnimationSet, render::PetRender, Mood},
     poop::{poop_count, update_poop_renders, PoopRender, MAX_POOPS},
     scene::{
         death_scene::DeathScene,
@@ -41,7 +36,10 @@ use crate::{
         food_select::FoodSelectScene,
         game_select::GameSelectScene,
         heal_scene::HealScene,
-        home_scene::menu_options::{MenuOption, MenuOptions},
+        home_scene::{
+            activity::{reset_wonder_end, wonder_end},
+            menu_options::{MenuOption, MenuOptions},
+        },
         inventory_scene::InventoryScene,
         pet_info_scene::PetInfoScene,
         pet_records_scene::PetRecordsScene,
@@ -78,7 +76,7 @@ pub const HOME_SCENE_TOP_AREA_RECT: Rect = Rect::new_top_left(
     Vec2::new(WIDTH_F32, HOME_SCENE_TOP_BORDER_RECT.y2()),
 );
 
-const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
+pub const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
     Duration::from_secs(30)..Duration::from_mins(3);
 
 const BOOK_POS: Vec2 = Vec2::new(CENTER_X, 90.);
@@ -123,6 +121,9 @@ pub struct HomeSceneData {
     target: Vec2,
     options: MenuOptions,
     sleeping_z: BasicAnimeSprite,
+    dream_bubble: DreamBubble,
+    show_dream_bubble: bool,
+    dream_bubble_timer: Duration,
     tv: TvRender,
     pc: PcRender,
     next_word_spawn: Duration,
@@ -151,6 +152,9 @@ impl Default for HomeSceneData {
             target: Vec2::default(),
             options: MenuOptions::default(),
             sleeping_z: BasicAnimeSprite::new(CENTER_VEC, &assets::FRAMES_SLEEPING_Z),
+            dream_bubble: DreamBubble::new(Vec2::new(CENTER_X + 15., CENTER_Y)),
+            show_dream_bubble: false,
+            dream_bubble_timer: Duration::ZERO,
             tv: TvRender::new(
                 TvKind::Lcd,
                 Vec2::new(20., 40.),
@@ -205,132 +209,6 @@ impl HomeSceneData {
         self.state = new_state;
         self.state_elapsed = Duration::ZERO;
     }
-}
-
-fn wonder_end(args: &mut SceneTickArgs) {
-    #[derive(Debug, Copy, Clone, EnumCount)]
-    enum Activity {
-        PlayingComputer,
-        WatchTv,
-        ReadBook,
-        ListenMusic,
-        GoOut,
-        Telescope,
-    }
-    const ACTIVITY_COUNT: usize = Activity::COUNT;
-
-    let mut options: heapless::Vec<Activity, ACTIVITY_COUNT> = heapless::Vec::new();
-
-    if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
-        && args.game_ctx.inventory.has_item(ItemKind::PersonalComputer)
-        && args.game_ctx.inventory.has_item(ItemKind::Screen)
-        && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
-        && args.game_ctx.pet.def_id != PET_BRAINO_ID
-    {
-        let _ = options.push(Activity::PlayingComputer);
-    }
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
-        && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
-            || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
-        && args.game_ctx.pet.def_id != PET_BRAINO_ID
-    {
-        let _ = options.push(Activity::WatchTv);
-    }
-    if !matches!(args.game_ctx.pet.definition().life_stage, LifeStage::Baby)
-        && args
-            .game_ctx
-            .pet
-            .book_history
-            .has_book_to_read(&args.game_ctx.inventory)
-    {
-        let _ = options.push(Activity::ReadBook);
-    }
-    if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
-        && args.game_ctx.pet.mood() == Mood::Happy
-    {
-        let _ = options.push(Activity::ListenMusic);
-    }
-
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
-        && args.game_ctx.pet.mood() == Mood::Happy
-    {
-        let _ = options.push(Activity::GoOut);
-    }
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
-        && args.game_ctx.inventory.has_item(ItemKind::Telescope)
-        && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
-    {
-        let _ = options.push(Activity::Telescope);
-    }
-
-    options.clear();
-    let _ = options.push(Activity::GoOut);
-
-    if !options.is_empty() {
-        let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
-
-        match option {
-            Activity::PlayingComputer => {
-                args.game_ctx.home.change_state(State::PlayingComputer {
-                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                    program_end_time: Duration::from_millis(args.game_ctx.rng.u64(
-                        PROGRAM_RUN_TIME_RANGE.start.as_millis() as u64
-                            ..PROGRAM_RUN_TIME_RANGE.end.as_millis() as u64,
-                    )),
-                    program_run_time: Duration::ZERO,
-                });
-            }
-            Activity::WatchTv => {
-                let mut kinds: heapless::Vec<TvKind, 2> = Default::default();
-                if args.game_ctx.inventory.has_item(ItemKind::TvLcd) {
-                    let _ = kinds.push(TvKind::Lcd);
-                }
-
-                if args.game_ctx.inventory.has_item(ItemKind::TvCrt) {
-                    let _ = kinds.push(TvKind::Crt);
-                }
-                args.game_ctx.home.tv.kind =
-                    args.game_ctx.rng.choice(kinds.iter()).cloned().unwrap();
-
-                args.game_ctx.home.change_state(State::WatchingTv {
-                    last_checked: u8::MAX,
-                    watch_end: reset_wonder_end(&mut args.game_ctx.rng),
-                });
-            }
-            Activity::ReadBook => {
-                let book_history = &args.game_ctx.pet.book_history;
-                let inventory = &args.game_ctx.inventory;
-                args.game_ctx.home.change_state(State::ReadingBook {
-                    book: book_history.get_reading_book(inventory).unwrap_or(
-                        book_history
-                            .pick_random_unread_book(&mut args.game_ctx.rng, inventory)
-                            .unwrap_or_default(),
-                    ),
-                });
-            }
-            Activity::ListenMusic => {
-                args.game_ctx.home.pet_render.pos = CENTER_VEC;
-                args.game_ctx.home.target = CENTER_VEC;
-                args.game_ctx.home.change_state(State::PlayingMp3 {
-                    jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
-                });
-            }
-            Activity::GoOut => {
-                args.game_ctx.home.change_state(State::GoneOut {
-                    outing_end_time: Duration::from_mins(args.game_ctx.rng.u64(5..10))
-                        + Duration::from_millis(args.game_ctx.rng.u64(0..60000)),
-                });
-            }
-            Activity::Telescope => {
-                args.game_ctx.home.change_state(State::Telescope {
-                    end_time: Duration::from_mins(args.game_ctx.rng.u64(1..10))
-                        + Duration::from_secs(args.game_ctx.rng.u64(1..60)),
-                });
-            }
-        }
-    }
-
-    args.game_ctx.home.wonder_end = reset_wonder_end(&mut args.game_ctx.rng);
 }
 
 const STAR_SPAWNER: Spawner = Spawner::new(
@@ -402,10 +280,6 @@ impl HomeScene {
             night_sky: PartialNightSky::default(),
         }
     }
-}
-
-fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
-    Duration::from_secs(rng.u64(0..(5 * 60)))
 }
 
 impl Scene for HomeScene {
@@ -628,10 +502,37 @@ impl Scene for HomeScene {
                 self.left_render.tick(args);
                 self.right_render.tick(args);
 
+                args.game_ctx.home.dream_bubble_timer = args
+                    .game_ctx
+                    .home
+                    .dream_bubble_timer
+                    .checked_sub(args.delta)
+                    .unwrap_or_default();
+
+                if args.game_ctx.home.dream_bubble_timer <= Duration::ZERO {
+                    if args.game_ctx.home.show_dream_bubble {
+                        args.game_ctx.home.show_dream_bubble = false;
+                        args.game_ctx.home.dream_bubble_timer =
+                            Duration::from_mins(args.game_ctx.rng.u64(3..30));
+                    } else {
+                        args.game_ctx.home.show_dream_bubble = true;
+                        args.game_ctx.home.dream_bubble_timer =
+                            Duration::from_secs(args.game_ctx.rng.u64(60..600));
+                    }
+                }
+
+                args.game_ctx
+                    .home
+                    .dream_bubble
+                    .tick(args.delta, &mut args.game_ctx.rng);
+
                 args.game_ctx
                     .home
                     .pet_render
                     .set_animation(PetAnimationSet::Sleeping);
+
+                args.game_ctx.home.dream_bubble.pos.y = CENTER_Y
+                    - args.game_ctx.home.pet_render.anime.current_frame().size.y as f32 / 2.;
 
                 args.game_ctx.home.sleeping_z.anime().tick(args.delta);
 
@@ -969,7 +870,12 @@ impl Scene for HomeScene {
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
             State::Sleeping => {
-                display.render_sprite(&args.game_ctx.home.sleeping_z);
+                if args.game_ctx.home.show_dream_bubble {
+                    display.render_complex(&args.game_ctx.home.dream_bubble);
+                } else {
+                    display.render_sprite(&args.game_ctx.home.sleeping_z);
+                }
+
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
             State::WatchingTv {

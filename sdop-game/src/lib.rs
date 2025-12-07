@@ -36,6 +36,7 @@ mod clock;
 mod date_utils;
 mod death;
 mod display;
+mod dream_bubble;
 mod egg;
 mod fish_tank;
 mod fonts;
