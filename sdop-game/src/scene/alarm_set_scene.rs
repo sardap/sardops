@@ -48,10 +48,7 @@ impl Scene for AlarmSetScene {
             if let Some(time) = self.time {
                 args.game_ctx
                     .alarm
-                    .set_config(crate::alarm::AlarmConfig::Time {
-                        days,
-                        time,
-                    });
+                    .set_config(crate::alarm::AlarmConfig::Time { days, time });
             }
         }
     }

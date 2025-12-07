@@ -104,13 +104,15 @@ impl Scene for SettingsScene {
                 if args.input.pressed(Button::Left) {
                     self.option = Option::iter()
                         .rev()
-                        .skip_while(|o| *o != self.option).nth(1)
+                        .skip_while(|o| *o != self.option)
+                        .nth(1)
                         .unwrap_or(Option::Back);
                 }
 
                 if args.input.pressed(Button::Right) {
                     self.option = Option::iter()
-                        .skip_while(|o| *o != self.option).nth(1)
+                        .skip_while(|o| *o != self.option)
+                        .nth(1)
                         .unwrap_or(Option::Sound);
                 }
 
@@ -130,13 +132,15 @@ impl Scene for SettingsScene {
                 if args.input.pressed(Button::Left) {
                     self.sound_selected = SoundSelection::iter()
                         .rev()
-                        .skip_while(|o| *o != self.sound_selected).nth(1)
+                        .skip_while(|o| *o != self.sound_selected)
+                        .nth(1)
                         .unwrap_or(SoundSelection::Back);
                 }
 
                 if args.input.pressed(Button::Right) {
                     self.sound_selected = SoundSelection::iter()
-                        .skip_while(|o| *o != self.sound_selected).nth(1)
+                        .skip_while(|o| *o != self.sound_selected)
+                        .nth(1)
                         .unwrap_or(SoundSelection::Music);
                 }
 

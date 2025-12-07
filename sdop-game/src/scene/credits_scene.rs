@@ -1,4 +1,3 @@
-
 use crate::{
     display::{ComplexRenderOption, GameDisplay, CENTER_VEC},
     fonts::FONT_VARIABLE_SMALL,
