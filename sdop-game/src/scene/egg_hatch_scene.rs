@@ -5,16 +5,16 @@ use glam::Vec2;
 use crate::{
     assets,
     death::DeathCause,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_Y, WIDTH_F32},
+    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
     egg::{EggRender, SavedEgg},
     geo::Rect,
     pet::{
-        definition::{PetAnimationSet, PetDefinitionId, PET_BABIES, PET_BLOB_ID},
+        definition::{PET_BABIES, PET_BLOB_ID, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
         render::PetRender,
     },
-    scene::{new_pet_scene::NewPetScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sounds::{SongPlayOptions, SONG_EGG_HATCH, SONG_FAN_FARE},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, new_pet_scene::NewPetScene},
+    sounds::{SONG_EGG_HATCH, SONG_FAN_FARE, SongPlayOptions},
     sprite::{BasicMaskedSprite, Sprite},
 };
 

@@ -1,22 +1,23 @@
 use bincode::{
-    error::{DecodeError, EncodeError},
     Decode, Encode,
+    error::{DecodeError, EncodeError},
 };
 
 use crate::{
+    Game, Timestamp,
     alarm::{AlarmConfig, AlarmState},
     egg::SavedEgg,
+    explore::ExploreSystemSave,
     fish_tank::HomeFishTank,
     furniture::HomeLayout,
     game_context::GameContext,
     items::Inventory,
     money::Money,
-    pet::{record::PetHistory, PetInstance},
-    poop::{Poop, MAX_POOPS},
+    pet::{PetInstance, record::PetHistory},
+    poop::{MAX_POOPS, Poop},
     shop::Shop,
     sounds::SoundOptions,
     suiter::SuiterSystem,
-    Game, Timestamp,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -36,6 +37,7 @@ pub struct SaveFile {
     pub sim_rng_seed: u64,
     pub alarm: AlarmConfig,
     pub sound: SoundOptions,
+    pub explore_save: ExploreSystemSave,
 }
 
 const BINCODE_CONFIG: bincode::config::Configuration = bincode::config::standard();
@@ -59,6 +61,7 @@ impl SaveFile {
             sim_rng_seed: game_ctx.sim_rng.get_seed(),
             alarm: *game_ctx.alarm.config(),
             sound: *game_ctx.sound_system.sound_options(),
+            explore_save: game_ctx.explore_system.save(),
         }
     }
 
@@ -76,6 +79,7 @@ impl SaveFile {
         game_ctx.sim_rng = fastrand::Rng::with_seed(self.sim_rng_seed);
         game_ctx.alarm = AlarmState::new(self.alarm);
         game_ctx.sound_system.set_sound_options(self.sound);
+        game_ctx.explore_system = self.explore_save.into();
     }
 
     pub const fn size() -> usize {

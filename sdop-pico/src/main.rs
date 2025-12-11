@@ -25,8 +25,8 @@ use embassy_sync::{
 };
 use embassy_time::{Instant, Timer};
 use embedded_graphics::{
-    mono_font::ascii::FONT_6X10,
     mono_font::MonoTextStyleBuilder,
+    mono_font::ascii::FONT_6X10,
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
@@ -35,10 +35,10 @@ use fixed::types::extra::U4;
 use fixedstr::str_format;
 use sdop_game::{SaveFile, Timestamp};
 use ssd1306::{
+    I2CDisplayInterface, Ssd1306,
     mode::{BufferedGraphicsMode, DisplayConfig},
     prelude::{DisplayRotation, I2CInterface},
     size::DisplaySize128x64,
-    I2CDisplayInterface, Ssd1306,
 };
 
 use crate::notes::freq;
@@ -46,7 +46,7 @@ use crate::notes::freq;
 use {defmt_rtt as _, panic_probe as _};
 
 /// Tell the Boot ROM about our application
-#[link_section = ".start_block"]
+#[unsafe(link_section = ".start_block")]
 #[used]
 pub static IMAGE_DEF: ImageDef = hal::block::ImageDef::secure_exe();
 
@@ -482,7 +482,7 @@ async fn main(spawner: Spawner) {
 
 // Program metadata for `picotool info`.
 // This isn't needed, but it's recomended to have these minimal entries.
-#[link_section = ".bi_entries"]
+#[unsafe(link_section = ".bi_entries")]
 #[used]
 pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
     embassy_rp::binary_info::rp_program_name!(c"Blinky Example"),

@@ -1,0 +1,317 @@
+use core::time::Duration;
+
+use glam::Vec2;
+
+use crate::{
+    Button, Timestamp, assets,
+    date_utils::DurationExt,
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
+    explore::{LOCATIONS, Location, LocationHistoryIter, get_location},
+    fonts::FONT_VARIABLE_SMALL,
+    pet::{definition::PetAnimationSet, render::PetRender},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{self, SongPlayOptions},
+    sprite::Sprite,
+};
+
+const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(500);
+
+enum State {
+    Cooldown,
+    Selecting,
+}
+
+pub struct ExploreSelectScene {
+    selected_location: usize,
+    sign_shake_remaining: Duration,
+    next_unlocked: bool,
+    next_explore_time: Timestamp,
+    state: State,
+    pet_render: PetRender,
+}
+
+impl ExploreSelectScene {
+    pub fn new() -> Self {
+        Self {
+            selected_location: 1,
+            sign_shake_remaining: Duration::ZERO,
+            next_unlocked: false,
+            next_explore_time: Timestamp::default(),
+            state: State::Selecting,
+            pet_render: PetRender::new(0),
+        }
+    }
+
+    pub fn location(&self) -> &'static Location {
+        get_location(self.selected_location)
+    }
+}
+
+impl Scene for ExploreSelectScene {
+    fn setup(&mut self, args: &mut SceneTickArgs) {
+        let mut iter = LocationHistoryIter::new(self.selected_location, &args.game_ctx.pet.explore);
+        self.next_unlocked = iter.next().is_some();
+        for (i, history) in args
+            .game_ctx
+            .pet
+            .explore
+            .location_history
+            .iter()
+            .enumerate()
+        {
+            let next_run_time = history.last_ran + get_location(i).cooldown;
+            if next_run_time > self.next_explore_time {
+                self.next_explore_time = next_run_time;
+                self.selected_location = i;
+            }
+        }
+
+        if args.timestamp < self.next_explore_time {
+            self.state = State::Cooldown;
+        }
+
+        self.pet_render.set_def_id(args.game_ctx.pet.def_id);
+        self.pet_render.set_animation(PetAnimationSet::Sad);
+    }
+
+    fn teardown(&mut self, _args: &mut SceneTickArgs) {}
+
+    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+        match self.state {
+            State::Cooldown => {
+                self.pet_render.tick(args.delta);
+
+                if args.timestamp > self.next_explore_time {
+                    self.state = State::Selecting;
+                }
+
+                if args.input.any_pressed() {
+                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                }
+            }
+            State::Selecting => {
+                self.sign_shake_remaining = self
+                    .sign_shake_remaining
+                    .checked_sub(args.delta)
+                    .unwrap_or_default();
+
+                if args.input.pressed(Button::Right) {
+                    let mut iter = LocationHistoryIter::new(
+                        self.selected_location,
+                        &args.game_ctx.pet.explore,
+                    );
+                    self.selected_location = iter.next().unwrap_or(1);
+                    self.next_unlocked = iter.next().is_some();
+                }
+
+                if args.input.pressed(Button::Left) {
+                    if self.selected_location == 1 {
+                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    }
+
+                    let mut iter = LocationHistoryIter::new(
+                        self.selected_location,
+                        &args.game_ctx.pet.explore,
+                    );
+                    self.selected_location = iter.next_back().unwrap_or(1);
+                    self.next_unlocked = true;
+                }
+
+                if args.input.pressed(Button::Middle) {
+                    if args.game_ctx.pet.explore.unlocked(self.selected_location) {
+                        args.game_ctx
+                            .explore_system
+                            .start_exploring(self.selected_location);
+                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    } else {
+                        args.game_ctx
+                            .sound_system
+                            .push_song(sounds::SONG_ERROR, SongPlayOptions::new().with_effect());
+                        self.sign_shake_remaining = SIGN_SHAKE_DURATION;
+                    }
+                }
+            }
+        }
+
+        SceneOutput::default()
+    }
+
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
+        match self.state {
+            State::Cooldown => {
+                let mut y = 3;
+
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, y as f32),
+                    "COOLING OFF",
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 6;
+
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, y as f32),
+                    "FROM GOING TO",
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 6;
+
+                display.render_image_complex(
+                    0,
+                    y,
+                    &self.location().cover,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+
+                y += self.location().cover.size.y as i32 + 3;
+
+                let mins = (self.next_explore_time - args.timestamp).as_mins() as i32;
+                let hours = mins / 60;
+                let mins = mins % 60;
+                let str = fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m", hours, mins);
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 6;
+
+                display.render_image_complex(
+                    (CENTER_X_I32) - (self.pet_render.anime.current_frame().size.x / 2) as i32,
+                    y,
+                    self.pet_render.image(),
+                    ComplexRenderOption::new().with_white(),
+                );
+            }
+            State::Selecting => {
+                let mut y = 0;
+                let unlocked = args.game_ctx.pet.explore.unlocked(self.selected_location);
+                let location = if unlocked {
+                    self.location()
+                } else {
+                    &LOCATIONS[0]
+                };
+
+                // Gotta handle cooldown here
+                display.render_image_complex(
+                    0,
+                    y,
+                    &location.cover,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+
+                y += location.cover.size.y as i32 + 2;
+
+                const SKILL_X_OFFSET: i32 = 2;
+
+                display.render_image_complex(
+                    SKILL_X_OFFSET,
+                    y,
+                    &assets::IMAGE_LENGTH_SYMBOL,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+                let mins = self.location().length.as_mins() as i32;
+                let hours = mins / 60;
+                let mins = mins % 60;
+                let str = fixedstr::str_format!(fixedstr::str24, ":{}h{}m", hours, mins);
+                display.render_text_complex(
+                    Vec2::new(
+                        SKILL_X_OFFSET as f32
+                            + assets::IMAGE_LENGTH_SYMBOL.const_size_vec2().x
+                            + 2.,
+                        y as f32,
+                    ),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                display.render_image_complex(
+                    SKILL_X_OFFSET,
+                    y,
+                    &assets::IMAGE_SKILL_SYMBOL,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+                let str =
+                    fixedstr::str_format!(fixedstr::str12, "{}", args.game_ctx.pet.explore_skill());
+                display.render_text_complex(
+                    Vec2::new(
+                        SKILL_X_OFFSET as f32 + assets::IMAGE_SKILL_SYMBOL.const_size_vec2().x + 1.,
+                        y as f32,
+                    ),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                display.render_image_complex(
+                    SKILL_X_OFFSET,
+                    y,
+                    &assets::IMAGE_CHALLENGE_SYMBOL,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+                let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
+                display.render_text_complex(
+                    Vec2::new(
+                        SKILL_X_OFFSET as f32
+                            + assets::IMAGE_CHALLENGE_SYMBOL.const_size_vec2().x
+                            + 1.,
+                        y as f32,
+                    ),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                display.render_image_complex(
+                    WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2,
+                    y,
+                    if unlocked {
+                        &assets::IMAGE_GO_EXPLORE_SYMBOL
+                    } else {
+                        &assets::IMAGE_GO_EXPLORE_LOCKED_SYMBOL
+                    },
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+
+                if self.selected_location > 1 {
+                    display.render_image_complex(
+                        1,
+                        y,
+                        &assets::IMAGE_GO_EXPLORE_ARROW,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                }
+
+                if self.next_unlocked {
+                    display.render_image_complex(
+                        WIDTH_I32 - 9,
+                        y,
+                        &assets::IMAGE_GO_EXPLORE_ARROW,
+                        ComplexRenderOption::new()
+                            .with_black()
+                            .with_white()
+                            .with_rotation(Rotation::R180),
+                    );
+                }
+            }
+        }
+    }
+}

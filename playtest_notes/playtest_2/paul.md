@@ -26,8 +26,8 @@
 - [X] Need an idle of the dop looking though the telescope
 - [X] OMG I SAW THE UFO
 - [X] Credits should do something
-- [ ] Dream bubbles
-- [ ] Need some sort of quick expoloration minigame send your guy off to do something
+- [X] Dream bubbles
+- [X] Need some sort of quick expoloration minigame send your guy off to do something
 - [ ] Remove tic tac toe
 - [ ] Get sick too much
 

@@ -5,10 +5,10 @@ use crate::{
     alarm::AlarmConfig,
     display::GameDisplay,
     scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         home_scene::HomeScene,
         weekday_select_scene::WeekdaySelectScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
 };
 

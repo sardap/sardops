@@ -3,10 +3,11 @@ use core::{ops::Range, time::Duration};
 use chrono::Timelike;
 
 use crate::{
+    Timestamp,
     assets::{self, MaskedFramesSet},
+    explore::ExploreSkill,
     food::Food,
     pet::LifeStage,
-    Timestamp,
 };
 use const_for::const_for;
 
@@ -62,6 +63,14 @@ impl PetDefinition {
             LifeStage::Baby => false,
             LifeStage::Child => !(8..21).contains(&hour),
             LifeStage::Adult => !(7..22).contains(&hour),
+        }
+    }
+
+    pub fn explore_skill(&self) -> ExploreSkill {
+        match self.life_stage {
+            LifeStage::Baby => -20,
+            LifeStage::Child => 40,
+            LifeStage::Adult => 100,
         }
     }
 

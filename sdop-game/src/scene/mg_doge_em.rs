@@ -1,19 +1,19 @@
 use core::{ops::Range, time::Duration};
 
-use fixedstr::{str12, str16, str_format};
+use fixedstr::{str_format, str12, str16};
 use glam::Vec2;
 
 use crate::{
+    Button, Timestamp,
     assets::{self, Image, StaticImage},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     geo::Rect,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
     },
-    scene::{mg_fanfare::MgFanFareScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
     sprite::{BasicSprite, Sprite},
-    Button, Timestamp,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]

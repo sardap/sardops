@@ -4,14 +4,14 @@ use glam::Vec2;
 
 use crate::{
     assets::{DynamicImage, IMAGE_STOMACH_MASK},
-    display::{GameDisplay, CENTER_VEC, CENTER_X},
+    display::{CENTER_VEC, CENTER_X, GameDisplay},
     food::Food,
     pet::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sounds::{SongPlayOptions, SONG_EATING, SONG_FAN_FARE},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_EATING, SONG_FAN_FARE, SongPlayOptions},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]

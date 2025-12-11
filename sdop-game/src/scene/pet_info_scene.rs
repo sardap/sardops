@@ -1,17 +1,17 @@
 use chrono::Datelike;
-use fixedstr::{str32, str_format};
+use fixedstr::{str_format, str32};
 use glam::Vec2;
 use strum::EnumCount;
 
 use crate::{
+    Button,
     assets::{self, Image},
     date_utils::DurationExt,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_X_I32},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts,
-    pet::{definition::PetAnimationSet, render::PetRender, LifeStage},
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     sprite::Sprite,
-    Button,
 };
 
 #[derive(PartialEq, Eq, Clone, Copy)]

@@ -1,8 +1,8 @@
 use crate::{
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC},
+    display::{CENTER_VEC, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     scene::{
-        inventory_scene::InventoryScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, inventory_scene::InventoryScene,
     },
 };
 

@@ -2,8 +2,8 @@ use chrono::{NaiveTime, Timelike};
 use glam::Vec2;
 
 use crate::{
-    assets::{self, StaticImage, IMAGE_DIGITAL_CLOCK_EMPTY},
-    display::{ComplexRender, ComplexRenderOption, CENTER_VEC},
+    assets::{self, IMAGE_DIGITAL_CLOCK_EMPTY, StaticImage},
+    display::{CENTER_VEC, ComplexRender, ComplexRenderOption},
 };
 
 pub enum AnalogueClockKind {
@@ -209,10 +209,6 @@ fn get_number_image(num: u8) -> &'static StaticImage {
 
 fn get_images(num: u8) -> [&'static StaticImage; 2] {
     let mut result = [&assets::IMAGE_DGC_EMPTY, &assets::IMAGE_DGC_EMPTY];
-
-    if num == 0 {
-        return result;
-    }
 
     if num < 10 {
         result[1] = get_number_image(num % 10);

@@ -2,7 +2,7 @@ use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
-use sdop_common::MelodyEntry;
+use sdop_common::{ItemCategory, MelodyEntry};
 use serde::{Deserialize, Serialize};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
@@ -21,6 +21,7 @@ const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
 const PETS_RON_PATH: &str = "../assets/pets.ron";
 const FOODS_RON_PATH: &str = "../assets/foods.ron";
 const ITEMS_RON_PATH: &str = "../assets/items.ron";
+const LOCATIONS_RON_PATH: &str = "../assets/locations.ron";
 const SOUNDS_PATH: &str = "../assets/sounds";
 
 #[derive(Default)]
@@ -31,6 +32,7 @@ struct ContentOut {
     item_definitions: String,
     dates_definitions: String,
     sounds_definitions: String,
+    locations_definitions: String,
 }
 
 impl ContentOut {
@@ -41,6 +43,8 @@ impl ContentOut {
         self.item_definitions.push_str(&other.item_definitions);
         self.dates_definitions.push_str(&other.dates_definitions);
         self.sounds_definitions.push_str(&other.sounds_definitions);
+        self.locations_definitions
+            .push_str(&other.locations_definitions);
     }
 }
 
@@ -519,17 +523,6 @@ enum RarityEnum {
     Rare,
 }
 
-#[derive(Serialize, Deserialize, Display)]
-pub enum ItemCategory {
-    Misc,
-    Furniture,
-    PlayThing,
-    Usable,
-    Book,
-    Software,
-    Food,
-}
-
 fn default_true() -> bool {
     true
 }
@@ -547,11 +540,16 @@ struct ItemEntry {
     fishing_odds: f32,
     #[serde(default = "default_true")]
     in_shop: bool,
+    #[serde(default = "default_true")]
+    in_store: bool,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     let contents = std::fs::read_to_string(food_path).unwrap();
-    let food_tempaltes: Vec<FoodTemplate> = ron::from_str(&contents).unwrap();
+    let food_templates: Vec<FoodTemplate> = ron::from_str(&contents).unwrap();
+
+    let contents = std::fs::read_to_string(PathBuf::from_str(LOCATIONS_RON_PATH).unwrap()).unwrap();
+    let location_tempaltes: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
 
     let contents = std::fs::read_to_string(path).unwrap();
     let templates: Vec<ItemEntry> = ron::from_str(&contents).unwrap();
@@ -619,10 +617,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         unique_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.unique));
 
-        category_fn.push_str(&format!(
-            "Self::{} => ItemCategory::{},\n",
-            enum_name, template.category
-        ));
+        category_fn.push_str(&format!("Self::{} => ItemCategory::Map,\n", enum_name,));
 
         image_fn_def.push_str(&format!(
             "Self::{} => &crate::assets::IMAGE_{},\n",
@@ -641,7 +636,36 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         item_count += 1;
     }
 
-    for (i, template) in food_tempaltes.iter().enumerate() {
+    for template in location_tempaltes.iter() {
+        let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
+        enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
+        rare_fn_def.push_str(&format!("Self::{} => ItemRarity::Common,\n", enum_name,));
+
+        cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, i32::MAX));
+
+        name_fn_def.push_str(&format!(
+            "Self::{} => \"Map to {}\",\n",
+            enum_name, template.name
+        ));
+
+        desc_fn.push_str(&format!(
+            "Self::{} => \"Find a way to {}\",\n",
+            enum_name, template.name
+        ));
+
+        unique_fn_def.push_str(&format!("Self::{} => true,\n", enum_name));
+
+        image_fn_def.push_str(&format!(
+            "Self::{} => &crate::assets::IMAGE_MAP,\n",
+            enum_name,
+        ));
+
+        category_fn.push_str(&format!("Self::{} => ItemCategory::Food,\n", enum_name,));
+
+        item_count += 1;
+    }
+
+    for (i, template) in food_templates.iter().enumerate() {
         let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
         rare_fn_def.push_str(&format!("Self::{} => ItemRarity::Common,\n", enum_name,));
@@ -880,6 +904,103 @@ fn generate_sounds() -> ContentOut {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ItemReward {
+    item: String,
+    odds: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LocationRewards {
+    money_start: i32,
+    money_end: i32,
+    items: Vec<ItemReward>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LocationTemplate {
+    pub name: String,
+    pub length_seconds: i32,
+    pub cooldown_seconds: i32,
+    pub difficulty: i32,
+    pub activities: Vec<String>,
+    pub rewards: LocationRewards,
+}
+
+fn generate_locations() -> ContentOut {
+    let locations_path = PathBuf::from_str(LOCATIONS_RON_PATH).unwrap();
+
+    let contents = std::fs::read_to_string(locations_path).unwrap();
+    let location_tempaltes: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
+
+    let mut locations_def = String::new();
+    let mut names = Vec::new();
+
+    for (i, entry) in location_tempaltes.iter().enumerate() {
+        let mut rewards = format!(
+            "LocationRewards::new({}..{}, &[",
+            entry.rewards.money_start, entry.rewards.money_end
+        );
+        for reward in &entry.rewards.items {
+            rewards.push_str(&format!(
+                "ItemReward::new(crate::items::ItemKind::{}, {}),",
+                reward.item.to_case(Case::Pascal),
+                reward.odds
+            ));
+        }
+        rewards.push_str("])");
+
+        let cover = format!(
+            "crate::assets::IMAGE_LOCATION_{}",
+            entry.name.to_case(Case::UpperSnake)
+        );
+        let mut activities = "&[".to_owned();
+        for activity in &entry.activities {
+            activities.push_str(&format!("\"{}\",", activity));
+        }
+        activities.push(']');
+
+        let const_name = format!("LOCATION_{}", entry.name.to_case(Case::UpperSnake));
+
+        locations_def.push_str(&format!(
+            "pub const {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {});",
+            const_name, i + 1, entry.name, entry.length_seconds, entry.cooldown_seconds, entry.difficulty, rewards, cover, activities
+        ));
+
+        names.push(const_name);
+    }
+
+    locations_def.push_str("pub const LOCATIONS: &[&'static Location] = &[&LOCATION_UNKNOWN,");
+    for name in names {
+        locations_def.push('&');
+        locations_def.push_str(&name);
+        locations_def.push(',');
+    }
+    locations_def.push_str("];");
+
+    locations_def.push_str(&format!(
+        "pub const LOCATION_COUNT: usize = {};",
+        location_tempaltes.len() + 1
+    ));
+
+    ContentOut {
+        locations_definitions: locations_def,
+        ..Default::default()
+    }
+}
+
+fn write_file<P: AsRef<Path>>(out_dir: &P, name: &str, to_write: String) {
+    let out_dir = out_dir.as_ref();
+    let dist_assets_path = Path::new(out_dir).join(name);
+    fs::write(&dist_assets_path, to_write).unwrap();
+    Command::new("rustfmt")
+        .arg(dist_assets_path)
+        .spawn()
+        .expect("Unable to format")
+        .wait()
+        .unwrap();
+}
+
 fn main() {
     let mut contents = ContentOut::default();
 
@@ -890,62 +1011,21 @@ fn main() {
     contents.merge(generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH));
     contents.merge(generate_dates());
     contents.merge(generate_sounds());
+    contents.merge(generate_locations());
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
-    let dist_assets_path = Path::new(&out_dir).join("dist_assets.rs");
-    fs::write(&dist_assets_path, contents.assets).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_assets_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
-
-    let dist_pets_path = Path::new(&out_dir).join("dist_pets.rs");
-    fs::write(&dist_pets_path, contents.pet_definitions).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_pets_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
-
-    let dist_foods_path = Path::new(&out_dir).join("dist_foods.rs");
-    fs::write(&dist_foods_path, contents.food_definitions).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_foods_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
-
-    let dist_items_path = Path::new(&out_dir).join("dist_items.rs");
-    fs::write(&dist_items_path, contents.item_definitions).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_items_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
-
-    let dist_dates_path = Path::new(&out_dir).join("dist_dates.rs");
-    fs::write(&dist_dates_path, contents.dates_definitions).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_dates_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
-
-    let dist_sounds_path = Path::new(&out_dir).join("dist_sounds.rs");
-    fs::write(&dist_sounds_path, contents.sounds_definitions).unwrap();
-    Command::new("rustfmt")
-        .arg(dist_sounds_path)
-        .spawn()
-        .expect("Unable to format")
-        .wait()
-        .unwrap();
+    write_file(&out_dir, "dist_assets.rs", contents.assets);
+    write_file(&out_dir, "dist_pets.rs", contents.pet_definitions);
+    write_file(&out_dir, "dist_foods.rs", contents.food_definitions);
+    write_file(&out_dir, "dist_items.rs", contents.item_definitions);
+    write_file(&out_dir, "dist_dates.rs", contents.dates_definitions);
+    write_file(&out_dir, "dist_sounds.rs", contents.sounds_definitions);
+    write_file(
+        &out_dir,
+        "dist_locations.rs",
+        contents.locations_definitions,
+    );
 
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ASSETS_PATH);

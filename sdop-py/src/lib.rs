@@ -6,7 +6,7 @@ mod sdop_py {
     use std::time::Duration;
 
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-    use pyo3::{prelude::*, PyRef, PyResult};
+    use pyo3::{PyRef, PyResult, prelude::*};
     use sdop_game::{ButtonState, SaveFile, Timestamp};
 
     #[pyclass]

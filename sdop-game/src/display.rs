@@ -1,18 +1,20 @@
 use core::f32;
 
 use embedded_graphics::prelude::*;
-use embedded_graphics::{pixelcolor::BinaryColor, primitives::Rectangle, Drawable};
+use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
 use glam::Vec2;
 use strum_macros::EnumIter;
 
-use crate::fonts::{Font, FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL};
+use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
 use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
 use crate::{assets::Image, geo::Rect, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
+pub const WIDTH_I32: i32 = WIDTH as i32;
 pub const WIDTH_F32: f32 = WIDTH as f32;
 pub const HEIGHT: usize = 128;
+pub const HEIGHT_I32: i32 = HEIGHT as i32;
 pub const HEIGHT_F32: f32 = HEIGHT as f32;
 pub const CENTER_X: f32 = WIDTH_F32 / 2.;
 pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
@@ -403,7 +405,7 @@ impl GameDisplay {
         options: ComplexRenderOption,
     ) -> f32 {
         let max_height = {
-            let mut max = u16::MIN;
+            let mut max = 0u16;
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
                 if image.size.y > max {
@@ -414,48 +416,61 @@ impl GameDisplay {
         } as f32;
 
         let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
+        let bytes = text.as_bytes();
 
         let (x_start, y_start) = match options.pos_mode {
             PostionMode::TopLeft => (pos.x, pos.y + max_height),
             PostionMode::Center => {
-                let mut max_width = 0;
-                let mut width = 0;
-                for ch in text.chars() {
-                    if ch == '\n' || width > wrapping_x {
-                        max_width = width.max(max_width);
-                        width = 0;
+                let mut current_x = 0;
+                let mut max_w = 0;
+                let mut i = 0;
+                while i < text.len() {
+                    let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+                    if current_x + word_w > wrapping_x && current_x > 0 {
+                        max_w = max_w.max(current_x);
+                        current_x = word_w;
+                    } else {
+                        current_x += word_w;
                     }
-                    let image = (options.font.convert)(ch);
-                    width += image.size.x as i32 + options.font.between_spacing;
+                    i = next_idx;
                 }
-                let width = width.max(max_width);
-                (pos.x - width as f32 / 2., pos.y + max_height / 2.)
+                let total_max = max_w.max(current_x);
+                (pos.x - total_max as f32 / 2., pos.y + max_height / 2.)
             }
             PostionMode::Bottomleft => (pos.x, pos.y),
             PostionMode::BottomRight => todo!(),
         };
 
-        let sub_complex_options = options.with_pos_mode(PostionMode::Bottomleft);
+        let sub_options = options.with_pos_mode(PostionMode::Bottomleft);
         let mut x_offset = 0;
         let mut y_offset = 0;
-        for ch in text.chars() {
-            if ch == '\n' {
-                x_offset = 0;
-                y_offset += max_height as i32;
-                continue;
-            }
-            let image = (options.font.convert)(ch);
-            if image.size.x as i32 + x_offset > wrapping_x {
+        let mut i = 0;
+
+        while i < text.len() {
+            let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+
+            if x_offset + word_w > wrapping_x && x_offset > 0 {
                 x_offset = 0;
                 y_offset += max_height as i32;
             }
-            self.render_image_complex(
-                x_start as i32 + x_offset,
-                y_start as i32 + y_offset,
-                image,
-                sub_complex_options,
-            );
-            x_offset += image.size.x as i32 + options.font.between_spacing;
+
+            let chunk = &text[i..next_idx];
+            for ch in chunk.chars() {
+                if ch == '\n' {
+                    x_offset = 0;
+                    y_offset += max_height as i32;
+                    continue;
+                }
+                let image = (options.font.convert)(ch);
+                self.render_image_complex(
+                    x_start as i32 + x_offset,
+                    y_start as i32 + y_offset,
+                    image,
+                    sub_options,
+                );
+                x_offset += image.size.x as i32 + options.font.between_spacing;
+            }
+            i = next_idx;
         }
 
         x_offset as f32
@@ -554,7 +569,7 @@ impl GameDisplay {
     }
 
     pub fn render_fps(&mut self, fps: &FPSCounter) {
-        use fixedstr::{str16, str_format};
+        use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
             Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
@@ -570,7 +585,7 @@ impl GameDisplay {
     }
 
     pub fn render_temperature(&mut self, temperature: f32) {
-        use fixedstr::{str16, str_format};
+        use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", temperature);
         let width = str.len() as f32 * 5. + 3.;
         self.render_rect_solid(
@@ -913,4 +928,27 @@ impl<T: Sprite> RenderSpriteWithMask<T> for T {
                 .with_rotation(rotation),
         );
     }
+}
+
+fn measure_next_chunk(text: &str, start: usize, options: &ComplexRenderOption) -> (i32, usize) {
+    let remaining = &text[start..];
+    let mut end = 0;
+
+    for (idx, ch) in remaining.char_indices() {
+        end = idx + ch.len_utf8();
+        if ch == ' ' || ch == '\n' {
+            break;
+        }
+    }
+
+    let chunk = &remaining[..end];
+    let mut width = 0;
+    for ch in chunk.chars() {
+        if ch == '\n' {
+            continue;
+        }
+        let image = (options.font.convert)(ch);
+        width += image.size.x as i32 + options.font.between_spacing;
+    }
+    (width, start + end)
 }

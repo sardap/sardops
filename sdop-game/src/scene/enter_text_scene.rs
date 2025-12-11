@@ -2,14 +2,13 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_X_I32, CENTER_Y},
+    Button, assets,
+    display::{CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay},
     fonts,
     geo::Rect,
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
-    Button,
 };
 
 enum State {

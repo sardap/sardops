@@ -7,7 +7,7 @@ use crate::{
     anime::Anime,
     assets::{self, Frame},
     display::{ComplexRender, ComplexRenderOption},
-    items::{Inventory, ItemKind, ALL_PROGRAMS, PROGRAM_COUNT},
+    items::{ALL_PROGRAMS, Inventory, ItemKind, PROGRAM_COUNT},
     pet::PetInstance,
 };
 

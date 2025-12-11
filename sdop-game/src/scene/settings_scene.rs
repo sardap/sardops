@@ -4,17 +4,17 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
+    Button, Timestamp,
     assets::{self, Image},
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         home_scene::HomeScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
     sounds::SoundOptions,
-    Button, Timestamp,
 };
 
 enum State {

@@ -1,24 +1,24 @@
 use core::time::Duration;
 
-use fixedstr::{str32, str_format};
+use fixedstr::{str_format, str32};
 use glam::Vec2;
 
 use crate::{
+    Button,
     anime::{HasAnime, MaskedAnimeRender},
     assets::{
         self, FRAMES_FISHING_POND_MOVING, IMAGE_FISHING_POND_LINE_MASK_0, IMAGE_FISHING_POND_STILL,
     },
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     input::random_button,
-    items::{pick_item_from_set, ItemKind, FISHING_ITEM_ODDS},
+    items::{FISHING_ITEM_ODDS, ItemKind, pick_item_from_set},
     money::Money,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    sounds::{SongPlayOptions, SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    sounds::{SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST, SongPlayOptions},
     sprite::BasicAnimeSprite,
-    Button,
 };
 
 struct HitSeqEntry {

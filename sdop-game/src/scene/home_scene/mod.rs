@@ -5,34 +5,40 @@ mod weather;
 use core::{time::Duration, u8};
 
 use chrono::{Datelike, Timelike};
-use fixedstr::{str32, str_format};
+use fixedstr::{str_format, str32};
 use glam::Vec2;
 
 use crate::{
-    anime::{tick_all_anime, HasAnime, MaskedAnimeRender},
+    Button, Timestamp, WIDTH,
+    anime::{HasAnime, MaskedAnimeRender, tick_all_anime},
     assets::{
-        self, DynamicImage, Image, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
+        self, DynamicImage, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
+        Image,
     },
     date_utils::DurationExt,
     display::{
-        ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_Y, HEIGHT_F32, WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
+        WIDTH_I32,
     },
     dream_bubble::DreamBubble,
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    geo::{vec2_direction, vec2_distance, Rect},
+    geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
     pc::{PcKind, PcRender},
-    pet::{definition::PetAnimationSet, render::PetRender, Mood},
-    poop::{poop_count, update_poop_renders, PoopRender, MAX_POOPS},
+    pet::{Mood, definition::PetAnimationSet, render::PetRender},
+    poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         death_scene::DeathScene,
         egg_hatch_scene::EggHatchScene,
         evolve_scene::EvolveScene,
+        explore_select_scene::ExploreSelectScene,
+        exploring_post_scene::ExploringPostScene,
         food_select::FoodSelectScene,
         game_select::GameSelectScene,
         heal_scene::HealScene,
@@ -48,13 +54,11 @@ use crate::{
         settings_scene::SettingsScene,
         shop_scene::ShopScene,
         suiters_scene::SuitersScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sounds::{SongPlayOptions, SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK},
+    sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
     sprite::{BasicAnimeSprite, MusicNote, Sprite},
     temperature::TemperatureLevel,
-    tv::{get_show_for_time, TvKind, TvRender, SHOW_RUN_TIME},
-    Button, Timestamp, WIDTH,
+    tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
 
 const WONDER_SPEED: f32 = 5.;
@@ -82,7 +86,7 @@ pub const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
 const BOOK_POS: Vec2 = Vec2::new(CENTER_X, 90.);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum State {
+pub enum State {
     Wondering,
     Sleeping,
     WatchingTv {
@@ -107,6 +111,7 @@ enum State {
     Telescope {
         end_time: Duration,
     },
+    Exploring,
 }
 
 struct Word {
@@ -128,7 +133,7 @@ pub struct HomeSceneData {
     pc: PcRender,
     next_word_spawn: Duration,
     floating_words: [Option<Word>; 5],
-    state: State,
+    pub state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
     skull: MaskedAnimeRender,
@@ -303,12 +308,13 @@ impl Scene for HomeScene {
                 note.pos = Vec2::new(-100., -100.);
             }
 
-            args.game_ctx.home.options = MenuOptions::new(args.game_ctx.home.state, args.game_ctx);
-
             generate_night_sky_image::<NIGHT_SKY_HEIGHT>(
                 &mut self.night_sky,
                 args.timestamp.inner().num_days_from_ce(),
-            )
+            );
+
+            args.game_ctx.home.dream_bubble_timer =
+                Duration::from_mins(args.game_ctx.rng.u64(1..=3));
         }
 
         self.egg_render.pos = Vec2::new(
@@ -332,6 +338,12 @@ impl Scene for HomeScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+        if args.game_ctx.home.state_elapsed == Duration::ZERO {
+            args.game_ctx.home.options = MenuOptions::new(args.game_ctx.home.state, args.game_ctx);
+        }
+
+        args.game_ctx.home.state_elapsed += args.delta;
+
         args.game_ctx
             .home
             .pet_render
@@ -348,15 +360,19 @@ impl Scene for HomeScene {
         args.game_ctx.home.pet_render.tick(args.delta);
         tick_all_anime(&mut args.game_ctx.home.poops, args.delta);
 
-        let should_be_sleeping = args
-            .game_ctx
-            .pet
-            .definition()
-            .should_be_sleeping(&args.timestamp);
-        if should_be_sleeping && !matches!(args.game_ctx.home.state, State::Sleeping) {
-            args.game_ctx.home.change_state(State::Sleeping);
-        } else if !should_be_sleeping && matches!(args.game_ctx.home.state, State::Sleeping) {
-            args.game_ctx.home.change_state(State::Wondering);
+        if args.game_ctx.explore_system.currently_exploring() {
+            args.game_ctx.home.change_state(State::Exploring);
+        } else {
+            let should_be_sleeping = args
+                .game_ctx
+                .pet
+                .definition()
+                .should_be_sleeping(&args.timestamp);
+            if should_be_sleeping && !matches!(args.game_ctx.home.state, State::Sleeping) {
+                args.game_ctx.home.change_state(State::Sleeping);
+            } else if !should_be_sleeping && matches!(args.game_ctx.home.state, State::Sleeping) {
+                args.game_ctx.home.change_state(State::Wondering);
+            }
         }
 
         // Pending sounds
@@ -448,8 +464,6 @@ impl Scene for HomeScene {
                 );
             args.game_ctx.home.skull.anime().tick(args.delta);
         }
-
-        args.game_ctx.home.state_elapsed += args.delta;
 
         args.game_ctx.home.weather.tick(
             args.delta,
@@ -755,6 +769,24 @@ impl Scene for HomeScene {
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
+            State::Exploring => {
+                if !args.game_ctx.explore_system.currently_exploring() {
+                    args.game_ctx.home.change_state(State::Wondering);
+                    return SceneOutput::new(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                }
+
+                let passed = args.game_ctx.explore_system.current_percent_passed();
+                args.game_ctx
+                    .home
+                    .pet_render
+                    .set_animation(if passed > 0.8 {
+                        PetAnimationSet::Normal
+                    } else if passed > 0.5 {
+                        PetAnimationSet::Normal
+                    } else {
+                        PetAnimationSet::Sad
+                    });
+            }
         }
 
         if !matches!(args.game_ctx.home.state, State::Alarm)
@@ -836,6 +868,11 @@ impl Scene for HomeScene {
                     MenuOption::Settings => {
                         return SceneOutput::new(SceneEnum::Settings(SettingsScene::new()));
                     }
+                    MenuOption::Explore => {
+                        return SceneOutput::new(SceneEnum::ExploreSelect(
+                            ExploreSelectScene::new(),
+                        ));
+                    }
                 };
             }
         }
@@ -859,7 +896,7 @@ impl Scene for HomeScene {
         if args.game_ctx.pet.is_ill()
             && !matches!(
                 args.game_ctx.home.state,
-                State::GoneOut { outing_end_time: _ }
+                State::GoneOut { outing_end_time: _ } | State::Exploring
             )
         {
             display.render_complex(&args.game_ctx.home.skull);
@@ -985,68 +1022,193 @@ impl Scene for HomeScene {
                 display.render_complex(&args.game_ctx.home.telescope);
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
+            State::Exploring => {
+                let explore = &args.game_ctx.explore_system;
+                let pet = &args.game_ctx.pet;
+
+                let y = 48;
+
+                display.render_image_complex(
+                    CENTER_X as i32,
+                    y + PREVIEW_RECT_HEIGHT / 2,
+                    args.game_ctx.home.pet_render.image(),
+                    ComplexRenderOption::new().with_white().with_center(),
+                );
+
+                display.render_rect_solid(
+                    Rect::new_bottom_left(Vec2::new(0., y as f32), Vec2::new(WIDTH_F32, 20.)),
+                    false,
+                );
+
+                display.render_rect_solid(
+                    Rect::new_top_left(
+                        Vec2::new(0., (y + PREVIEW_RECT_HEIGHT - 1) as f32),
+                        Vec2::new(WIDTH_F32, 20.),
+                    ),
+                    false,
+                );
+
+                display.render_image_complex(
+                    CENTER_X as i32,
+                    y + PREVIEW_RECT_HEIGHT / 2,
+                    &assets::IMAGE_EXPLORE_HOME_WINDOW,
+                    ComplexRenderOption::new().with_center().with_white(),
+                );
+
+                let mut y = 1;
+                display.render_image_complex(
+                    WIDTH_I32 / 2 - assets::IMAGE_CURRENTLY_EXPLORING.size.x as i32 / 2,
+                    y,
+                    &assets::IMAGE_CURRENTLY_EXPLORING,
+                    ComplexRenderOption::new().with_white(),
+                );
+                y += assets::IMAGE_CURRENTLY_EXPLORING.size.y as i32;
+
+                display.render_text_complex(
+                    Vec2::new(CENTER_X, y as f32 + 4.),
+                    explore.current_location().name,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font_wrapping_x(WIDTH_I32)
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 17;
+
+                {
+                    let total_seconds =
+                        (explore.current_location().length - explore.elapsed()).as_secs() as i32; // Get total time in seconds
+                    let hours = total_seconds / 3600;
+                    let remaining = total_seconds % 3600;
+                    let mins = remaining / 60;
+                    let seconds = remaining % 60;
+
+                    let str = str_format!(fixedstr::str12, "{}h{:02}m{:02}s", hours, mins, seconds);
+                    display.render_text_complex(
+                        Vec2::new(CENTER_X, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                }
+                y += 4;
+
+                // Render percent
+                const PROGRESS_RECT_HEIGHT: f32 = 5.;
+                display.render_rect_outline(
+                    Rect::new_top_left(
+                        Vec2::new(0., y as f32),
+                        Vec2::new(WIDTH_F32, PROGRESS_RECT_HEIGHT),
+                    ),
+                    true,
+                );
+                display.render_rect_solid(
+                    Rect::new_top_left(
+                        Vec2::new(0., y as f32),
+                        Vec2::new(WIDTH_F32 * explore.percent_complete(), PROGRESS_RECT_HEIGHT),
+                    ),
+                    true,
+                );
+
+                y += PROGRESS_RECT_HEIGHT as i32 + 2;
+
+                const PREVIEW_RECT_HEIGHT: i32 = 20;
+
+                // already rendered the pet
+
+                y += PREVIEW_RECT_HEIGHT + 3;
+
+                let str = str_format!(fixedstr::str32, "{} now is", pet.name.trim());
+                display.render_text_complex(
+                    Vec2::new(CENTER_X + 1., y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 7;
+
+                display.render_text_complex(
+                    Vec2::new(CENTER_X + 1., y as f32),
+                    explore.current_activity(),
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL)
+                        .with_font_wrapping_x(WIDTH_I32 - 2),
+                );
+            }
         }
 
-        display.render_sprites(&args.game_ctx.home.poops);
+        if !matches!(args.game_ctx.home.state, State::Exploring) {
+            display.render_sprites(&args.game_ctx.home.poops);
 
-        display.render_complex(&args.game_ctx.home.weather);
+            display.render_complex(&args.game_ctx.home.weather);
+        }
 
         display.render_complex(&self.particle_system);
 
-        let pet = &args.game_ctx.pet;
+        if !matches!(args.game_ctx.home.state, State::Exploring) {
+            let pet = &args.game_ctx.pet;
 
-        display.render_rect_solid(HOME_SCENE_TOP_AREA_RECT, false);
+            display.render_rect_solid(HOME_SCENE_TOP_AREA_RECT, false);
 
-        let total_filled = pet.stomach_filled / pet.definition().stomach_size;
-        display.render_stomach(
-            Vec2::new(9., IMAGE_STOMACH_MASK.size.y as f32),
-            total_filled,
-        );
+            let total_filled = pet.stomach_filled / pet.definition().stomach_size;
+            display.render_stomach(
+                Vec2::new(9., IMAGE_STOMACH_MASK.size.y as f32),
+                total_filled,
+            );
 
-        const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.size.y as i32 + 1;
-        display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
-        let hours = pet.age.as_hours() as i32;
-        let days = hours / 24;
-        let hours = hours % 24;
-        let str = str_format!(str32, "{}d{}h", days, hours);
-        display.render_text_complex(
-            Vec2::new(
-                STOMACH_END_X as f32 + assets::IMAGE_AGE_SYMBOL.size.x as f32 + 2.,
-                1.,
-            ),
-            &str,
-            ComplexRenderOption::new()
-                .with_white()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
+            const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.size.y as i32 + 1;
+            display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
+            let hours = pet.age.as_hours() as i32;
+            let days = hours / 24;
+            let hours = hours % 24;
+            let str = str_format!(str32, "{}d{}h", days, hours);
+            display.render_text_complex(
+                Vec2::new(
+                    STOMACH_END_X as f32 + assets::IMAGE_AGE_SYMBOL.size.x as f32 + 2.,
+                    1.,
+                ),
+                &str,
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
 
-        let money_str = fixedstr::str_format!(str32, "${}", args.game_ctx.money);
-        display.render_text_complex(
-            Vec2::new(STOMACH_END_X as f32, 10.),
-            &money_str,
-            ComplexRenderOption::new()
-                .with_white()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
+            let money_str = fixedstr::str_format!(str32, "${}", args.game_ctx.money);
+            display.render_text_complex(
+                Vec2::new(STOMACH_END_X as f32, 10.),
+                &money_str,
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
 
-        display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
+            display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
 
-        display.render_complex(&args.game_ctx.home.options);
+            if args.game_ctx.egg.is_some() {
+                display.render_complex(&self.egg_render);
+            }
 
-        if args.game_ctx.egg.is_some() {
-            display.render_complex(&self.egg_render);
-        }
-
-        // No lights if sleeping
-        if matches!(
-            args.game_ctx.home.state,
-            State::Wondering | State::PlayingMp3 { jam_end_time: _ } | State::Alarm
-        ) {
-            for i in [&self.top_render, &self.right_render, &self.left_render] {
-                if let HomeFurnitureRender::InvetroLight(light) = i {
-                    display.render_complex(light);
+            // No lights if sleeping
+            if matches!(
+                args.game_ctx.home.state,
+                State::Wondering | State::PlayingMp3 { jam_end_time: _ } | State::Alarm
+            ) {
+                for i in [&self.top_render, &self.right_render, &self.left_render] {
+                    if let HomeFurnitureRender::InvetroLight(light) = i {
+                        display.render_complex(light);
+                    }
                 }
             }
         }
+
+        display.render_complex(&args.game_ctx.home.options);
     }
 }

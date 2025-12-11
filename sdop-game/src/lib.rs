@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![cfg_attr(feature = "2025", feature(duration_constructors_lite))]
-#![feature(unsigned_is_multiple_of)]
-#![feature(specialization)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
+#![feature(duration_constructors_lite)]
+#![feature(specialization)]
 #![feature(generic_const_exprs)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
@@ -20,8 +19,8 @@ use crate::{
     input::Input,
     pet::definition::PET_BABIES,
     scene::{
-        home_scene::HomeScene, new_pet_scene::NewPetScene, RenderArgs, SceneEnum, SceneManger,
-        SceneTickArgs,
+        RenderArgs, SceneEnum, SceneManger, SceneTickArgs, home_scene::HomeScene,
+        new_pet_scene::NewPetScene,
     },
     sim::tick_sim,
 };
@@ -38,6 +37,7 @@ mod death;
 mod display;
 mod dream_bubble;
 mod egg;
+mod explore;
 mod fish_tank;
 mod fonts;
 mod food;
@@ -79,7 +79,7 @@ pub use crate::input::{Button, ButtonState, ButtonStates};
 pub use crate::items::ALL_ITEMS;
 #[cfg(feature = "notes")]
 pub use crate::notes::note_sound_file;
-pub use crate::save::{SaveFile, SAVE_SIZE};
+pub use crate::save::{SAVE_SIZE, SaveFile};
 pub use crate::sounds::Song;
 pub use sdop_common::Note;
 

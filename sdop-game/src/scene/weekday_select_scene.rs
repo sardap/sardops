@@ -3,13 +3,12 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X},
+    Button, assets,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
-    sounds::{SongPlayOptions, SONG_ERROR},
-    Button,
+    sounds::{SONG_ERROR, SongPlayOptions},
 };
 
 enum FieldOption {

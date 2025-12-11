@@ -53,6 +53,14 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
             args.game_ctx
                 .suiter_system
                 .sim_tick(delta, &mut args.game_ctx.sim_rng, pet, sleeping);
+            args.game_ctx.explore_system.sim_tick(
+                delta,
+                &args.timestamp,
+                &mut args.game_ctx.rng,
+                &mut args.game_ctx.pet,
+                &mut args.game_ctx.inventory,
+                &mut args.game_ctx.money,
+            );
         }
     }
 }

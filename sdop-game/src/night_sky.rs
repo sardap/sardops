@@ -1,8 +1,8 @@
 use glam::U16Vec2;
 
 use crate::{
-    assets::{DynamicImage, IMAGE_NIGHT_SKY_0, IMAGE_NIGHT_SKY_1, IMAGE_NIGHT_SKY_2},
     WIDTH,
+    assets::{DynamicImage, IMAGE_NIGHT_SKY_0, IMAGE_NIGHT_SKY_1, IMAGE_NIGHT_SKY_2},
 };
 
 pub fn generate_night_sky_image<const HEIGHT: usize>(

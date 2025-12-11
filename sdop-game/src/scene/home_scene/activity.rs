@@ -8,10 +8,10 @@ use crate::{
     display::CENTER_VEC,
     game_consts::TELESCOPE_USE_RANGE,
     items::ItemKind,
-    pet::{definition::PET_BRAINO_ID, LifeStage, Mood},
+    pet::{LifeStage, Mood, definition::PET_BRAINO_ID},
     scene::{
-        home_scene::{State, PROGRAM_RUN_TIME_RANGE},
         SceneTickArgs,
+        home_scene::{PROGRAM_RUN_TIME_RANGE, State},
     },
     tv::TvKind,
 };
@@ -49,7 +49,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
     {
         let _ = options.push(Activity::WatchTv);
     }
-    if !matches!(args.game_ctx.pet.definition().life_stage, LifeStage::Baby)
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args
             .game_ctx
             .pet
@@ -64,20 +64,17 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         let _ = options.push(Activity::ListenMusic);
     }
 
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.pet.mood() == Mood::Happy
     {
         let _ = options.push(Activity::GoOut);
     }
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Child
+    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.inventory.has_item(ItemKind::Telescope)
         && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
     {
         let _ = options.push(Activity::Telescope);
     }
-
-    options.clear();
-    let _ = options.push(Activity::GoOut);
 
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();

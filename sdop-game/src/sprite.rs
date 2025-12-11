@@ -4,7 +4,7 @@ use strum::IntoEnumIterator;
 use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
-    display::{PostionMode, Rotation, HEIGHT_F32, WIDTH_F32},
+    display::{HEIGHT_F32, PostionMode, Rotation, WIDTH_F32},
     geo::Rect,
 };
 
