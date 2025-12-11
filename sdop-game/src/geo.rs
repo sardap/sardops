@@ -109,8 +109,8 @@ impl Rect {
 
     pub const fn grow(mut self, by: f32) -> Self {
         let mut pos = self.pos_top_left();
-        self.size.x = self.size.x + by;
-        self.size.y = self.size.y + by;
+        self.size.x += by;
+        self.size.y += by;
         pos.x -= by / 2.;
         pos.y -= by / 2.;
         self.pos = Vec2::new(pos.x + self.size.x / 2., pos.y + self.size.y / 2.);

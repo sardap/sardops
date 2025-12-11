@@ -107,3 +107,16 @@ impl MelodyEntry {
         Self { note, duration }
     }
 }
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ItemCategory {
+    Misc,
+    Furniture,
+    PlayThing,
+    Usable,
+    Book,
+    Software,
+    Food,
+    Map,
+}

@@ -114,7 +114,7 @@ impl<'a, const N: usize> IntoIterator for &'a BitArray<N> {
     }
 }
 
-impl<'a, const N: usize> Iterator for BitArrayIter<'a, N> {
+impl<const N: usize> Iterator for BitArrayIter<'_, N> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {

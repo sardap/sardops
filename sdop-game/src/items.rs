@@ -3,6 +3,7 @@ use core::time::Duration;
 use bincode::{Decode, Encode};
 use const_for::const_for;
 use glam::usize;
+use sdop_common::ItemCategory;
 use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
@@ -14,8 +15,8 @@ use crate::{
     game_context::GameContext,
     pc::Program,
     scene::{
-        alarm_set_scene::AlarmSetScene, credits_scene::CreditsScene, fishing_scene,
-        star_gazing_scene, SceneEnum,
+        SceneEnum, alarm_set_scene::AlarmSetScene, credits_scene::CreditsScene, fishing_scene,
+        home_scene, star_gazing_scene,
     },
 };
 
@@ -23,40 +24,29 @@ include!(concat!(env!("OUT_DIR"), "/dist_items.rs"));
 
 pub const ITEM_COUNT: usize = core::mem::variant_count::<ItemKind>();
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
-pub enum ItemCategory {
-    Misc,
-    Furniture,
-    PlayThing,
-    Usable,
-    Book,
-    Software,
-    Food,
+pub const fn items_for_cata(cata: &ItemCategory) -> &'static [ItemKind] {
+    match cata {
+        ItemCategory::Misc => &[],
+        ItemCategory::Furniture => &FURNITURE_ITEMS,
+        ItemCategory::PlayThing => &PLAYTHING_ITEMS,
+        ItemCategory::Usable => &USABLE_ITEMS,
+        ItemCategory::Book => &BOOK_ITEMS,
+        ItemCategory::Software => &SOFTWARE_ITEMS,
+        ItemCategory::Food => &FOOD_ITEMS,
+        ItemCategory::Map => &MAP_ITEMS,
+    }
 }
 
-impl ItemCategory {
-    pub const fn items(&self) -> &'static [ItemKind] {
-        match self {
-            ItemCategory::Misc => &[],
-            ItemCategory::Furniture => &FURNITURE_ITEMS,
-            ItemCategory::PlayThing => &PLAYTHING_ITEMS,
-            ItemCategory::Usable => &USABLE_ITEMS,
-            ItemCategory::Book => &BOOK_ITEMS,
-            ItemCategory::Software => &SOFTWARE_ITEMS,
-            ItemCategory::Food => &FOOD_ITEMS,
-        }
-    }
-
-    pub const fn icon(&self) -> &'static StaticImage {
-        match self {
-            ItemCategory::Misc => &assets::IMAGE_BAG_ICON_FURNITURE,
-            ItemCategory::Furniture => &assets::IMAGE_BAG_ICON_FURNITURE,
-            ItemCategory::PlayThing => &assets::IMAGE_BAG_ICON_PLAYTHING,
-            ItemCategory::Usable => &assets::IMAGE_BAG_ICON_USEABLE,
-            ItemCategory::Book => &assets::IMAGE_BAG_ICON_BOOK,
-            ItemCategory::Software => &assets::IMAGE_BAG_ICON_SOFTWARE,
-            ItemCategory::Food => &assets::IMAGE_BAG_ICON_FOOD,
-        }
+pub const fn icon_for_cata(cata: &ItemCategory) -> &'static StaticImage {
+    match cata {
+        ItemCategory::Misc => &assets::IMAGE_BAG_ICON_FURNITURE,
+        ItemCategory::Furniture => &assets::IMAGE_BAG_ICON_FURNITURE,
+        ItemCategory::PlayThing => &assets::IMAGE_BAG_ICON_PLAYTHING,
+        ItemCategory::Usable => &assets::IMAGE_BAG_ICON_USEABLE,
+        ItemCategory::Book => &assets::IMAGE_BAG_ICON_BOOK,
+        ItemCategory::Software => &assets::IMAGE_BAG_ICON_SOFTWARE,
+        ItemCategory::Food => &assets::IMAGE_BAG_ICON_FOOD,
+        ItemCategory::Map => &assets::IMAGE_BAG_ICON_FOOD,
     }
 }
 
@@ -415,6 +405,7 @@ items_for_category!("usable", "USABLE", Usable);
 items_for_category!("book", "BOOK", Book);
 items_for_category!("software", "SOFTWARE", Software);
 items_for_category!("food", "FOOD", Food);
+items_for_category!("map", "MAP", Map);
 
 const fn all_items_gen() -> [ItemKind; ITEM_COUNT] {
     let mut result = [ItemKind::None; ITEM_COUNT];
@@ -644,6 +635,12 @@ const USE_FISHING_ROD: UsableItem = UsableItem::new(ItemKind::FishingRod, |game_
     }
 
     result
+})
+.with_is_usable_fn(|game_ctx| {
+    !matches!(
+        game_ctx.home.state,
+        home_scene::State::Exploring | home_scene::State::GoneOut { outing_end_time: _ }
+    )
 });
 
 const USE_FISH: UsableItem = UsableItem::new(ItemKind::Fish, |game_ctx| {
@@ -657,12 +654,15 @@ const USE_TELESCOPE: UsableItem = UsableItem::new(ItemKind::Telescope, |_| {
         star_gazing_scene::StarGazingScene::new(),
     ))
 })
-.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::Telescope));
 
 const USE_ALARM: UsableItem = UsableItem::new(ItemKind::Alarm, |_| {
     UseItemOutput::new().with_scene(SceneEnum::AlarmSet(AlarmSetScene::new()))
 })
-.with_is_usable_fn(|game_ctx| game_ctx.inventory.has_item(ItemKind::FishTank));
+.with_is_usable_fn(|game_ctx| {
+    game_ctx.inventory.has_item(ItemKind::AnalogueClock)
+        || game_ctx.inventory.has_item(ItemKind::DigitalClock)
+});
 
 const USE_CREDITS: UsableItem = UsableItem::new(ItemKind::CreditsScroll, |_| {
     UseItemOutput::new().with_scene(SceneEnum::Credits(CreditsScene::new()))

@@ -7,6 +7,8 @@ pub mod egg_hatch_scene;
 pub mod enter_date_scene;
 pub mod enter_text_scene;
 pub mod evolve_scene;
+pub mod explore_select_scene;
+pub mod exploring_post_scene;
 pub mod fishing_scene;
 pub mod food_select;
 pub mod game_select;
@@ -34,8 +36,8 @@ use core::time::Duration;
 use chrono::{NaiveDate, NaiveTime, WeekdaySet};
 
 use crate::{
-    display::GameDisplay, game_context::GameContext, input::Input,
-    scene::enter_text_scene::EnterTextStr, Timestamp,
+    Timestamp, display::GameDisplay, game_context::GameContext, input::Input,
+    scene::enter_text_scene::EnterTextStr,
 };
 
 #[macro_export]
@@ -117,6 +119,8 @@ define_scence_enum!(SceneEnum {
     AlarmSet(alarm_set_scene::AlarmSetScene),
     Settings(settings_scene::SettingsScene),
     Credits(credits_scene::CreditsScene),
+    ExploreSelect(explore_select_scene::ExploreSelectScene),
+    ExploringPost(exploring_post_scene::ExploringPostScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),
@@ -145,7 +149,9 @@ impl SceneEnum {
             | SceneEnum::StarGazing(_)
             | SceneEnum::AlarmSet(_)
             | SceneEnum::Settings(_)
-            | SceneEnum::Credits(_) => true,
+            | SceneEnum::Credits(_)
+            | SceneEnum::ExploreSelect(_)
+            | SceneEnum::ExploringPost(_) => true,
             _ => false,
         }
     }

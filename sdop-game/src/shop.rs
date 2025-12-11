@@ -1,8 +1,9 @@
 use bincode::{Decode, Encode};
+use sdop_common::ItemCategory;
 
 use crate::{
-    items::{ItemCategory, ItemKind, COMMON_ITEMS, RARE_ITEMS},
     Timestamp,
+    items::{ItemKind, items_for_cata},
 };
 
 const MAX_SHOP_ITEMS: usize = 20;
@@ -53,14 +54,15 @@ impl Shop {
         for (catas, count) in counts {
             // Flattening iter isn't working just do it myself
             let mut added = 0;
-            let total: usize = catas.iter().map(|i| i.items().len()).sum();
+            let total: usize = catas.iter().map(|i| items_for_cata(i).len()).sum();
             for _ in 0..total {
                 let next = rng.usize(0..total);
 
                 let mut max = 0;
                 for cata in catas {
-                    if next < max + cata.items().len() {
-                        let item = cata.items()[next - max];
+                    let items = items_for_cata(cata);
+                    if next < max + items.len() {
+                        let item = items[next - max];
                         if !result.contains(&item) && item != ItemKind::RecipeBiscuit {
                             result[top] = item;
                             top += 1;
@@ -68,7 +70,7 @@ impl Shop {
                         }
                         break;
                     }
-                    max += cata.items().len();
+                    max += items.len();
                 }
 
                 if added >= count {

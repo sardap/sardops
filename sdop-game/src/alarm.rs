@@ -5,11 +5,10 @@ use chrono::{Datelike, NaiveTime, TimeDelta, WeekdaySet};
 use glam::Vec2;
 
 use crate::{
+    Timestamp,
     anime::{Anime, HasAnime},
     assets::{FRAMES_ALARM, FRAMES_ALARM_MASK, IMAGE_ALARM_0},
-    bit_array::bytes_for_bits,
     sprite::{Sprite, SpriteMask},
-    Timestamp,
 };
 
 pub struct AlarmRender {

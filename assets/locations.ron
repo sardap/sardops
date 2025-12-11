@@ -1,0 +1,172 @@
+[
+    (
+        name: "Down the road",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Waiting at the lights",
+            "staring at the sun",
+            "loitering",
+            "going up hill",
+            "going down hill",
+            "watching the birds",
+            "crossing the street",
+            "dodging dog poop",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: [(item: "Painting Dude", odds: 0.2)]
+        ),
+    ),
+    (
+        name: "to the ninch",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Fighting the traffic",
+            "Rolling down the ninch Freeway",
+            "Avoiding Frankston",
+            "Eating at The Dava Hotel",
+            "Going down Nepean highway",
+            "Walking down the beach",
+            "Enjoying the rock pools",
+            "Swimming between the flags",
+            "Walking around fort nepean",
+            "Shopping at a IGA",
+            "Looking at phillip island",
+            "Enjoying the beach",
+            "Circling the navel base",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "1000 steps",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Going up some steps",
+            "Waiting for others to pass",
+            "More steps",
+            "can't believe it more steps",
+            "how many is 1000",
+            "you know it isn't even 1000 steps",
+            "must be at least a couple 100 to go",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "riding the 109",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Outside of box hill central",
+            "A man is sipping on cask wine",
+            "Heading down to maccas",
+            "I was on the 109",
+            "me and some guys from school",
+            "heading down to north richmond",
+            "Going though Victora street",
+            "stopping at vic gardens",
+            "I was riding the 109",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "into the office",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Topping up myki",
+            "Waiting on the platform",
+            "avoiding eye contact with pissing man",
+            "scrolling on phone",
+            "thinking about but not reading book",
+            "staring out window",
+            "marching along",
+            "crying in toilet",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "n seoul tower",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Waiting for the bus",
+            "Walking",
+            "Walking...",
+            "Wow look at the city",
+            "Taking selife",
+            "stuffed into cable car",
+            "Waiting",
+            "Walking",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "The malls balls",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Looking at the malls balls",
+            "Feeling the malls balls",
+            "Embracing the malls balls",
+            "In awe of the malls balls",
+            "Bowing to the malls balls",
+            "Smitten by the malls balls",
+            "Beholding the malls balls",
+            "Appreciating the malls balls",
+            "Pondering the malls balls",
+        ],
+        rewards: (
+            money_start: 500,
+            money_end: 1000,
+            items: []
+        ),
+    ),
+    (
+        name: "Koreana Mart Adelaide",
+        length_seconds: 600,
+        cooldown_seconds: 600,
+        difficulty: 100,
+        activities: [
+            "Walking down Grote Street",
+            "Beholding Market plaza food court",
+            "Looking around",
+            "Looking at gimbap",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: []
+        ),
+    )
+]

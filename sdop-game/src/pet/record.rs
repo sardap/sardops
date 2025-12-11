@@ -3,12 +3,12 @@ use core::time::Duration;
 use bincode::{Decode, Encode};
 
 use crate::{
+    Timestamp,
     death::DeathCause,
     pet::{
-        definition::{PetDefinition, PetDefinitionId},
         LifeStageHistory, PetInstance, PetName, PetParents, UniquePetId,
+        definition::{PetDefinition, PetDefinitionId},
     },
-    Timestamp,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

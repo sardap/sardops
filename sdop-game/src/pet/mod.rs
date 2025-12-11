@@ -8,8 +8,10 @@ use strum::EnumCount;
 use strum_macros::{EnumCount, EnumIter};
 
 use crate::{
+    Timestamp,
     book::BookHistory,
-    death::{get_threshold_odds, passed_threshold_chance, DeathCause},
+    death::{DeathCause, get_threshold_odds, passed_threshold_chance},
+    explore::{ExploreHistory, ExploreSkill},
     food::Food,
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
@@ -18,19 +20,18 @@ use crate::{
         DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE,
         HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS,
         ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS,
-        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, POOP_INTERVNAL, RANDOM_NAMES, SPLACE_LOCATIONS,
+        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
     pet::definition::{
-        PetAnimationSet, PetDefinition, PetDefinitionId, PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID,
-        PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID, PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID,
-        PET_HUMBIE_ID, PET_ICE_CUBE_ID, PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID,
-        PET_WAS_GAURD_ID,
+        PET_BALLOTEE_ID, PET_BEACH_UNBRELLA_ID, PET_BEERIE_ID, PET_BRAINO_ID, PET_CKCS_ID,
+        PET_COMPUTIE_ID, PET_COUNT, PET_DEVIL_ID, PET_HUMBIE_ID, PET_ICE_CUBE_ID,
+        PET_PAWN_WHITE_ID, PET_SICKO_ID, PET_SNOWMAN_ID, PET_WAS_GAURD_ID, PetAnimationSet,
+        PetDefinition, PetDefinitionId,
     },
-    poop::{poop_count, Poop},
+    poop::{Poop, poop_count},
     temperature::TemperatureLevel,
-    Timestamp,
 };
 
 pub mod definition;
@@ -76,6 +77,12 @@ const DEFAULT_LIFE_STAGE_ENTRY: LifeStageHistoryEntry = LifeStageHistoryEntry {
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct LifeStageHistory {
     history: [Option<LifeStageHistoryEntry>; LifeStage::COUNT],
+}
+
+impl Default for LifeStageHistory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LifeStageHistory {
@@ -207,6 +214,7 @@ pub struct PetInstance {
     cold_for: Duration,
     total_hot_for: Duration,
     pub seen_alien: bool,
+    pub explore: ExploreHistory,
 }
 
 impl PetInstance {
@@ -600,6 +608,10 @@ impl PetInstance {
             }
         }
     }
+
+    pub fn explore_skill(&self) -> ExploreSkill {
+        self.definition().explore_skill() + self.explore.skill
+    }
 }
 
 impl Default for PetInstance {
@@ -634,6 +646,7 @@ impl Default for PetInstance {
             total_cold_for: Duration::ZERO,
             total_hot_for: Duration::ZERO,
             seen_alien: false,
+            explore: ExploreHistory::default(),
         }
     }
 }

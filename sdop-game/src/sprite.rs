@@ -4,7 +4,7 @@ use strum::IntoEnumIterator;
 use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
-    display::{PostionMode, Rotation, HEIGHT_F32, WIDTH_F32},
+    display::{HEIGHT_F32, PostionMode, Rotation, WIDTH_F32},
     geo::Rect,
 };
 
@@ -239,7 +239,7 @@ pub struct MusicNote {
 
 impl MusicNote {
     pub fn reset(&mut self, center: Vec2, rng: &mut fastrand::Rng) {
-        const NOTES: &[&'static StaticImage] = &[
+        const NOTES: &[&StaticImage] = &[
             &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
             &assets::IMAGE_MUSIC_NOTE_CROTCHET,
             &assets::IMAGE_MUSIC_NOTE_QUAVER,

@@ -10,8 +10,7 @@ ENV DEVKITARM=${DEVKITPRO}/devkitARM
 ENV PATH=${DEVKITPRO}/tools/bin:$PATH
 ENV PATH=${DEVKITARM}/bin:$PATH
 
-ENV RUST_TOOLCHAIN_SDOP_GAME=nightly-2024-12-21
-ENV RUST_TOOLCHAIN_NEW=nightly-2025-07-23
+ENV RUST_TOOLCHAIN_SDOP_GAME=nightly-2025-12-01
 
 ENV VITASDK=/usr/local/vitasdk
 ENV PATH=$VITASDK/bin:$PATH
@@ -26,10 +25,9 @@ RUN apt-get update && \
     rustup target add x86_64-unknown-linux-gnu --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup target add thumbv8m.main-none-eabihf --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
-    rustup target add thumbv8m.main-none-eabihf --toolchain ${RUST_TOOLCHAIN_NEW} && \
-    rustup component add rust-src --toolchain ${RUST_TOOLCHAIN_NEW} && \
-    rustup component add clippy --toolchain ${RUST_TOOLCHAIN_NEW} && \
-    rustup component add rustfmt --toolchain ${RUST_TOOLCHAIN_NEW} && \
+    rustup component add rust-src --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
+    rustup component add clippy --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
+    rustup component add rustfmt --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     cargo install cargo-cache && \
     cargo cache -a && \
     git clone https://github.com/vitasdk/vdpm && cd vdpm && ./bootstrap-vitasdk.sh && ./install-all.sh  && cd .. && \

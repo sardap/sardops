@@ -1,19 +1,19 @@
 use core::time::Duration;
 
-use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, TimeDelta, Timelike};
 use glam::Vec2;
 
 use crate::{
     anime::HasAnime,
     assets::{self, Image},
-    display::{ComplexRenderOption, GameDisplay, CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y},
+    display::{CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     game_consts::SHOP_OPEN_TIMES,
     geo::Rect,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs},
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
     shop::ShopItemSet,
-    sounds::{self, SongPlayOptions, SONG_SHOP, SONG_SHOP_CLOSED},
+    sounds::{self, SONG_SHOP, SONG_SHOP_CLOSED, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };
 
@@ -30,7 +30,7 @@ pub struct ShopScene {
     state: State,
     shop_keeper: BasicAnimeSprite,
     closed_sign: BasicAnimeSprite,
-    sign_shake_remaning: Duration,
+    sign_shake_remaining: Duration,
     particle_system: ParticleSystem<50, 1>,
 }
 
@@ -53,7 +53,7 @@ impl ShopScene {
                 CENTER_VEC + Vec2::new(0., -7.),
                 &assets::FRAMES_SHOP_SIGN_CLOSED,
             ),
-            sign_shake_remaning: Duration::ZERO,
+            sign_shake_remaining: Duration::ZERO,
             particle_system: ParticleSystem::default(),
         }
     }
@@ -87,8 +87,8 @@ impl Scene for ShopScene {
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
         self.shop_keeper.anime().tick(args.delta);
 
-        self.sign_shake_remaning = self
-            .sign_shake_remaning
+        self.sign_shake_remaining = self
+            .sign_shake_remaining
             .checked_sub(args.delta)
             .unwrap_or_default();
 
@@ -145,29 +145,25 @@ impl Scene for ShopScene {
                             sounds::SONG_BUY_CHIME,
                             SongPlayOptions::new().with_effect(),
                         );
-                        self.particle_system.run_once_spwaner(
+                        self.particle_system.run_once_spawner(
                             |args| {
-                                Some((
-                                    ParticleTemplate::new(
-                                        Duration::from_millis(1000)..Duration::from_millis(2000),
-                                        Rect::new_top_left(
-                                            Vec2::new(10., 80.),
-                                            Vec2::new(40., 40.),
-                                        ),
-                                        Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
-                                        &[&assets::IMAGE_MONEY_PARTICLE],
-                                    ),
-                                    20,
-                                ))
+                                const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
+                                    Duration::from_millis(1000)..Duration::from_millis(2000),
+                                    Rect::new_top_left(Vec2::new(10., 80.), Vec2::new(40., 40.)),
+                                    Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
+                                    &[&assets::IMAGE_MONEY_PARTICLE],
+                                );
+
+                                (&TEMPLATE, 20)
                             },
                             &mut ParticleTickArgs::new(args.delta, &mut args.game_ctx.rng),
                         );
-                        self.sign_shake_remaning = SIGN_SHAKE_DURATION;
+                        self.sign_shake_remaining = SIGN_SHAKE_DURATION;
                     } else {
                         args.game_ctx
                             .sound_system
                             .push_song(sounds::SONG_ERROR, SongPlayOptions::new().with_effect());
-                        self.sign_shake_remaning = SIGN_SHAKE_DURATION;
+                        self.sign_shake_remaining = SIGN_SHAKE_DURATION;
                     }
                 }
 
@@ -396,7 +392,7 @@ impl Scene for ShopScene {
                 if item.unique() && own_count > 0 {
                     display.render_image_center(
                         CENTER_X_I32
-                            + if self.sign_shake_remaning > Duration::ZERO {
+                            + if self.sign_shake_remaining > Duration::ZERO {
                                 args.game_ctx.rng.i32(-3..=3)
                             } else {
                                 0
@@ -426,7 +422,7 @@ impl Scene for ShopScene {
                     if !too_much {
                         display.render_image_center(
                             CENTER_X_I32
-                                + if self.sign_shake_remaning > Duration::ZERO {
+                                + if self.sign_shake_remaining > Duration::ZERO {
                                     args.game_ctx.rng.i32(-3..=3)
                                 } else {
                                     0
@@ -437,7 +433,7 @@ impl Scene for ShopScene {
                     } else {
                         display.render_image_center(
                             CENTER_X_I32
-                                + if self.sign_shake_remaning > Duration::ZERO {
+                                + if self.sign_shake_remaining > Duration::ZERO {
                                     args.game_ctx.rng.i32(-3..=3)
                                 } else {
                                     0

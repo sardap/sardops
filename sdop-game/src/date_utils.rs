@@ -1,5 +1,5 @@
 use core::{
-    ops::{Add, Sub},
+    ops::{Add, Range, Sub},
     time::Duration,
 };
 
@@ -510,4 +510,8 @@ impl SpriteMask for MoonRender {
     fn image_mask(&self) -> &impl assets::Image {
         assets::FRAMES_MOON_ANIME_MASK[self.frame_index()].frame
     }
+}
+
+pub fn time_in_range(time: &NaiveTime, range: &Range<NaiveTime>) -> bool {
+    time.ge(&range.start) && time.le(&range.end)
 }

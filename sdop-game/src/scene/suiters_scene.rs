@@ -3,16 +3,15 @@ use core::time::Duration;
 use glam::Vec2;
 
 use crate::{
-    assets,
-    display::{ComplexRenderOption, GameDisplay, Rotation, CENTER_X, WIDTH_F32},
+    Button, assets,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    pet::{definition::PetAnimationSet, render::PetRender, ParentInfo},
+    pet::{ParentInfo, definition::PetAnimationSet, render::PetRender},
     scene::{
-        breed_scene::BreedScene, home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput,
-        SceneTickArgs,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene,
+        home_scene::HomeScene,
     },
     suiter::Suiter,
-    Button,
 };
 
 const FALLING_SPEED: f32 = 15.;

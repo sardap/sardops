@@ -4,7 +4,7 @@ use crate::{
     anime::Anime,
     assets::Image,
     display::PostionMode,
-    pet::definition::{PetAnimationSet, PetDefinition, PetDefinitionId, PET_BLOB_ID},
+    pet::definition::{PET_BLOB_ID, PetAnimationSet, PetDefinition, PetDefinitionId},
     sprite::{Sprite, SpriteMask, SpritePostionMode},
 };
 

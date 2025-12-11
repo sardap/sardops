@@ -6,8 +6,9 @@ use crate::{
     death::passed_threshold_chance,
     game_consts::{SUITER_LEAVE_ODDS, SUITER_SHOW_UP_ODDS_THRESHOLD},
     pet::{
-        definition::{PetDefinitionId, PET_ADULTS},
-        gen_pid, random_name, PetInstance, PetName, UniquePetId,
+        PetInstance, PetName, UniquePetId,
+        definition::{PET_ADULTS, PetDefinitionId},
+        gen_pid, random_name,
     },
 };
 

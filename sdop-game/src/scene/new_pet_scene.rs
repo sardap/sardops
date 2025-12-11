@@ -2,17 +2,17 @@ use chrono::NaiveDateTime;
 use fixedstr::str_format;
 
 use crate::{
+    Timestamp,
     display::GameDisplay,
     game_consts::STARTING_FILLED,
-    pet::{definition::PetDefinitionId, gen_pid, PetInstance, PetName, PetParents, UniquePetId},
+    pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
     scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
         home_scene::HomeScene,
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
     },
-    sounds::{SongPlayOptions, SONG_NEW_PET},
-    Timestamp,
+    sounds::{SONG_NEW_PET, SongPlayOptions},
 };
 
 #[derive(Clone)]
@@ -98,11 +98,14 @@ impl Scene for NewPetScene {
                 }
 
                 self.state = State::NameEntered;
-                SceneOutput::new(SceneEnum::EnterText(EnterTextScene::new(
-                    6,
-                    str_format!(fixedstr::str12, "ENTER NAME"),
-                    Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
-                )))
+                SceneOutput::new(SceneEnum::EnterText(
+                    EnterTextScene::new(
+                        6,
+                        str_format!(fixedstr::str12, "ENTER NAME"),
+                        Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
+                    )
+                    .with_show_pet(self.def_id),
+                ))
             }
             State::NameEntered => SceneOutput::new(SceneEnum::Home(HomeScene::new())),
         }

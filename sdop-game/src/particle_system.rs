@@ -2,7 +2,6 @@ use core::{ops::Range, time::Duration};
 
 use glam::Vec2;
 use heapless::Vec;
-use log::info;
 
 use crate::{
     assets::StaticImage,
@@ -23,21 +22,21 @@ impl<'a> ParticleTickArgs<'a> {
 }
 
 pub struct ParticleTemplate {
-    remaing: Range<Duration>,
+    remaining: Range<Duration>,
     area: Rect,
     dir: Range<Vec2>,
     images: &'static [&'static StaticImage],
 }
 
 impl ParticleTemplate {
-    pub fn new(
-        remaing: Range<Duration>,
+    pub const fn new(
+        remaining: Range<Duration>,
         area: Rect,
         dir: Range<Vec2>,
         images: &'static [&'static StaticImage],
     ) -> Self {
         Self {
-            remaing,
+            remaining,
             area,
             dir,
             images,
@@ -46,8 +45,8 @@ impl ParticleTemplate {
 
     pub fn instantiate(&self, rng: &mut fastrand::Rng) -> Particle {
         Particle {
-            remaning: Duration::from_micros(rng.u64(
-                (self.remaing.start.as_micros() as u64)..(self.remaing.end.as_micros() as u64),
+            remaining: Duration::from_micros(rng.u64(
+                (self.remaining.start.as_micros() as u64)..(self.remaining.end.as_micros() as u64),
             )),
             pos: Vec2::new(
                 rng.i32((self.area.x() as i32)..(self.area.x2() as i32)) as f32 + rng.f32(),
@@ -62,11 +61,11 @@ impl ParticleTemplate {
     }
 }
 
-pub type ParticleSpawnFn = fn(args: &mut ParticleTickArgs) -> Option<(ParticleTemplate, u8)>;
+pub type ParticleSpawnFn = fn(args: &mut ParticleTickArgs) -> (&'static ParticleTemplate, u8);
 
 #[derive(Clone, Copy)]
 pub struct Particle {
-    remaning: Duration,
+    remaining: Duration,
     pos: Vec2,
     dir: Vec2,
     image: &'static StaticImage,
@@ -82,8 +81,91 @@ impl Sprite for Particle {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum SpawnTrigger {
+    TimerConst {
+        current: Duration,
+        max: Duration,
+    },
+    TimerRange {
+        current: Duration,
+        current_target: Duration,
+        target: Range<Duration>,
+    },
+}
+
+impl SpawnTrigger {
+    pub fn timer_const(max: Duration) -> Self {
+        Self::TimerConst {
+            current: Duration::ZERO,
+            max,
+        }
+    }
+
+    pub const fn timer_range(max_range: Range<Duration>) -> Self {
+        Self::TimerRange {
+            current: Duration::ZERO,
+            current_target: Duration::ZERO,
+            target: max_range,
+        }
+    }
+
+    pub fn tick(&mut self, delta: Duration, rng: &mut fastrand::Rng) -> bool {
+        match self {
+            SpawnTrigger::TimerConst { current, max } => {
+                *current += delta;
+                if *current >= *max {
+                    *current = Duration::ZERO;
+                    return true;
+                }
+            }
+            SpawnTrigger::TimerRange {
+                current,
+                current_target,
+                target,
+            } => {
+                *current += delta;
+                if *current > *current_target {
+                    *current = Duration::ZERO;
+                    *current_target = Duration::from_millis(
+                        rng.u64((target.start.as_millis() as u64)..(target.end.as_millis() as u64)),
+                    );
+                    return true;
+                }
+            }
+        };
+
+        false
+    }
+}
+
+#[derive(Clone)]
+pub struct Spawner {
+    pub name: &'static str,
+    trigger: SpawnTrigger,
+    spawn_fn: ParticleSpawnFn,
+}
+
+impl Spawner {
+    pub const fn new(name: &'static str, trigger: SpawnTrigger, spawn_fn: ParticleSpawnFn) -> Self {
+        Self {
+            name,
+            trigger,
+            spawn_fn,
+        }
+    }
+
+    pub fn tick(&mut self, args: &mut ParticleTickArgs) -> Option<(&'static ParticleTemplate, u8)> {
+        if self.trigger.tick(args.delta, args.rng) {
+            Some((self.spawn_fn)(args))
+        } else {
+            None
+        }
+    }
+}
+
 pub struct ParticleSystem<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize> {
-    spawners: Vec<ParticleSpawnFn, MAX_SPAWN_FUNCS>,
+    spawners: Vec<Spawner, MAX_SPAWN_FUNCS>,
     particles: [Option<Particle>; MAX_PARTICLES],
     last_particle_index: usize,
 }
@@ -110,50 +192,63 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
         }
     }
 
-    pub fn with_spawner(mut self, spawner: ParticleSpawnFn) -> Self {
-        let _ = self.spawners.push(spawner);
+    pub fn with_spawner(mut self, spawner: Spawner) -> Self {
+        self.add_spawner(spawner);
         self
     }
 
-    pub fn run_once_spwaner(&mut self, spawner: ParticleSpawnFn, args: &mut ParticleTickArgs) {
-        let particles = &mut self.particles;
-        if let Some((template, count)) = spawner(args) {
-            let mut remaning = count;
-            for range in &[
-                self.last_particle_index..particles.len(),
-                0..self.last_particle_index,
-            ] {
-                for i in range.start..range.end {
-                    if particles[i].is_none() {
-                        particles[i] = Some(template.instantiate(args.rng));
-                        self.last_particle_index = i;
-                        remaning -= 1;
+    pub fn add_spawner(&mut self, spawner: Spawner) {
+        let _ = self.spawners.push(spawner);
+    }
 
-                        if remaning <= 0 {
-                            break;
-                        }
+    pub fn remove_spawner(&mut self, name: &'static str) {
+        if let Some((index, _)) = self
+            .spawners
+            .iter()
+            .enumerate()
+            .find(|(_, i)| i.name == name)
+        {
+            self.spawners.remove(index);
+        }
+    }
+
+    pub fn run_once_spawner(&mut self, spawner: ParticleSpawnFn, args: &mut ParticleTickArgs) {
+        let particles = &mut self.particles;
+        let (template, count) = spawner(args);
+        let mut remaining = count;
+        for range in &[
+            self.last_particle_index..particles.len(),
+            0..self.last_particle_index,
+        ] {
+            for i in range.start..range.end {
+                if particles[i].is_none() {
+                    particles[i] = Some(template.instantiate(args.rng));
+                    self.last_particle_index = i;
+                    remaining -= 1;
+
+                    if remaining <= 0 {
+                        break;
                     }
                 }
+            }
 
-                if remaning <= 0 {
-                    break;
-                }
+            if remaining <= 0 {
+                break;
             }
         }
     }
 
     pub fn tick(&mut self, args: &mut ParticleTickArgs) {
-        let spawners = &mut self.spawners;
         let particles = &mut self.particles;
         // tick existing
         for i in 0..particles.len() {
             let mut should_drop = false;
             if let Some(particle) = particles.get_mut(i).unwrap() {
-                particle.remaning = particle
-                    .remaning
+                particle.remaining = particle
+                    .remaining
                     .checked_sub(args.delta)
                     .unwrap_or(Duration::ZERO);
-                if particle.remaning <= Duration::ZERO {
+                if particle.remaining <= Duration::ZERO {
                     should_drop = true;
                 } else {
                     particle.pos.x += particle.dir.x * args.delta.as_secs_f32();
@@ -167,9 +262,9 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
         }
 
         // Spawn new
-        for spawner in spawners {
-            if let Some((template, count)) = spawner(args) {
-                let mut remaning = count;
+        for spawner in &mut self.spawners {
+            if let Some((template, count)) = spawner.tick(args) {
+                let mut remaining = count;
                 for range in &[
                     self.last_particle_index..particles.len(),
                     0..self.last_particle_index,
@@ -178,15 +273,15 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
                         if particles[i].is_none() {
                             particles[i] = Some(template.instantiate(args.rng));
                             self.last_particle_index = i;
-                            remaning -= 1;
+                            remaining -= 1;
 
-                            if remaning <= 0 {
+                            if remaining <= 0 {
                                 break;
                             }
                         }
                     }
 
-                    if remaning <= 0 {
+                    if remaining <= 0 {
                         break;
                     }
                 }
@@ -201,7 +296,6 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize> ComplexRender
     fn render(&self, display: &mut GameDisplay) {
         for particle in &self.particles {
             if let Some(particle) = particle {
-                info!("Dota 2 {} {}", particle.pos.x, particle.pos.y);
                 display.render_image_complex(
                     particle.pos.x as i32,
                     particle.pos.y as i32,

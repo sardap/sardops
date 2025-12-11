@@ -2,12 +2,13 @@ use fixedstr::str_format;
 use glam::Vec2;
 
 use crate::{
-    assets,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, CENTER_Y},
+    Button, assets,
+    display::{CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay},
     fonts,
     geo::Rect,
+    pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
-    Button,
+    sprite::Sprite,
 };
 
 enum State {
@@ -33,6 +34,7 @@ pub struct EnterTextScene {
     selected_index: usize,
     char_index: usize,
     valid: ValidFn,
+    pet_render: PetRender,
 }
 
 impl EnterTextScene {
@@ -51,7 +53,13 @@ impl EnterTextScene {
             selected_index: 0,
             char_index: 0,
             valid: valid.unwrap_or(default_valid_fn),
+            pet_render: PetRender::default(),
         }
+    }
+
+    pub fn with_show_pet(mut self, pet_def_id: PetDefinitionId) -> Self {
+        self.pet_render.set_def_id(pet_def_id);
+        self
     }
 }
 
@@ -61,6 +69,8 @@ impl Scene for EnterTextScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+        self.pet_render.tick(args.delta);
+
         match self.state {
             State::SelectIndex => {
                 let mut updated = self.selected_index;
@@ -115,8 +125,15 @@ impl Scene for EnterTextScene {
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
+        display.render_image_complex(
+            CENTER_X_I32,
+            25,
+            self.pet_render.image(),
+            ComplexRenderOption::new().with_white().with_center(),
+        );
+
         display.render_text_complex(
-            Vec2::new(CENTER_X, 30.),
+            Vec2::new(CENTER_X, 50.),
             &self.display_text,
             ComplexRenderOption::new()
                 .with_white()

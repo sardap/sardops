@@ -3,18 +3,19 @@ use core::time::Duration;
 use fixedstr::str_format;
 use glam::Vec2;
 use heapless::Vec;
+use sdop_common::ItemCategory;
 use strum::IntoEnumIterator;
 
 use crate::{
+    ALL_ITEMS, Button,
     assets::{self, Image},
     date_utils::DurationExt,
-    display::{ComplexRenderOption, GameDisplay, CENTER_X, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    game_consts::{UI_FLASHING_TIMER, UI_FLASH_TIMER},
+    game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
     geo::Rect,
-    items::{Inventory, ItemCategory, ItemKind, ITEM_COUNT},
-    scene::{home_scene::HomeScene, RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs},
-    Button, ALL_ITEMS,
+    items::{ITEM_COUNT, Inventory, ItemKind, icon_for_cata, items_for_cata},
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
 };
 
 const SELECTABLE_CATEGORIRES: &[ItemCategory] = &[
@@ -67,7 +68,7 @@ impl InventoryScene {
 
     fn change_item(&self, inventory: &Inventory, current: usize, change: i32) -> usize {
         let mut all_items = ALL_ITEMS.iter();
-        let items = self.resolved_cata().items();
+        let items = items_for_cata(&self.resolved_cata());
 
         let start = ((current as isize + change as isize) % ITEM_COUNT as isize).max(0) as usize;
 
@@ -96,8 +97,7 @@ impl InventoryScene {
 impl Scene for InventoryScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
         for cata in SELECTABLE_CATEGORIRES {
-            if cata
-                .items()
+            if items_for_cata(cata)
                 .iter()
                 .any(|item| args.game_ctx.inventory.has_item(*item))
             {
@@ -164,7 +164,9 @@ impl Scene for InventoryScene {
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if let Some(output) = item.use_item(args.game_ctx) {
+                    if let Some(output) = item.use_item(args.game_ctx)
+                        && item.is_usable(args.game_ctx)
+                    {
                         if let Some(scene) = output.new_scene {
                             return SceneOutput::new(scene);
                         }
@@ -202,18 +204,19 @@ impl Scene for InventoryScene {
                     display.render_image_complex(
                         x as i32,
                         y as i32,
-                        cata.icon(),
+                        icon_for_cata(cata),
                         ComplexRenderOption::new().with_white(),
                     );
 
                     if self.flash && i as isize == self.selected_cata {
                         let rect =
-                            Rect::new_top_left(Vec2::new(x, y), cata.icon().size_vec2()).grow(4.);
+                            Rect::new_top_left(Vec2::new(x, y), icon_for_cata(cata).size_vec2())
+                                .grow(4.);
                         display.render_rect_outline(rect, true);
                     }
 
                     if i % 2 != 0 {
-                        y += cata.icon().size.y as f32 + 5.;
+                        y += icon_for_cata(cata).size.y as f32 + 5.;
                     }
                 }
 
