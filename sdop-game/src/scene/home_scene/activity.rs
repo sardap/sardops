@@ -4,6 +4,7 @@ use strum::EnumCount;
 use strum_macros::EnumCount;
 
 use crate::{
+    Timestamp,
     date_utils::time_in_range,
     display::CENTER_VEC,
     game_consts::TELESCOPE_USE_RANGE,
@@ -20,18 +21,45 @@ pub fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
     Duration::from_secs(rng.u64(0..(5 * 60)))
 }
 
-pub fn wonder_end(args: &mut SceneTickArgs) {
-    #[derive(Debug, Copy, Clone, EnumCount)]
-    enum Activity {
-        PlayingComputer,
-        WatchTv,
-        ReadBook,
-        ListenMusic,
-        GoOut,
-        Telescope,
-    }
-    const ACTIVITY_COUNT: usize = Activity::COUNT;
+#[derive(Debug, Copy, Clone, EnumCount)]
+enum Activity {
+    PlayingComputer = 0,
+    WatchTv = 1,
+    ReadBook = 2,
+    ListenMusic = 3,
+    GoOut = 4,
+    Telescope = 5,
+}
 
+impl Activity {
+    pub fn cooldown(&self) -> Duration {
+        match self {
+            Activity::PlayingComputer => Duration::from_mins(5),
+            Activity::WatchTv => Duration::from_mins(5),
+            Activity::ReadBook => Duration::from_mins(5),
+            Activity::ListenMusic => Duration::from_mins(5),
+            Activity::GoOut => Duration::from_mins(45),
+            Activity::Telescope => Duration::from_mins(5),
+        }
+    }
+}
+
+const ACTIVITY_COUNT: usize = Activity::COUNT;
+
+pub type ActivityHistory = [Timestamp; ACTIVITY_COUNT];
+
+fn add_option(
+    options: &mut heapless::Vec<Activity, ACTIVITY_COUNT>,
+    history: &ActivityHistory,
+    now: &Timestamp,
+    to_add: Activity,
+) {
+    if now > &(history[to_add as usize] + to_add.cooldown()) {
+        let _ = options.push(to_add);
+    }
+}
+
+pub fn wonder_end(args: &mut SceneTickArgs) {
     let mut options: heapless::Vec<Activity, ACTIVITY_COUNT> = heapless::Vec::new();
 
     if args.game_ctx.pet.definition().life_stage == LifeStage::Adult
@@ -40,15 +68,26 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         && args.game_ctx.inventory.has_item(ItemKind::Keyboard)
         && args.game_ctx.pet.def_id != PET_BRAINO_ID
     {
-        let _ = options.push(Activity::PlayingComputer);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::PlayingComputer,
+        );
     }
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && (args.game_ctx.inventory.has_item(ItemKind::TvLcd)
             || args.game_ctx.inventory.has_item(ItemKind::TvCrt))
         && args.game_ctx.pet.def_id != PET_BRAINO_ID
     {
-        let _ = options.push(Activity::WatchTv);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::WatchTv,
+        );
     }
+
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args
             .game_ctx
@@ -56,28 +95,52 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
             .book_history
             .has_book_to_read(&args.game_ctx.inventory)
     {
-        let _ = options.push(Activity::ReadBook);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::ReadBook,
+        );
     }
+
     if args.game_ctx.inventory.has_item(ItemKind::Mp3Player)
         && args.game_ctx.pet.mood() == Mood::Happy
     {
-        let _ = options.push(Activity::ListenMusic);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::ListenMusic,
+        );
     }
 
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.pet.mood() == Mood::Happy
     {
-        let _ = options.push(Activity::GoOut);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::GoOut,
+        );
     }
+
+    // This is broken
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.inventory.has_item(ItemKind::Telescope)
         && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
     {
-        let _ = options.push(Activity::Telescope);
+        add_option(
+            &mut options,
+            &args.game_ctx.home.activity_history,
+            &args.timestamp,
+            Activity::Telescope,
+        );
     }
 
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
+        args.game_ctx.home.activity_history[option as usize] = args.timestamp;
 
         match option {
             Activity::PlayingComputer => {

@@ -2,7 +2,7 @@
     (
         name: "Down the road",
         length_seconds: 600,
-        cooldown_seconds: 600,
+        cooldown_seconds: 6000,
         difficulty: 100,
         activities: [
             "Waiting at the lights",

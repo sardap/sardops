@@ -43,7 +43,7 @@ use crate::{
         game_select::GameSelectScene,
         heal_scene::HealScene,
         home_scene::{
-            activity::{reset_wonder_end, wonder_end},
+            activity::{ActivityHistory, reset_wonder_end, wonder_end},
             menu_options::{MenuOption, MenuOptions},
         },
         inventory_scene::InventoryScene,
@@ -147,6 +147,7 @@ pub struct HomeSceneData {
     last_was_hungry: bool,
     gone_out_sign: MaskedAnimeRender,
     telescope: MaskedAnimeRender,
+    activity_history: ActivityHistory,
 }
 
 impl Default for HomeSceneData {
@@ -194,6 +195,7 @@ impl Default for HomeSceneData {
                 &FRAMES_TELESCOPE_HOME,
                 &FRAMES_TELESCOPE_HOME_MASK,
             ),
+            activity_history: Default::default(),
         }
     }
 }
@@ -338,8 +340,12 @@ impl Scene for HomeScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
-        if args.game_ctx.home.state_elapsed == Duration::ZERO {
-            args.game_ctx.home.options = MenuOptions::new(args.game_ctx.home.state, args.game_ctx);
+        if args.game_ctx.home.state_elapsed == Duration::ZERO || args.frames % 5 == 0 {
+            args.game_ctx.home.options = MenuOptions::new(
+                args.game_ctx.home.state,
+                args.game_ctx.home.options.current_index(),
+                args.game_ctx,
+            );
         }
 
         args.game_ctx.home.state_elapsed += args.delta;

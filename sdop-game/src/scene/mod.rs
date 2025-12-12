@@ -176,6 +176,7 @@ pub struct SceneTickArgs<'a> {
     pub input: &'a Input,
     pub game_ctx: &'a mut GameContext,
     pub last_scene: Option<SceneEnum>,
+    pub frames: u32,
 }
 
 pub struct RenderArgs<'a> {

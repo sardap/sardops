@@ -14,7 +14,7 @@ use crate::{
     sprite::Sprite,
 };
 
-const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(500);
+const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(200);
 
 enum State {
     Cooldown,
@@ -96,15 +96,25 @@ impl Scene for ExploreSelectScene {
                     .unwrap_or_default();
 
                 if args.input.pressed(Button::Right) {
+                    self.sign_shake_remaining = SIGN_SHAKE_DURATION;
                     let mut iter = LocationHistoryIter::new(
                         self.selected_location,
                         &args.game_ctx.pet.explore,
                     );
-                    self.selected_location = iter.next().unwrap_or(1);
-                    self.next_unlocked = iter.next().is_some();
+                    (self.selected_location, self.next_unlocked) = match iter.next() {
+                        Some(index) => (index, iter.next().is_some()),
+                        None => (
+                            1,
+                            LocationHistoryIter::new(1, &args.game_ctx.pet.explore)
+                                .next()
+                                .is_some(),
+                        ),
+                    };
                 }
 
                 if args.input.pressed(Button::Left) {
+                    self.sign_shake_remaining = SIGN_SHAKE_DURATION;
+
                     if self.selected_location == 1 {
                         return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
                     }
@@ -214,6 +224,7 @@ impl Scene for ExploreSelectScene {
                 y += location.cover.size.y as i32 + 2;
 
                 const SKILL_X_OFFSET: i32 = 2;
+                const TEXT_X_OFFSET: f32 = 35.;
 
                 display.render_image_complex(
                     SKILL_X_OFFSET,
@@ -224,20 +235,15 @@ impl Scene for ExploreSelectScene {
                 let mins = self.location().length.as_mins() as i32;
                 let hours = mins / 60;
                 let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, ":{}h{}m", hours, mins);
+                let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
                 display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32
-                            + assets::IMAGE_LENGTH_SYMBOL.const_size_vec2().x
-                            + 2.,
-                        y as f32,
-                    ),
+                    Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
 
                 display.render_image_complex(
                     SKILL_X_OFFSET,
@@ -248,10 +254,7 @@ impl Scene for ExploreSelectScene {
                 let str =
                     fixedstr::str_format!(fixedstr::str12, "{}", args.game_ctx.pet.explore_skill());
                 display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32 + assets::IMAGE_SKILL_SYMBOL.const_size_vec2().x + 1.,
-                        y as f32,
-                    ),
+                    Vec2::new(TEXT_X_OFFSET, y as f32),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -267,12 +270,7 @@ impl Scene for ExploreSelectScene {
                 );
                 let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
                 display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32
-                            + assets::IMAGE_CHALLENGE_SYMBOL.const_size_vec2().x
-                            + 1.,
-                        y as f32,
-                    ),
+                    Vec2::new(TEXT_X_OFFSET, y as f32),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -281,7 +279,33 @@ impl Scene for ExploreSelectScene {
                 y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
 
                 display.render_image_complex(
-                    WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2,
+                    SKILL_X_OFFSET,
+                    y,
+                    &assets::IMAGE_COOLDOWN_SYMBOL,
+                    ComplexRenderOption::new().with_black().with_white(),
+                );
+                let mins = self.location().cooldown.as_mins() as i32;
+                let hours = mins / 60;
+                let mins = mins % 60;
+                let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
+                display.render_text_complex(
+                    Vec2::new(TEXT_X_OFFSET, y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                y += 5;
+
+                display.render_image_complex(
+                    WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2
+                        + if self.sign_shake_remaining > Duration::ZERO {
+                            args.game_ctx.rng.i32(-2..=2)
+                        } else {
+                            0
+                        },
                     y,
                     if unlocked {
                         &assets::IMAGE_GO_EXPLORE_SYMBOL

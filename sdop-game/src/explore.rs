@@ -14,7 +14,7 @@ include!(concat!(env!("OUT_DIR"), "/dist_locations.rs"));
 pub type ExploreSkill = i32;
 
 const MAX_REWARD_ITEMS_LOCATION: usize = 10;
-const CHECK_INTERVAL: Duration = Duration::from_millis(100);
+const CHECK_INTERVAL: Duration = Duration::from_secs(60);
 const PASSED_THRESHOLD: f32 = 0.5;
 
 pub struct ItemReward {

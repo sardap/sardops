@@ -15,16 +15,16 @@ use crate::{
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MenuOption {
     PetInfo,
-    Breed,
-    Poop,
-    Heal,
-    Explore,
-    GameSelect,
     FoodSelect,
+    Poop,
+    Breed,
+    Heal,
     Shop,
     Inventory,
     PlaceFurniture,
+    Explore,
     PetRecords,
+    GameSelect,
     Settings,
 }
 
@@ -58,7 +58,7 @@ impl Default for MenuOptions {
 
 impl MenuOptions {
     // SLOW POINT
-    pub fn new(state: super::State, game_ctx: &GameContext) -> Self {
+    pub fn new(state: super::State, current: usize, game_ctx: &GameContext) -> Self {
         let mut options = heapless::Vec::new();
         let _ = options.push(MenuOption::PetInfo);
         let _ = options.push(MenuOption::Settings);
@@ -110,6 +110,9 @@ impl MenuOptions {
         options.sort_unstable();
 
         let mut result = MenuOptions::default();
+        if current < options.len() {
+            result.selected_index = current;
+        }
         result.inner = options;
 
         result

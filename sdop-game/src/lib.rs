@@ -92,6 +92,7 @@ pub struct Game {
     time_scale: f32,
     fps: FPSCounter,
     since_input: Duration,
+    frames: u32,
 }
 
 impl Game {
@@ -105,6 +106,7 @@ impl Game {
             time_scale: 1.,
             fps: FPSCounter::new(),
             since_input: Duration::ZERO,
+            frames: 0,
         }
     }
 
@@ -171,6 +173,7 @@ impl Game {
             input: &self.input,
             game_ctx: &mut self.game_ctx,
             last_scene: None,
+            frames: self.frames,
         };
 
         tick_sim(self.time_scale, &mut scene_args);
@@ -219,6 +222,7 @@ impl Game {
         self.display.render_fps(&self.fps);
         // self.display.render_temperature(self.input().temperature());
         self.fps.update(delta);
+        self.frames = self.frames.checked_add(1).unwrap_or_default();
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {
@@ -251,6 +255,7 @@ impl Game {
             input: &self.input,
             game_ctx: &mut self.game_ctx,
             last_scene: None,
+            frames: self.frames,
         };
         tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();

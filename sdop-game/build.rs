@@ -549,7 +549,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     let food_templates: Vec<FoodTemplate> = ron::from_str(&contents).unwrap();
 
     let contents = std::fs::read_to_string(PathBuf::from_str(LOCATIONS_RON_PATH).unwrap()).unwrap();
-    let location_tempaltes: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
+    let location_templates: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
 
     let contents = std::fs::read_to_string(path).unwrap();
     let templates: Vec<ItemEntry> = ron::from_str(&contents).unwrap();
@@ -617,7 +617,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         unique_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, template.unique));
 
-        category_fn.push_str(&format!("Self::{} => ItemCategory::Map,\n", enum_name,));
+        category_fn.push_str(&format!(
+            "Self::{} => ItemCategory::{:?},\n",
+            enum_name, template.category,
+        ));
 
         image_fn_def.push_str(&format!(
             "Self::{} => &crate::assets::IMAGE_{},\n",
@@ -636,8 +639,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
         item_count += 1;
     }
 
-    for template in location_tempaltes.iter() {
-        let enum_name = format!("Recipe{}", template.name.to_case(Case::Pascal));
+    for template in location_templates.iter() {
+        let enum_name = format!("Map{}", template.name.to_case(Case::Pascal));
         enum_def.push_str(&format!("{} = {},\n", enum_name, item_count));
         rare_fn_def.push_str(&format!("Self::{} => ItemRarity::Common,\n", enum_name,));
 
@@ -660,7 +663,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
             enum_name,
         ));
 
-        category_fn.push_str(&format!("Self::{} => ItemCategory::Food,\n", enum_name,));
+        category_fn.push_str(&format!("Self::{} => ItemCategory::Map,\n", enum_name,));
 
         item_count += 1;
     }
