@@ -5,7 +5,7 @@ use crate::{
     assets,
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32},
     fonts::FONT_VARIABLE_SMALL,
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 pub struct ExploringPostScene {}

@@ -12,7 +12,6 @@ use crate::{
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
-        home_scene::HomeScene,
     },
     sounds::SoundOptions,
 };

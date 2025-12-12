@@ -8,7 +8,7 @@ use crate::{
     egg::{EggRender, SavedEgg},
     geo::Rect,
     pet::{ParentInfo, PetParents, combine_pid, definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_BREEDING, SONG_FAN_FARE, SongPlayOptions},
 };
 

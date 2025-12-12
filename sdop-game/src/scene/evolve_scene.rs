@@ -6,7 +6,7 @@ use crate::{
     Timestamp, assets,
     display::{CENTER_VEC, GameDisplay},
     pet::{definition::PetDefinitionId, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_FAN_FARE_LONG, SongPlayOptions},
     sprite::Sprite,
 };

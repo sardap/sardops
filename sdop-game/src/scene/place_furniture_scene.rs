@@ -7,7 +7,7 @@ use crate::{
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::Rect,
     items::{FURNITURE_ITEMS, ItemKind},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]

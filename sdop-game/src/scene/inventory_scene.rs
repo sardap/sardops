@@ -15,7 +15,7 @@ use crate::{
     game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
     geo::Rect,
     items::{ITEM_COUNT, Inventory, ItemKind, icon_for_cata, items_for_cata},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 const SELECTABLE_CATEGORIRES: &[ItemCategory] = &[

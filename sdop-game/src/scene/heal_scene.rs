@@ -14,7 +14,7 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_HEAL, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };

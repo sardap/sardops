@@ -10,7 +10,6 @@ use crate::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
-        home_scene::HomeScene,
     },
     sounds::{SONG_NEW_PET, SongPlayOptions},
 };

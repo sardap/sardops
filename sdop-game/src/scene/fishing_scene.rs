@@ -16,7 +16,7 @@ use crate::{
     items::{FISHING_ITEM_ODDS, ItemKind, pick_item_from_set},
     money::Money,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_FAN_FARE, SONG_FISHING_IDLE, SONG_FISHING_PULLING, SONG_LOST, SongPlayOptions},
     sprite::BasicAnimeSprite,
 };

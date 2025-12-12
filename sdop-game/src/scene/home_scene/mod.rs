@@ -315,8 +315,8 @@ impl Scene for HomeScene {
                 args.timestamp.inner().num_days_from_ce(),
             );
 
-            args.game_ctx.home.dream_bubble_timer =
-                Duration::from_mins(args.game_ctx.rng.u64(1..=3));
+            args.game_ctx.home.show_dream_bubble = true;
+            args.game_ctx.home.dream_bubble_timer = Duration::ZERO;
         }
 
         self.egg_render.pos = Vec2::new(

@@ -2,7 +2,7 @@ use crate::{
     display::{CENTER_VEC, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, inventory_scene::InventoryScene,
+        RenderArgs, Scene, SceneOutput, SceneTickArgs,
     },
 };
 

@@ -7,10 +7,7 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     pet::{ParentInfo, definition::PetAnimationSet, render::PetRender},
-    scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene,
-        home_scene::HomeScene,
-    },
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene},
     suiter::Suiter,
 };
 

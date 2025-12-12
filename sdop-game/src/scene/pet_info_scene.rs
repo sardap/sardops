@@ -10,7 +10,7 @@ use crate::{
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts,
     pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 

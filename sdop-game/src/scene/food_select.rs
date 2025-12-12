@@ -8,7 +8,6 @@ use crate::{
     items::ItemKind,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene,
-        home_scene::HomeScene,
     },
     sprite::Sprite,
 };

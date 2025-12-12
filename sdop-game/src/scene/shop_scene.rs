@@ -11,7 +11,7 @@ use crate::{
     game_consts::SHOP_OPEN_TIMES,
     geo::Rect,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
     sounds::{self, SONG_SHOP, SONG_SHOP_CLOSED, SongPlayOptions},
     sprite::BasicAnimeSprite,

@@ -186,6 +186,10 @@ impl ExploreHistory {
     pub fn unlocked(&self, id: usize) -> bool {
         return id != 0 && self.get_by_id(id).unlocked;
     }
+
+    pub fn any_unlocked(&self) -> bool {
+        self.location_history.iter().any(|i| i.unlocked)
+    }
 }
 
 pub struct ExploreDetailedResult {

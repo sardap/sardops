@@ -103,7 +103,8 @@ impl MenuOptions {
         if !matches!(
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
-        ) {
+        ) && game_ctx.pet.explore.any_unlocked()
+        {
             let _ = options.push(MenuOption::Explore);
         }
 

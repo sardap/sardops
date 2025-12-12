@@ -10,7 +10,7 @@ use crate::{
     game_consts::{ALIEN_ODDS, TELESCOPE_USE_RANGE},
     night_sky::generate_night_sky_image,
     pet::combine_pid,
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_TWINKLE_TWINKLE_LITTLE_STAR, SongPlayOptions},
     sprite::BasicSprite,
 };
