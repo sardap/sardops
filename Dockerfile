@@ -25,6 +25,7 @@ RUN apt-get update && \
     rustup target add x86_64-unknown-linux-gnu --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup target add thumbv8m.main-none-eabihf --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
+    rustup component add rust-src --toolchain ${RUST_TOOLCHAIN_SDOP_GAME}-x86_64-unknown-linux-gnu && \
     rustup component add rust-src --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup component add clippy --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
     rustup component add rustfmt --toolchain ${RUST_TOOLCHAIN_SDOP_GAME} && \
