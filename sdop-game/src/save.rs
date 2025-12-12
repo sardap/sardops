@@ -52,7 +52,7 @@ impl SaveFile {
             money: game_ctx.money,
             inventory: game_ctx.inventory,
             shop: game_ctx.shop,
-            pet_records: game_ctx.pet_records,
+            pet_records: game_ctx.pet_history,
             fish_tank: game_ctx.home_fish_tank,
             home_layout: game_ctx.home_layout,
             egg: game_ctx.egg,
@@ -71,7 +71,7 @@ impl SaveFile {
         game_ctx.poops = self.poops;
         game_ctx.inventory = self.inventory;
         game_ctx.shop = self.shop;
-        game_ctx.pet_records = self.pet_records;
+        game_ctx.pet_history = self.pet_records;
         game_ctx.home_fish_tank = self.fish_tank;
         game_ctx.home_layout = self.home_layout;
         game_ctx.suiter_system = self.suiter_system;

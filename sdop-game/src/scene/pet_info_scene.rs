@@ -299,7 +299,7 @@ impl Scene for PetInfoScene {
 
                         current_y += self.parent_renders[i].image().size().y as f32 + Y_BUFFER;
 
-                        let record = args.game_ctx.pet_records.get_by_upid(parent.upid());
+                        let record = args.game_ctx.pet_history.get_by_upid(parent.upid());
 
                         let str = match &record {
                             Some(record) => str_format!(

@@ -75,7 +75,7 @@ impl Scene for EggHatchScene {
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
         args.game_ctx.egg = None;
-        args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
+        args.game_ctx.pet_history.add(PetRecord::from_pet_instance(
             &args.game_ctx.pet,
             args.timestamp,
             DeathCause::Leaving,

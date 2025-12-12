@@ -178,12 +178,7 @@ impl Scene for InventoryScene {
                     }
 
                     if !args.game_ctx.inventory.has_item(item) {
-                        for (i, item) in ItemKind::iter().enumerate() {
-                            if args.game_ctx.inventory.has_item(item) {
-                                self.selected_index = i;
-                                break;
-                            }
-                        }
+                        self.state = State::SelectCategory;
                     }
                 }
             }
@@ -238,14 +233,13 @@ impl Scene for InventoryScene {
             State::View => {
                 let mut y = 10.;
                 {
-                    let str =
-                        str_format!(fixedstr::str32, "#{} {} ", self.selected_index, item.name());
                     display.render_text_complex(
-                        Vec2::new(5., y),
-                        &str,
+                        Vec2::new(CENTER_X, y),
+                        item.name(),
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL)
+                            .with_center()
                             .with_font_wrapping_x((WIDTH_F32 - 10.) as i32),
                     );
                     y += 14.

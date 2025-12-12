@@ -340,11 +340,14 @@ impl Scene for HomeScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
-        if args.game_ctx.home.state_elapsed == Duration::ZERO || args.frames % 5 == 0 {
-            args.game_ctx.home.options = MenuOptions::new(
+        if args.game_ctx.home.state_elapsed == Duration::ZERO || args.frames % 10 == 0 {
+            args.game_ctx.home.options.refresh(
                 args.game_ctx.home.state,
-                args.game_ctx.home.options.current_index(),
-                args.game_ctx,
+                &args.game_ctx.suiter_system,
+                &args.game_ctx.inventory,
+                args.game_ctx.poop_count(),
+                &args.game_ctx.pet_history,
+                &args.game_ctx.pet,
             );
         }
 

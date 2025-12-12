@@ -48,7 +48,7 @@ impl Scene for PetRecordsScene {
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
-        if let Some(record) = &args.game_ctx.pet_records.get_by_index(self.selected) {
+        if let Some(record) = &args.game_ctx.pet_history.get_by_index(self.selected) {
             self.pet_render.set_def_id(record.def_id);
         }
 
@@ -70,7 +70,7 @@ impl Scene for PetRecordsScene {
                 if updated < 0 {
                     output.set_home();
                     return;
-                } else if updated >= args.game_ctx.pet_records.count() as isize {
+                } else if updated >= args.game_ctx.pet_history.count() as isize {
                     updated = 0;
                 }
 
@@ -85,7 +85,7 @@ impl Scene for PetRecordsScene {
         const TEXT_X_OFFSET: f32 = 2.;
         const Y_BUFFER: f32 = 7.;
 
-        if let Some(record) = args.game_ctx.pet_records.get_by_index(self.selected) {
+        if let Some(record) = args.game_ctx.pet_history.get_by_index(self.selected) {
             match self.state {
                 State::Select => {
                     let str = str_format!(fixedstr::str32, "PID:{:010X}", record.upid);

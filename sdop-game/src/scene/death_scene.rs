@@ -209,7 +209,7 @@ impl Scene for DeathScene {
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
         args.game_ctx.poops = Default::default();
-        args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
+        args.game_ctx.pet_history.add(PetRecord::from_pet_instance(
             &args.game_ctx.pet,
             args.timestamp,
             self.cause,

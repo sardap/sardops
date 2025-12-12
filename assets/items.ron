@@ -175,7 +175,7 @@
         cost: 1000,
         image: "book_0_closed",
         unique: true,
-        desc: "A comprehensive history of victorain australian poltics between 1981 to 1992.",
+        desc: "A history of vic aus politics between 81 to 92.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -185,7 +185,7 @@
         cost: 1000,
         image: "book_wran_closed",
         unique: true,
-        desc: "A comprehensive history of Nevile Wran.",
+        desc: "A history of Nevile Wran.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -205,7 +205,7 @@
         cost: 1000,
         image: "book_dracula_closed",
         unique: true,
-        desc: "Dracula is an 1897 Gothic horror novel by Irish author Bram Stoker.",
+        desc: "is a Gothic horror novel by Irish author Bram Stoker.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -215,7 +215,7 @@
         cost: 1000,
         image: "book_great_gatsby_closed",
         unique: true,
-        desc: "The Great Gatsby is a 1925 tragedy novel by American writer F. Scott Fitzgerald.",
+        desc: "is a 1925 tragedy novel.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -225,7 +225,7 @@
         cost: 1000,
         image: "book_gilgamesh_closed",
         unique: true,
-        desc: "The Great Gatsby is a 1925 tragedy novel by American writer F. Scott Fitzgerald.",
+        desc: "Follow Gilgamesh on his epic.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -235,7 +235,7 @@
         cost: 1000,
         image: "book_odyssey_closed",
         unique: true,
-        desc: "A ancient tale of a great joruny around the sea.",
+        desc: "A ancient tale of a great journey around the sea.",
         fishing_odds: 0.05,
     ),
     ItemEntry(
@@ -245,7 +245,7 @@
         cost: 1000,
         image: "software_tic_tac_toe",
         unique: true,
-        desc: "The peak of game desgin now playable on computer!",
+        desc: "The peak of game design now playable on computer!",
         fishing_odds: 0.05,
     ),
     ItemEntry(
