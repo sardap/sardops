@@ -102,7 +102,7 @@ impl Scene for PlaceFurnitureScene {
         // args.game_ctx.home_layout.right = self.right.kind;
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.left.render.tick(args);
         self.top.render.tick(args);
         self.right.render.tick(args);
@@ -118,7 +118,8 @@ impl Scene for PlaceFurnitureScene {
 
                 if args.input.pressed(Button::Middle) {
                     if matches!(self.selected, PlaceSelection::Exit) {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     }
 
                     self.state = State::SelectingFurniture;
@@ -178,8 +179,6 @@ impl Scene for PlaceFurnitureScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

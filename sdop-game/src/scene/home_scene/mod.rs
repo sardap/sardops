@@ -339,7 +339,7 @@ impl Scene for HomeScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         if args.game_ctx.home.state_elapsed == Duration::ZERO || args.frames % 5 == 0 {
             args.game_ctx.home.options = MenuOptions::new(
                 args.game_ctx.home.state,
@@ -438,25 +438,28 @@ impl Scene for HomeScene {
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
             if let Some(egg) = &args.game_ctx.egg {
                 if egg.hatch {
-                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
+                    output.set(SceneEnum::EggHatch(EggHatchScene::new(
                         *egg,
                         args.game_ctx.pet.def_id,
                     )));
+                    return;
                 }
             }
 
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
-                return SceneOutput::new(SceneEnum::Death(DeathScene::new(
+                output.set(SceneEnum::Death(DeathScene::new(
                     cause_of_death,
                     args.game_ctx.pet.def_id,
                 )));
+                return;
             }
 
             if let Some(next_pet_id) = args.game_ctx.pet.should_evolve() {
-                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
+                output.set(SceneEnum::Evovle(EvolveScene::new(
                     args.game_ctx.pet.def_id,
                     next_pet_id,
                 )));
+                return;
             }
         }
 
@@ -778,7 +781,8 @@ impl Scene for HomeScene {
             State::Exploring => {
                 if !args.game_ctx.explore_system.currently_exploring() {
                     args.game_ctx.home.change_state(State::Wondering);
-                    return SceneOutput::new(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    output.set(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    return;
                 }
 
                 let passed = args.game_ctx.explore_system.current_percent_passed();
@@ -836,54 +840,27 @@ impl Scene for HomeScene {
                     *args.game_ctx.home.options.current().get_song(),
                     SongPlayOptions::new().with_effect(),
                 );
-                match *args.game_ctx.home.options.current() {
-                    MenuOption::Breed => {
-                        return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
-                            args.game_ctx.suiter_system.suiter.unwrap_or_default(),
-                        )));
-                    }
-                    MenuOption::Poop => {
-                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
-                    }
-                    MenuOption::PetInfo => {
-                        return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
-                    }
-                    MenuOption::GameSelect => {
-                        return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
-                    }
-                    MenuOption::FoodSelect => {
-                        return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
-                    }
-                    MenuOption::Shop => {
-                        return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
-                    }
-                    MenuOption::Inventory => {
-                        return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
-                    }
+                output.set(match *args.game_ctx.home.options.current() {
+                    MenuOption::Breed => SceneEnum::Suiters(SuitersScene::new(
+                        args.game_ctx.suiter_system.suiter.unwrap_or_default(),
+                    )),
+                    MenuOption::Poop => SceneEnum::PoopClear(PoopClearScene::new()),
+                    MenuOption::PetInfo => SceneEnum::PetInfo(PetInfoScene::new()),
+                    MenuOption::GameSelect => SceneEnum::GameSelect(GameSelectScene::new()),
+                    MenuOption::FoodSelect => SceneEnum::FoodSelect(FoodSelectScene::new()),
+                    MenuOption::Shop => SceneEnum::Shop(ShopScene::new()),
+                    MenuOption::Inventory => SceneEnum::Inventory(InventoryScene::new()),
                     MenuOption::PlaceFurniture => {
-                        return SceneOutput::new(SceneEnum::PlaceFurniture(
-                            PlaceFurnitureScene::new(),
-                        ));
+                        SceneEnum::PlaceFurniture(PlaceFurnitureScene::new())
                     }
-                    MenuOption::PetRecords => {
-                        return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
-                    }
-                    MenuOption::Heal => {
-                        return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
-                    }
-                    MenuOption::Settings => {
-                        return SceneOutput::new(SceneEnum::Settings(SettingsScene::new()));
-                    }
-                    MenuOption::Explore => {
-                        return SceneOutput::new(SceneEnum::ExploreSelect(
-                            ExploreSelectScene::new(),
-                        ));
-                    }
-                };
+                    MenuOption::PetRecords => SceneEnum::PetRecords(PetRecordsScene::new()),
+                    MenuOption::Heal => SceneEnum::Heal(HealScene::new()),
+                    MenuOption::Settings => SceneEnum::Settings(SettingsScene::new()),
+                    MenuOption::Explore => SceneEnum::ExploreSelect(ExploreSelectScene::new()),
+                });
+                return;
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

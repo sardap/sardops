@@ -111,7 +111,7 @@ impl Scene for WeekdaySelectScene {
         args.game_ctx.shared_out.weekday_out = self.days;
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         if args.input.pressed(Button::Left) {
             self.current -= 1;
         }
@@ -143,12 +143,11 @@ impl Scene for WeekdaySelectScene {
                         .sound_system
                         .push_song(SONG_ERROR, SongPlayOptions::new().with_effect());
                 } else {
-                    return SceneOutput::new(args.last_scene.take().unwrap());
+                    output.set(args.last_scene.take().unwrap());
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

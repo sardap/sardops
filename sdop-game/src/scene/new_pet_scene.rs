@@ -80,14 +80,14 @@ impl Scene for NewPetScene {
             .add_def(self.def_id, args.timestamp);
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::EnterDate => {
                 self.state = State::EnterName;
-                SceneOutput::new(SceneEnum::EnterDate(EnterDateScene::new(
+                output.set(SceneEnum::EnterDate(EnterDateScene::new(
                     enter_date_scene::Required::DateTime,
                     str_format!(fixedstr::str12, "WHEN IS IT?"),
-                )))
+                )));
             }
             State::EnterName => {
                 if self.need_timestamp {
@@ -98,16 +98,18 @@ impl Scene for NewPetScene {
                 }
 
                 self.state = State::NameEntered;
-                SceneOutput::new(SceneEnum::EnterText(
+                output.set(SceneEnum::EnterText(
                     EnterTextScene::new(
                         6,
                         str_format!(fixedstr::str12, "ENTER NAME"),
                         Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
                     )
                     .with_show_pet(self.def_id),
-                ))
+                ));
             }
-            State::NameEntered => SceneOutput::new(SceneEnum::Home(HomeScene::new())),
+            State::NameEntered => {
+                output.set_home();
+            }
         }
     }
 

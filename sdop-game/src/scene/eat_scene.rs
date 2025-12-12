@@ -64,7 +64,7 @@ impl Scene for EatScene {
         args.game_ctx.pet.digest(self.food);
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         let pet = &args.game_ctx.pet;
 
         self.pet_render.tick(args.delta);
@@ -114,12 +114,11 @@ impl Scene for EatScene {
             EatSceneState::Finished => {
                 self.pet_render.set_animation(PetAnimationSet::Happy);
                 if self.state_elapsed > Duration::from_secs_f32(2.5) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

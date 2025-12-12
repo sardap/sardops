@@ -125,7 +125,7 @@ impl Scene for EvolveScene {
             .evolve(self.to_pet_render.def_id(), args.timestamp);
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.to_pet_render.tick(args.delta.mul_f32(2.));
         self.from_pet_render.tick(args.delta.mul_f32(2.));
 
@@ -203,7 +203,8 @@ impl Scene for EvolveScene {
                 self.to_pet_render
                     .set_animation(crate::pet::definition::PetAnimationSet::Happy);
                 if args.timestamp - self.start_time > Duration::from_secs(20) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
 
                 const SPEEDS: [f32; 5] = [20.3, 10.5, 60.7, 50.2, 30.];
@@ -218,7 +219,6 @@ impl Scene for EvolveScene {
                 }
             }
         }
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

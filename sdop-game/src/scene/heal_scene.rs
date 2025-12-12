@@ -93,7 +93,7 @@ impl Scene for HealScene {
         args.game_ctx.sound_system.clear_song();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
         self.state_elapsed += args.delta;
 
@@ -124,7 +124,8 @@ impl Scene for HealScene {
 
                 if args.input.pressed(Button::Middle) {
                     if args.game_ctx.pet.heal_cost() > args.game_ctx.money {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     } else {
                         args.game_ctx.pet.cure();
                         args.game_ctx
@@ -157,12 +158,11 @@ impl Scene for HealScene {
 
                 self.pet_render.pos.x -= SPEED * args.delta.as_secs_f32();
                 if self.pet_render.pos.x < -(self.pet_render.anime.current_frame().size.x as f32) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

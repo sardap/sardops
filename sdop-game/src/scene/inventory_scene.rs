@@ -108,7 +108,7 @@ impl Scene for InventoryScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.flash_timer += args.delta;
         if (!self.flash && self.flash_timer > UI_FLASH_TIMER)
             || (self.flash && self.flash_timer > UI_FLASHING_TIMER)
@@ -146,7 +146,8 @@ impl Scene for InventoryScene {
 
                 if args.input.pressed(Button::Middle) {
                     if self.selected_cata <= -1 {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     } else {
                         self.selected_index = self.change_item(&args.game_ctx.inventory, 0, 0);
                         self.state = State::View;
@@ -164,11 +165,12 @@ impl Scene for InventoryScene {
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if let Some(output) = item.use_item(args.game_ctx)
+                    if let Some(item_output) = item.use_item(args.game_ctx)
                         && item.is_usable(args.game_ctx)
                     {
-                        if let Some(scene) = output.new_scene {
-                            return SceneOutput::new(scene);
+                        if let Some(scene) = item_output.new_scene {
+                            output.set(scene);
+                            return;
                         }
                     } else if item.toggleable() {
                         let entry = args.game_ctx.inventory.get_entry_mut(item);
@@ -186,8 +188,6 @@ impl Scene for InventoryScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

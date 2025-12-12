@@ -91,7 +91,7 @@ impl Scene for FoodSelectScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         if args.input.pressed(crate::Button::Right) {
             self.move_cursor(1);
         }
@@ -102,16 +102,16 @@ impl Scene for FoodSelectScene {
 
         if args.input.pressed(crate::Button::Middle) {
             if self.food_count == self.selected as usize {
-                return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                output.set_home();
+                return;
             }
 
-            return SceneOutput::new(SceneEnum::Eat(EatScene::new(
+            output.set(SceneEnum::Eat(EatScene::new(
                 self.foods[self.selected as usize].as_ref().unwrap().food,
                 args.game_ctx.pet.def_id,
             )));
+            return;
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

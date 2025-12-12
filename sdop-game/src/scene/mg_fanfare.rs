@@ -66,7 +66,7 @@ impl Scene for MgFanFareScene {
         args.game_ctx.pet.played_game();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
         match self.state {
@@ -80,7 +80,8 @@ impl Scene for MgFanFareScene {
             State::ShowingTotal => {
                 let elapsed = args.timestamp - self.start_time;
                 if elapsed > Duration::from_secs(2) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
@@ -95,8 +96,6 @@ impl Scene for MgFanFareScene {
             self.show_earned = true;
             self.flash_duration = Duration::ZERO;
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

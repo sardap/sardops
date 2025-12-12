@@ -167,7 +167,7 @@ impl Scene for FishingScene {
         args.game_ctx.sound_system.clear_song();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.fishing_line.anime().tick(args.delta);
         self.fishing_line_pulled.anime().tick(args.delta);
         self.fishing_pond_moving.anime().tick(args.delta);
@@ -292,12 +292,11 @@ impl Scene for FishingScene {
                         }
                     }
 
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

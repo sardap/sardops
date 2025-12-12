@@ -69,7 +69,7 @@ impl Scene for BreedScene {
         ));
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
         self.left_render.tick(args.delta);
         self.right_render.tick(args.delta);
@@ -156,12 +156,11 @@ impl Scene for BreedScene {
             }
             State::Egg => {
                 if self.state_elapsed > Duration::from_secs(5) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

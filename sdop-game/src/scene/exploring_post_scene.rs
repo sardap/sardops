@@ -21,12 +21,11 @@ impl Scene for ExploringPostScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         if args.input.any_pressed() {
-            return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+            output.set_home();
+            return;
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

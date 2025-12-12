@@ -45,7 +45,7 @@ impl Scene for PetRecordsScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
         if let Some(record) = &args.game_ctx.pet_records.get_by_index(self.selected) {
@@ -68,7 +68,8 @@ impl Scene for PetRecordsScene {
 
                 let mut updated = self.selected as isize + change;
                 if updated < 0 {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 } else if updated >= args.game_ctx.pet_records.count() as isize {
                     updated = 0;
                 }
@@ -78,8 +79,6 @@ impl Scene for PetRecordsScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

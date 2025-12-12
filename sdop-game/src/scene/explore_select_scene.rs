@@ -76,7 +76,7 @@ impl Scene for ExploreSelectScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::Cooldown => {
                 self.pet_render.tick(args.delta);
@@ -86,7 +86,8 @@ impl Scene for ExploreSelectScene {
                 }
 
                 if args.input.any_pressed() {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
             State::Selecting => {
@@ -116,7 +117,8 @@ impl Scene for ExploreSelectScene {
                     self.sign_shake_remaining = SIGN_SHAKE_DURATION;
 
                     if self.selected_location == 1 {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     }
 
                     let mut iter = LocationHistoryIter::new(
@@ -132,7 +134,8 @@ impl Scene for ExploreSelectScene {
                         args.game_ctx
                             .explore_system
                             .start_exploring(self.selected_location);
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     } else {
                         args.game_ctx
                             .sound_system
@@ -142,8 +145,6 @@ impl Scene for ExploreSelectScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

@@ -84,7 +84,7 @@ impl Scene for ShopScene {
         args.game_ctx.sound_system.clear_song();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.shop_keeper.anime().tick(args.delta);
 
         self.sign_shake_remaining = self
@@ -101,7 +101,8 @@ impl Scene for ShopScene {
             State::Closed => {
                 self.closed_sign.anime().tick(args.delta);
                 if args.input.any_pressed() {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
                 let opening_times =
                     SHOP_OPEN_TIMES[args.timestamp.inner().date().weekday() as usize];
@@ -130,7 +131,8 @@ impl Scene for ShopScene {
                     self.state = State::Selected(0);
                 }
                 if args.input.pressed(crate::Button::Left) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
             State::Selected(selected) => {
@@ -182,7 +184,6 @@ impl Scene for ShopScene {
                 }
             }
         }
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

@@ -124,7 +124,7 @@ impl Scene for EnterDateScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::SelectField => {
                 if args.input.pressed(Button::Left) {
@@ -138,7 +138,8 @@ impl Scene for EnterDateScene {
                     if matches!(self.selected, FieldOption::Submit) {
                         args.game_ctx.shared_out.date_out = self.date;
                         args.game_ctx.shared_out.time_out = self.time;
-                        return SceneOutput::new(args.last_scene.take().unwrap());
+                        output.set(args.last_scene.take().unwrap());
+                        return;
                     }
                     self.state = State::SelectValue;
                 }
@@ -231,8 +232,6 @@ impl Scene for EnterDateScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

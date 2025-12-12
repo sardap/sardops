@@ -17,7 +17,7 @@ impl Scene for TemplateScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, _args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, _args: &mut SceneTickArgs, output: &mut SceneOutput) {
         SceneOutput::default()
     }
 

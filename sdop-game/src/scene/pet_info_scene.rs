@@ -87,11 +87,12 @@ impl Scene for PetInfoScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
         if self.state == State::Main && args.input.pressed(Button::Left) {
-            return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+            output.set_home();
+            return;
         }
 
         for parent in &mut self.parent_renders {
@@ -119,8 +120,6 @@ impl Scene for PetInfoScene {
             }
             self.state = STATE_ORDER[index as usize];
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

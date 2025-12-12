@@ -82,7 +82,7 @@ impl Scene for EggHatchScene {
         ));
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
         self.baby_pet_render.tick(args.delta);
         self.parent_pet_render.tick(args.delta);
@@ -193,17 +193,16 @@ impl Scene for EggHatchScene {
             }
             State::NewGuy => {
                 if self.state_elapsed > Duration::from_secs(1) {
-                    return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(
+                    output.set(SceneEnum::NewPet(NewPetScene::new(
                         self.def_id,
                         false,
                         Some(self.egg.upid),
                         self.egg.parents,
                     )));
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

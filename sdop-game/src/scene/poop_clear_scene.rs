@@ -62,7 +62,7 @@ impl Scene for PoopClearScene {
         args.game_ctx.poops = Default::default();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         update_poop_renders(&mut self.poops, &args.game_ctx.poops);
 
         tick_all_anime(&mut self.poops, args.delta);
@@ -90,12 +90,11 @@ impl Scene for PoopClearScene {
             State::Cheering { elapsed } => {
                 *elapsed += args.delta;
                 if *elapsed > Duration::from_secs(3) {
-                    return SceneOutput::new(SceneEnum::Home(home_scene::HomeScene::new()));
+                    output.set(SceneEnum::Home(home_scene::HomeScene::new()));
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
