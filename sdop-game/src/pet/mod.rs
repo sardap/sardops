@@ -610,7 +610,7 @@ impl PetInstance {
     }
 
     pub fn explore_skill(&self) -> ExploreSkill {
-        self.definition().explore_skill() + self.explore.skill
+        self.definition().explore_skill() + self.explore.bonus_skill
     }
 }
 

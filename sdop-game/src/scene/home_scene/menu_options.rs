@@ -10,10 +10,7 @@ use crate::{
     display::{CENTER_X, ComplexRender, ComplexRenderOption, GameDisplay, WIDTH_F32},
     geo::Rect,
     items::Inventory,
-    pet::{
-        PetInstance,
-        record::PetHistory,
-    },
+    pet::{PetInstance, record::PetHistory},
     suiter::SuiterSystem,
 };
 
@@ -116,7 +113,8 @@ impl MenuOptions {
         if !matches!(
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
-        ) && pet.explore.any_unlocked()
+        ) && inventory.has_any_map()
+            || true
         {
             let _ = options.push(MenuOption::Explore);
         }

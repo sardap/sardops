@@ -16,6 +16,7 @@ use crate::{
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
         Image,
     },
+    book::on_book_completed,
     date_utils::DurationExt,
     display::{
         CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
@@ -707,11 +708,15 @@ impl Scene for HomeScene {
                 if args.game_ctx.home.state_elapsed
                     > book.book_info().chapter_length(args.game_ctx.pet.def_id)
                 {
-                    args.game_ctx
-                        .pet
-                        .book_history
-                        .get_mut_read(book)
-                        .complete_chapter();
+                    let completed = {
+                        let book = args.game_ctx.pet.book_history.get_mut_read(book);
+                        book.complete_chapter();
+                        book.completed()
+                    };
+
+                    if completed {
+                        on_book_completed(args.game_ctx, book);
+                    }
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }

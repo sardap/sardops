@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
+#![feature(inherent_associated_types)]
 #![feature(duration_constructors_lite)]
 #![feature(specialization)]
 #![feature(generic_const_exprs)]
@@ -49,6 +50,7 @@ mod geo;
 mod input;
 mod invetro_light;
 mod items;
+mod items_use;
 mod link_four;
 mod math;
 mod money;

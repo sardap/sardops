@@ -1,8 +1,8 @@
 [
     (
         name: "Down the road",
-        length_seconds: 600,
-        cooldown_seconds: 6000,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Waiting at the lights",
@@ -22,8 +22,8 @@
     ),
     (
         name: "to the ninch",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Fighting the traffic",
@@ -41,15 +41,15 @@
             "Circling the navel base",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "1000 steps",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Going up some steps",
@@ -61,15 +61,15 @@
             "must be at least a couple 100 to go",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "riding the 109",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Outside of box hill central",
@@ -83,15 +83,15 @@
             "I was riding the 109",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "into the office",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Topping up myki",
@@ -104,15 +104,15 @@
             "crying in toilet",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "n seoul tower",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Waiting for the bus",
@@ -125,15 +125,15 @@
             "Walking",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "The malls balls",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Looking at the malls balls",
@@ -147,15 +147,15 @@
             "Pondering the malls balls",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
+            money_start: 0,
+            money_end: 0,
             items: []
         ),
     ),
     (
         name: "Koreana Mart Adelaide",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        length: "10m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Walking down Grote Street",
@@ -168,5 +168,50 @@
             money_end: 0,
             items: []
         ),
+    ),
+    (
+        name: "Cyberspace",
+        length: "10m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Surfing the bits",
+            "Seeing between the lines",
+            "hacking",
+            "Crushing the bits",
+            "Hitting the net",
+            "breaching the firewall",
+            "jumping to the mainframe",
+            "I'm in",
+            "Jacking in",
+            "Found the backdoor",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: []
+        ),
+    ),
+    (
+        name: "Flagstaff Station",
+        length: "10m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+        "Lot's of courts around here",
+        "it's so brown",
+        "where is it again",
+        "should i go to the zoo?",
+        "Is it still closed on weekends?",
+        "It's so empty",
+        "So many wigs and robes",
+
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: []
+        ),
     )
+
 ]

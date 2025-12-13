@@ -207,6 +207,7 @@
         unique: true,
         desc: "is a Gothic horror novel by Irish author Bram Stoker.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
     ItemEntry(
         name: "Book Great Gatsby",
@@ -227,6 +228,7 @@
         unique: true,
         desc: "Follow Gilgamesh on his epic.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
     ItemEntry(
         name: "Book Homers odyssey",
@@ -237,6 +239,7 @@
         unique: true,
         desc: "A ancient tale of a great journey around the sea.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
     ItemEntry(
         name: "Program Tic Tac Toe",

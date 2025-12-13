@@ -6,9 +6,7 @@ use crate::{
     food::{self, FOOD_COUNT, Food},
     geo::Rect,
     items::ItemKind,
-    scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene,
-    },
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
     sprite::Sprite,
 };
 

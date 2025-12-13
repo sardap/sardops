@@ -3556,6 +3556,7 @@ dependencies = [
  "libm",
  "log",
  "paste",
+ "regex",
  "ron",
  "sdop-common",
  "serde",

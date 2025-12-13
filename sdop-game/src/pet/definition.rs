@@ -68,7 +68,7 @@ impl PetDefinition {
 
     pub fn explore_skill(&self) -> ExploreSkill {
         match self.life_stage {
-            LifeStage::Baby => -20,
+            LifeStage::Baby => 5,
             LifeStage::Child => 40,
             LifeStage::Adult => 100,
         }

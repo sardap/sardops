@@ -47,6 +47,7 @@ pub struct Location {
     pub rewards: LocationRewards,
     pub cover: StaticImage,
     pub activities: &'static [&'static str],
+    pub item: ItemKind,
 }
 
 impl Location {
@@ -59,6 +60,7 @@ impl Location {
         rewards: LocationRewards,
         cover: StaticImage,
         activities: &'static [&'static str],
+        item: ItemKind,
     ) -> Self {
         Self {
             id,
@@ -69,6 +71,7 @@ impl Location {
             rewards,
             cover,
             activities,
+            item,
         }
     }
 
@@ -86,11 +89,12 @@ pub const LOCATION_UNKNOWN: Location = Location::new(
     LocationRewards::new(0..1, &[]),
     assets::IMAGE_LOCATION_UNKOWN,
     &[],
+    ItemKind::None,
 );
 
 pub const fn get_location(id: usize) -> &'static Location {
     if id >= LOCATIONS.len() {
-        return &LOCATIONS[0];
+        return &LOCATION_UNKNOWN;
     }
     LOCATIONS[id]
 }
@@ -98,20 +102,42 @@ pub const fn get_location(id: usize) -> &'static Location {
 pub struct LocationHistoryIter<'a> {
     current: usize,
     history: &'a ExploreHistory,
+    inventory: &'a Inventory,
 }
 
 impl<'a> LocationHistoryIter<'a> {
-    pub fn new(current: usize, history: &'a ExploreHistory) -> Self {
-        Self { current, history }
+    pub type Item = usize;
+
+    pub fn new(current: usize, history: &'a ExploreHistory, inventory: &'a Inventory) -> Self {
+        Self {
+            current,
+            history,
+            inventory,
+        }
+    }
+
+    pub fn first(&mut self) -> Option<Self::Item> {
+        if self.inventory.has_item(get_location(self.current).item) {
+            return Some(self.current);
+        }
+
+        loop {
+            let next = self.next();
+            if let Some(next) = next {
+                return Some(next);
+            } else {
+                return None;
+            }
+        }
     }
 }
 
 impl<'a> Iterator for LocationHistoryIter<'a> {
-    type Item = usize;
+    type Item = LocationHistoryIter<'a>::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         for i in (self.current + 1)..LOCATION_COUNT {
-            if self.history.location_history[i].unlocked {
+            if self.inventory.has_item(get_location(i).item) {
                 self.current = i;
                 return Some(self.current);
             }
@@ -124,7 +150,7 @@ impl<'a> Iterator for LocationHistoryIter<'a> {
 impl<'a> DoubleEndedIterator for LocationHistoryIter<'a> {
     fn next_back(&mut self) -> Option<Self::Item> {
         for i in (0..self.current).rev() {
-            if self.history.location_history[i].unlocked {
+            if self.inventory.has_item(get_location(i).item) {
                 self.current = i;
                 return Some(self.current);
             }
@@ -137,7 +163,6 @@ impl<'a> DoubleEndedIterator for LocationHistoryIter<'a> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct LocationHistory {
-    pub unlocked: bool,
     pub runs: u16,
     pub successful: u16,
     pub last_ran: Timestamp,
@@ -146,7 +171,6 @@ pub struct LocationHistory {
 impl Default for LocationHistory {
     fn default() -> Self {
         Self {
-            unlocked: true,
             runs: 0,
             successful: 0,
             last_ran: Timestamp::default(),
@@ -158,19 +182,15 @@ impl Default for LocationHistory {
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct ExploreHistory {
     pub location_history: [LocationHistory; LOCATION_COUNT],
-    pub skill: ExploreSkill,
+    pub bonus_skill: ExploreSkill,
 }
 
 impl Default for ExploreHistory {
     fn default() -> Self {
-        let mut result = Self {
+        Self {
             location_history: Default::default(),
-            skill: 100,
-        };
-
-        result.location_history[1].unlocked = true;
-
-        result
+            bonus_skill: 0,
+        }
     }
 }
 
@@ -181,14 +201,6 @@ impl ExploreHistory {
 
     pub fn get_by_id(&self, id: usize) -> &LocationHistory {
         &self.location_history[id]
-    }
-
-    pub fn unlocked(&self, id: usize) -> bool {
-        return id != 0 && self.get_by_id(id).unlocked;
-    }
-
-    pub fn any_unlocked(&self) -> bool {
-        self.location_history.iter().any(|i| i.unlocked)
     }
 }
 
@@ -308,7 +320,7 @@ impl ExploreSystem {
                     .unwrap_or(&PLACEHOLDER_ACTIVTY);
 
                 let skill = pet.explore_skill();
-                let odds = rng.i32((skill / 2)..=skill);
+                let odds = rng.i32((skill / 4)..=skill);
                 let location_odds = rng.i32(0..current.difficulty);
                 if odds > location_odds {
                     self.passes += 1;

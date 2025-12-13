@@ -1,9 +1,7 @@
 use crate::{
     display::{CENTER_VEC, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    scene::{
-        RenderArgs, Scene, SceneOutput, SceneTickArgs,
-    },
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 pub struct CreditsScene {}

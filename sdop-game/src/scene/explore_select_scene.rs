@@ -33,7 +33,7 @@ pub struct ExploreSelectScene {
 impl ExploreSelectScene {
     pub fn new() -> Self {
         Self {
-            selected_location: 1,
+            selected_location: 0,
             sign_shake_remaining: Duration::ZERO,
             next_unlocked: false,
             next_explore_time: Timestamp::default(),
@@ -49,8 +49,6 @@ impl ExploreSelectScene {
 
 impl Scene for ExploreSelectScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        let mut iter = LocationHistoryIter::new(self.selected_location, &args.game_ctx.pet.explore);
-        self.next_unlocked = iter.next().is_some();
         for (i, history) in args
             .game_ctx
             .pet
@@ -68,6 +66,11 @@ impl Scene for ExploreSelectScene {
 
         if args.timestamp < self.next_explore_time {
             self.state = State::Cooldown;
+        } else {
+            let mut iter =
+                LocationHistoryIter::new(0, &args.game_ctx.pet.explore, &args.game_ctx.inventory);
+            self.selected_location = iter.first().unwrap_or(0);
+            self.next_unlocked = iter.next().is_some();
         }
 
         self.pet_render.set_def_id(args.game_ctx.pet.def_id);
@@ -101,14 +104,19 @@ impl Scene for ExploreSelectScene {
                     let mut iter = LocationHistoryIter::new(
                         self.selected_location,
                         &args.game_ctx.pet.explore,
+                        &args.game_ctx.inventory,
                     );
                     (self.selected_location, self.next_unlocked) = match iter.next() {
                         Some(index) => (index, iter.next().is_some()),
                         None => (
-                            1,
-                            LocationHistoryIter::new(1, &args.game_ctx.pet.explore)
-                                .next()
-                                .is_some(),
+                            0,
+                            LocationHistoryIter::new(
+                                0,
+                                &args.game_ctx.pet.explore,
+                                &args.game_ctx.inventory,
+                            )
+                            .next()
+                            .is_some(),
                         ),
                     };
                 }
@@ -116,7 +124,7 @@ impl Scene for ExploreSelectScene {
                 if args.input.pressed(Button::Left) {
                     self.sign_shake_remaining = SIGN_SHAKE_DURATION;
 
-                    if self.selected_location == 1 {
+                    if self.selected_location == 0 {
                         output.set_home();
                         return;
                     }
@@ -124,13 +132,18 @@ impl Scene for ExploreSelectScene {
                     let mut iter = LocationHistoryIter::new(
                         self.selected_location,
                         &args.game_ctx.pet.explore,
+                        &args.game_ctx.inventory,
                     );
                     self.selected_location = iter.next_back().unwrap_or(1);
                     self.next_unlocked = true;
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if args.game_ctx.pet.explore.unlocked(self.selected_location) {
+                    if args
+                        .game_ctx
+                        .inventory
+                        .has_item(get_location(self.selected_location).item)
+                    {
                         args.game_ctx
                             .explore_system
                             .start_exploring(self.selected_location);
@@ -207,7 +220,10 @@ impl Scene for ExploreSelectScene {
             }
             State::Selecting => {
                 let mut y = 0;
-                let unlocked = args.game_ctx.pet.explore.unlocked(self.selected_location);
+                let unlocked = args
+                    .game_ctx
+                    .inventory
+                    .has_item(get_location(self.selected_location).item);
                 let location = if unlocked {
                     self.location()
                 } else {
@@ -316,7 +332,7 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                if self.selected_location > 1 {
+                if self.selected_location > 0 {
                     display.render_image_complex(
                         1,
                         y,

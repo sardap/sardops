@@ -2,15 +2,21 @@ use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
+use regex::Regex;
 use sdop_common::{ItemCategory, MelodyEntry};
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{self, Visitor},
+};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
     env,
+    fmt::{self},
     fs::{self},
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
+    time::{Duration, SystemTime},
     vec,
 };
 use strum_macros::{Display, EnumString};
@@ -542,6 +548,8 @@ struct ItemEntry {
     in_shop: bool,
     #[serde(default = "default_true")]
     in_store: bool,
+    #[serde(default)]
+    skill: i32,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -597,6 +605,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     category_fn.push_str("Self::None => ItemCategory::Misc,\n");
     let mut fishing_chance_def = String::new();
     fishing_chance_def.push_str("pub const FISHING_ITEM_ODDS: &[ItemChance] = &[\n");
+    let mut skill_fn_def = String::new();
+    skill_fn_def.push_str("pub const fn skill(&self) -> i32 {\n");
+    skill_fn_def.push_str("return match self {\n");
+    skill_fn_def.push_str("Self::None => 0,\n");
 
     let fishing_sum: f32 = templates.iter().map(|i| i.fishing_odds).sum();
     let mut fishing_current: f32 = 0.;
@@ -634,6 +646,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
                 "ItemChance::new(ItemKind::{}, {:.8}),",
                 enum_name, fishing_current
             ));
+        }
+
+        if template.skill > 0 {
+            skill_fn_def.push_str(&format!("Self::{} => {},", enum_name, template.skill));
         }
 
         item_count += 1;
@@ -708,6 +724,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     from_food_fn.push_str("}\n}\n");
     category_fn.push_str("}}");
     desc_fn.push_str("}\n}\n");
+    skill_fn_def.push_str("_ => 0\n");
+    skill_fn_def.push_str("}\n}");
     fishing_chance_def.push_str("];");
 
     let mut items_definitions = String::new();
@@ -722,6 +740,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&from_food_fn);
     items_definitions.push_str(&desc_fn);
     items_definitions.push_str(&category_fn);
+    items_definitions.push_str(&skill_fn_def);
     items_definitions.push('}');
     items_definitions.push_str(&fishing_chance_def);
 
@@ -920,11 +939,90 @@ pub struct LocationRewards {
     items: Vec<ItemReward>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy)]
+pub struct SdopDuration {
+    duration: Duration,
+}
+
+fn parse_duration_string(s: &str) -> Result<Duration, String> {
+    let re = Regex::new(r"(?P<minutes>\d+m)?\s*(?P<seconds>\d+s)?")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    let captures = re
+        .captures(s)
+        .ok_or_else(|| "Could not parse duration string.".to_string())?;
+
+    let mut total_duration = Duration::new(0, 0);
+
+    let mut found_component = false;
+
+    if let Some(m_match) = captures.name("minutes") {
+        let val_str = m_match.as_str().trim_end_matches('m');
+        if let Ok(minutes) = val_str.parse::<u64>() {
+            total_duration += Duration::from_secs(minutes * 60);
+            found_component = true;
+        }
+    }
+
+    if let Some(s_match) = captures.name("seconds") {
+        let val_str = s_match.as_str().trim_end_matches('s');
+        if let Ok(seconds) = val_str.parse::<u64>() {
+            total_duration += Duration::from_secs(seconds);
+            found_component = true;
+        }
+    }
+
+    if !found_component {
+        Err(format!(
+            "Invalid duration format: '{}'. Expected format like '5m 30s' or '5m' or '30s'.",
+            s
+        ))
+    } else {
+        Ok(total_duration)
+    }
+}
+
+struct SdopDurationVisitor;
+
+impl<'de> Visitor<'de> for SdopDurationVisitor {
+    type Value = SdopDuration;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a duration string like '5m 30s', '10m', or '45s'")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        parse_duration_string(value)
+            .map(|duration| SdopDuration { duration })
+            .map_err(E::custom)
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let s = std::str::from_utf8(v).map_err(E::custom)?;
+        self.visit_str(s)
+    }
+}
+
+impl<'de> Deserialize<'de> for SdopDuration {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(SdopDurationVisitor)
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct LocationTemplate {
     pub name: String,
-    pub length_seconds: i32,
-    pub cooldown_seconds: i32,
+    pub length: SdopDuration,
+    pub cooldown: SdopDuration,
     pub difficulty: i32,
     pub activities: Vec<String>,
     pub rewards: LocationRewards,
@@ -966,14 +1064,14 @@ fn generate_locations() -> ContentOut {
         let const_name = format!("LOCATION_{}", entry.name.to_case(Case::UpperSnake));
 
         locations_def.push_str(&format!(
-            "pub const {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {});",
-            const_name, i + 1, entry.name, entry.length_seconds, entry.cooldown_seconds, entry.difficulty, rewards, cover, activities
+            "pub const {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {}, crate::items::ItemKind::Map{});",
+            const_name, i, entry.name, entry.length.duration.as_secs(), entry.cooldown.duration.as_secs(), entry.difficulty, rewards, cover, activities, entry.name.to_case(Case::Pascal)
         ));
 
         names.push(const_name);
     }
 
-    locations_def.push_str("pub const LOCATIONS: &[&'static Location] = &[&LOCATION_UNKNOWN,");
+    locations_def.push_str("pub const LOCATIONS: &[&'static Location] = &[");
     for name in names {
         locations_def.push('&');
         locations_def.push_str(&name);
@@ -1007,14 +1105,20 @@ fn write_file<P: AsRef<Path>>(out_dir: &P, name: &str, to_write: String) {
 fn main() {
     let mut contents = ContentOut::default();
 
-    contents.merge(generate_image_code(IMAGES_MISC_PATH));
-    contents.merge(generate_image_tilesets_code(IMAGES_TILESETS_PATH));
-    contents.merge(generate_pet_definitions(PETS_RON_PATH));
-    contents.merge(generate_food_definitions(FOODS_RON_PATH));
-    contents.merge(generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH));
-    contents.merge(generate_dates());
-    contents.merge(generate_sounds());
-    contents.merge(generate_locations());
+    let gen_fun: Vec<Box<dyn Fn() -> ContentOut>> = vec![
+        Box::new(|| generate_image_code(IMAGES_MISC_PATH)),
+        Box::new(|| generate_image_tilesets_code(IMAGES_TILESETS_PATH)),
+        Box::new(|| generate_pet_definitions(PETS_RON_PATH)),
+        Box::new(|| generate_food_definitions(FOODS_RON_PATH)),
+        Box::new(|| generate_item_enum(ITEMS_RON_PATH, FOODS_RON_PATH)),
+        Box::new(|| generate_dates()),
+        Box::new(|| generate_sounds()),
+        Box::new(|| generate_locations()),
+    ];
+
+    for func in gen_fun {
+        contents.merge((func)());
+    }
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 

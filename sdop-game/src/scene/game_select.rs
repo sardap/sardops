@@ -6,8 +6,8 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
     geo::Rect,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
-        mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_doge_em::MgDogeEmScene,
+        mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
         mg_weight_lift::MgWeightLift,
     },
 };
