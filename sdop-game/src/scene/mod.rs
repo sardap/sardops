@@ -195,6 +195,7 @@ pub struct SceneTickArgs<'a> {
 pub struct RenderArgs<'a> {
     pub timestamp: Timestamp,
     pub game_ctx: &'a mut GameContext,
+    pub frames: u32,
 }
 
 pub trait Scene {

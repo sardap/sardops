@@ -189,7 +189,7 @@
         rewards: (
             money_start: 0,
             money_end: 0,
-            items: []
+            items: [(item: "MapTheMoon", odds: 0.1)]
         ),
     ),
     (
@@ -198,14 +198,32 @@
         cooldown: "10m",
         difficulty: 100,
         activities: [
-        "Lot's of courts around here",
-        "it's so brown",
-        "where is it again",
-        "should i go to the zoo?",
-        "Is it still closed on weekends?",
-        "It's so empty",
-        "So many wigs and robes",
-
+            "Lot's of courts around here",
+            "it's so brown",
+            "where is it again",
+            "should i go to the zoo?",
+            "Is it still closed on weekends?",
+            "It's so empty",
+            "So many wigs and robes",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: []
+        ),
+    ),
+    (
+        name: "The Moon",
+        length: "10m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Bloody Hell i'm high up",
+            "Huh a white flag",
+            "I wonder how it tastes",
+            "Is that a speaking orb?",
+            "Jumping really high",
+            "How am I getting back?"
         ],
         rewards: (
             money_start: 0,
@@ -213,5 +231,4 @@
             items: []
         ),
     )
-
 ]

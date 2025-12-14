@@ -209,7 +209,7 @@ impl HomeSceneData {
         )
     }
 
-    fn change_state(&mut self, new_state: State) {
+    pub fn change_state(&mut self, new_state: State) {
         if self.state == new_state {
             return;
         }
@@ -1151,7 +1151,14 @@ impl Scene for HomeScene {
 
             let total_filled = pet.stomach_filled / pet.definition().stomach_size;
             display.render_stomach(
-                Vec2::new(9., IMAGE_STOMACH_MASK.size.y as f32),
+                Vec2::new(
+                    9. + if total_filled < 0.05 && args.frames % 10 == 0 {
+                        if args.game_ctx.rng.bool() { 1. } else { -1. }
+                    } else {
+                        0.
+                    },
+                    IMAGE_STOMACH_MASK.size.y as f32,
+                ),
                 total_filled,
             );
 

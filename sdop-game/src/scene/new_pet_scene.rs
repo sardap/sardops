@@ -4,6 +4,7 @@ use fixedstr::str_format;
 use crate::{
     Timestamp,
     display::GameDisplay,
+    explore::ExploreSystem,
     game_consts::STARTING_FILLED,
     pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
     scene::{
@@ -77,6 +78,10 @@ impl Scene for NewPetScene {
             .pet
             .life_stage_history
             .add_def(self.def_id, args.timestamp);
+        args.game_ctx.explore_system = ExploreSystem::default();
+        args.game_ctx
+            .home
+            .change_state(crate::scene::home_scene::State::Wondering);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {

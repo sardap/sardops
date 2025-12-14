@@ -16,7 +16,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
-    time::{Duration, SystemTime},
+    time::Duration,
     vec,
 };
 use strum_macros::{Display, EnumString};

@@ -219,6 +219,7 @@ impl Game {
         let mut scene_args = RenderArgs {
             timestamp: self.last_time,
             game_ctx: &mut self.game_ctx,
+            frames: self.frames,
         };
 
         self.display.clear();

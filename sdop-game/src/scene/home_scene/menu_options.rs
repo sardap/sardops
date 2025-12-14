@@ -114,7 +114,6 @@ impl MenuOptions {
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
         ) && inventory.has_any_map()
-            || true
         {
             let _ = options.push(MenuOption::Explore);
         }
