@@ -6,6 +6,7 @@
 #![feature(duration_constructors_lite)]
 #![feature(specialization)]
 #![feature(generic_const_exprs)]
+#![feature(trait_alias)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
 #![no_std]

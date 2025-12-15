@@ -476,13 +476,15 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 struct FoodTemplate {
     name: String,
     fill_factor: f32,
     path: String,
     #[serde(default = "default_true")]
     in_shop: bool,
+    max_ate: u8,
+    expire: SdopDuration,
 }
 
 fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
@@ -505,8 +507,8 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         write_image(&mut assets, &image_normal_var_name, image_path);
 
         food_definitions.push_str(&format!(
-            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{});",
-            food_var_name, i, template.name, image_normal_var_name, template.fill_factor, template.name.to_case(Case::Pascal)
+            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{}, {}, Duration::from_secs({}));",
+            food_var_name, i, template.name, image_normal_var_name, template.fill_factor, template.name.to_case(Case::Pascal), template.max_ate, template.expire.duration.as_secs()
         ));
 
         food_vars.push(image_normal_var_name);
@@ -950,23 +952,24 @@ pub struct SdopDuration {
     duration: Duration,
 }
 
-fn parse_duration_string(s: &str) -> Result<Duration, String> {
-    let re = Regex::new(r"(?P<minutes>\d+m)?\s*(?P<seconds>\d+s)?")
-        .map_err(|e| format!("Regex error: {}", e))?;
+fn parse_duration_string(s: &str) -> Duration {
+    let re = Regex::new(r"(?P<hours>\d+h)?\s*(?P<minutes>\d+m)?\s*(?P<seconds>\d+s)?").unwrap();
 
-    let captures = re
-        .captures(s)
-        .ok_or_else(|| "Could not parse duration string.".to_string())?;
+    let captures = re.captures(s).unwrap();
 
     let mut total_duration = Duration::new(0, 0);
 
-    let mut found_component = false;
+    if let Some(m_match) = captures.name("hours") {
+        let val_str = m_match.as_str().trim_end_matches('h');
+        if let Ok(hours) = val_str.parse::<u64>() {
+            total_duration += Duration::from_hours(hours);
+        }
+    }
 
     if let Some(m_match) = captures.name("minutes") {
         let val_str = m_match.as_str().trim_end_matches('m');
         if let Ok(minutes) = val_str.parse::<u64>() {
-            total_duration += Duration::from_secs(minutes * 60);
-            found_component = true;
+            total_duration += Duration::from_mins(minutes);
         }
     }
 
@@ -974,18 +977,10 @@ fn parse_duration_string(s: &str) -> Result<Duration, String> {
         let val_str = s_match.as_str().trim_end_matches('s');
         if let Ok(seconds) = val_str.parse::<u64>() {
             total_duration += Duration::from_secs(seconds);
-            found_component = true;
         }
     }
 
-    if !found_component {
-        Err(format!(
-            "Invalid duration format: '{}'. Expected format like '5m 30s' or '5m' or '30s'.",
-            s
-        ))
-    } else {
-        Ok(total_duration)
-    }
+    total_duration
 }
 
 struct SdopDurationVisitor;
@@ -1001,9 +996,9 @@ impl<'de> Visitor<'de> for SdopDurationVisitor {
     where
         E: de::Error,
     {
-        parse_duration_string(value)
-            .map(|duration| SdopDuration { duration })
-            .map_err(E::custom)
+        Ok(SdopDuration {
+            duration: parse_duration_string(value),
+        })
     }
 
     fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>

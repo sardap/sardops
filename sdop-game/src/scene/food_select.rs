@@ -1,16 +1,20 @@
+use core::time::Duration;
+
 use glam::Vec2;
 
 use crate::{
+    assets,
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
-    food::{FOODS, Food, MAX_FOOD_X},
+    food::{FOOD_HISTORY_SIZE, FOODS, Food, MAX_FOOD_X},
     geo::Rect,
-    items::ItemKind,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
+    sounds::{SONG_ERROR, SongPlayOptions},
 };
 
 pub struct FoodSelectScene {
     current: &'static Food,
+    sick_of_shake_remaining: Duration,
 }
 
 impl Default for FoodSelectScene {
@@ -21,7 +25,10 @@ impl Default for FoodSelectScene {
 
 impl FoodSelectScene {
     pub fn new() -> Self {
-        Self { current: FOODS[0] }
+        Self {
+            current: FOODS[0],
+            sick_of_shake_remaining: Duration::ZERO,
+        }
     }
 }
 
@@ -34,6 +41,11 @@ impl Scene for FoodSelectScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
+        self.sick_of_shake_remaining = self
+            .sick_of_shake_remaining
+            .checked_sub(args.delta)
+            .unwrap_or_default();
+
         if args.input.pressed(crate::Button::Right) {
             self.current = FOODS
                 .iter()
@@ -65,11 +77,18 @@ impl Scene for FoodSelectScene {
         }
 
         if args.input.pressed(crate::Button::Middle) {
-            output.set(SceneEnum::Eat(EatScene::new(
-                self.current,
-                args.game_ctx.pet.def_id,
-            )));
-            return;
+            if !args.game_ctx.pet.food_history.sick_of(self.current) {
+                output.set(SceneEnum::Eat(EatScene::new(
+                    self.current,
+                    args.game_ctx.pet.def_id,
+                )));
+                return;
+            } else {
+                args.game_ctx
+                    .sound_system
+                    .push_song(SONG_ERROR, SongPlayOptions::new().with_effect());
+                self.sick_of_shake_remaining = Duration::from_millis(200);
+            }
         }
     }
 
@@ -184,6 +203,21 @@ impl Scene for FoodSelectScene {
 
             y += 7;
 
+            let ate_count = args.game_ctx.pet.food_history.consumed_count(food);
+            if ate_count > 0 && ate_count < food.max_eat {
+                let str =
+                    fixedstr::str_format!(fixedstr::str12, "ate {}/{}", ate_count, food.max_eat);
+                display.render_text_complex(
+                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 7;
+            }
+
             let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
 
             if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
@@ -193,6 +227,27 @@ impl Scene for FoodSelectScene {
                         Vec2::new(WIDTH_F32 - 3., (y_end - select_rect_y) as f32 + 5.),
                     ),
                     true,
+                );
+            }
+
+            if args.game_ctx.pet.food_history.sick_of(food) {
+                let x_offset =
+                    if self.sick_of_shake_remaining > Duration::ZERO && food == &self.current {
+                        args.game_ctx.rng.i32(-2..2)
+                    } else {
+                        0
+                    };
+                display.render_image_complex(
+                    x_offset,
+                    select_rect_y + 4,
+                    &assets::IMAGE_SICK_OF_LABEL,
+                    ComplexRenderOption::new().with_white(),
+                );
+                display.render_image_complex(
+                    x_offset,
+                    select_rect_y + 4,
+                    &assets::IMAGE_SICK_OF_LABEL_MASK,
+                    ComplexRenderOption::new().with_black(),
                 );
             }
 

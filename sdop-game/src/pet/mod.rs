@@ -12,7 +12,7 @@ use crate::{
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     explore::{ExploreHistory, ExploreSkill},
-    food::Food,
+    food::{Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
         BREED_ODDS_THRESHOLD, DEATH_BY_HYPOTHERMIA_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD,
@@ -215,6 +215,7 @@ pub struct PetInstance {
     total_hot_for: Duration,
     pub seen_alien: bool,
     pub explore: ExploreHistory,
+    pub food_history: FoodHistory,
 }
 
 impl PetInstance {
@@ -230,13 +231,15 @@ impl PetInstance {
         food.fill_factor * self.definition().food_multiplier(food)
     }
 
-    pub fn eat(&mut self, food: &Food) {
+    pub fn eat(&mut self, food: &Food, now: Timestamp) {
         self.stomach_filled += self.food_fill(food);
         let extra = self.stomach_filled - self.definition().stomach_size;
         if extra > 0. {
             self.stomach_filled = self.definition().stomach_size;
             self.extra_weight += extra;
         }
+
+        self.food_history.add(food, now);
     }
 
     pub fn tick_age(&mut self, delta: Duration) {
@@ -244,7 +247,7 @@ impl PetInstance {
         self.life_stage_age += delta;
     }
 
-    pub fn tick_hunger(&mut self, delta: Duration, sleep: bool) {
+    pub fn tick_hunger(&mut self, delta: Duration, now: Timestamp, sleep: bool) {
         const GRAMS_LOSS_PER_SECOND: f32 = 0.005;
         let sleep_modifer = if sleep { 0.4 } else { 1. };
         self.extra_weight = (self.extra_weight
@@ -275,6 +278,8 @@ impl PetInstance {
                 elapsed: elapsed + delta,
             }
         }
+
+        self.food_history.sim_tick(now);
     }
 
     pub fn tick_poop(&mut self, delta: Duration) {
@@ -655,6 +660,7 @@ impl Default for PetInstance {
             total_hot_for: Duration::ZERO,
             seen_alien: false,
             explore: ExploreHistory::default(),
+            food_history: Default::default(),
         }
     }
 }

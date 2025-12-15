@@ -2,7 +2,7 @@ use core::{ops::Range, time::Duration};
 
 use chrono::NaiveTime;
 
-use crate::{death::Threshold, money::Money};
+use crate::{Timestamp, death::Threshold, money::Money};
 
 pub const UI_FLASH_TIMER: Duration = Duration::from_millis(250);
 pub const UI_FLASHING_TIMER: Duration = Duration::from_millis(500);
