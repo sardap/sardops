@@ -63,7 +63,7 @@ impl Shop {
                     let items = items_for_cata(cata);
                     if next < max + items.len() {
                         let item = items[next - max];
-                        if !result.contains(&item) && item != ItemKind::RecipeBiscuit {
+                        if !result.contains(&item) && item.in_shop() {
                             result[top] = item;
                             top += 1;
                             added += 1;

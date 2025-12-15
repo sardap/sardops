@@ -61,7 +61,7 @@ impl Scene for EatScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
-        args.game_ctx.pet.digest(self.food);
+        args.game_ctx.pet.eat(self.food);
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {

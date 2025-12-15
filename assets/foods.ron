@@ -3,6 +3,7 @@
         name: "biscuit",
         fill_factor: 10,
         path: "/images/foods/biscuit.aseprite",
+        in_shop: false,
     ),
     FoodTemplate(
         name: "soup",
@@ -15,7 +16,7 @@
         path: "/images/foods/sandwich.aseprite",
     ),
     FoodTemplate(
-        name: "watermelon",
+        name: "water melon",
         fill_factor: 10,
         path: "/images/foods/watermelon.aseprite",
     ),
@@ -39,6 +40,9 @@
         fill_factor: 50,
         path: "/images/foods/pizza.aseprite",
     ),
-
-
+    FoodTemplate(
+        name: "chips",
+        fill_factor: 50,
+        path: "/images/foods/chips.aseprite",
+    ),
 ]

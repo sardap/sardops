@@ -2,7 +2,7 @@ use core::f32;
 
 use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 use strum_macros::EnumIter;
 
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
@@ -403,7 +403,7 @@ impl GameDisplay {
         pos: Vec2,
         text: &str,
         options: ComplexRenderOption,
-    ) -> f32 {
+    ) -> IVec2 {
         let max_height = {
             let mut max = 0u16;
             for ch in text.chars() {
@@ -444,6 +444,7 @@ impl GameDisplay {
         let sub_options = options.with_pos_mode(PostionMode::Bottomleft);
         let mut x_offset = 0;
         let mut y_offset = 0;
+        let mut y_end = 0;
         let mut i = 0;
 
         while i < text.len() {
@@ -469,11 +470,12 @@ impl GameDisplay {
                     sub_options,
                 );
                 x_offset += image.size.x as i32 + options.font.between_spacing;
+                y_end = (y_offset + y_start as i32).max(y_end);
             }
             i = next_idx;
         }
 
-        x_offset as f32
+        IVec2::new(x_offset, y_end)
     }
 
     pub fn render_stomach(&mut self, pos_center: Vec2, filled: f32) {

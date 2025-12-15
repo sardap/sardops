@@ -176,14 +176,16 @@ impl Scene for WeekdaySelectScene {
             };
 
             let str = str_format!(fixedstr::str12, "{}", day);
-            let width = display.render_text_complex(
-                Vec2::new(x, y),
-                &str,
-                ComplexRenderOption::new()
-                    .with_font(&FONT_VARIABLE_SMALL)
-                    .with_white()
-                    .with_bottom_left(),
-            );
+            let width = display
+                .render_text_complex(
+                    Vec2::new(x, y),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_font(&FONT_VARIABLE_SMALL)
+                        .with_white()
+                        .with_bottom_left(),
+                )
+                .x as f32;
 
             if self.days.contains(*day) {
                 display.render_rect_solid(

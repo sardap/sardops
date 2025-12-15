@@ -35,7 +35,7 @@ impl Activity {
     pub fn cooldown(&self) -> Duration {
         match self {
             Activity::PlayingComputer => Duration::from_mins(5),
-            Activity::WatchTv => Duration::from_mins(5),
+            Activity::WatchTv => Duration::from_mins(15),
             Activity::ReadBook => Duration::from_mins(5),
             Activity::ListenMusic => Duration::from_mins(5),
             Activity::GoOut => Duration::from_mins(45),

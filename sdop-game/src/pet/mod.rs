@@ -222,8 +222,16 @@ impl PetInstance {
         PetDefinition::get_by_id(self.def_id)
     }
 
-    pub fn digest(&mut self, food: &Food) {
-        self.stomach_filled += food.fill_factor * self.definition().food_multiplier(food);
+    pub fn food_fill_percent(&self) -> f32 {
+        (self.stomach_filled / self.definition().stomach_size).min(1.)
+    }
+
+    pub fn food_fill(&self, food: &Food) -> f32 {
+        food.fill_factor * self.definition().food_multiplier(food)
+    }
+
+    pub fn eat(&mut self, food: &Food) {
+        self.stomach_filled += self.food_fill(food);
         let extra = self.stomach_filled - self.definition().stomach_size;
         if extra > 0. {
             self.stomach_filled = self.definition().stomach_size;

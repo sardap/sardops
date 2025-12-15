@@ -207,11 +207,13 @@ impl Scene for SettingsScene {
                         (40 + i * 17) as f32
                     };
 
-                    let width = display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
-                        option.text(),
-                        ComplexRenderOption::new().with_white().with_center(),
-                    );
+                    let width = display
+                        .render_text_complex(
+                            Vec2::new(CENTER_X, y),
+                            option.text(),
+                            ComplexRenderOption::new().with_white().with_center(),
+                        )
+                        .x as f32;
 
                     if self.option == option {
                         display.render_rect_solid(

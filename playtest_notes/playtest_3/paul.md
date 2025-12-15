@@ -17,7 +17,7 @@
 -  
 
 ### Issues / Bugs
-- [] Stomach should shake when hungry
+- [X] Stomach should shake when hungry
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

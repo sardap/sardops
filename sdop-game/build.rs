@@ -481,6 +481,8 @@ struct FoodTemplate {
     name: String,
     fill_factor: f32,
     path: String,
+    #[serde(default = "default_true")]
+    in_shop: bool,
 }
 
 fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
@@ -503,8 +505,8 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         write_image(&mut assets, &image_normal_var_name, image_path);
 
         food_definitions.push_str(&format!(
-            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2});",
-            food_var_name, i, template.name, image_normal_var_name, template.fill_factor
+            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{});",
+            food_var_name, i, template.name, image_normal_var_name, template.fill_factor, template.name.to_case(Case::Pascal)
         ));
 
         food_vars.push(image_normal_var_name);
@@ -534,7 +536,7 @@ fn default_true() -> bool {
 }
 
 #[derive(Serialize, Deserialize)]
-struct ItemEntry {
+struct ItemTemplate {
     name: String,
     category: ItemCategory,
     cost: i32,
@@ -560,7 +562,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     let location_templates: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
 
     let contents = std::fs::read_to_string(path).unwrap();
-    let templates: Vec<ItemEntry> = ron::from_str(&contents).unwrap();
+    let templates: Vec<ItemTemplate> = ron::from_str(&contents).unwrap();
 
     let mut enum_def = String::new();
 
@@ -592,9 +594,6 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     image_fn_def.push_str("pub const fn image(&self) -> &'static crate::assets::StaticImage {\n");
     image_fn_def.push_str("return match self {\n");
     image_fn_def.push_str("Self::None => &crate::assets::IMAGE_POOP_0,\n");
-    let mut from_food_fn = String::new();
-    from_food_fn.push_str("pub const fn from_food(food_id: u32) -> Self {\n");
-    from_food_fn.push_str("return match food_id {\n");
     let mut desc_fn = String::new();
     desc_fn.push_str("pub const fn desc(&self) -> &'static str {\n");
     desc_fn.push_str("return match self {\n");
@@ -609,6 +608,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     skill_fn_def.push_str("pub const fn skill(&self) -> i32 {\n");
     skill_fn_def.push_str("return match self {\n");
     skill_fn_def.push_str("Self::None => 0,\n");
+    let mut in_shop_def = String::new();
+    in_shop_def.push_str("pub const fn in_shop(&self) -> bool {\n");
+    in_shop_def.push_str("return match self {\n");
+    in_shop_def.push_str("Self::None => false,\n");
 
     let fishing_sum: f32 = templates.iter().map(|i| i.fishing_odds).sum();
     let mut fishing_current: f32 = 0.;
@@ -652,6 +655,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
             skill_fn_def.push_str(&format!("Self::{} => {},", enum_name, template.skill));
         }
 
+        in_shop_def.push_str(&format!("Self::{} => {},", enum_name, template.in_shop));
+
         item_count += 1;
     }
 
@@ -681,6 +686,8 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         category_fn.push_str(&format!("Self::{} => ItemCategory::Map,\n", enum_name,));
 
+        in_shop_def.push_str(&format!("Self::{} => {},", enum_name, template.in_shop));
+
         item_count += 1;
     }
 
@@ -707,25 +714,24 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
             enum_name, food_var_name
         ));
 
-        from_food_fn.push_str(&format!("{} => Self::{},\n", i, enum_name));
-
         category_fn.push_str(&format!("Self::{} => ItemCategory::Food,\n", enum_name,));
+
+        in_shop_def.push_str(&format!("Self::{} => {},", enum_name, template.in_shop));
 
         item_count += 1;
     }
 
-    enum_def.push_str("}\n");
-    rare_fn_def.push_str("}\n}\n");
-    cost_fn_def.push_str("}\n}\n");
-    name_fn_def.push_str("}\n}\n");
-    unique_fn_def.push_str("}\n}\n");
-    image_fn_def.push_str("}\n}\n");
-    from_food_fn.push_str("_ => Self::None\n");
-    from_food_fn.push_str("}\n}\n");
+    enum_def.push_str("}");
+    rare_fn_def.push_str("}}");
+    cost_fn_def.push_str("}}");
+    name_fn_def.push_str("}}");
+    unique_fn_def.push_str("}}");
+    image_fn_def.push_str("}}");
     category_fn.push_str("}}");
-    desc_fn.push_str("}\n}\n");
-    skill_fn_def.push_str("_ => 0\n");
-    skill_fn_def.push_str("}\n}");
+    desc_fn.push_str("}}");
+    skill_fn_def.push_str("_ => 0");
+    skill_fn_def.push_str("}}");
+    in_shop_def.push_str("}}");
     fishing_chance_def.push_str("];");
 
     let mut items_definitions = String::new();
@@ -737,10 +743,10 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
     items_definitions.push_str(&name_fn_def);
     items_definitions.push_str(&unique_fn_def);
     items_definitions.push_str(&image_fn_def);
-    items_definitions.push_str(&from_food_fn);
     items_definitions.push_str(&desc_fn);
     items_definitions.push_str(&category_fn);
     items_definitions.push_str(&skill_fn_def);
+    items_definitions.push_str(&in_shop_def);
     items_definitions.push('}');
     items_definitions.push_str(&fishing_chance_def);
 
@@ -1026,6 +1032,8 @@ pub struct LocationTemplate {
     pub difficulty: i32,
     pub activities: Vec<String>,
     pub rewards: LocationRewards,
+    #[serde(default = "default_true")]
+    in_shop: bool,
 }
 
 fn generate_locations() -> ContentOut {

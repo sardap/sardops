@@ -14,7 +14,7 @@ SDOP_PS_VITA_DIR := ./sdop-psvita
 SDOP_SAVE_EDIT := ./sdop-save-edit
 
 .PHONY: build_all
-build_all: build_3ds build_psp build_linux_x86 build_wasm build_pico build_ps_vita build_save_editor_linux_x86
+build_all: build_3ds build_psp build_linux_x86 build_wasm build_pico build_save_editor_linux_x86
 
 .PHONY: make_output
 make_output:

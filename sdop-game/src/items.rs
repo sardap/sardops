@@ -554,7 +554,7 @@ impl Default for Inventory {
         };
 
         for food in STARTING_FOOD {
-            result.add_item(ItemKind::from_food(food.id), 1);
+            result.add_item(food.item, 1);
         }
 
         result

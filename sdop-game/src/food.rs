@@ -1,4 +1,10 @@
-use crate::assets::{self, StaticImage};
+use const_for::const_for;
+use core::i32;
+
+use crate::{
+    assets::{self, StaticImage},
+    items::ItemKind,
+};
 
 include!(concat!(env!("OUT_DIR"), "/dist_foods.rs"));
 
@@ -8,6 +14,7 @@ pub struct Food {
     pub name: &'static str,
     pub image: &'static StaticImage,
     pub fill_factor: f32,
+    pub item: ItemKind,
 }
 
 impl Food {
@@ -16,12 +23,14 @@ impl Food {
         name: &'static str,
         image: &'static StaticImage,
         fill_factor: f32,
+        item: ItemKind,
     ) -> Self {
         Self {
             id,
             name,
             image,
             fill_factor,
+            item,
         }
     }
 
@@ -34,3 +43,16 @@ impl Food {
 }
 
 pub const STARTING_FOOD: &[&Food] = &[&FOOD_BISCUIT];
+
+const fn max_food_width() -> i32 {
+    let mut max = 0;
+    const_for!(i in 0..FOODS.len() => {
+        if FOODS[i].image.size.x as i32 > max {
+            max = FOODS[i].image.size.x as i32;
+        }
+    });
+
+    max
+}
+
+pub const MAX_FOOD_X: i32 = max_food_width();
