@@ -18,6 +18,11 @@
 
 ### Issues / Bugs
 - [X] Stomach should shake when hungry
+- [X] Shouldn't go to sleep if hungry
+- [X] watching tv egg needs to move to the right side
+- [X] Egg should not render when going out
+- [] should not go out if egg will hatch soon
+
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

@@ -256,6 +256,16 @@ const STAR_SPAWNER: Spawner = Spawner::new(
     },
 );
 
+const EGG_RIGHT: Vec2 = Vec2::new(
+    WIDTH_F32 - assets::IMAGE_EGG.size.x as f32,
+    WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
+);
+
+const EGG_LEFT: Vec2 = Vec2::new(
+    assets::IMAGE_EGG.size.x as f32,
+    WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
+);
+
 const NIGHT_SKY_HEIGHT: usize = 30;
 
 type PartialNightSky = DynamicImage<{ WIDTH * NIGHT_SKY_HEIGHT / 8 }>;
@@ -320,10 +330,7 @@ impl Scene for HomeScene {
             args.game_ctx.home.dream_bubble_timer = Duration::ZERO;
         }
 
-        self.egg_render.pos = Vec2::new(
-            WIDTH_F32 - assets::IMAGE_EGG.size.x as f32,
-            WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
-        );
+        self.egg_render.pos = EGG_RIGHT;
         if let Some(egg) = &args.game_ctx.egg {
             self.egg_render.set_pid(egg.upid);
         }
@@ -373,14 +380,13 @@ impl Scene for HomeScene {
         if args.game_ctx.explore_system.currently_exploring() {
             args.game_ctx.home.change_state(State::Exploring);
         } else {
-            let should_be_sleeping = args
-                .game_ctx
-                .pet
-                .definition()
-                .should_be_sleeping(&args.timestamp);
-            if should_be_sleeping && !matches!(args.game_ctx.home.state, State::Sleeping) {
+            if args.game_ctx.pet.is_sleeping()
+                && !matches!(args.game_ctx.home.state, State::Sleeping)
+            {
                 args.game_ctx.home.change_state(State::Sleeping);
-            } else if !should_be_sleeping && matches!(args.game_ctx.home.state, State::Sleeping) {
+            } else if !args.game_ctx.pet.is_sleeping()
+                && matches!(args.game_ctx.home.state, State::Sleeping)
+            {
                 args.game_ctx.home.change_state(State::Wondering);
             }
         }
@@ -495,6 +501,7 @@ impl Scene for HomeScene {
 
         match args.game_ctx.home.state {
             State::Wondering => {
+                self.egg_render.pos = EGG_RIGHT;
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
                     wonder_end(args);
                 }
@@ -525,6 +532,8 @@ impl Scene for HomeScene {
                         * args.delta.as_secs_f32();
             }
             State::Sleeping => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 self.top_render.tick(args);
                 self.left_render.tick(args);
                 self.right_render.tick(args);
@@ -575,6 +584,8 @@ impl Scene for HomeScene {
                 mut last_checked,
                 watch_end,
             } => {
+                self.egg_render.pos = EGG_LEFT;
+
                 if args.game_ctx.home.state_elapsed > watch_end {
                     args.game_ctx.home.change_state(State::Wondering);
                 } else {
@@ -614,6 +625,8 @@ impl Scene for HomeScene {
                 mut program_end_time,
                 mut program_run_time,
             } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx
                     .home
                     .pc
@@ -646,6 +659,8 @@ impl Scene for HomeScene {
                 }
             }
             State::ReadingBook { book } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx.home.next_word_spawn = args
                     .game_ctx
                     .home
@@ -721,6 +736,8 @@ impl Scene for HomeScene {
                 }
             }
             State::PlayingMp3 { jam_end_time } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 // Shake a bit
                 let dist =
                     vec2_distance(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target);
@@ -751,6 +768,8 @@ impl Scene for HomeScene {
                 }
             }
             State::Alarm => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx
                     .home
                     .pet_render
@@ -776,6 +795,8 @@ impl Scene for HomeScene {
                 }
             }
             State::Telescope { end_time } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx.home.telescope.pos = Vec2::new(15., 80.);
                 args.game_ctx.home.pet_render.pos = Vec2::new(45., 85.);
 
@@ -787,6 +808,8 @@ impl Scene for HomeScene {
                 }
             }
             State::Exploring => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 if !args.game_ctx.explore_system.currently_exploring() {
                     args.game_ctx.home.change_state(State::Wondering);
                     output.set(SceneEnum::ExploringPost(ExploringPostScene::new()));
@@ -1190,7 +1213,12 @@ impl Scene for HomeScene {
 
             display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
 
-            if args.game_ctx.egg.is_some() {
+            if args.game_ctx.egg.is_some()
+                && matches!(
+                    args.game_ctx.home.state,
+                    State::GoneOut { outing_end_time: _ } | State::Exploring
+                )
+            {
                 display.render_complex(&self.egg_render);
             }
 

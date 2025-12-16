@@ -216,6 +216,46 @@ pub struct PetInstance {
     pub seen_alien: bool,
     pub explore: ExploreHistory,
     pub food_history: FoodHistory,
+    is_sleeping: bool,
+}
+
+impl Default for PetInstance {
+    fn default() -> Self {
+        let def_id = crate::pet::definition::PET_BLOB_ID;
+        Self {
+            upid: 0,
+            def_id,
+            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
+            born: Timestamp::default(),
+            age: Duration::ZERO,
+            life_stage_age: Duration::ZERO,
+            stomach_mood: StomachMood::Full {
+                elapsed: Duration::ZERO,
+            },
+            total_starve_time: Duration::ZERO,
+            stomach_filled: 0.,
+            extra_weight: 0.,
+            until_poop: POOP_SPAWN_MAGIC_NUMBER * 2,
+            since_game: Duration::ZERO,
+            since_death_check: Duration::ZERO,
+            since_evolve_check: Duration::ZERO,
+            should_evolve: None,
+            should_die: None,
+            parents: None,
+            life_stage_history: LifeStageHistory::new(),
+            mood: Mood::Normal,
+            should_breed: false,
+            book_history: Default::default(),
+            illness: Default::default(),
+            cold_for: Duration::ZERO,
+            total_cold_for: Duration::ZERO,
+            total_hot_for: Duration::ZERO,
+            seen_alien: false,
+            explore: ExploreHistory::default(),
+            food_history: Default::default(),
+            is_sleeping: false,
+        }
+    }
 }
 
 impl PetInstance {
@@ -267,7 +307,7 @@ impl PetInstance {
             self.stomach_mood = StomachMood::Starving {
                 elapsed: elapsed + delta,
             }
-        } else if self.stomach_filled > 10. {
+        } else if self.stomach_filled > 5. {
             let elapsed = if let StomachMood::Full { elapsed } = self.stomach_mood {
                 elapsed
             } else {
@@ -625,42 +665,14 @@ impl PetInstance {
     pub fn explore_skill(&self) -> ExploreSkill {
         self.definition().explore_skill() + self.explore.bonus_skill
     }
-}
 
-impl Default for PetInstance {
-    fn default() -> Self {
-        let def_id = crate::pet::definition::PET_BLOB_ID;
-        Self {
-            upid: 0,
-            def_id,
-            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
-            born: Timestamp::default(),
-            age: Duration::ZERO,
-            life_stage_age: Duration::ZERO,
-            stomach_mood: StomachMood::Full {
-                elapsed: Duration::ZERO,
-            },
-            total_starve_time: Duration::ZERO,
-            stomach_filled: 0.,
-            extra_weight: 0.,
-            until_poop: POOP_SPAWN_MAGIC_NUMBER * 2,
-            since_game: Duration::ZERO,
-            since_death_check: Duration::ZERO,
-            since_evolve_check: Duration::ZERO,
-            should_evolve: None,
-            should_die: None,
-            parents: None,
-            life_stage_history: LifeStageHistory::new(),
-            mood: Mood::Normal,
-            should_breed: false,
-            book_history: Default::default(),
-            illness: Default::default(),
-            cold_for: Duration::ZERO,
-            total_cold_for: Duration::ZERO,
-            total_hot_for: Duration::ZERO,
-            seen_alien: false,
-            explore: ExploreHistory::default(),
-            food_history: Default::default(),
+    pub fn is_sleeping(&self) -> bool {
+        self.is_sleeping
+    }
+
+    pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {
+        if self.is_sleeping || !matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ }) {
+            self.is_sleeping = self.definition().should_be_sleeping(timestamp);
         }
     }
 }

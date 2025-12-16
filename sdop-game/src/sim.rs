@@ -43,7 +43,8 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
 
             pet.tick_age(delta);
 
-            let sleeping = pet.definition().should_be_sleeping(&timestamp);
+            pet.tick_sleeping(&timestamp);
+            let sleeping = pet.is_sleeping();
 
             pet.tick_hunger(delta, timestamp, sleeping);
             pet.tick_poop(delta);

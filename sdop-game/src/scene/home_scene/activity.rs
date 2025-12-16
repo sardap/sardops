@@ -34,12 +34,12 @@ enum Activity {
 impl Activity {
     pub fn cooldown(&self) -> Duration {
         match self {
-            Activity::PlayingComputer => Duration::from_mins(5),
+            Activity::PlayingComputer => Duration::from_mins(15),
             Activity::WatchTv => Duration::from_mins(15),
-            Activity::ReadBook => Duration::from_mins(5),
-            Activity::ListenMusic => Duration::from_mins(5),
+            Activity::ReadBook => Duration::from_mins(10),
+            Activity::ListenMusic => Duration::from_mins(10),
             Activity::GoOut => Duration::from_mins(45),
-            Activity::Telescope => Duration::from_mins(5),
+            Activity::Telescope => Duration::from_mins(45),
         }
     }
 }
