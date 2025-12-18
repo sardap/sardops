@@ -11,8 +11,8 @@ use crate::{
     assets::{self, StaticImage},
     book::BookInfo,
     explore::LOCATIONS,
-    food::STARTING_FOOD,
     furniture::HomeFurnitureKind,
+    game_consts::STARTING_ITEMS,
     game_context::GameContext,
     items_use::ALL_USEABLE_ITEMS,
     pc::Program,
@@ -319,6 +319,7 @@ impl From<HomeFurnitureKind> for ItemKind {
             HomeFurnitureKind::PaintingMan => Self::PaintingMan,
             HomeFurnitureKind::PaintingPc => Self::PaintingPc,
             HomeFurnitureKind::PaintingSun => Self::PaintingSun,
+            HomeFurnitureKind::PaintingMallsBalls => Self::PaintingMallsBalls,
         }
     }
 }
@@ -536,6 +537,14 @@ impl Inventory {
         entry.owned = updated as u32;
     }
 
+    pub fn clear_item(&mut self, item: ItemKind) {
+        let entry = self.get_entry_mut(item);
+        if entry.owned <= 0 {
+            return;
+        }
+        entry.owned = 0;
+    }
+
     pub fn has_any_enabled_book(&self) -> bool {
         BOOKS
             .iter()
@@ -553,8 +562,8 @@ impl Default for Inventory {
             contents: core::array::from_fn(|_| InventoryEntry::default()),
         };
 
-        for food in STARTING_FOOD {
-            result.add_item(food.item, 1);
+        for item in STARTING_ITEMS {
+            result.add_item(*item, 1);
         }
 
         result

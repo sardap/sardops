@@ -24,10 +24,6 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
     for _ in 0..runs {
         timestamp = timestamp + SIM_LENGTH_STEP;
 
-        if let Some(egg) = &mut args.game_ctx.egg {
-            egg.sim_tick(delta, &mut args.game_ctx.sim_rng);
-        }
-
         if args.game_ctx.pet.should_die().is_none() {
             args.game_ctx.pet.tick_mood(
                 &args.game_ctx.poops,

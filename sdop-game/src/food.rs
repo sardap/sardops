@@ -62,8 +62,6 @@ impl PartialEq for Food {
     }
 }
 
-pub const STARTING_FOOD: &[&Food] = &[&FOOD_BISCUIT];
-
 const fn max_food_width() -> i32 {
     let mut max = 0;
     const_for!(i in 0..FOODS.len() => {
@@ -93,7 +91,6 @@ pub struct FoodHistory {
     next_refresh: Timestamp,
 }
 
-// Probably should split this out
 impl FoodHistory {
     pub fn add(&mut self, food: &Food, now: Timestamp) {
         let entry = &mut self.entries[food.id];

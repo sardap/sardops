@@ -6,7 +6,7 @@ use crate::{
     assets,
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
-    food::{FOOD_HISTORY_SIZE, FOODS, Food, MAX_FOOD_X},
+    food::{FOODS, Food, MAX_FOOD_X},
     geo::Rect,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
     sounds::{SONG_ERROR, SongPlayOptions},

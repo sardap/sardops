@@ -39,6 +39,7 @@ pub enum HomeFurnitureKind {
     PaintingMan,
     PaintingPc,
     PaintingSun,
+    PaintingMallsBalls,
 }
 
 impl HomeFurnitureKind {
@@ -60,6 +61,7 @@ impl HomeFurnitureKind {
             Self::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
             Self::PaintingPc => assets::IMAGE_PAINTING_PC.size_vec2(),
             Self::PaintingSun => assets::IMAGE_PAINTING_SUN.size_vec2(),
+            Self::PaintingMallsBalls => assets::IMAGE_PAINTING_MALLS_BALLS.size_vec2(),
         }
     }
 
@@ -167,7 +169,9 @@ pub enum HomeFurnitureRender {
 }
 
 impl HomeFurnitureRender {
-    pub fn new(location: HomeFurnitureLocation, kind: HomeFurnitureKind) -> Self {
+    pub type Kind = HomeFurnitureKind;
+
+    pub fn new(location: HomeFurnitureLocation, kind: Self::Kind) -> Self {
         let pos = location.pos()
             + match location {
                 HomeFurnitureLocation::Top => Vec2::new(0., kind.size().y / 2.),
@@ -176,62 +180,66 @@ impl HomeFurnitureRender {
             };
 
         match kind {
-            HomeFurnitureKind::None => HomeFurnitureRender::None,
-            HomeFurnitureKind::DigitalClock => {
+            Self::Kind::None => HomeFurnitureRender::None,
+            Self::Kind::DigitalClock => {
                 HomeFurnitureRender::DigitalClock(DigitalClockRender::new(pos, Default::default()))
             }
-            HomeFurnitureKind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
+            Self::Kind::AnalogueClock => HomeFurnitureRender::AnalogueClock(
                 AnalogueRenderClock::new(AnalogueClockKind::Clock21, pos, Default::default()),
             ),
-            HomeFurnitureKind::Alarm => HomeFurnitureRender::Alarm(AlarmRender::new(pos)),
-            HomeFurnitureKind::ThermometerMercury => HomeFurnitureRender::ThermometerMercury(
+            Self::Kind::Alarm => HomeFurnitureRender::Alarm(AlarmRender::new(pos)),
+            Self::Kind::ThermometerMercury => HomeFurnitureRender::ThermometerMercury(
                 RenderThermometerMercury::new(pos, ROOM_TEMPTURE),
             ),
-            HomeFurnitureKind::ThermometerDigital => HomeFurnitureRender::ThermometerDigital(
+            Self::Kind::ThermometerDigital => HomeFurnitureRender::ThermometerDigital(
                 RenderThermometerDigital::new(pos, ROOM_TEMPTURE),
             ),
-            HomeFurnitureKind::SpaceHeater => {
+            Self::Kind::SpaceHeater => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_SPACE_HEATER))
             }
-            HomeFurnitureKind::AirCon => {
+            Self::Kind::AirCon => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_AIR_CONDITIONER))
             }
-            HomeFurnitureKind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
-            HomeFurnitureKind::InvertroLight => {
+            Self::Kind::FishTank => HomeFurnitureRender::FishTank(FishTankRender::new(pos)),
+            Self::Kind::InvertroLight => {
                 HomeFurnitureRender::InvetroLight(InvetroLightRender::new(pos, 50, location))
             }
-            HomeFurnitureKind::Calendar => {
+            Self::Kind::Calendar => {
                 HomeFurnitureRender::Calendar(CalendarRender::new(pos, NaiveDate::default()))
             }
-            HomeFurnitureKind::PaintingBranch => {
+            Self::Kind::PaintingBranch => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_BRANCH))
             }
-            HomeFurnitureKind::PaintingDude => {
+            Self::Kind::PaintingDude => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_DUDE))
             }
-            HomeFurnitureKind::PaintingMan => {
+            Self::Kind::PaintingMan => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_MAN))
             }
-            HomeFurnitureKind::PaintingPc => {
+            Self::Kind::PaintingPc => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_PC))
             }
-            HomeFurnitureKind::PaintingSun => {
+            Self::Kind::PaintingSun => {
                 HomeFurnitureRender::Sprite(BasicSprite::new(pos, &assets::IMAGE_PAINTING_SUN))
             }
+            Self::Kind::PaintingMallsBalls => HomeFurnitureRender::Sprite(BasicSprite::new(
+                pos,
+                &assets::IMAGE_PAINTING_MALLS_BALLS,
+            )),
         }
     }
 
     pub fn size(&self) -> Vec2 {
         match self {
             Self::None => Vec2::ZERO,
-            Self::DigitalClock(_) => HomeFurnitureKind::DigitalClock.size(),
-            Self::AnalogueClock(_) => HomeFurnitureKind::AnalogueClock.size(),
+            Self::DigitalClock(_) => Self::Kind::DigitalClock.size(),
+            Self::AnalogueClock(_) => Self::Kind::AnalogueClock.size(),
             Self::Alarm(_) => AlarmRender::size(),
-            Self::ThermometerMercury(_) => HomeFurnitureKind::ThermometerMercury.size(),
-            Self::ThermometerDigital(_) => HomeFurnitureKind::ThermometerDigital.size(),
-            Self::FishTank(_) => HomeFurnitureKind::FishTank.size(),
+            Self::ThermometerMercury(_) => Self::Kind::ThermometerMercury.size(),
+            Self::ThermometerDigital(_) => Self::Kind::ThermometerDigital.size(),
+            Self::FishTank(_) => Self::Kind::FishTank.size(),
             Self::Calendar(_) => CalendarRender::size(),
-            Self::InvetroLight(_) => HomeFurnitureKind::InvertroLight.size(),
+            Self::InvetroLight(_) => Self::Kind::InvertroLight.size(),
             Self::Sprite(basic_sprite) => basic_sprite.image.size_vec2(),
         }
     }

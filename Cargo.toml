@@ -9,3 +9,6 @@ chrono = { git = "https://github.com/sardap/chrono", default-features = false, f
 bincode = { version = "2.0.1", default-features = false, features = ["derive"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_bytes = "0.11.19"
+strum = { version = "0.27", default-features = false }
+strum_macros = { version = "0.27", default-features = false }
+const_for = "0.1.5"

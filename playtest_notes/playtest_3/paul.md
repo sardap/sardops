@@ -22,6 +22,7 @@
 - [X] watching tv egg needs to move to the right side
 - [X] Egg should not render when going out
 - [] should not go out if egg will hatch soon
+- [] After new pet somehow gone out instantly probably not reseting the state but should have validates 
 
 
 ### Concerns

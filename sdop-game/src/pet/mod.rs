@@ -1,3 +1,4 @@
+use const_for::const_for;
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
@@ -15,12 +16,13 @@ use crate::{
     food::{Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
-        BREED_ODDS_THRESHOLD, DEATH_BY_HYPOTHERMIA_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD,
-        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL, DEATH_STARVE_THRESHOLDS,
-        DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE,
-        HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS,
-        ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS,
-        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES, SPLACE_LOCATIONS,
+        BREED_ODDS_THRESHOLD, COFFEE_POOP_MODIFER, DEATH_BY_HYPOTHERMIA_THRESHOLD,
+        DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
+        DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
+        HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS,
+        ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS,
+        ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES,
+        SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -37,6 +39,7 @@ use crate::{
 pub mod definition;
 pub mod record;
 pub mod render;
+pub use sdop_common::LifeStage;
 
 pub type PetName = fixedstr::str7;
 
@@ -407,11 +410,21 @@ impl PetInstance {
     }
 
     pub fn should_poop(&mut self, rng: &mut Rng, sleeping: bool) -> bool {
+        // This is to set it up, I really should write comments for stupid lines of bullshit
         if self.until_poop > POOP_SPAWN_MAGIC_NUMBER {
             self.until_poop = self.get_next_poop_duration(rng);
         }
 
-        if !sleeping && self.until_poop <= Duration::ZERO {
+        let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
+
+        if !sleeping && (coffees_consumed > 0 && self.until_poop <= Duration::ZERO)
+            || (coffees_consumed > 0
+                && self
+                    .until_poop
+                    .checked_sub(COFFEE_POOP_MODIFER)
+                    .unwrap_or_default()
+                    <= Duration::ZERO)
+        {
             self.until_poop = self.get_next_poop_duration(rng);
             return true;
         }
@@ -430,12 +443,12 @@ impl PetInstance {
 
         match self.definition().life_stage {
             LifeStage::Baby => {
-                if self.life_stage_age < Duration::from_hours(4) {
+                if self.life_stage_age < Duration::from_days(1) {
                     return;
                 }
             }
             LifeStage::Child => {
-                if self.life_stage_age < Duration::from_days(1) {
+                if self.life_stage_age < Duration::from_days(2) {
                     return;
                 }
             }
@@ -451,6 +464,7 @@ impl PetInstance {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
                 let _ = possible.push(PET_PAWN_WHITE_ID);
+                let _ = possible.push(PET_DEVIL_ID);
                 if self.total_cold_for > Duration::ZERO {
                     let _ = possible.push(PET_ICE_CUBE_ID);
                 }
@@ -458,7 +472,6 @@ impl PetInstance {
             LifeStage::Child => {
                 let _ = possible.push(PET_BEERIE_ID);
                 let _ = possible.push(PET_WAS_GAURD_ID);
-                let _ = possible.push(PET_DEVIL_ID);
                 if self
                     .book_history
                     .get_read(ItemKind::BookNevileWran)
@@ -692,32 +705,6 @@ impl Mood {
             Mood::Normal => PetAnimationSet::Normal,
             Mood::Sad => PetAnimationSet::Sad,
             Mood::Happy => PetAnimationSet::Happy,
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, EnumIter, EnumCount)]
-pub enum LifeStage {
-    Baby,
-    Child,
-    Adult,
-}
-
-impl LifeStage {
-    pub fn from_index(index: usize) -> Self {
-        match index {
-            0 => Self::Baby,
-            1 => Self::Child,
-            2 => Self::Adult,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn name(self) -> &'static str {
-        match self {
-            LifeStage::Baby => "BABY",
-            LifeStage::Child => "CHILD",
-            LifeStage::Adult => "ADULT",
         }
     }
 }

@@ -43,30 +43,62 @@ impl Scene for ExploringPostScene {
         y += 8;
 
         let completed = result.percent_passed();
-        let str = str_format!(
-            fixedstr::str24,
-            "Passed {}% of",
-            libm::roundf(completed * 100.) as i32
-        );
-        display.render_text_complex(
-            Vec2::new(CENTER_X, y as f32),
-            &str,
-            ComplexRenderOption::new()
-                .with_white()
-                .with_center()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
-        y += 6;
-        display.render_text_complex(
-            Vec2::new(CENTER_X, y as f32),
-            "hurdles",
-            ComplexRenderOption::new()
-                .with_white()
-                .with_center()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
 
-        y += 8;
+        if completed > 0.05 {
+            let str = str_format!(
+                fixedstr::str24,
+                "Passed {}% of",
+                libm::roundf(completed * 100.) as i32
+            );
+            display.render_text_complex(
+                Vec2::new(CENTER_X, y as f32),
+                &str,
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_center()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+            y += 6;
+            display.render_text_complex(
+                Vec2::new(CENTER_X, y as f32),
+                "hurdles",
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_center()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+            y += 8;
+        } else {
+            let str = str_format!(fixedstr::str24, "{} IS A", args.game_ctx.pet.name.trim());
+            display.render_text_complex(
+                Vec2::new(CENTER_X, y as f32),
+                &str,
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_center()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+            y += 6;
+            display.render_text_complex(
+                Vec2::new(CENTER_X, y as f32),
+                "COMPLETE",
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_center()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+            y += 6;
+            display.render_text_complex(
+                Vec2::new(CENTER_X, y as f32),
+                "FAILURE",
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_center()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+            y += 8;
+        }
+
         if result.completed() {
             let str = str_format!(
                 fixedstr::str24,

@@ -129,6 +129,17 @@
         fishing_odds: 0.05,
     ),
     ItemTemplate(
+        name: "Painting Malls Balls",
+        category: Furniture,
+        rarity: Rare,
+        cost: 1000,
+        image: "painting_malls_balls",
+        unique: false,
+        desc: "A Painting of the malls balls",
+        fishing_odds: 0.0,
+        in_shop: false,
+    ),
+    ItemTemplate(
         name: "Invetro Light",
         category: Furniture,
         rarity: Rare,
@@ -176,7 +187,8 @@
         image: "book_0_closed",
         unique: true,
         desc: "A history of vic aus politics between 81 to 92.",
-        fishing_odds: 0.05,
+        fishing_odds: 0.0,
+        in_shop: false,
     ),
     ItemTemplate(
         name: "Book Nevile Wran",
@@ -259,7 +271,8 @@
         image: "software_dopcraft",
         unique: true,
         desc: "The hit Real time Strategy from 1998!",
-        fishing_odds: 0.05,
+        fishing_odds: 0.0,
+        in_shop: false,
     ),
     ItemTemplate(
         name: "Program C Compiler",
@@ -369,7 +382,8 @@
         image: "credits_scroll",
         unique: true,
         desc: "A scroll found at the top of the highest hill, It's told that it appeared after a lighting strike.",
-        fishing_odds: 0.05,
+        fishing_odds: 0.0,
+        in_shop: false
     ),
     ItemTemplate(
         name: "Shop capacity upgrade",

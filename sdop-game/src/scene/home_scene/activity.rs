@@ -116,6 +116,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
 
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.pet.mood() == Mood::Happy
+        && !crate::egg::will_hatch_soon(&args.game_ctx.egg, args.timestamp)
     {
         add_option(
             &mut options,

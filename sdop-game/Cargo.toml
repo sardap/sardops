@@ -24,7 +24,7 @@ libm = { version = "0.2", default-features = false }
 embedded-graphics = { version = "0.8.1", default-features = false }
 tinybmp = "0.6.0"
 chrono = { workspace = true }
-const_for = "0.1.5"
+const_for = { workspace = true }
 casey = "0.4.2"
 paste = "1.0.15"
 serde = { workspace = true, optional = true }

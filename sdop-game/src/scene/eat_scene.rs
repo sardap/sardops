@@ -82,7 +82,8 @@ impl Scene for EatScene {
                 }
             }
             EatSceneState::Eating => {
-                let eat_duration = Duration::from_secs_f32(self.food.fill_factor / 7.);
+                let eat_duration =
+                    Duration::from_secs_f32(self.food.fill_factor / 7.).max(Duration::from_secs(3));
                 let complete_percent =
                     self.state_elapsed.as_millis_f32() / eat_duration.as_millis_f32();
                 let new_end = (self.food_texture.used_length as f32 * complete_percent) as usize;

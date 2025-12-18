@@ -64,8 +64,10 @@ impl Scene for BreedScene {
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
         args.game_ctx.egg = Some(SavedEgg::new(
+            &mut args.game_ctx.rng,
             combine_pid(self.left.upid(), self.right.upid()),
             Some(PetParents::new([self.left, self.right])),
+            args.timestamp,
         ));
     }
 

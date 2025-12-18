@@ -5,7 +5,7 @@ use crate::{
     assets::{self, StaticImage},
     items::{Inventory, ItemKind},
     money::Money,
-    pet::PetInstance,
+    pet::{LifeStage, PetInstance},
 };
 use bincode::{Decode, Encode};
 
@@ -48,6 +48,7 @@ pub struct Location {
     pub cover: StaticImage,
     pub activities: &'static [&'static str],
     pub item: ItemKind,
+    pub ls_mask: u8,
 }
 
 impl Location {
@@ -61,6 +62,7 @@ impl Location {
         cover: StaticImage,
         activities: &'static [&'static str],
         item: ItemKind,
+        life_stages: &'static [LifeStage],
     ) -> Self {
         Self {
             id,
@@ -72,6 +74,7 @@ impl Location {
             cover,
             activities,
             item,
+            ls_mask: LifeStage::create_bitmask(life_stages),
         }
     }
 
@@ -90,6 +93,7 @@ pub const LOCATION_UNKNOWN: Location = Location::new(
     assets::IMAGE_LOCATION_UNKOWN,
     &[],
     ItemKind::None,
+    &[],
 );
 
 pub const fn get_location(id: usize) -> &'static Location {

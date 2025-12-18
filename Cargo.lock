@@ -3533,7 +3533,10 @@ dependencies = [
 name = "sdop-common"
 version = "0.1.0"
 dependencies = [
+ "const_for",
  "serde",
+ "strum 0.27.2",
+ "strum_macros 0.27.2",
 ]
 
 [[package]]

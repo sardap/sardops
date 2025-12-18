@@ -6,7 +6,7 @@ use crate::{
     Button, Timestamp, assets,
     date_utils::DurationExt,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
-    explore::{LOCATIONS, Location, LocationHistoryIter, get_location},
+    explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
@@ -143,6 +143,9 @@ impl Scene for ExploreSelectScene {
                         .game_ctx
                         .inventory
                         .has_item(get_location(self.selected_location).item)
+                        && (args.game_ctx.pet.definition().life_stage.bitmask()
+                            & get_location(self.selected_location).ls_mask)
+                            > 0
                     {
                         args.game_ctx
                             .explore_system
@@ -220,15 +223,9 @@ impl Scene for ExploreSelectScene {
             }
             State::Selecting => {
                 let mut y = 0;
-                let unlocked = args
-                    .game_ctx
-                    .inventory
-                    .has_item(get_location(self.selected_location).item);
-                let location = if unlocked {
-                    self.location()
-                } else {
-                    &LOCATIONS[0]
-                };
+                let location = get_location(self.selected_location);
+                let unlocked = args.game_ctx.inventory.has_item(location.item)
+                    && (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
 
                 // Gotta handle cooldown here
                 display.render_image_complex(
@@ -240,81 +237,97 @@ impl Scene for ExploreSelectScene {
 
                 y += location.cover.size.y as i32 + 2;
 
-                const SKILL_X_OFFSET: i32 = 2;
-                const TEXT_X_OFFSET: f32 = 35.;
+                if unlocked {
+                    const SKILL_X_OFFSET: i32 = 2;
+                    const TEXT_X_OFFSET: f32 = 35.;
 
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_LENGTH_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let mins = self.location().length.as_mins() as i32;
-                let hours = mins / 60;
-                let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
-                display.render_text_complex(
-                    Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_LENGTH_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let mins = self.location().length.as_mins() as i32;
+                    let hours = mins / 60;
+                    let mins = mins % 60;
+                    let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
 
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_SKILL_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let str =
-                    fixedstr::str_format!(fixedstr::str12, "{}", args.game_ctx.pet.explore_skill());
-                display.render_text_complex(
-                    Vec2::new(TEXT_X_OFFSET, y as f32),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_SKILL_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let str = fixedstr::str_format!(
+                        fixedstr::str12,
+                        "{}",
+                        args.game_ctx.pet.explore_skill()
+                    );
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
 
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_CHALLENGE_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
-                display.render_text_complex(
-                    Vec2::new(TEXT_X_OFFSET, y as f32),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_CHALLENGE_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
 
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_COOLDOWN_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let mins = self.location().cooldown.as_mins() as i32;
-                let hours = mins / 60;
-                let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
-                display.render_text_complex(
-                    Vec2::new(TEXT_X_OFFSET, y as f32),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_COOLDOWN_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let mins = self.location().cooldown.as_mins() as i32;
+                    let hours = mins / 60;
+                    let mins = mins % 60;
+                    let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
 
-                y += 5;
+                    y += 5;
+                } else {
+                    let text_area = display.render_text_complex(
+                        Vec2::new(CENTER_X, y as f32 + 5.),
+                        &"NOT RIGHT LIFE STAGE",
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font_wrapping_x(WIDTH_I32 - 2)
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += (text_area.y - y) + 10;
+                }
 
                 display.render_image_complex(
                     WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2

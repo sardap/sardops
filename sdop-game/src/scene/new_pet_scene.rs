@@ -5,7 +5,7 @@ use crate::{
     Timestamp,
     display::GameDisplay,
     explore::ExploreSystem,
-    game_consts::STARTING_FILLED,
+    game_consts::{ITEMS_CLEAR_ON_NEW_PET, STARTING_FILLED},
     pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -82,6 +82,10 @@ impl Scene for NewPetScene {
         args.game_ctx
             .home
             .change_state(crate::scene::home_scene::State::Wondering);
+
+        for item in ITEMS_CLEAR_ON_NEW_PET {
+            args.game_ctx.inventory.clear_item(*item);
+        }
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {

@@ -447,7 +447,7 @@ impl Scene for HomeScene {
 
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
             if let Some(egg) = &args.game_ctx.egg {
-                if egg.hatch {
+                if egg.should_hatch(args.timestamp) {
                     output.set(SceneEnum::EggHatch(EggHatchScene::new(
                         *egg,
                         args.game_ctx.pet.def_id,

@@ -2,7 +2,7 @@ use core::{ops::Range, time::Duration};
 
 use chrono::NaiveTime;
 
-use crate::{Timestamp, death::Threshold, money::Money};
+use crate::{death::Threshold, items::ItemKind, money::Money};
 
 pub const UI_FLASH_TIMER: Duration = Duration::from_millis(250);
 pub const UI_FLASHING_TIMER: Duration = Duration::from_millis(500);
@@ -113,11 +113,7 @@ pub const SUITER_SHOW_UP_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
 
 pub const SUITER_LEAVE_ODDS: f32 = sim_tick_odds_per_hour(0.25);
 
-pub const EGG_HATCH_ODDS_THRESHOLD: &[Threshold<Duration>] = &[
-    Threshold::new(Duration::from_days(1), sim_tick_odds_per_hour(0.0)),
-    Threshold::new(Duration::from_days(2), sim_tick_odds_per_hour(0.1)),
-    Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.99)),
-];
+pub const EGG_HATCH_MAX: Duration = Duration::from_days(1);
 
 pub const ILLNESS_SINCE_GAME_DURATION: Duration = Duration::from_hours(6);
 
@@ -235,3 +231,9 @@ pub const SHOP_OPEN_TIMES: [[NaiveTime; 2]; 7] = [
 
 pub const TELESCOPE_USE_RANGE: Range<NaiveTime> =
     NaiveTime::from_hms_opt(5, 30, 0).unwrap()..NaiveTime::from_hms_opt(20, 30, 0).unwrap();
+
+pub const COFFEE_POOP_MODIFER: Duration = Duration::from_mins(30);
+
+pub const ITEMS_CLEAR_ON_NEW_PET: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
+
+pub const STARTING_ITEMS: &[ItemKind] = &[ItemKind::RecipeBiscuit, ItemKind::MapDownTheRoad];
