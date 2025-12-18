@@ -8,7 +8,7 @@ use crate::{
     egg::{EggRender, SavedEgg},
     geo::Rect,
     pet::{ParentInfo, PetParents, combine_pid, definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_BREEDING, SONG_FAN_FARE, SongPlayOptions},
 };
 
@@ -64,12 +64,14 @@ impl Scene for BreedScene {
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
         args.game_ctx.egg = Some(SavedEgg::new(
+            &mut args.game_ctx.rng,
             combine_pid(self.left.upid(), self.right.upid()),
             Some(PetParents::new([self.left, self.right])),
+            args.timestamp,
         ));
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
         self.left_render.tick(args.delta);
         self.right_render.tick(args.delta);
@@ -156,12 +158,11 @@ impl Scene for BreedScene {
             }
             State::Egg => {
                 if self.state_elapsed > Duration::from_secs(5) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

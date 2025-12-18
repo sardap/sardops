@@ -1,9 +1,10 @@
 [
     (
         name: "Down the road",
-        length_seconds: 600,
-        cooldown_seconds: 600,
-        difficulty: 100,
+        life_stages: [Baby],
+        length: "45m",
+        cooldown: "3h",
+        difficulty: 20,
         activities: [
             "Waiting at the lights",
             "staring at the sun",
@@ -15,15 +16,46 @@
             "dodging dog poop",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: [(item: "Painting Dude", odds: 0.2)]
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Painting Dude", odds: 0.2),
+                (item: "Map To The Ninch", odds: 0.15),
+
+            ]
+        ),
+    ),
+    (
+        name: "into the office",
+        life_stages: [Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Topping up myki",
+            "Waiting on the platform",
+            "avoiding eye contact with pissing man",
+            "scrolling on phone",
+            "thinking about but not reading book",
+            "staring out window",
+            "marching along",
+            "crying in toilet",
+            "Lunch looks sloppy",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Office Slop", odds: 0.2),
+                (item: "Book Vic 1981-1992", odds: 0.2),
+            ]
         ),
     ),
     (
         name: "to the ninch",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Fighting the traffic",
@@ -39,17 +71,24 @@
             "Looking at phillip island",
             "Enjoying the beach",
             "Circling the navel base",
+            "Ohhh pizza",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Pizza", odds: 0.2),
+                (item: "Recipe Chips", odds: 0.2),
+                (item: "Fishing Rod", odds: 0.1),
+                (item: "Map 1000 steps", odds: 0.8),
+            ]
         ),
     ),
     (
         name: "1000 steps",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Going up some steps",
@@ -61,15 +100,18 @@
             "must be at least a couple 100 to go",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Map Riding the 109", odds: 0.8),
+            ]
         ),
     ),
     (
         name: "riding the 109",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Outside of box hill central",
@@ -83,36 +125,122 @@
             "I was riding the 109",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Bubble Tea", odds: 0.2),
+                (item: "Recipe Meatballs", odds: 0.2),
+                (item: "Map Flagstaff Station", odds: 0.8),
+            ]
         ),
     ),
     (
-        name: "into the office",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        name: "Flagstaff Station",
+        life_stages: [Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
-            "Topping up myki",
-            "Waiting on the platform",
-            "avoiding eye contact with pissing man",
-            "scrolling on phone",
-            "thinking about but not reading book",
-            "staring out window",
-            "marching along",
-            "crying in toilet",
+            "Lot's of courts around here",
+            "it's so brown",
+            "where is it again",
+            "should i go to the zoo?",
+            "Is it still closed on weekends?",
+            "It's so empty",
+            "So many wigs and robes",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Coffee", odds: 0.2),
+                (item: "Recipe Jokbal", odds: 0.2),
+                (item: "Map Cyberspace", odds: 0.5),
+            ]
+        ),
+    ),
+    (
+        name: "The malls balls",
+        life_stages: [Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Looking at the malls balls",
+            "Feeling the malls balls",
+            "Embracing the malls balls",
+            "In awe of the malls balls",
+            "Bowing to the malls balls",
+            "Smitten by the malls balls",
+            "Beholding the malls balls",
+            "Appreciating the malls balls",
+            "Pondering the malls balls",
+            "Eating Roti next to the malls balls",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Painting Malls Balls", odds: 0.2),
+                (item: "Recipe Roti Canai", odds: 0.2),
+                (item: "Map Koreana Mart Adelaide", odds: 0.8),
+            ]
+        ),
+    ),
+    (
+        name: "Koreana Mart Adelaide",
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Walking down Grote Street",
+            "Beholding Market plaza food court",
+            "Looking around",
+            "Looking at Kimbap",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Kimbap", odds: 0.2),
+            ]
+        ),
+    ),
+    // Gotta add 3rd aldialde location
+    (
+        name: "Kukje Center",
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Waiting for the bus",
+            "Line number 3 is the best",
+            "Oh cool a DAISO",
+            "Gangnam 07 Gangnam 07",
+            "Love some zoo coffee",
+            "So many floors...",
+            "So many empty floors....",
+            "They got apex on the xbox no way",
+            "That's a lot for a gb micro",
+            "These anime figures are off putting",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Coffee", odds: 0.2),
+                (item: "Program Dop craft", odds: 0.2),
+                (item: "Map N Seoul Tower", odds: 0.8),
+            ]
         ),
     ),
     (
         name: "n seoul tower",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
             "Waiting for the bus",
@@ -125,48 +253,84 @@
             "Walking",
         ],
         rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Fried Chicken", odds: 0.2),
+                (item: "Map Gangnam Style Sculpture", odds: 0.8),
+            ]
         ),
     ),
     (
-        name: "The malls balls",
-        length_seconds: 600,
-        cooldown_seconds: 600,
+        name: "Gangnam Style Sculpture",
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
         difficulty: 100,
         activities: [
-            "Looking at the malls balls",
-            "Feeling the malls balls",
-            "Embracing the malls balls",
-            "In awe of the malls balls",
-            "Bowing to the malls balls",
-            "Smitten by the malls balls",
-            "Beholding the malls balls",
-            "Appreciating the malls balls",
-            "Pondering the malls balls",
-        ],
-        rewards: (
-            money_start: 500,
-            money_end: 1000,
-            items: []
-        ),
-    ),
-    (
-        name: "Koreana Mart Adelaide",
-        length_seconds: 600,
-        cooldown_seconds: 600,
-        difficulty: 100,
-        activities: [
-            "Walking down Grote Street",
-            "Beholding Market plaza food court",
-            "Looking around",
-            "Looking at gimbap",
+            "Doing the dance",
+            "Having photos of me taken while doing the dance",
+            "Singing as loud as I can",
+            "Watching the music video on the little tv",
+            "On their knees praising the sculpture",
+            "Heeeyyyy Sexy Lady",
+            "Oppa Gangnam Style",
         ],
         rewards: (
             money_start: 0,
             money_end: 0,
-            items: []
+            items: [
+                (item: "Recipe Gopchang", odds: 0.2),
+                (item: "Map Cyberspace", odds: 0.5),
+            ]
+        ),
+    ),
+    (
+        name: "Cyberspace",
+        life_stages: [Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Surfing the bits",
+            "Seeing between the lines",
+            "hacking",
+            "Crushing the bits",
+            "Hitting the net",
+            "breaching the firewall",
+            "jumping to the mainframe",
+            "I'm in",
+            "Jacking in",
+            "Found the backdoor",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "MapTheMoon", odds: 0.1)
+            ]
+        ),
+    ),
+    (
+        name: "The Moon",
+        life_stages: [Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 100,
+        activities: [
+            "Bloody Hell i'm high up",
+            "Huh a white flag",
+            "I wonder how it tastes",
+            "Is that a speaking orb?",
+            "Jumping really high",
+            "How am I getting back?"
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Credits Scroll", odds: 0.1)
+            ]
         ),
     )
 ]

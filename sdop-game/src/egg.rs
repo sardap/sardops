@@ -4,39 +4,41 @@ use bincode::{Decode, Encode};
 use glam::{I8Vec2, Vec2};
 
 use crate::{
+    Timestamp,
     anime::Anime,
     assets,
     death::passed_threshold_chance,
     display::{ComplexRender, ComplexRenderOption, GameDisplay},
-    game_consts::EGG_HATCH_ODDS_THRESHOLD,
+    game_consts::EGG_HATCH_MAX,
     pet::{PetParents, UniquePetId},
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone)]
 pub struct SavedEgg {
-    pub age: Duration,
+    pub hatch_time: Timestamp,
     pub upid: UniquePetId,
     pub parents: Option<PetParents>,
-    pub hatch: bool,
 }
 
 impl SavedEgg {
-    pub const fn new(pid: UniquePetId, parents: Option<PetParents>) -> Self {
+    pub fn new(
+        rng: &mut fastrand::Rng,
+        pid: UniquePetId,
+        parents: Option<PetParents>,
+        now: Timestamp,
+    ) -> Self {
         Self {
-            age: Duration::ZERO,
+            hatch_time: now
+                + (Duration::from_days(1)
+                    + Duration::from_secs(rng.u64(0..EGG_HATCH_MAX.as_secs()))),
             upid: pid,
             parents,
-            hatch: false,
         }
     }
 
-    pub fn sim_tick(&mut self, delta: Duration, rng: &mut fastrand::Rng) {
-        self.age += delta;
-
-        if passed_threshold_chance(rng, EGG_HATCH_ODDS_THRESHOLD, self.age) {
-            self.hatch = true
-        }
+    pub fn should_hatch(&self, timestamp: Timestamp) -> bool {
+        timestamp > self.hatch_time
     }
 }
 
@@ -221,4 +223,12 @@ impl ComplexRender for EggRender {
             ComplexRenderOption::new().with_black().with_center(),
         );
     }
+}
+
+pub fn will_hatch_soon(egg: &Option<SavedEgg>, timestamp: Timestamp) -> bool {
+    if let Some(egg) = egg {
+        return (egg.hatch_time - timestamp) < Duration::from_hours(2);
+    }
+
+    false
 }

@@ -1,5 +1,8 @@
 #![no_std]
 
+use const_for::const_for;
+use strum_macros::{EnumCount, EnumIter};
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Note {
@@ -119,4 +122,44 @@ pub enum ItemCategory {
     Software,
     Food,
     Map,
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount)]
+pub enum LifeStage {
+    Baby = 0b100,
+    Child = 0b010,
+    Adult = 0b001,
+}
+
+impl LifeStage {
+    pub fn from_index(index: usize) -> Self {
+        match index {
+            0 => Self::Baby,
+            1 => Self::Child,
+            2 => Self::Adult,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            LifeStage::Baby => "BABY",
+            LifeStage::Child => "CHILD",
+            LifeStage::Adult => "ADULT",
+        }
+    }
+
+    pub const fn create_bitmask(stages: &[LifeStage]) -> u8 {
+        let mut result = 0;
+        const_for!(i in 0..stages.len() => {
+            result |= stages[i].bitmask();
+        });
+
+        result
+    }
+
+    pub const fn bitmask(&self) -> u8 {
+        *self as u8
+    }
 }

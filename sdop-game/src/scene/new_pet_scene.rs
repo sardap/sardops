@@ -4,13 +4,13 @@ use fixedstr::str_format;
 use crate::{
     Timestamp,
     display::GameDisplay,
-    game_consts::STARTING_FILLED,
+    explore::ExploreSystem,
+    game_consts::{ITEMS_CLEAR_ON_NEW_PET, STARTING_FILLED},
     pet::{PetInstance, PetName, PetParents, UniquePetId, definition::PetDefinitionId, gen_pid},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
-        home_scene::HomeScene,
     },
     sounds::{SONG_NEW_PET, SongPlayOptions},
 };
@@ -78,16 +78,24 @@ impl Scene for NewPetScene {
             .pet
             .life_stage_history
             .add_def(self.def_id, args.timestamp);
+        args.game_ctx.explore_system = ExploreSystem::default();
+        args.game_ctx
+            .home
+            .change_state(crate::scene::home_scene::State::Wondering);
+
+        for item in ITEMS_CLEAR_ON_NEW_PET {
+            args.game_ctx.inventory.clear_item(*item);
+        }
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::EnterDate => {
                 self.state = State::EnterName;
-                SceneOutput::new(SceneEnum::EnterDate(EnterDateScene::new(
+                output.set(SceneEnum::EnterDate(EnterDateScene::new(
                     enter_date_scene::Required::DateTime,
                     str_format!(fixedstr::str12, "WHEN IS IT?"),
-                )))
+                )));
             }
             State::EnterName => {
                 if self.need_timestamp {
@@ -98,16 +106,18 @@ impl Scene for NewPetScene {
                 }
 
                 self.state = State::NameEntered;
-                SceneOutput::new(SceneEnum::EnterText(
+                output.set(SceneEnum::EnterText(
                     EnterTextScene::new(
                         6,
                         str_format!(fixedstr::str12, "ENTER NAME"),
                         Some(|text| !text.is_empty() && text.chars().any(|c| !c.is_whitespace())),
                     )
                     .with_show_pet(self.def_id),
-                ))
+                ));
             }
-            State::NameEntered => SceneOutput::new(SceneEnum::Home(HomeScene::new())),
+            State::NameEntered => {
+                output.set_home();
+            }
         }
     }
 

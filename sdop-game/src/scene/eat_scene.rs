@@ -10,7 +10,7 @@ use crate::{
         definition::{PetAnimationSet, PetDefinition, PetDefinitionId},
         render::PetRender,
     },
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_EATING, SONG_FAN_FARE, SongPlayOptions},
 };
 
@@ -61,10 +61,10 @@ impl Scene for EatScene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
-        args.game_ctx.pet.digest(self.food);
+        args.game_ctx.pet.eat(self.food, args.timestamp);
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         let pet = &args.game_ctx.pet;
 
         self.pet_render.tick(args.delta);
@@ -82,7 +82,8 @@ impl Scene for EatScene {
                 }
             }
             EatSceneState::Eating => {
-                let eat_duration = Duration::from_secs_f32(self.food.fill_factor / 7.);
+                let eat_duration =
+                    Duration::from_secs_f32(self.food.fill_factor / 7.).max(Duration::from_secs(3));
                 let complete_percent =
                     self.state_elapsed.as_millis_f32() / eat_duration.as_millis_f32();
                 let new_end = (self.food_texture.used_length as f32 * complete_percent) as usize;
@@ -114,12 +115,11 @@ impl Scene for EatScene {
             EatSceneState::Finished => {
                 self.pet_render.set_animation(PetAnimationSet::Happy);
                 if self.state_elapsed > Duration::from_secs_f32(2.5) {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

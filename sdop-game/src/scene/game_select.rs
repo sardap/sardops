@@ -6,8 +6,8 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
     geo::Rect,
     scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene,
-        mg_doge_em::MgDogeEmScene, mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_doge_em::MgDogeEmScene,
+        mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
         mg_weight_lift::MgWeightLift,
     },
 };
@@ -73,7 +73,7 @@ impl Scene for GameSelectScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         let mut change = 0;
         if args.input.pressed(Button::Left) {
             change = -1;
@@ -88,10 +88,11 @@ impl Scene for GameSelectScene {
 
         if args.input.pressed(Button::Middle) {
             if self.selected == self.active_minigames.len() as i32 {
-                return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                output.set_home();
+                return;
             }
 
-            return SceneOutput::new(match self.active_minigames[self.selected as usize] {
+            output.set(match self.active_minigames[self.selected as usize] {
                 MiniGame::TicTacToe => SceneEnum::MgTicTacToe(MgTicTacToeScene::new()),
                 MiniGame::DogeEm => {
                     SceneEnum::MgDogeEm(MgDogeEmScene::new(args.game_ctx.pet.def_id))
@@ -102,8 +103,6 @@ impl Scene for GameSelectScene {
                 }
             });
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

@@ -12,7 +12,6 @@ use crate::{
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
-        home_scene::HomeScene,
     },
     sounds::SoundOptions,
 };
@@ -98,7 +97,7 @@ impl Scene for SettingsScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::Selecting => {
                 if args.input.pressed(Button::Left) {
@@ -124,7 +123,10 @@ impl Scene for SettingsScene {
                         Option::Time => {
                             self.state = State::GettingTime;
                         }
-                        Option::Back => return SceneOutput::new(SceneEnum::Home(HomeScene::new())),
+                        Option::Back => {
+                            output.set_home();
+                            return;
+                        }
                     }
                 }
             }
@@ -164,7 +166,7 @@ impl Scene for SettingsScene {
             }
             State::GettingTime => {
                 self.state = State::GotTime;
-                return SceneOutput::new(SceneEnum::EnterDate(
+                output.set(SceneEnum::EnterDate(
                     EnterDateScene::new(
                         enter_date_scene::Required::DateTime,
                         fixedstr::str_format!(fixedstr::str12, "WHEN IS IT?"),
@@ -172,6 +174,7 @@ impl Scene for SettingsScene {
                     .with_date(args.timestamp.inner().date())
                     .with_time(args.timestamp.inner().time()),
                 ));
+                return;
             }
             State::GotTime => {
                 self.state = State::Selecting;
@@ -181,8 +184,6 @@ impl Scene for SettingsScene {
                 )));
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
@@ -206,11 +207,13 @@ impl Scene for SettingsScene {
                         (40 + i * 17) as f32
                     };
 
-                    let width = display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
-                        option.text(),
-                        ComplexRenderOption::new().with_white().with_center(),
-                    );
+                    let width = display
+                        .render_text_complex(
+                            Vec2::new(CENTER_X, y),
+                            option.text(),
+                            ComplexRenderOption::new().with_white().with_center(),
+                        )
+                        .x as f32;
 
                     if self.option == option {
                         display.render_rect_solid(

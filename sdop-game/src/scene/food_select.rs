@@ -1,37 +1,20 @@
+use core::time::Duration;
+
 use glam::Vec2;
 
 use crate::{
-    HEIGHT, assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    food::{self, FOOD_COUNT, Food},
+    assets,
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
+    fonts::FONT_VARIABLE_SMALL,
+    food::{FOODS, Food, MAX_FOOD_X},
     geo::Rect,
-    items::ItemKind,
-    scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene,
-        home_scene::HomeScene,
-    },
-    sprite::Sprite,
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
+    sounds::{SONG_ERROR, SongPlayOptions},
 };
 
-struct FoodOption {
-    food: &'static Food,
-    pos: Vec2,
-}
-
-impl Sprite for FoodOption {
-    fn pos(&self) -> &Vec2 {
-        &self.pos
-    }
-
-    fn image(&self) -> &impl crate::assets::Image {
-        self.food.image
-    }
-}
-
 pub struct FoodSelectScene {
-    foods: [Option<FoodOption>; FOOD_COUNT],
-    food_count: usize,
-    selected: i32,
+    current: &'static Food,
+    sick_of_shake_remaining: Duration,
 }
 
 impl Default for FoodSelectScene {
@@ -43,19 +26,8 @@ impl Default for FoodSelectScene {
 impl FoodSelectScene {
     pub fn new() -> Self {
         Self {
-            foods: Default::default(),
-            food_count: 0,
-            selected: 0,
-        }
-    }
-
-    pub fn move_cursor(&mut self, change: i32) {
-        self.selected += change;
-        if self.selected < 0 {
-            self.selected = self.food_count as i32;
-        }
-        if self.selected > self.food_count as i32 {
-            self.selected = 0;
+            current: FOODS[0],
+            sick_of_shake_remaining: Duration::ZERO,
         }
     }
 }
@@ -64,81 +36,222 @@ const COL_HEIGHT: f32 = 30.;
 const COL_WIDTH: f32 = WIDTH_F32 / 2.;
 
 impl Scene for FoodSelectScene {
-    fn setup(&mut self, args: &mut SceneTickArgs) {
-        let mut food_count = 0;
-        for food in food::FOODS {
-            if args
-                .game_ctx
-                .inventory
-                .has_item(ItemKind::from_food(food.id))
-            {
-                let x = if food_count % 2 == 0 {
-                    WIDTH_F32 / 4.
-                } else {
-                    (WIDTH_F32 / 4.) * 3.
-                };
-                let y = (libm::floorf(food_count as f32 / 2.) * COL_HEIGHT) + 30.;
-                self.foods[food_count] = Some(FoodOption {
-                    pos: Vec2::new(x, y),
-                    food,
-                });
-                food_count += 1;
-            }
-        }
-
-        self.food_count = food_count;
-    }
+    fn setup(&mut self, args: &mut SceneTickArgs) {}
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
+        self.sick_of_shake_remaining = self
+            .sick_of_shake_remaining
+            .checked_sub(args.delta)
+            .unwrap_or_default();
+
         if args.input.pressed(crate::Button::Right) {
-            self.move_cursor(1);
+            self.current = FOODS
+                .iter()
+                .skip(self.current.id as usize + 1)
+                .filter(|f| args.game_ctx.inventory.has_item(f.item))
+                .next()
+                .unwrap_or(&FOODS[0]);
         }
 
         if args.input.pressed(crate::Button::Left) {
-            self.move_cursor(-1);
+            if self.current.id == 0 {
+                output.set_home();
+                return;
+            }
+
+            loop {
+                let next = match self.current.id.checked_sub(1) {
+                    Some(index) => index as usize,
+                    None => break,
+                };
+
+                if args.game_ctx.inventory.has_item(self.current.item) {
+                    self.current = FOODS[next];
+                    break;
+                }
+
+                self.current = FOODS[next];
+            }
         }
 
         if args.input.pressed(crate::Button::Middle) {
-            if self.food_count == self.selected as usize {
-                return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+            if !args.game_ctx.pet.food_history.sick_of(self.current) {
+                output.set(SceneEnum::Eat(EatScene::new(
+                    self.current,
+                    args.game_ctx.pet.def_id,
+                )));
+                return;
+            } else {
+                args.game_ctx
+                    .sound_system
+                    .push_song(SONG_ERROR, SongPlayOptions::new().with_effect());
+                self.sick_of_shake_remaining = Duration::from_millis(200);
             }
-
-            return SceneOutput::new(SceneEnum::Eat(EatScene::new(
-                self.foods[self.selected as usize].as_ref().unwrap().food,
-                args.game_ctx.pet.def_id,
-            )));
         }
-
-        SceneOutput::default()
     }
 
-    fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
+    fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
+        const Y_START: i32 = 20;
+        const FOOD_SPACE: i32 = (HEIGHT_I32 - Y_START) as i32 / 3;
+        const INFO_COL_X: i32 = MAX_FOOD_X + 5;
+
+        let current_filled = args.game_ctx.pet.food_fill_percent();
+
+        let str =
+            fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(current_filled * 100.),);
         display.render_text_complex(
-            Vec2::new(CENTER_X, 8.),
-            "FOOD",
-            ComplexRenderOption::new().with_white().with_center(),
+            Vec2::new(CENTER_X, 5.),
+            &str,
+            ComplexRenderOption::new()
+                .with_white()
+                .with_center()
+                .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        display.render_sprites(&self.foods);
+        let selected_index = FOODS
+            .iter()
+            .filter(|f| args.game_ctx.inventory.has_item(f.item))
+            .position(|f| f.id == self.current.id)
+            .unwrap_or_default();
 
-        const BACK_Y: i32 = HEIGHT as i32 - assets::IMAGE_BACK_SYMBOL.size.y as i32 / 2 - 15;
-        display.render_image_center(CENTER_X as i32, BACK_Y, &assets::IMAGE_BACK_SYMBOL);
+        let iter = FOODS
+            .iter()
+            .filter(|f| args.game_ctx.inventory.has_item(f.item))
+            .enumerate();
+        let mut y = Y_START;
+        for (i, food) in iter {
+            if selected_index != 0 && i < selected_index - 1 {
+                continue;
+            }
 
-        if self.selected as usize == self.food_count {
-            const RECT: Rect = Rect::new_center(
-                Vec2::new(CENTER_X, BACK_Y as f32),
-                Vec2::new(
-                    assets::IMAGE_BACK_SYMBOL.size.x as f32,
-                    assets::IMAGE_BACK_SYMBOL.size.y as f32 + 1.,
-                ),
+            if y > HEIGHT_I32 {
+                break;
+            }
+
+            let select_rect_y = y;
+
+            let text_y_height = display
+                .render_text_complex(
+                    Vec2::new(CENTER_X, y as f32),
+                    food.name,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                )
+                .y;
+
+            y += (text_y_height - y) + 1;
+
+            display.render_image_complex(
+                WIDTH_I32 / 4 - food.image.size.x as i32 / 2,
+                y,
+                food.image,
+                ComplexRenderOption::new().with_white(),
             );
 
-            display.render_rect_outline(RECT, true);
-        } else if let Some(food_option) = self.foods[self.selected as usize].as_ref() {
-            let selected_rect = Rect::new_center(food_option.pos, Vec2::new(COL_WIDTH, COL_HEIGHT));
-            display.render_rect_outline(selected_rect, true);
+            let fill = args.game_ctx.pet.food_fill(food);
+            let fill_percent = (args.game_ctx.pet.stomach_filled + fill)
+                / args.game_ctx.pet.definition().stomach_size;
+
+            let str =
+                fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(fill_percent * 100.),);
+            display
+                .render_text_complex(
+                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                )
+                .x;
+
+            y += 7;
+
+            let str = fixedstr::str_format!(
+                fixedstr::str12,
+                "+{}%",
+                libm::roundf((fill_percent - current_filled) * 100.),
+            );
+            display.render_text_complex(
+                Vec2::new(INFO_COL_X as f32, y as f32),
+                &str,
+                ComplexRenderOption::new()
+                    .with_white()
+                    .with_font(&FONT_VARIABLE_SMALL),
+            );
+
+            y += 7;
+
+            {
+                let pet = &args.game_ctx.pet;
+                if pet.stomach_filled + food.fill_factor > pet.definition().stomach_size {
+                    let extra =
+                        (pet.stomach_filled + food.fill_factor) - pet.definition().stomach_size;
+                    let str = fixedstr::str_format!(fixedstr::str12, "+{}g", extra as i32);
+                    display.render_text_complex(
+                        Vec2::new(INFO_COL_X as f32, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                }
+            }
+
+            y += 7;
+
+            let ate_count = args.game_ctx.pet.food_history.consumed_count(food);
+            if ate_count > 0 && ate_count < food.max_eat {
+                let str =
+                    fixedstr::str_format!(fixedstr::str12, "ate {}/{}", ate_count, food.max_eat);
+                display.render_text_complex(
+                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &str,
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_font(&FONT_VARIABLE_SMALL),
+                );
+
+                y += 7;
+            }
+
+            let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
+
+            if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
+                display.render_rect_outline(
+                    Rect::new_top_left(
+                        Vec2::new(1., select_rect_y as f32 - 4.),
+                        Vec2::new(WIDTH_F32 - 3., (y_end - select_rect_y) as f32 + 5.),
+                    ),
+                    true,
+                );
+            }
+
+            if args.game_ctx.pet.food_history.sick_of(food) {
+                let x_offset =
+                    if self.sick_of_shake_remaining > Duration::ZERO && food == &self.current {
+                        args.game_ctx.rng.i32(-2..2)
+                    } else {
+                        0
+                    };
+                display.render_image_complex(
+                    x_offset,
+                    select_rect_y + 4,
+                    &assets::IMAGE_SICK_OF_LABEL,
+                    ComplexRenderOption::new().with_white(),
+                );
+                display.render_image_complex(
+                    x_offset,
+                    select_rect_y + 4,
+                    &assets::IMAGE_SICK_OF_LABEL_MASK,
+                    ComplexRenderOption::new().with_black(),
+                );
+            }
+
+            y += 10;
         }
     }
 }

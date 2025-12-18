@@ -15,7 +15,7 @@ use crate::{
     game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
     geo::Rect,
     items::{ITEM_COUNT, Inventory, ItemKind, icon_for_cata, items_for_cata},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 const SELECTABLE_CATEGORIRES: &[ItemCategory] = &[
@@ -108,7 +108,7 @@ impl Scene for InventoryScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.flash_timer += args.delta;
         if (!self.flash && self.flash_timer > UI_FLASH_TIMER)
             || (self.flash && self.flash_timer > UI_FLASHING_TIMER)
@@ -146,7 +146,8 @@ impl Scene for InventoryScene {
 
                 if args.input.pressed(Button::Middle) {
                     if self.selected_cata <= -1 {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     } else {
                         self.selected_index = self.change_item(&args.game_ctx.inventory, 0, 0);
                         self.state = State::View;
@@ -164,11 +165,12 @@ impl Scene for InventoryScene {
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if let Some(output) = item.use_item(args.game_ctx)
+                    if let Some(item_output) = item.use_item(args.game_ctx)
                         && item.is_usable(args.game_ctx)
                     {
-                        if let Some(scene) = output.new_scene {
-                            return SceneOutput::new(scene);
+                        if let Some(scene) = item_output.new_scene {
+                            output.set(scene);
+                            return;
                         }
                     } else if item.toggleable() {
                         let entry = args.game_ctx.inventory.get_entry_mut(item);
@@ -176,18 +178,11 @@ impl Scene for InventoryScene {
                     }
 
                     if !args.game_ctx.inventory.has_item(item) {
-                        for (i, item) in ItemKind::iter().enumerate() {
-                            if args.game_ctx.inventory.has_item(item) {
-                                self.selected_index = i;
-                                break;
-                            }
-                        }
+                        self.state = State::SelectCategory;
                     }
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
@@ -238,14 +233,13 @@ impl Scene for InventoryScene {
             State::View => {
                 let mut y = 10.;
                 {
-                    let str =
-                        str_format!(fixedstr::str32, "#{} {} ", self.selected_index, item.name());
                     display.render_text_complex(
-                        Vec2::new(5., y),
-                        &str,
+                        Vec2::new(CENTER_X, y),
+                        item.name(),
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL)
+                            .with_center()
                             .with_font_wrapping_x((WIDTH_F32 - 10.) as i32),
                     );
                     y += 14.

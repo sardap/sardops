@@ -1,5 +1,5 @@
 [
-    ItemEntry(
+    ItemTemplate(
         name: "Telescope",
         category: Usable,
         rarity: Rare,
@@ -9,7 +9,7 @@
         desc: "Gaze with wonder at the stars and the moon who knows what you will see up there.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "tv lcd",
         category: PlayThing,
         rarity: Rare,
@@ -19,7 +19,7 @@
         desc: "Wow A wonderfull TV that's just so thin and light!",
         fishing_odds: 0.1,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "tv crt",
         category: PlayThing,
         rarity: Rare,
@@ -29,7 +29,7 @@
         desc: "A fat TV.",
         fishing_odds: 0.1,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "fishing rod",
         category: Usable,
         rarity: Common,
@@ -39,7 +39,7 @@
         desc: "Go fishing maybe you can catch something good.",
         fishing_odds: 0.2,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "analogue clock",
         category: Furniture,
         rarity: Common,
@@ -48,7 +48,7 @@
         unique: false,
         desc: "Wow you can tell the time.",
         fishing_odds: 0.1,
-    ),ItemEntry(
+    ),ItemTemplate(
         name: "digital clock",
         category: Furniture,
         rarity: Common,
@@ -58,7 +58,7 @@
         desc: "Wow you can tell the time digitaly.",
         fishing_odds: 0.1,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Fish Tank",
         category: Furniture,
         rarity: Rare,
@@ -68,7 +68,7 @@
         desc: "A Fish Tank for some Fish. Fish not included.",
         fishing_odds: 0.1,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Fish",
         category: Furniture,
         rarity: Common,
@@ -78,7 +78,7 @@
         desc: "A fish for a Fish Tank. Fish tank not included.",
         fishing_odds: 0.8,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Painting Branch",
         category: Furniture,
         rarity: Rare,
@@ -88,7 +88,7 @@
         desc: "A Painting of a Branch.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Painting Dude",
         category: Furniture,
         rarity: Rare,
@@ -98,7 +98,7 @@
         desc: "A Painting of a Dude.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Painting Man",
         category: Furniture,
         rarity: Rare,
@@ -108,7 +108,7 @@
         desc: "A Painting of Man.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Painting PC",
         category: Furniture,
         rarity: Rare,
@@ -118,7 +118,7 @@
         desc: "A Painting of a PC.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Painting Sun",
         category: Furniture,
         rarity: Rare,
@@ -128,7 +128,18 @@
         desc: "A Painting of a Sun.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
+        name: "Painting Malls Balls",
+        category: Furniture,
+        rarity: Rare,
+        cost: 1000,
+        image: "painting_malls_balls",
+        unique: false,
+        desc: "A Painting of the malls balls",
+        fishing_odds: 0.0,
+        in_shop: false,
+    ),
+    ItemTemplate(
         name: "Invetro Light",
         category: Furniture,
         rarity: Rare,
@@ -138,7 +149,7 @@
         desc: "Change up the lighting.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Personal Computer",
         category: PlayThing,
         rarity: Rare,
@@ -148,7 +159,7 @@
         desc: "A computer it can run software. Screen and a keyboard sold separately.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Screen",
         category: PlayThing,
         rarity: Rare,
@@ -158,7 +169,7 @@
         desc: "A computer screen can show graphics. Computer and a keyboard sold separately.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Keyboard",
         category: PlayThing,
         rarity: Rare,
@@ -168,27 +179,28 @@
         desc: "A computer keyboard can be used for input. Computer and screen sold separately.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Vic 1981-1992",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_0_closed",
         unique: true,
-        desc: "A comprehensive history of victorain australian poltics between 1981 to 1992.",
-        fishing_odds: 0.05,
+        desc: "A history of vic aus politics between 81 to 92.",
+        fishing_odds: 0.0,
+        in_shop: false,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Nevile Wran",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_wran_closed",
         unique: true,
-        desc: "A comprehensive history of Nevile Wran.",
+        desc: "A history of Nevile Wran.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book C Programming",
         category: Book,
         rarity: Common,
@@ -198,57 +210,60 @@
         desc: "The perfect book to start to learn C.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Dracula",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_dracula_closed",
         unique: true,
-        desc: "Dracula is an 1897 Gothic horror novel by Irish author Bram Stoker.",
+        desc: "is a Gothic horror novel by Irish author Bram Stoker.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Great Gatsby",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_great_gatsby_closed",
         unique: true,
-        desc: "The Great Gatsby is a 1925 tragedy novel by American writer F. Scott Fitzgerald.",
+        desc: "is a 1925 tragedy novel.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Epic of Gilgamesh",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_gilgamesh_closed",
         unique: true,
-        desc: "The Great Gatsby is a 1925 tragedy novel by American writer F. Scott Fitzgerald.",
+        desc: "Follow Gilgamesh on his epic.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Book Homers odyssey",
         category: Book,
         rarity: Common,
         cost: 1000,
         image: "book_odyssey_closed",
         unique: true,
-        desc: "A ancient tale of a great joruny around the sea.",
+        desc: "A ancient tale of a great journey around the sea.",
         fishing_odds: 0.05,
+        skill: 30,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Program Tic Tac Toe",
         category: Software,
         rarity: Common,
         cost: 1000,
         image: "software_tic_tac_toe",
         unique: true,
-        desc: "The peak of game desgin now playable on computer!",
+        desc: "The peak of game design now playable on computer!",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Program Dop craft",
         category: Software,
         rarity: Common,
@@ -256,9 +271,10 @@
         image: "software_dopcraft",
         unique: true,
         desc: "The hit Real time Strategy from 1998!",
-        fishing_odds: 0.05,
+        fishing_odds: 0.0,
+        in_shop: false,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Program C Compiler",
         category: Software,
         rarity: Common,
@@ -268,7 +284,7 @@
         desc: "Burn your life making intangible software.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Program WWW Surfer",
         category: Software,
         rarity: Common,
@@ -278,7 +294,7 @@
         desc: "It's a web browser for the personal computer.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Program sardips",
         category: Software,
         rarity: Common,
@@ -288,7 +304,7 @@
         desc: "A virtual pet game playable on the computer. Does a virutal pet game make sense on a PC?",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Thermometer Mercury",
         category: Furniture,
         rarity: Common,
@@ -298,7 +314,7 @@
         desc: "Tell the temperature the old fashioned way just don't drink it!",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Space Heater",
         category: Furniture,
         rarity: Common,
@@ -308,7 +324,7 @@
         desc: "The world too cold for your dop, Just chuck one of these bad boys in and it will be nice and toasty.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Air Conditioner",
         category: Furniture,
         rarity: Common,
@@ -318,7 +334,7 @@
         desc: "It's like a box of ice that never melts.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Thermometer Digital",
         category: Furniture,
         rarity: Common,
@@ -328,7 +344,7 @@
         desc: "Get the exact temperature no guess and it's not poisonous!",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Calendar",
         category: Furniture,
         rarity: Common,
@@ -338,7 +354,7 @@
         desc: "Always know the date!",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "MP3 Player",
         category: PlayThing,
         rarity: Common,
@@ -348,7 +364,7 @@
         desc: "Let your dop jam out to some sweet tunes!",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Alarm",
         category: Furniture,
         rarity: Common,
@@ -358,7 +374,7 @@
         desc: "Set a time and make a noise! You must have some kind of clock placed to have it work.",
         fishing_odds: 0.05,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Credits Scroll",
         category: Usable,
         rarity: Rare,
@@ -366,9 +382,10 @@
         image: "credits_scroll",
         unique: true,
         desc: "A scroll found at the top of the highest hill, It's told that it appeared after a lighting strike.",
-        fishing_odds: 0.05,
+        fishing_odds: 0.0,
+        in_shop: false
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Shop capacity upgrade",
         category: Usable,
         rarity: Rare,
@@ -378,7 +395,7 @@
         desc: "Give the shop keeper the investment they need to add a extra item per day.",
         fishing_odds: 0.1,
     ),
-    ItemEntry(
+    ItemTemplate(
         name: "Shop Hours upgrade",
         category: Usable,
         rarity: Rare,

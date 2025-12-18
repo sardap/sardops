@@ -16,6 +16,7 @@ use crate::{
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
         Image,
     },
+    book::on_book_completed,
     date_utils::DurationExt,
     display::{
         CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
@@ -43,7 +44,7 @@ use crate::{
         game_select::GameSelectScene,
         heal_scene::HealScene,
         home_scene::{
-            activity::{reset_wonder_end, wonder_end},
+            activity::{ActivityHistory, reset_wonder_end, wonder_end},
             menu_options::{MenuOption, MenuOptions},
         },
         inventory_scene::InventoryScene,
@@ -147,6 +148,7 @@ pub struct HomeSceneData {
     last_was_hungry: bool,
     gone_out_sign: MaskedAnimeRender,
     telescope: MaskedAnimeRender,
+    activity_history: ActivityHistory,
 }
 
 impl Default for HomeSceneData {
@@ -194,6 +196,7 @@ impl Default for HomeSceneData {
                 &FRAMES_TELESCOPE_HOME,
                 &FRAMES_TELESCOPE_HOME_MASK,
             ),
+            activity_history: Default::default(),
         }
     }
 }
@@ -206,7 +209,7 @@ impl HomeSceneData {
         )
     }
 
-    fn change_state(&mut self, new_state: State) {
+    pub fn change_state(&mut self, new_state: State) {
         if self.state == new_state {
             return;
         }
@@ -251,6 +254,16 @@ const STAR_SPAWNER: Spawner = Spawner::new(
             1,
         );
     },
+);
+
+const EGG_RIGHT: Vec2 = Vec2::new(
+    WIDTH_F32 - assets::IMAGE_EGG.size.x as f32,
+    WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
+);
+
+const EGG_LEFT: Vec2 = Vec2::new(
+    assets::IMAGE_EGG.size.x as f32,
+    WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
 );
 
 const NIGHT_SKY_HEIGHT: usize = 30;
@@ -313,14 +326,11 @@ impl Scene for HomeScene {
                 args.timestamp.inner().num_days_from_ce(),
             );
 
-            args.game_ctx.home.dream_bubble_timer =
-                Duration::from_mins(args.game_ctx.rng.u64(1..=3));
+            args.game_ctx.home.show_dream_bubble = true;
+            args.game_ctx.home.dream_bubble_timer = Duration::ZERO;
         }
 
-        self.egg_render.pos = Vec2::new(
-            WIDTH_F32 - assets::IMAGE_EGG.size.x as f32,
-            WONDER_RECT.y2() - assets::IMAGE_EGG.size.y as f32,
-        );
+        self.egg_render.pos = EGG_RIGHT;
         if let Some(egg) = &args.game_ctx.egg {
             self.egg_render.set_pid(egg.upid);
         }
@@ -337,9 +347,16 @@ impl Scene for HomeScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
-        if args.game_ctx.home.state_elapsed == Duration::ZERO {
-            args.game_ctx.home.options = MenuOptions::new(args.game_ctx.home.state, args.game_ctx);
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
+        if args.game_ctx.home.state_elapsed == Duration::ZERO || args.frames % 10 == 0 {
+            args.game_ctx.home.options.refresh(
+                args.game_ctx.home.state,
+                &args.game_ctx.suiter_system,
+                &args.game_ctx.inventory,
+                args.game_ctx.poop_count(),
+                &args.game_ctx.pet_history,
+                &args.game_ctx.pet,
+            );
         }
 
         args.game_ctx.home.state_elapsed += args.delta;
@@ -363,14 +380,13 @@ impl Scene for HomeScene {
         if args.game_ctx.explore_system.currently_exploring() {
             args.game_ctx.home.change_state(State::Exploring);
         } else {
-            let should_be_sleeping = args
-                .game_ctx
-                .pet
-                .definition()
-                .should_be_sleeping(&args.timestamp);
-            if should_be_sleeping && !matches!(args.game_ctx.home.state, State::Sleeping) {
+            if args.game_ctx.pet.is_sleeping()
+                && !matches!(args.game_ctx.home.state, State::Sleeping)
+            {
                 args.game_ctx.home.change_state(State::Sleeping);
-            } else if !should_be_sleeping && matches!(args.game_ctx.home.state, State::Sleeping) {
+            } else if !args.game_ctx.pet.is_sleeping()
+                && matches!(args.game_ctx.home.state, State::Sleeping)
+            {
                 args.game_ctx.home.change_state(State::Wondering);
             }
         }
@@ -431,26 +447,29 @@ impl Scene for HomeScene {
 
         if !matches!(args.game_ctx.home.state, State::Sleeping) {
             if let Some(egg) = &args.game_ctx.egg {
-                if egg.hatch {
-                    return SceneOutput::new(SceneEnum::EggHatch(EggHatchScene::new(
+                if egg.should_hatch(args.timestamp) {
+                    output.set(SceneEnum::EggHatch(EggHatchScene::new(
                         *egg,
                         args.game_ctx.pet.def_id,
                     )));
+                    return;
                 }
             }
 
             if let Some(cause_of_death) = args.game_ctx.pet.should_die() {
-                return SceneOutput::new(SceneEnum::Death(DeathScene::new(
+                output.set(SceneEnum::Death(DeathScene::new(
                     cause_of_death,
                     args.game_ctx.pet.def_id,
                 )));
+                return;
             }
 
             if let Some(next_pet_id) = args.game_ctx.pet.should_evolve() {
-                return SceneOutput::new(SceneEnum::Evovle(EvolveScene::new(
+                output.set(SceneEnum::Evovle(EvolveScene::new(
                     args.game_ctx.pet.def_id,
                     next_pet_id,
                 )));
+                return;
             }
         }
 
@@ -482,6 +501,7 @@ impl Scene for HomeScene {
 
         match args.game_ctx.home.state {
             State::Wondering => {
+                self.egg_render.pos = EGG_RIGHT;
                 if args.game_ctx.home.state_elapsed > args.game_ctx.home.wonder_end {
                     wonder_end(args);
                 }
@@ -512,6 +532,8 @@ impl Scene for HomeScene {
                         * args.delta.as_secs_f32();
             }
             State::Sleeping => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 self.top_render.tick(args);
                 self.left_render.tick(args);
                 self.right_render.tick(args);
@@ -562,6 +584,8 @@ impl Scene for HomeScene {
                 mut last_checked,
                 watch_end,
             } => {
+                self.egg_render.pos = EGG_LEFT;
+
                 if args.game_ctx.home.state_elapsed > watch_end {
                     args.game_ctx.home.change_state(State::Wondering);
                 } else {
@@ -601,6 +625,8 @@ impl Scene for HomeScene {
                 mut program_end_time,
                 mut program_run_time,
             } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx
                     .home
                     .pc
@@ -633,6 +659,8 @@ impl Scene for HomeScene {
                 }
             }
             State::ReadingBook { book } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx.home.next_word_spawn = args
                     .game_ctx
                     .home
@@ -695,15 +723,21 @@ impl Scene for HomeScene {
                 if args.game_ctx.home.state_elapsed
                     > book.book_info().chapter_length(args.game_ctx.pet.def_id)
                 {
-                    args.game_ctx
-                        .pet
-                        .book_history
-                        .get_mut_read(book)
-                        .complete_chapter();
+                    let completed = {
+                        let book = args.game_ctx.pet.book_history.get_mut_read(book);
+                        book.complete_chapter();
+                        book.completed()
+                    };
+
+                    if completed {
+                        on_book_completed(args.game_ctx, book);
+                    }
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
             State::PlayingMp3 { jam_end_time } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 // Shake a bit
                 let dist =
                     vec2_distance(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target);
@@ -734,6 +768,8 @@ impl Scene for HomeScene {
                 }
             }
             State::Alarm => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx
                     .home
                     .pet_render
@@ -759,6 +795,8 @@ impl Scene for HomeScene {
                 }
             }
             State::Telescope { end_time } => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 args.game_ctx.home.telescope.pos = Vec2::new(15., 80.);
                 args.game_ctx.home.pet_render.pos = Vec2::new(45., 85.);
 
@@ -770,9 +808,12 @@ impl Scene for HomeScene {
                 }
             }
             State::Exploring => {
+                self.egg_render.pos = EGG_RIGHT;
+
                 if !args.game_ctx.explore_system.currently_exploring() {
                     args.game_ctx.home.change_state(State::Wondering);
-                    return SceneOutput::new(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    output.set(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    return;
                 }
 
                 let passed = args.game_ctx.explore_system.current_percent_passed();
@@ -830,54 +871,27 @@ impl Scene for HomeScene {
                     *args.game_ctx.home.options.current().get_song(),
                     SongPlayOptions::new().with_effect(),
                 );
-                match *args.game_ctx.home.options.current() {
-                    MenuOption::Breed => {
-                        return SceneOutput::new(SceneEnum::Suiters(SuitersScene::new(
-                            args.game_ctx.suiter_system.suiter.unwrap_or_default(),
-                        )));
-                    }
-                    MenuOption::Poop => {
-                        return SceneOutput::new(SceneEnum::PoopClear(PoopClearScene::new()));
-                    }
-                    MenuOption::PetInfo => {
-                        return SceneOutput::new(SceneEnum::PetInfo(PetInfoScene::new()));
-                    }
-                    MenuOption::GameSelect => {
-                        return SceneOutput::new(SceneEnum::GameSelect(GameSelectScene::new()));
-                    }
-                    MenuOption::FoodSelect => {
-                        return SceneOutput::new(SceneEnum::FoodSelect(FoodSelectScene::new()));
-                    }
-                    MenuOption::Shop => {
-                        return SceneOutput::new(SceneEnum::Shop(ShopScene::new()));
-                    }
-                    MenuOption::Inventory => {
-                        return SceneOutput::new(SceneEnum::Inventory(InventoryScene::new()));
-                    }
+                output.set(match *args.game_ctx.home.options.current() {
+                    MenuOption::Breed => SceneEnum::Suiters(SuitersScene::new(
+                        args.game_ctx.suiter_system.suiter.unwrap_or_default(),
+                    )),
+                    MenuOption::Poop => SceneEnum::PoopClear(PoopClearScene::new()),
+                    MenuOption::PetInfo => SceneEnum::PetInfo(PetInfoScene::new()),
+                    MenuOption::GameSelect => SceneEnum::GameSelect(GameSelectScene::new()),
+                    MenuOption::FoodSelect => SceneEnum::FoodSelect(FoodSelectScene::new()),
+                    MenuOption::Shop => SceneEnum::Shop(ShopScene::new()),
+                    MenuOption::Inventory => SceneEnum::Inventory(InventoryScene::new()),
                     MenuOption::PlaceFurniture => {
-                        return SceneOutput::new(SceneEnum::PlaceFurniture(
-                            PlaceFurnitureScene::new(),
-                        ));
+                        SceneEnum::PlaceFurniture(PlaceFurnitureScene::new())
                     }
-                    MenuOption::PetRecords => {
-                        return SceneOutput::new(SceneEnum::PetRecords(PetRecordsScene::new()));
-                    }
-                    MenuOption::Heal => {
-                        return SceneOutput::new(SceneEnum::Heal(HealScene::new()));
-                    }
-                    MenuOption::Settings => {
-                        return SceneOutput::new(SceneEnum::Settings(SettingsScene::new()));
-                    }
-                    MenuOption::Explore => {
-                        return SceneOutput::new(SceneEnum::ExploreSelect(
-                            ExploreSelectScene::new(),
-                        ));
-                    }
-                };
+                    MenuOption::PetRecords => SceneEnum::PetRecords(PetRecordsScene::new()),
+                    MenuOption::Heal => SceneEnum::Heal(HealScene::new()),
+                    MenuOption::Settings => SceneEnum::Settings(SettingsScene::new()),
+                    MenuOption::Explore => SceneEnum::ExploreSelect(ExploreSelectScene::new()),
+                });
+                return;
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
@@ -1160,7 +1174,14 @@ impl Scene for HomeScene {
 
             let total_filled = pet.stomach_filled / pet.definition().stomach_size;
             display.render_stomach(
-                Vec2::new(9., IMAGE_STOMACH_MASK.size.y as f32),
+                Vec2::new(
+                    9. + if total_filled < 0.05 && args.frames % 10 == 0 {
+                        if args.game_ctx.rng.bool() { 1. } else { -1. }
+                    } else {
+                        0.
+                    },
+                    IMAGE_STOMACH_MASK.size.y as f32,
+                ),
                 total_filled,
             );
 
@@ -1192,7 +1213,12 @@ impl Scene for HomeScene {
 
             display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
 
-            if args.game_ctx.egg.is_some() {
+            if args.game_ctx.egg.is_some()
+                && matches!(
+                    args.game_ctx.home.state,
+                    State::GoneOut { outing_end_time: _ } | State::Exploring
+                )
+            {
                 display.render_complex(&self.egg_render);
             }
 

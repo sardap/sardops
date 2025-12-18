@@ -2,9 +2,11 @@
 #![allow(unused_variables)]
 #![feature(duration_constructors)]
 #![feature(duration_millis_float)]
+#![feature(inherent_associated_types)]
 #![feature(duration_constructors_lite)]
 #![feature(specialization)]
 #![feature(generic_const_exprs)]
+#![feature(trait_alias)]
 #![feature(variant_count)]
 #![feature(const_trait_impl)]
 #![no_std]
@@ -19,7 +21,7 @@ use crate::{
     input::Input,
     pet::definition::PET_BABIES,
     scene::{
-        RenderArgs, SceneEnum, SceneManger, SceneTickArgs, home_scene::HomeScene,
+        RenderArgs, SceneEnum, SceneManger, SceneOutput, SceneTickArgs, home_scene::HomeScene,
         new_pet_scene::NewPetScene,
     },
     sim::tick_sim,
@@ -49,6 +51,7 @@ mod geo;
 mod input;
 mod invetro_light;
 mod items;
+mod items_use;
 mod link_four;
 mod math;
 mod money;
@@ -88,10 +91,12 @@ pub struct Game {
     input: input::Input,
     last_time: Timestamp,
     scene_manger: SceneManger,
+    scene_output: SceneOutput,
     game_ctx: GameContext,
     time_scale: f32,
     fps: FPSCounter,
     since_input: Duration,
+    frames: u32,
 }
 
 impl Game {
@@ -101,10 +106,12 @@ impl Game {
             input: input::Input::default(),
             last_time: timestamp,
             scene_manger: SceneManger::default(),
+            scene_output: SceneOutput::new(),
             game_ctx: GameContext::new(timestamp),
             time_scale: 1.,
             fps: FPSCounter::new(),
             since_input: Duration::ZERO,
+            frames: 0,
         }
     }
 
@@ -171,6 +178,7 @@ impl Game {
             input: &self.input,
             game_ctx: &mut self.game_ctx,
             last_scene: None,
+            frames: self.frames,
         };
 
         tick_sim(self.time_scale, &mut scene_args);
@@ -182,13 +190,14 @@ impl Game {
 
         let scene = self.scene_manger.scene_enum_mut();
 
-        let output = scene.tick(&mut scene_args);
+        let output = scene.tick(&mut scene_args, &mut self.scene_output);
 
         // move last scene back before maybe replacing it
         self.scene_manger.restore_last_scene(scene_args.last_scene);
 
-        if let Some(next) = output.next_scene {
-            self.scene_manger.set_next(next);
+        if self.scene_output.next_scene.is_some() {
+            self.scene_manger
+                .set_next(self.scene_output.next_scene.take().unwrap());
         } else if self.since_input > Duration::from_mins(5)
             && self.scene_manger.scene_enum().should_quit_on_idle()
         {
@@ -211,6 +220,7 @@ impl Game {
         let mut scene_args = RenderArgs {
             timestamp: self.last_time,
             game_ctx: &mut self.game_ctx,
+            frames: self.frames,
         };
 
         self.display.clear();
@@ -219,6 +229,7 @@ impl Game {
         self.display.render_fps(&self.fps);
         // self.display.render_temperature(self.input().temperature());
         self.fps.update(delta);
+        self.frames = self.frames.checked_add(1).unwrap_or_default();
     }
 
     pub fn get_display_image_data(&self) -> &[u8] {
@@ -251,6 +262,7 @@ impl Game {
             input: &self.input,
             game_ctx: &mut self.game_ctx,
             last_scene: None,
+            frames: self.frames,
         };
         tick_sim(1., &mut scene_args);
         self.scene_manger = SceneManger::default();

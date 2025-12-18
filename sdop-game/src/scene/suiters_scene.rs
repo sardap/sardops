@@ -7,10 +7,7 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     pet::{ParentInfo, definition::PetAnimationSet, render::PetRender},
-    scene::{
-        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene,
-        home_scene::HomeScene,
-    },
+    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene},
     suiter::Suiter,
 };
 
@@ -57,7 +54,7 @@ impl Scene for SuitersScene {
         args.game_ctx.suiter_system.clear_suiter();
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
         self.suiter_render.tick(args.delta);
 
@@ -86,7 +83,7 @@ impl Scene for SuitersScene {
 
                 if args.input.pressed(Button::Middle) {
                     if self.embrace {
-                        return SceneOutput::new(SceneEnum::Breed(BreedScene::new(
+                        output.set(SceneEnum::Breed(BreedScene::new(
                             ParentInfo::new(
                                 args.game_ctx.pet.upid,
                                 args.game_ctx.pet.def_id,
@@ -98,14 +95,14 @@ impl Scene for SuitersScene {
                                 self.suiter.name,
                             ),
                         )));
+                        return;
                     } else {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     }
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

@@ -154,6 +154,15 @@ impl Add<Duration> for Timestamp {
     }
 }
 
+impl Sub<Duration> for Timestamp {
+    type Output = Timestamp;
+
+    fn sub(self, rhs: Duration) -> Self::Output {
+        let duration = chrono::Duration::from_std(rhs).unwrap_or_default();
+        Timestamp::new(self.0.checked_sub_signed(duration).unwrap_or_default())
+    }
+}
+
 impl PartialOrd for Timestamp {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.0.partial_cmp(&other.0)

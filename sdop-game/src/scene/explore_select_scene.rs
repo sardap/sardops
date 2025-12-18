@@ -6,15 +6,15 @@ use crate::{
     Button, Timestamp, assets,
     date_utils::DurationExt,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
-    explore::{LOCATIONS, Location, LocationHistoryIter, get_location},
+    explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{self, SongPlayOptions},
     sprite::Sprite,
 };
 
-const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(500);
+const SIGN_SHAKE_DURATION: Duration = Duration::from_millis(200);
 
 enum State {
     Cooldown,
@@ -33,7 +33,7 @@ pub struct ExploreSelectScene {
 impl ExploreSelectScene {
     pub fn new() -> Self {
         Self {
-            selected_location: 1,
+            selected_location: 0,
             sign_shake_remaining: Duration::ZERO,
             next_unlocked: false,
             next_explore_time: Timestamp::default(),
@@ -49,8 +49,6 @@ impl ExploreSelectScene {
 
 impl Scene for ExploreSelectScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
-        let mut iter = LocationHistoryIter::new(self.selected_location, &args.game_ctx.pet.explore);
-        self.next_unlocked = iter.next().is_some();
         for (i, history) in args
             .game_ctx
             .pet
@@ -68,6 +66,11 @@ impl Scene for ExploreSelectScene {
 
         if args.timestamp < self.next_explore_time {
             self.state = State::Cooldown;
+        } else {
+            let mut iter =
+                LocationHistoryIter::new(0, &args.game_ctx.pet.explore, &args.game_ctx.inventory);
+            self.selected_location = iter.first().unwrap_or(0);
+            self.next_unlocked = iter.next().is_some();
         }
 
         self.pet_render.set_def_id(args.game_ctx.pet.def_id);
@@ -76,7 +79,7 @@ impl Scene for ExploreSelectScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::Cooldown => {
                 self.pet_render.tick(args.delta);
@@ -86,7 +89,8 @@ impl Scene for ExploreSelectScene {
                 }
 
                 if args.input.any_pressed() {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    output.set_home();
+                    return;
                 }
             }
             State::Selecting => {
@@ -96,33 +100,58 @@ impl Scene for ExploreSelectScene {
                     .unwrap_or_default();
 
                 if args.input.pressed(Button::Right) {
+                    self.sign_shake_remaining = SIGN_SHAKE_DURATION;
                     let mut iter = LocationHistoryIter::new(
                         self.selected_location,
                         &args.game_ctx.pet.explore,
+                        &args.game_ctx.inventory,
                     );
-                    self.selected_location = iter.next().unwrap_or(1);
-                    self.next_unlocked = iter.next().is_some();
+                    (self.selected_location, self.next_unlocked) = match iter.next() {
+                        Some(index) => (index, iter.next().is_some()),
+                        None => (
+                            0,
+                            LocationHistoryIter::new(
+                                0,
+                                &args.game_ctx.pet.explore,
+                                &args.game_ctx.inventory,
+                            )
+                            .next()
+                            .is_some(),
+                        ),
+                    };
                 }
 
                 if args.input.pressed(Button::Left) {
-                    if self.selected_location == 1 {
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                    self.sign_shake_remaining = SIGN_SHAKE_DURATION;
+
+                    if self.selected_location == 0 {
+                        output.set_home();
+                        return;
                     }
 
                     let mut iter = LocationHistoryIter::new(
                         self.selected_location,
                         &args.game_ctx.pet.explore,
+                        &args.game_ctx.inventory,
                     );
                     self.selected_location = iter.next_back().unwrap_or(1);
                     self.next_unlocked = true;
                 }
 
                 if args.input.pressed(Button::Middle) {
-                    if args.game_ctx.pet.explore.unlocked(self.selected_location) {
+                    if args
+                        .game_ctx
+                        .inventory
+                        .has_item(get_location(self.selected_location).item)
+                        && (args.game_ctx.pet.definition().life_stage.bitmask()
+                            & get_location(self.selected_location).ls_mask)
+                            > 0
+                    {
                         args.game_ctx
                             .explore_system
                             .start_exploring(self.selected_location);
-                        return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+                        output.set_home();
+                        return;
                     } else {
                         args.game_ctx
                             .sound_system
@@ -132,8 +161,6 @@ impl Scene for ExploreSelectScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
@@ -196,12 +223,9 @@ impl Scene for ExploreSelectScene {
             }
             State::Selecting => {
                 let mut y = 0;
-                let unlocked = args.game_ctx.pet.explore.unlocked(self.selected_location);
-                let location = if unlocked {
-                    self.location()
-                } else {
-                    &LOCATIONS[0]
-                };
+                let location = get_location(self.selected_location);
+                let unlocked = args.game_ctx.inventory.has_item(location.item)
+                    && (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
 
                 // Gotta handle cooldown here
                 display.render_image_complex(
@@ -213,75 +237,105 @@ impl Scene for ExploreSelectScene {
 
                 y += location.cover.size.y as i32 + 2;
 
-                const SKILL_X_OFFSET: i32 = 2;
+                if unlocked {
+                    const SKILL_X_OFFSET: i32 = 2;
+                    const TEXT_X_OFFSET: f32 = 35.;
+
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_LENGTH_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let mins = self.location().length.as_mins() as i32;
+                    let hours = mins / 60;
+                    let mins = mins % 60;
+                    let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
+
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_SKILL_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let str = fixedstr::str_format!(
+                        fixedstr::str12,
+                        "{}",
+                        args.game_ctx.pet.explore_skill()
+                    );
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_CHALLENGE_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                    display.render_image_complex(
+                        SKILL_X_OFFSET,
+                        y,
+                        &assets::IMAGE_COOLDOWN_SYMBOL,
+                        ComplexRenderOption::new().with_black().with_white(),
+                    );
+                    let mins = self.location().cooldown.as_mins() as i32;
+                    let hours = mins / 60;
+                    let mins = mins % 60;
+                    let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
+                    display.render_text_complex(
+                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+
+                    y += 5;
+                } else {
+                    let text_area = display.render_text_complex(
+                        Vec2::new(CENTER_X, y as f32 + 5.),
+                        &"NOT RIGHT LIFE STAGE",
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font_wrapping_x(WIDTH_I32 - 2)
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+                    y += (text_area.y - y) + 10;
+                }
 
                 display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_LENGTH_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let mins = self.location().length.as_mins() as i32;
-                let hours = mins / 60;
-                let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, ":{}h{}m", hours, mins);
-                display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32
-                            + assets::IMAGE_LENGTH_SYMBOL.const_size_vec2().x
-                            + 2.,
-                        y as f32,
-                    ),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
-
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_SKILL_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let str =
-                    fixedstr::str_format!(fixedstr::str12, "{}", args.game_ctx.pet.explore_skill());
-                display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32 + assets::IMAGE_SKILL_SYMBOL.const_size_vec2().x + 1.,
-                        y as f32,
-                    ),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
-
-                display.render_image_complex(
-                    SKILL_X_OFFSET,
-                    y,
-                    &assets::IMAGE_CHALLENGE_SYMBOL,
-                    ComplexRenderOption::new().with_black().with_white(),
-                );
-                let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
-                display.render_text_complex(
-                    Vec2::new(
-                        SKILL_X_OFFSET as f32
-                            + assets::IMAGE_CHALLENGE_SYMBOL.const_size_vec2().x
-                            + 1.,
-                        y as f32,
-                    ),
-                    &str,
-                    ComplexRenderOption::new()
-                        .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
-                );
-                y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
-
-                display.render_image_complex(
-                    WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2,
+                    WIDTH_I32 / 2 - assets::IMAGE_GO_EXPLORE_SYMBOL.size.x as i32 / 2
+                        + if self.sign_shake_remaining > Duration::ZERO {
+                            args.game_ctx.rng.i32(-2..=2)
+                        } else {
+                            0
+                        },
                     y,
                     if unlocked {
                         &assets::IMAGE_GO_EXPLORE_SYMBOL
@@ -291,7 +345,7 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                if self.selected_location > 1 {
+                if self.selected_location > 0 {
                     display.render_image_complex(
                         1,
                         y,

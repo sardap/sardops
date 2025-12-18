@@ -1,11 +1,12 @@
 use const_for::const_for;
-use core::time::Duration;
+use core::{slice::Iter, time::Duration};
 use heapless::Vec;
 
 use bincode::{Decode, Encode};
 
 use crate::{
     assets::StaticImage,
+    game_context::GameContext,
     items::{BOOK_COUNT, ITEM_COUNT, Inventory, ItemKind},
     pet::definition::{PET_BRAINO_ID, PetDefinitionId},
 };
@@ -56,6 +57,26 @@ impl BookRead {
     pub fn complete_chapter(&mut self) {
         self.chapters = self.chapters.checked_add(1).unwrap_or_default();
     }
+
+    pub fn item(&self) -> ItemKind {
+        self.item
+    }
+}
+
+pub fn on_book_completed(game_ctx: &mut GameContext, book: ItemKind) {
+    match book {
+        ItemKind::BookVic19811992 => {
+            game_ctx
+                .inventory
+                .add_item(ItemKind::MapFlagstaffStation, 1);
+        }
+        ItemKind::BookCProgramming => {
+            game_ctx.inventory.add_item(ItemKind::MapCyberspace, 1);
+        }
+        _ => {}
+    }
+
+    game_ctx.pet.explore.bonus_skill += book.skill();
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -113,6 +134,10 @@ impl BookHistory {
 
     pub fn completed_count(&self) -> usize {
         self.books.iter().filter(|i| i.completed()).count()
+    }
+
+    pub fn iter<'a>(&'a self) -> Iter<'a, BookRead> {
+        self.books.iter()
     }
 }
 

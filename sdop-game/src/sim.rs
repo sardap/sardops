@@ -18,11 +18,11 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
     }
 
     let delta = SIM_LENGTH_STEP;
+    let mut timestamp =
+        args.timestamp - Duration::from_micros(runs * SIM_LENGTH_STEP.as_micros() as u64);
 
     for _ in 0..runs {
-        if let Some(egg) = &mut args.game_ctx.egg {
-            egg.sim_tick(delta, &mut args.game_ctx.sim_rng);
-        }
+        timestamp = timestamp + SIM_LENGTH_STEP;
 
         if args.game_ctx.pet.should_die().is_none() {
             args.game_ctx.pet.tick_mood(
@@ -39,16 +39,17 @@ pub fn tick_sim(time_scale: f32, args: &mut SceneTickArgs) {
 
             pet.tick_age(delta);
 
-            let sleeping = pet.definition().should_be_sleeping(&args.timestamp);
+            pet.tick_sleeping(&timestamp);
+            let sleeping = pet.is_sleeping();
 
-            pet.tick_hunger(delta, sleeping);
+            pet.tick_hunger(delta, timestamp, sleeping);
             pet.tick_poop(delta);
             pet.tick_since_game(delta, sleeping);
             pet.tick_death(delta, &mut args.game_ctx.sim_rng, sleeping, poop_count);
             pet.tick_evolve(delta, &args.game_ctx.inventory);
             pet.tick_illness(&mut args.game_ctx.sim_rng, delta);
             if pet.should_poop(&mut args.game_ctx.sim_rng, sleeping) {
-                add_poop(&mut args.game_ctx.poops, args.timestamp);
+                add_poop(&mut args.game_ctx.poops, timestamp);
             }
             args.game_ctx
                 .suiter_system

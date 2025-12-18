@@ -7,7 +7,6 @@ use crate::{
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
-        home_scene::HomeScene,
         weekday_select_scene::WeekdaySelectScene,
     },
 };
@@ -53,7 +52,7 @@ impl Scene for AlarmSetScene {
         }
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         match self.state {
             State::GettingTime => {
                 self.state = State::GettingDay;
@@ -63,13 +62,13 @@ impl Scene for AlarmSetScene {
                     AlarmConfig::Time { days: _, time } => *time,
                 };
 
-                SceneOutput::new(SceneEnum::EnterDate(
+                output.set(SceneEnum::EnterDate(
                     EnterDateScene::new(
                         enter_date_scene::Required::Time,
                         str_format!(fixedstr::str12, "ALARM TIME?"),
                     )
                     .with_time(time),
-                ))
+                ));
             }
             State::GettingDay => {
                 self.state = State::GotDay;
@@ -82,17 +81,17 @@ impl Scene for AlarmSetScene {
                     AlarmConfig::Time { days, time: _ } => *days,
                 };
 
-                SceneOutput::new(SceneEnum::WeekDaySelect(
+                output.set(SceneEnum::WeekDaySelect(
                     WeekdaySelectScene::new(1, str_format!(fixedstr::str12, "WHAT DAYS?"))
                         .with_days(days),
-                ))
+                ));
             }
             State::GotDay => {
                 if self.days.is_none() {
                     self.days = Some(args.game_ctx.shared_out.weekday_out);
                 }
 
-                SceneOutput::new(SceneEnum::Home(HomeScene::new()))
+                output.set_home();
             }
         }
     }

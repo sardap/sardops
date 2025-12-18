@@ -153,7 +153,7 @@ impl Scene for MgLinkFourScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.player_pet_render.tick(args.delta);
         self.opponent_pet_render.tick(args.delta);
 
@@ -267,7 +267,7 @@ impl Scene for MgLinkFourScene {
                         (false, 200)
                     };
 
-                    return SceneOutput::new(SceneEnum::MgFanFare(MgFanFareScene::new(
+                    output.set(SceneEnum::MgFanFare(MgFanFareScene::new(
                         won,
                         amount,
                         args.game_ctx.pet.def_id,
@@ -275,8 +275,6 @@ impl Scene for MgLinkFourScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

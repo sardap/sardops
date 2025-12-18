@@ -1,3 +1,4 @@
+use const_for::const_for;
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
@@ -12,15 +13,16 @@ use crate::{
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     explore::{ExploreHistory, ExploreSkill},
-    food::Food,
+    food::{Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
-        BREED_ODDS_THRESHOLD, DEATH_BY_HYPOTHERMIA_THRESHOLD, DEATH_BY_ILLNESS_THRESHOLD,
-        DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL, DEATH_STARVE_THRESHOLDS,
-        DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL, HEALING_COST_RANGE,
-        HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS,
-        ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS, ILLNESS_SINCE_ODDS,
-        ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES, SPLACE_LOCATIONS,
+        BREED_ODDS_THRESHOLD, COFFEE_POOP_MODIFER, DEATH_BY_HYPOTHERMIA_THRESHOLD,
+        DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
+        DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
+        HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS,
+        ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS,
+        ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES,
+        SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -37,6 +39,7 @@ use crate::{
 pub mod definition;
 pub mod record;
 pub mod render;
+pub use sdop_common::LifeStage;
 
 pub type PetName = fixedstr::str7;
 
@@ -215,6 +218,47 @@ pub struct PetInstance {
     total_hot_for: Duration,
     pub seen_alien: bool,
     pub explore: ExploreHistory,
+    pub food_history: FoodHistory,
+    is_sleeping: bool,
+}
+
+impl Default for PetInstance {
+    fn default() -> Self {
+        let def_id = crate::pet::definition::PET_BLOB_ID;
+        Self {
+            upid: 0,
+            def_id,
+            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
+            born: Timestamp::default(),
+            age: Duration::ZERO,
+            life_stage_age: Duration::ZERO,
+            stomach_mood: StomachMood::Full {
+                elapsed: Duration::ZERO,
+            },
+            total_starve_time: Duration::ZERO,
+            stomach_filled: 0.,
+            extra_weight: 0.,
+            until_poop: POOP_SPAWN_MAGIC_NUMBER * 2,
+            since_game: Duration::ZERO,
+            since_death_check: Duration::ZERO,
+            since_evolve_check: Duration::ZERO,
+            should_evolve: None,
+            should_die: None,
+            parents: None,
+            life_stage_history: LifeStageHistory::new(),
+            mood: Mood::Normal,
+            should_breed: false,
+            book_history: Default::default(),
+            illness: Default::default(),
+            cold_for: Duration::ZERO,
+            total_cold_for: Duration::ZERO,
+            total_hot_for: Duration::ZERO,
+            seen_alien: false,
+            explore: ExploreHistory::default(),
+            food_history: Default::default(),
+            is_sleeping: false,
+        }
+    }
 }
 
 impl PetInstance {
@@ -222,13 +266,23 @@ impl PetInstance {
         PetDefinition::get_by_id(self.def_id)
     }
 
-    pub fn digest(&mut self, food: &Food) {
-        self.stomach_filled += food.fill_factor * self.definition().food_multiplier(food);
+    pub fn food_fill_percent(&self) -> f32 {
+        (self.stomach_filled / self.definition().stomach_size).min(1.)
+    }
+
+    pub fn food_fill(&self, food: &Food) -> f32 {
+        food.fill_factor * self.definition().food_multiplier(food)
+    }
+
+    pub fn eat(&mut self, food: &Food, now: Timestamp) {
+        self.stomach_filled += self.food_fill(food);
         let extra = self.stomach_filled - self.definition().stomach_size;
         if extra > 0. {
             self.stomach_filled = self.definition().stomach_size;
             self.extra_weight += extra;
         }
+
+        self.food_history.add(food, now);
     }
 
     pub fn tick_age(&mut self, delta: Duration) {
@@ -236,7 +290,7 @@ impl PetInstance {
         self.life_stage_age += delta;
     }
 
-    pub fn tick_hunger(&mut self, delta: Duration, sleep: bool) {
+    pub fn tick_hunger(&mut self, delta: Duration, now: Timestamp, sleep: bool) {
         const GRAMS_LOSS_PER_SECOND: f32 = 0.005;
         let sleep_modifer = if sleep { 0.4 } else { 1. };
         self.extra_weight = (self.extra_weight
@@ -256,7 +310,7 @@ impl PetInstance {
             self.stomach_mood = StomachMood::Starving {
                 elapsed: elapsed + delta,
             }
-        } else if self.stomach_filled > 10. {
+        } else if self.stomach_filled > 5. {
             let elapsed = if let StomachMood::Full { elapsed } = self.stomach_mood {
                 elapsed
             } else {
@@ -267,6 +321,8 @@ impl PetInstance {
                 elapsed: elapsed + delta,
             }
         }
+
+        self.food_history.sim_tick(now);
     }
 
     pub fn tick_poop(&mut self, delta: Duration) {
@@ -354,11 +410,21 @@ impl PetInstance {
     }
 
     pub fn should_poop(&mut self, rng: &mut Rng, sleeping: bool) -> bool {
+        // This is to set it up, I really should write comments for stupid lines of bullshit
         if self.until_poop > POOP_SPAWN_MAGIC_NUMBER {
             self.until_poop = self.get_next_poop_duration(rng);
         }
 
-        if !sleeping && self.until_poop <= Duration::ZERO {
+        let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
+
+        if !sleeping && (coffees_consumed > 0 && self.until_poop <= Duration::ZERO)
+            || (coffees_consumed > 0
+                && self
+                    .until_poop
+                    .checked_sub(COFFEE_POOP_MODIFER)
+                    .unwrap_or_default()
+                    <= Duration::ZERO)
+        {
             self.until_poop = self.get_next_poop_duration(rng);
             return true;
         }
@@ -377,12 +443,12 @@ impl PetInstance {
 
         match self.definition().life_stage {
             LifeStage::Baby => {
-                if self.life_stage_age < Duration::from_hours(4) {
+                if self.life_stage_age < Duration::from_days(1) {
                     return;
                 }
             }
             LifeStage::Child => {
-                if self.life_stage_age < Duration::from_days(1) {
+                if self.life_stage_age < Duration::from_days(2) {
                     return;
                 }
             }
@@ -398,6 +464,7 @@ impl PetInstance {
             LifeStage::Baby => {
                 let _ = possible.push(PET_HUMBIE_ID);
                 let _ = possible.push(PET_PAWN_WHITE_ID);
+                let _ = possible.push(PET_DEVIL_ID);
                 if self.total_cold_for > Duration::ZERO {
                     let _ = possible.push(PET_ICE_CUBE_ID);
                 }
@@ -405,7 +472,6 @@ impl PetInstance {
             LifeStage::Child => {
                 let _ = possible.push(PET_BEERIE_ID);
                 let _ = possible.push(PET_WAS_GAURD_ID);
-                let _ = possible.push(PET_DEVIL_ID);
                 if self
                     .book_history
                     .get_read(ItemKind::BookNevileWran)
@@ -610,43 +676,16 @@ impl PetInstance {
     }
 
     pub fn explore_skill(&self) -> ExploreSkill {
-        self.definition().explore_skill() + self.explore.skill
+        self.definition().explore_skill() + self.explore.bonus_skill
     }
-}
 
-impl Default for PetInstance {
-    fn default() -> Self {
-        let def_id = crate::pet::definition::PET_BLOB_ID;
-        Self {
-            upid: 0,
-            def_id,
-            name: fixedstr::str_format!(PetName, "AAAAAAAA"),
-            born: Timestamp::default(),
-            age: Duration::ZERO,
-            life_stage_age: Duration::ZERO,
-            stomach_mood: StomachMood::Full {
-                elapsed: Duration::ZERO,
-            },
-            total_starve_time: Duration::ZERO,
-            stomach_filled: 0.,
-            extra_weight: 0.,
-            until_poop: POOP_SPAWN_MAGIC_NUMBER * 2,
-            since_game: Duration::ZERO,
-            since_death_check: Duration::ZERO,
-            since_evolve_check: Duration::ZERO,
-            should_evolve: None,
-            should_die: None,
-            parents: None,
-            life_stage_history: LifeStageHistory::new(),
-            mood: Mood::Normal,
-            should_breed: false,
-            book_history: Default::default(),
-            illness: Default::default(),
-            cold_for: Duration::ZERO,
-            total_cold_for: Duration::ZERO,
-            total_hot_for: Duration::ZERO,
-            seen_alien: false,
-            explore: ExploreHistory::default(),
+    pub fn is_sleeping(&self) -> bool {
+        self.is_sleeping
+    }
+
+    pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {
+        if self.is_sleeping || !matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ }) {
+            self.is_sleeping = self.definition().should_be_sleeping(timestamp);
         }
     }
 }
@@ -666,32 +705,6 @@ impl Mood {
             Mood::Normal => PetAnimationSet::Normal,
             Mood::Sad => PetAnimationSet::Sad,
             Mood::Happy => PetAnimationSet::Happy,
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, EnumIter, EnumCount)]
-pub enum LifeStage {
-    Baby,
-    Child,
-    Adult,
-}
-
-impl LifeStage {
-    pub fn from_index(index: usize) -> Self {
-        match index {
-            0 => Self::Baby,
-            1 => Self::Child,
-            2 => Self::Adult,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn name(self) -> &'static str {
-        match self {
-            LifeStage::Baby => "BABY",
-            LifeStage::Child => "CHILD",
-            LifeStage::Adult => "ADULT",
         }
     }
 }

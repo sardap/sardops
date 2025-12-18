@@ -14,6 +14,11 @@ const DREAMS: &[&[Frame]] = &[
     &assets::FRAMES_DREAM_EATING_MASK,
     &assets::FRAMES_DREAM_WORDS_MASK,
     &assets::FRAMES_DREAM_WAVES_MASK,
+    &assets::FRAMES_DREAM_BIRD_MASK,
+    &assets::FRAMES_DREAM_CUBE_MASK,
+    &assets::FRAMES_DREAM_CONNECTIONS_MASK,
+    &assets::FRAMES_DREAM_SMILE_MASK,
+    &assets::FRAMES_DREAM_WORM_MASK,
 ];
 
 pub struct DreamBubble {

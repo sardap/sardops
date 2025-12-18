@@ -10,7 +10,7 @@ use crate::{
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     pet::{planet_location_from_upid, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 
@@ -45,10 +45,10 @@ impl Scene for PetRecordsScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
-        if let Some(record) = &args.game_ctx.pet_records.get_by_index(self.selected) {
+        if let Some(record) = &args.game_ctx.pet_history.get_by_index(self.selected) {
             self.pet_render.set_def_id(record.def_id);
         }
 
@@ -68,8 +68,9 @@ impl Scene for PetRecordsScene {
 
                 let mut updated = self.selected as isize + change;
                 if updated < 0 {
-                    return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
-                } else if updated >= args.game_ctx.pet_records.count() as isize {
+                    output.set_home();
+                    return;
+                } else if updated >= args.game_ctx.pet_history.count() as isize {
                     updated = 0;
                 }
 
@@ -78,15 +79,13 @@ impl Scene for PetRecordsScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         const TEXT_X_OFFSET: f32 = 2.;
         const Y_BUFFER: f32 = 7.;
 
-        if let Some(record) = args.game_ctx.pet_records.get_by_index(self.selected) {
+        if let Some(record) = args.game_ctx.pet_history.get_by_index(self.selected) {
             match self.state {
                 State::Select => {
                     let str = str_format!(fixedstr::str32, "PID:{:010X}", record.upid);

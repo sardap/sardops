@@ -9,3 +9,6 @@ serde = ["dep:serde"]
 
 [dependencies]
 serde = { workspace = true, optional = true }
+strum = { workspace = true, default-features = false }
+strum_macros = { workspace = true, default-features = false }
+const_for = { workspace = true }

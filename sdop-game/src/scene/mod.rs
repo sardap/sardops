@@ -36,8 +36,11 @@ use core::time::Duration;
 use chrono::{NaiveDate, NaiveTime, WeekdaySet};
 
 use crate::{
-    Timestamp, display::GameDisplay, game_context::GameContext, input::Input,
-    scene::enter_text_scene::EnterTextStr,
+    Timestamp,
+    display::GameDisplay,
+    game_context::GameContext,
+    input::Input,
+    scene::{enter_text_scene::EnterTextStr, home_scene::HomeScene},
 };
 
 #[macro_export]
@@ -73,10 +76,10 @@ macro_rules! define_scence_enum {
             }
 
             #[inline(always)]
-            pub fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+            pub fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
                 match self {
                     $(
-                        Self::$variant(inner) => inner.tick(args),
+                        Self::$variant(inner) => inner.tick(args, output),
                     )+
                 }
             }
@@ -163,10 +166,20 @@ pub struct SceneOutput {
 }
 
 impl SceneOutput {
-    pub fn new(scene: SceneEnum) -> Self {
-        Self {
-            next_scene: Some(scene),
-        }
+    pub fn new() -> Self {
+        Self { next_scene: None }
+    }
+
+    pub fn set(&mut self, scene: SceneEnum) {
+        self.next_scene = Some(scene);
+    }
+
+    pub fn set_home(&mut self) {
+        self.next_scene = Some(SceneEnum::Home(HomeScene::new()));
+    }
+
+    pub fn clear(&mut self) {
+        self.next_scene = None;
     }
 }
 
@@ -176,11 +189,13 @@ pub struct SceneTickArgs<'a> {
     pub input: &'a Input,
     pub game_ctx: &'a mut GameContext,
     pub last_scene: Option<SceneEnum>,
+    pub frames: u32,
 }
 
 pub struct RenderArgs<'a> {
     pub timestamp: Timestamp,
     pub game_ctx: &'a mut GameContext,
+    pub frames: u32,
 }
 
 pub trait Scene {
@@ -188,7 +203,7 @@ pub trait Scene {
 
     fn teardown(&mut self, args: &mut SceneTickArgs);
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput;
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput);
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs);
 }

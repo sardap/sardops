@@ -10,7 +10,7 @@ use crate::{
     game_consts::{ALIEN_ODDS, TELESCOPE_USE_RANGE},
     night_sky::generate_night_sky_image,
     pet::combine_pid,
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_TWINKLE_TWINKLE_LITTLE_STAR, SongPlayOptions},
     sprite::BasicSprite,
 };
@@ -72,7 +72,7 @@ impl Scene for StarGazingScene {
         }
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         if !args.game_ctx.sound_system.get_playing() {
             args.game_ctx.sound_system.push_song(
                 SONG_TWINKLE_TWINKLE_LITTLE_STAR,
@@ -81,7 +81,8 @@ impl Scene for StarGazingScene {
         }
 
         if args.input.any_pressed() {
-            return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+            output.set_home();
+            return;
         }
 
         const UFO_SPEED: f32 = 15.;
@@ -96,8 +97,6 @@ impl Scene for StarGazingScene {
                 self.ufo_left = !self.ufo_left;
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

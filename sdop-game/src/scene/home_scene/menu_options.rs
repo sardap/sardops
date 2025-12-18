@@ -8,23 +8,25 @@ use crate::{
     anime::Anime,
     assets::{self},
     display::{CENTER_X, ComplexRender, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    game_context::GameContext,
     geo::Rect,
+    items::Inventory,
+    pet::{PetInstance, record::PetHistory},
+    suiter::SuiterSystem,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MenuOption {
     PetInfo,
-    Breed,
-    Poop,
-    Heal,
-    Explore,
-    GameSelect,
     FoodSelect,
+    Poop,
+    Breed,
+    Heal,
     Shop,
     Inventory,
     PlaceFurniture,
+    Explore,
     PetRecords,
+    GameSelect,
     Settings,
 }
 
@@ -58,11 +60,19 @@ impl Default for MenuOptions {
 
 impl MenuOptions {
     // SLOW POINT
-    pub fn new(state: super::State, game_ctx: &GameContext) -> Self {
+    pub fn refresh(
+        &mut self,
+        state: super::State,
+        suiter_system: &SuiterSystem,
+        inventory: &Inventory,
+        poop_count: usize,
+        pet_history: &PetHistory,
+        pet: &PetInstance,
+    ) {
         let mut options = heapless::Vec::new();
         let _ = options.push(MenuOption::PetInfo);
         let _ = options.push(MenuOption::Settings);
-        if game_ctx.suiter_system.suiter_waiting()
+        if suiter_system.suiter_waiting()
             && !matches!(
                 state,
                 super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
@@ -70,22 +80,22 @@ impl MenuOptions {
         {
             let _ = options.push(MenuOption::Breed);
         }
-        if game_ctx.inventory.has_any_item() {
+        if inventory.has_any_item() {
             let _ = options.push(MenuOption::Inventory);
         }
-        if game_ctx.inventory.has_any_furniture() && !matches!(state, super::State::Exploring) {
+        if inventory.has_any_furniture() && !matches!(state, super::State::Exploring) {
             let _ = options.push(MenuOption::PlaceFurniture);
         }
 
-        if game_ctx.poop_count() > 0 && !matches!(state, super::State::Exploring) {
+        if poop_count > 0 && !matches!(state, super::State::Exploring) {
             let _ = options.push(MenuOption::Poop);
         }
 
-        if game_ctx.pet_records.count() > 0 {
+        if pet_history.count() > 0 {
             let _ = options.push(MenuOption::PetRecords);
         }
 
-        if game_ctx.pet.is_ill() && !matches!(state, super::State::Exploring) {
+        if pet.is_ill() && !matches!(state, super::State::Exploring) {
             let _ = options.push(MenuOption::Heal);
         }
 
@@ -103,16 +113,18 @@ impl MenuOptions {
         if !matches!(
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
-        ) {
+        ) && inventory.has_any_map()
+        {
             let _ = options.push(MenuOption::Explore);
         }
 
         options.sort_unstable();
 
-        let mut result = MenuOptions::default();
-        result.inner = options;
+        self.inner = options;
 
-        result
+        if self.selected_index >= self.inner.len() {
+            self.selected_index = 0;
+        }
     }
 
     pub fn tick(&mut self, delta: Duration) {

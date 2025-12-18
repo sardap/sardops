@@ -68,7 +68,7 @@ impl Scene for EnterTextScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
         match self.state {
@@ -89,7 +89,8 @@ impl Scene for EnterTextScene {
                 if args.input.pressed(Button::Middle) {
                     if self.selected_index == self.max_len {
                         args.game_ctx.shared_out.enter_text_out = self.text;
-                        return SceneOutput::new(args.last_scene.take().unwrap());
+                        output.set(args.last_scene.take().unwrap());
+                        return;
                     } else {
                         let mut char = self.text.chars().nth(self.selected_index).unwrap_or('a');
                         if char.is_whitespace() {
@@ -120,8 +121,6 @@ impl Scene for EnterTextScene {
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

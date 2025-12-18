@@ -51,7 +51,7 @@ impl PetDefinition {
 
     pub const fn poop_interval_range(&self) -> Range<Duration> {
         match self.life_stage {
-            LifeStage::Baby => (Duration::from_mins(30))..(Duration::from_mins(90)),
+            LifeStage::Baby => Duration::from_mins(30)..Duration::from_mins(60),
             LifeStage::Child => (Duration::from_mins(90))..(Duration::from_hours(3)),
             LifeStage::Adult => (Duration::from_mins(150))..(Duration::from_hours(4)),
         }
@@ -68,7 +68,7 @@ impl PetDefinition {
 
     pub fn explore_skill(&self) -> ExploreSkill {
         match self.life_stage {
-            LifeStage::Baby => -20,
+            LifeStage::Baby => 5,
             LifeStage::Child => 40,
             LifeStage::Adult => 100,
         }

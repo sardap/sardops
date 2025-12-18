@@ -209,14 +209,14 @@ impl Scene for DeathScene {
     fn teardown(&mut self, args: &mut SceneTickArgs) {
         args.game_ctx.sound_system.clear_song();
         args.game_ctx.poops = Default::default();
-        args.game_ctx.pet_records.add(PetRecord::from_pet_instance(
+        args.game_ctx.pet_history.add(PetRecord::from_pet_instance(
             &args.game_ctx.pet,
             args.timestamp,
             self.cause,
         ));
     }
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
 
         self.pet_render.tick(args.delta);
@@ -373,17 +373,16 @@ impl Scene for DeathScene {
                 self.pet_render.set_animation(PetAnimationSet::Sad);
 
                 if args.input.any_pressed() {
-                    return SceneOutput::new(SceneEnum::NewPet(NewPetScene::new(
+                    output.set(SceneEnum::NewPet(NewPetScene::new(
                         args.game_ctx.rng.choice(PET_BABIES).unwrap(),
                         false,
                         None,
                         None,
                     )));
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {

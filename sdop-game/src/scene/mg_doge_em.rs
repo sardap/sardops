@@ -152,7 +152,7 @@ impl Scene for MgDogeEmScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.pos.x = self.current_lane.center_x();
 
         self.pet_render.tick(args.delta);
@@ -270,16 +270,15 @@ impl Scene for MgDogeEmScene {
                     } else {
                         (elapsed.as_secs_f32() * 100. / 2.) as i32
                     };
-                    return SceneOutput::new(SceneEnum::MgFanFare(MgFanFareScene::new(
+                    output.set(SceneEnum::MgFanFare(MgFanFareScene::new(
                         won,
                         winnings,
                         self.pet_def_id,
                     )));
+                    return;
                 }
             }
         };
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {

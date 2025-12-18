@@ -10,7 +10,7 @@ use crate::{
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts,
     pet::{LifeStage, definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene::HomeScene},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
 };
 
@@ -87,11 +87,12 @@ impl Scene for PetInfoScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.pet_render.tick(args.delta);
 
         if self.state == State::Main && args.input.pressed(Button::Left) {
-            return SceneOutput::new(SceneEnum::Home(HomeScene::new()));
+            output.set_home();
+            return;
         }
 
         for parent in &mut self.parent_renders {
@@ -119,8 +120,6 @@ impl Scene for PetInfoScene {
             }
             self.state = STATE_ORDER[index as usize];
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
@@ -300,7 +299,7 @@ impl Scene for PetInfoScene {
 
                         current_y += self.parent_renders[i].image().size().y as f32 + Y_BUFFER;
 
-                        let record = args.game_ctx.pet_records.get_by_upid(parent.upid());
+                        let record = args.game_ctx.pet_history.get_by_upid(parent.upid());
 
                         let str = match &record {
                             Some(record) => str_format!(

@@ -89,7 +89,7 @@ impl Scene for MgWeightLift {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, args: &mut SceneTickArgs) -> SceneOutput {
+    fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
         self.state_elapsed += args.delta;
 
         match self.state {
@@ -234,16 +234,15 @@ impl Scene for MgWeightLift {
 
                 if self.state_elapsed > Duration::from_secs(3) {
                     self.state_elapsed = Duration::ZERO;
-                    return SceneOutput::new(SceneEnum::MgFanFare(MgFanFareScene::new(
+                    output.set(SceneEnum::MgFanFare(MgFanFareScene::new(
                         self.won,
                         1000,
                         args.game_ctx.pet.def_id,
                     )));
+                    return;
                 }
             }
         }
-
-        SceneOutput::default()
     }
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
