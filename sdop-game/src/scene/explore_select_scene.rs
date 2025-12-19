@@ -146,6 +146,10 @@ impl Scene for ExploreSelectScene {
                         && (args.game_ctx.pet.definition().life_stage.bitmask()
                             & get_location(self.selected_location).ls_mask)
                             > 0
+                        && !args
+                            .game_ctx
+                            .pet
+                            .should_be_sleeping(&(args.timestamp + self.location().length))
                     {
                         args.game_ctx
                             .explore_system
@@ -224,8 +228,15 @@ impl Scene for ExploreSelectScene {
             State::Selecting => {
                 let mut y = 0;
                 let location = get_location(self.selected_location);
+                let right_life_stage =
+                    (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
+                let bed_soon = args
+                    .game_ctx
+                    .pet
+                    .should_be_sleeping(&(args.timestamp + self.location().length));
                 let unlocked = args.game_ctx.inventory.has_item(location.item)
-                    && (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
+                    && right_life_stage
+                    && !bed_soon;
 
                 // Gotta handle cooldown here
                 display.render_image_complex(
@@ -317,16 +328,29 @@ impl Scene for ExploreSelectScene {
 
                     y += 5;
                 } else {
-                    let text_area = display.render_text_complex(
-                        &IVec2::new(CENTER_X_I32, y + 5),
-                        &"NOT RIGHT LIFE STAGE",
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_center()
-                            .with_font_wrapping_x(WIDTH_I32 - 2)
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += (text_area.y - y) + 10;
+                    if bed_soon {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "BEDTIME BEFORE BACK",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    } else {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "NOT RIGHT LIFE STAGE",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    }
                 }
 
                 display.render_image_complex(

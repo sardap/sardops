@@ -72,6 +72,7 @@ impl MenuOptions {
         let mut options = heapless::Vec::new();
         let _ = options.push(MenuOption::PetInfo);
         let _ = options.push(MenuOption::Settings);
+        let _ = options.push(MenuOption::Shop);
         if suiter_system.suiter_waiting()
             && !matches!(
                 state,
@@ -99,21 +100,21 @@ impl MenuOptions {
             let _ = options.push(MenuOption::Heal);
         }
 
-        if state != super::State::Sleeping {
-            if !matches!(
-                state,
-                super::State::GoneOut { outing_end_time: _ } | super::State::Exploring
-            ) {
-                let _ = options.push(MenuOption::GameSelect);
-                let _ = options.push(MenuOption::FoodSelect);
-            }
-            let _ = options.push(MenuOption::Shop);
+        if !matches!(
+            state,
+            super::State::GoneOut { outing_end_time: _ }
+                | super::State::Exploring
+                | super::State::Sleeping
+        ) {
+            let _ = options.push(MenuOption::GameSelect);
+            let _ = options.push(MenuOption::FoodSelect);
         }
 
         if !matches!(
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
         ) && inventory.has_any_map()
+            && !pet.is_sleeping()
         {
             let _ = options.push(MenuOption::Explore);
         }

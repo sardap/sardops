@@ -11,7 +11,7 @@ use crate::{
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     explore::{ExploreHistory, ExploreSkill},
-    food::{Food, FoodHistory},
+    food::{FOOD_COFFEE, Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
         BREED_ODDS_THRESHOLD, COFFEE_POOP_MODIFER, DEATH_BY_HYPOTHERMIA_THRESHOLD,
@@ -415,7 +415,7 @@ impl PetInstance {
 
         let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
 
-        if !sleeping && (coffees_consumed > 0 && self.until_poop <= Duration::ZERO)
+        if !sleeping && self.until_poop <= Duration::ZERO
             || (coffees_consumed > 0
                 && self
                     .until_poop
@@ -681,9 +681,14 @@ impl PetInstance {
         self.is_sleeping
     }
 
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
+        self.definition()
+            .should_be_sleeping(timestamp, self.food_history.sick_of(&FOOD_COFFEE))
+    }
+
     pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {
         if self.is_sleeping || !matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ }) {
-            self.is_sleeping = self.definition().should_be_sleeping(timestamp);
+            self.is_sleeping = self.should_be_sleeping(timestamp);
         }
     }
 }

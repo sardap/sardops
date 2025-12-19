@@ -51,14 +51,14 @@ impl PetDefinition {
 
     pub const fn poop_interval_range(&self) -> Range<Duration> {
         match self.life_stage {
-            LifeStage::Baby => Duration::from_mins(30)..Duration::from_mins(60),
+            LifeStage::Baby => Duration::from_mins(30)..Duration::from_mins(90),
             LifeStage::Child => (Duration::from_mins(90))..(Duration::from_hours(3)),
             LifeStage::Adult => (Duration::from_mins(150))..(Duration::from_hours(4)),
         }
     }
 
-    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
-        let hour = timestamp.inner().hour();
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
+        let hour = timestamp.inner().hour() as i32 + if coffee { -1 } else { 0 };
         match self.life_stage {
             LifeStage::Baby => !(6..20).contains(&hour),
             LifeStage::Child => !(8..21).contains(&hour),
