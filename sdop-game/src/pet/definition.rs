@@ -58,11 +58,26 @@ impl PetDefinition {
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
-        let hour = timestamp.inner().hour() as i32 + if coffee { -1 } else { 0 };
+        let hour = timestamp.inner().hour() as i32;
+        let (mut start, mut end) = match self.life_stage {
+            LifeStage::Baby => (6, 20),
+            LifeStage::Child => (8, 21),
+            LifeStage::Adult => (7, 22),
+        };
+
+        if coffee {
+            start -= 1;
+            end += 1;
+        }
+
+        !(start..end).contains(&hour)
+    }
+
+    pub const fn wonder_speed(&self) -> f32 {
         match self.life_stage {
-            LifeStage::Baby => !(6..20).contains(&hour),
-            LifeStage::Child => !(8..21).contains(&hour),
-            LifeStage::Adult => !(7..22).contains(&hour),
+            LifeStage::Baby => 15.,
+            LifeStage::Child => 10.,
+            LifeStage::Adult => 5.,
         }
     }
 

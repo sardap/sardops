@@ -178,18 +178,18 @@ impl GameDisplay {
             return;
         }
 
-        let image_size = image.size();
+        let image_size = image.size_ivec2();
         let texture = image.texture();
 
         let (x_plus, y_plus) = match options.pos_mode {
             PostionMode::TopLeft => (x, y),
-            PostionMode::Center => (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2),
-            PostionMode::Bottomleft => (x, y - image_size.y as i32),
-            PostionMode::BottomRight => (x - image_size.x as i32, y - image_size.y as i32),
+            PostionMode::Center => (x - image_size.x / 2, y - image_size.y / 2),
+            PostionMode::Bottomleft => (x, y - image_size.y),
+            PostionMode::BottomRight => (x - image_size.x, y - image_size.y),
         };
 
-        let cx = (image_size.x as i32) / 2;
-        let cy = (image_size.y as i32) / 2;
+        let cx = image_size.x / 2;
+        let cy = image_size.y / 2;
 
         for iy in 0..image_size.y {
             for ix in 0..image_size.x {

@@ -523,7 +523,13 @@ impl Scene for HomeScene {
 
                 args.game_ctx.home.pet_render.pos +=
                     vec2_direction(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target)
-                        * WONDER_SPEED
+                        * args.game_ctx.pet.definition().wonder_speed()
+                        * if args.game_ctx.pet.is_starving() {
+                            0.5
+                        } else {
+                            1.
+                        }
+                        * if args.game_ctx.pet.is_ill() { 0.5 } else { 1. }
                         * if args.game_ctx.home.weather.is_weather_none() {
                             1.
                         } else {
