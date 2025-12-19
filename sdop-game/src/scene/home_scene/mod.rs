@@ -7,7 +7,6 @@ use core::{time::Duration, u8};
 use chrono::{Datelike, Timelike};
 use fixedstr::{str_format, str32};
 use glam::{IVec2, Vec2};
-use heapless::Vec;
 
 use crate::{
     Button, Timestamp, WIDTH,
@@ -1177,7 +1176,7 @@ impl Scene for HomeScene {
             display.render_stomach(
                 Vec2::new(
                     9. + if total_filled < 0.05 && args.frames % 10 == 0 {
-                        if args.game_ctx.rng.bool() { 1. } else { -1. }
+                        args.game_ctx.rng.i32(-2..=2) as f32
                     } else {
                         0.
                     },
