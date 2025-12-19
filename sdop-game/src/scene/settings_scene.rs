@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
     Button, Timestamp,
     assets::{self, Image},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{
@@ -196,20 +196,21 @@ impl Scene for SettingsScene {
 
         match self.state {
             State::Selecting => {
+                let mut render_pos = IVec2::new(CENTER_X_I32, 0);
                 for (i, option) in Option::iter().enumerate() {
                     if option == Option::Back {
                         break;
                     }
 
-                    let y = if option == Option::iter().last().unwrap() {
-                        110.
+                    render_pos.y = if option == Option::iter().last().unwrap() {
+                        110
                     } else {
-                        (40 + i * 17) as f32
+                        40 + i as i32 * 17
                     };
 
                     let width = display
                         .render_text_complex(
-                            Vec2::new(CENTER_X, y),
+                            &render_pos,
                             option.text(),
                             ComplexRenderOption::new().with_white().with_center(),
                         )
@@ -217,7 +218,10 @@ impl Scene for SettingsScene {
 
                     if self.option == option {
                         display.render_rect_solid(
-                            Rect::new_center(Vec2::new(CENTER_X, y + 7.), Vec2::new(width, 1.)),
+                            Rect::new_center(
+                                Vec2::new(CENTER_X, render_pos.y as f32 + 7.),
+                                Vec2::new(width, 1.),
+                            ),
                             true,
                         );
                     }
@@ -240,6 +244,7 @@ impl Scene for SettingsScene {
                 }
             }
             State::Sounds => {
+                let mut render_pos = IVec2::new(20, 0);
                 for (i, option) in [
                     SoundSelection::Music,
                     SoundSelection::Effect,
@@ -248,9 +253,9 @@ impl Scene for SettingsScene {
                 .into_iter()
                 .enumerate()
                 {
-                    let y = 50. + (i * 13) as f32;
+                    render_pos.y = 50 + (i as i32 * 13);
                     display.render_text_complex(
-                        Vec2::new(20., y),
+                        &render_pos,
                         option.text(),
                         ComplexRenderOption::new()
                             .with_white()
@@ -258,7 +263,10 @@ impl Scene for SettingsScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    let rect = Rect::new_bottom_left(Vec2::new(5., y), Vec2::new(10., 10.));
+                    let rect = Rect::new_bottom_left(
+                        Vec2::new(5., render_pos.y as f32),
+                        Vec2::new(10., 10.),
+                    );
                     if self.sound_selected == option {
                         display.render_rect_outline_dashed(rect, true, 1);
                     } else {

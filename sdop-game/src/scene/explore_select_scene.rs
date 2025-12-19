@@ -1,11 +1,11 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp, assets,
     date_utils::DurationExt,
-    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
     explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
@@ -169,7 +169,7 @@ impl Scene for ExploreSelectScene {
                 let mut y = 3;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     "COOLING OFF",
                     ComplexRenderOption::new()
                         .with_white()
@@ -180,7 +180,7 @@ impl Scene for ExploreSelectScene {
                 y += 6;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     "FROM GOING TO",
                     ComplexRenderOption::new()
                         .with_white()
@@ -197,14 +197,14 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                y += self.location().cover.size.y as i32 + 3;
+                y += self.location().cover.isize.y + 3;
 
                 let mins = (self.next_explore_time - args.timestamp).as_mins() as i32;
                 let hours = mins / 60;
                 let mins = mins % 60;
                 let str = fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m", hours, mins);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -215,7 +215,7 @@ impl Scene for ExploreSelectScene {
                 y += 6;
 
                 display.render_image_complex(
-                    (CENTER_X_I32) - (self.pet_render.anime.current_frame().size.x / 2) as i32,
+                    CENTER_X_I32 - (self.pet_render.anime.current_frame().isize.x / 2),
                     y,
                     self.pet_render.image(),
                     ComplexRenderOption::new().with_white(),
@@ -235,11 +235,11 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                y += location.cover.size.y as i32 + 2;
+                y += location.cover.isize.y + 2;
 
                 if unlocked {
                     const SKILL_X_OFFSET: i32 = 2;
-                    const TEXT_X_OFFSET: f32 = 35.;
+                    const TEXT_X_OFFSET: i32 = 35;
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -252,13 +252,13 @@ impl Scene for ExploreSelectScene {
                     let mins = mins % 60;
                     let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
+                        &IVec2::new(TEXT_X_OFFSET, y - 1),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_LENGTH_SYMBOL.isize.y + 1;
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -272,13 +272,13 @@ impl Scene for ExploreSelectScene {
                         args.game_ctx.pet.explore_skill()
                     );
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &IVec2::new(TEXT_X_OFFSET, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -288,13 +288,13 @@ impl Scene for ExploreSelectScene {
                     );
                     let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &IVec2::new(TEXT_X_OFFSET, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -307,18 +307,18 @@ impl Scene for ExploreSelectScene {
                     let mins = mins % 60;
                     let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &IVec2::new(TEXT_X_OFFSET, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
 
                     y += 5;
                 } else {
                     let text_area = display.render_text_complex(
-                        Vec2::new(CENTER_X, y as f32 + 5.),
+                        &IVec2::new(CENTER_X_I32, y + 5),
                         &"NOT RIGHT LIFE STAGE",
                         ComplexRenderOption::new()
                             .with_white()

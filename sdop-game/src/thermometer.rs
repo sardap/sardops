@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets::{self, Image},
@@ -103,8 +103,8 @@ impl ComplexRender for RenderThermometerDigital {
             display.render_point(left_x as i32 + 2, left_y as i32 + 4, true);
         }
 
-        let first_digit = Vec2::new(left_x + 4., left_y + 2.);
-        let second_digit = Vec2::new(left_x + 10., left_y + 2.);
+        let first_digit = IVec2::new((left_x + 4.) as i32, (left_y + 2.) as i32);
+        let second_digit = IVec2::new((left_x + 10.) as i32, (left_y + 2.) as i32);
 
         // This is stupid
         let num_map = |num| match num {
@@ -123,14 +123,14 @@ impl ComplexRender for RenderThermometerDigital {
 
         if let Some(second) = second {
             display.render_text_complex(
-                first_digit,
+                &first_digit,
                 num_map(first),
                 ComplexRenderOption::new()
                     .with_white()
                     .with_font(&FONT_VARIABLE_SMALL),
             );
             display.render_text_complex(
-                second_digit,
+                &second_digit,
                 num_map(second),
                 ComplexRenderOption::new()
                     .with_white()
@@ -138,7 +138,7 @@ impl ComplexRender for RenderThermometerDigital {
             );
         } else {
             display.render_text_complex(
-                second_digit,
+                &second_digit,
                 num_map(first),
                 ComplexRenderOption::new()
                     .with_white()

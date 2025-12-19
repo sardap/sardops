@@ -1,6 +1,8 @@
 use core::time::Duration;
 
-use glam::{U16Vec2, Vec2, usize};
+use glam::{IVec2, U16Vec2, Vec2, usize};
+
+use crate::display::WIDTH_I32;
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 
@@ -18,6 +20,7 @@ pub trait Image {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StaticImage {
     pub size: U16Vec2,
+    pub isize: IVec2,
     pub texture: &'static [u8],
 }
 
@@ -41,6 +44,7 @@ impl StaticImage {
     pub const fn new(width: u16, height: u16, texture: &'static [u8]) -> Self {
         Self {
             size: U16Vec2::new(width, height),
+            isize: IVec2::new(width as i32, height as i32),
             texture,
         }
     }

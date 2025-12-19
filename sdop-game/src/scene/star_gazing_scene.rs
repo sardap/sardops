@@ -1,11 +1,14 @@
 use chrono::Datelike;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     HEIGHT, WIDTH,
     assets::{self, DynamicImage},
     date_utils::{MoonRender, time_in_range},
-    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{
+        CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32,
+        HEIGHT_I32, WIDTH_F32,
+    },
     fonts::FONT_VARIABLE_SMALL,
     game_consts::{ALIEN_ODDS, TELESCOPE_USE_RANGE},
     night_sky::generate_night_sky_image,
@@ -103,8 +106,10 @@ impl Scene for StarGazingScene {
         if time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE) {
             display.invert();
 
+            const DAYTIME_RENDER_POS: IVec2 = IVec2::new(CENTER_X_I32, HEIGHT_I32 - 10);
+
             display.render_text_complex(
-                Vec2::new(CENTER_X, HEIGHT_F32 - 10.),
+                &DAYTIME_RENDER_POS,
                 "DAYTIME",
                 ComplexRenderOption::new()
                     .with_black()

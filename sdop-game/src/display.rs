@@ -21,6 +21,7 @@ pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_Y_I32: i32 = (HEIGHT_F32 / 2.) as i32;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
+pub const CENTER_IVEC: IVec2 = IVec2::new(CENTER_X_I32, CENTER_Y_I32);
 
 pub type DisplayData = Bitmap<WIDTH, HEIGHT>;
 
@@ -393,14 +394,14 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_text(&mut self, top_left: Vec2, text: &str) {
+    pub fn render_text(&mut self, top_left: &IVec2, text: &str) {
         const DEFAULT_RENDER: ComplexRenderOption = ComplexRenderOption::new().with_white();
         self.render_text_complex(top_left, text, DEFAULT_RENDER);
     }
 
     pub fn render_text_complex(
         &mut self,
-        pos: Vec2,
+        pos: &IVec2,
         text: &str,
         options: ComplexRenderOption,
     ) -> IVec2 {
@@ -413,7 +414,7 @@ impl GameDisplay {
                 }
             }
             max + 1
-        } as f32;
+        } as i32;
 
         let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
         let bytes = text.as_bytes();
@@ -435,7 +436,7 @@ impl GameDisplay {
                     i = next_idx;
                 }
                 let total_max = max_w.max(current_x);
-                (pos.x - total_max as f32 / 2., pos.y + max_height / 2.)
+                (pos.x - total_max / 2, pos.y + max_height / 2)
             }
             PostionMode::Bottomleft => (pos.x, pos.y),
             PostionMode::BottomRight => todo!(),
@@ -578,7 +579,7 @@ impl GameDisplay {
             false,
         );
         self.render_text_complex(
-            Vec2::new(0., 0.),
+            &IVec2::new(0, 0),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -589,13 +590,16 @@ impl GameDisplay {
     pub fn render_temperature(&mut self, temperature: f32) {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", temperature);
-        let width = str.len() as f32 * 5. + 3.;
+        let width = str.len() as i32 * 5 + 3;
         self.render_rect_solid(
-            Rect::new_top_left(Vec2::new(WIDTH_F32 - width, 0.), Vec2::new(width, 9.)),
+            Rect::new_top_left(
+                Vec2::new(WIDTH_F32 - width as f32, 0.),
+                Vec2::new(width as f32, 9.),
+            ),
             false,
         );
         self.render_text_complex(
-            Vec2::new(WIDTH_F32 - width + 3., 0.),
+            &IVec2::new(WIDTH_I32 - width + 3, 0),
             &str,
             ComplexRenderOption::new()
                 .with_white()

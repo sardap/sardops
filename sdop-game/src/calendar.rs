@@ -1,6 +1,6 @@
 use chrono::{Datelike, NaiveDate, Weekday};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
@@ -46,14 +46,16 @@ impl ComplexRender for CalendarRender {
                 .with_center(),
         );
 
-        let top_left = Vec2::new(
-            self.pos.x - Self::size().x / 2.,
-            self.pos.y - Self::size().y / 2.,
+        const MONTH_OFFSET: IVec2 = IVec2::new(9, 5);
+
+        let top_left = IVec2::new(
+            self.pos.x as i32 - Self::size().x as i32 / 2,
+            self.pos.y as i32 - Self::size().y as i32 / 2,
         );
         // Render month
         let str = str_format!(fixedstr::str4, "{}", self.date.month());
         display.render_text_complex(
-            top_left + Vec2::new(9., 5.),
+            &(top_left + MONTH_OFFSET),
             &str,
             ComplexRenderOption::new()
                 .with_white()

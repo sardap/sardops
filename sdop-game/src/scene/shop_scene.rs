@@ -1,12 +1,12 @@
 use core::time::Duration;
 
 use chrono::{Datelike, Days, NaiveDate, NaiveDateTime, TimeDelta, Timelike};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     anime::HasAnime,
-    assets::{self, Image},
-    display::{CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
+    assets::{self},
+    display::{CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     game_consts::SHOP_OPEN_TIMES,
     geo::Rect,
@@ -198,13 +198,13 @@ impl Scene for ShopScene {
                     ComplexRenderOption::new().with_white().with_bottom_left(),
                 );
                 display.render_sprite(&self.closed_sign);
-                let y_offset = self.shop_keeper.pos.y
-                    + assets::IMAGE_SHOP_SIGN_CLOSED_0.size.y as f32 / 2.
-                    + 4.;
+                let y_offset = self.shop_keeper.pos.y as i32
+                    + assets::IMAGE_SHOP_SIGN_CLOSED_0.isize.y / 2
+                    + 4;
 
                 if let Some(day) = args.game_ctx.speical_days.non_trading_day() {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y_offset),
+                        &IVec2::new(CENTER_X_I32, y_offset),
                         "DUE TO",
                         ComplexRenderOption::new()
                             .with_white()
@@ -212,7 +212,7 @@ impl Scene for ShopScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y_offset + 10.),
+                        &IVec2::new(CENTER_X_I32, y_offset + 10),
                         day.name(),
                         ComplexRenderOption::new()
                             .with_white()
@@ -220,15 +220,15 @@ impl Scene for ShopScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                 } else {
-                    const X_OFFSET: f32 = 8.;
+                    const X_OFFSET: i32 = 8;
                     for (i, time) in SHOP_OPEN_TIMES.iter().enumerate() {
                         let day = chrono::Weekday::try_from(i as u8).unwrap();
                         let open = time[0];
                         let closed = time[1];
-                        let y = y_offset + i as f32 * 7.;
+                        let y = y_offset + (i as i32) * 7;
                         let str = fixedstr::str_format!(fixedstr::str16, "{}", day,);
                         display.render_text_complex(
-                            Vec2::new(X_OFFSET + 0., y),
+                            &IVec2::new(X_OFFSET + 0, y),
                             &str,
                             ComplexRenderOption::new()
                                 .with_white()
@@ -236,7 +236,7 @@ impl Scene for ShopScene {
                         );
                         let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", open.hour(),);
                         display.render_text_complex(
-                            Vec2::new(X_OFFSET + 20., y),
+                            &IVec2::new(X_OFFSET + 20, y),
                             &str,
                             ComplexRenderOption::new()
                                 .with_white()
@@ -244,7 +244,7 @@ impl Scene for ShopScene {
                         );
 
                         display.render_text_complex(
-                            Vec2::new(X_OFFSET + 31., y),
+                            &IVec2::new(X_OFFSET + 31, y),
                             "-",
                             ComplexRenderOption::new()
                                 .with_white()
@@ -253,7 +253,7 @@ impl Scene for ShopScene {
 
                         let str = fixedstr::str_format!(fixedstr::str16, "{:0>2}", closed.hour(),);
                         display.render_text_complex(
-                            Vec2::new(X_OFFSET + 37., y),
+                            &IVec2::new(X_OFFSET + 37, y),
                             &str,
                             ComplexRenderOption::new()
                                 .with_white()
@@ -263,7 +263,7 @@ impl Scene for ShopScene {
                 }
             }
             State::ShopKeeper => {
-                const Y_BUFFER: f32 = 8.0;
+                const Y_BUFFER: i32 = 8;
                 display.render_image_complex(
                     4,
                     (self.shop_keeper.pos.y
@@ -273,64 +273,67 @@ impl Scene for ShopScene {
                     ComplexRenderOption::new().with_white().with_bottom_left(),
                 );
                 display.render_sprite(&self.shop_keeper);
-                let mut y = self.shop_keeper.pos.y
-                    + self.shop_keeper.anime.current_frame().size.y as f32 / 2.
-                    + 5.;
+                let y = self.shop_keeper.pos.y as i32
+                    + self.shop_keeper.anime.current_frame().isize.y / 2
+                    + 5;
+
+                let mut render_pos = IVec2::new(CENTER_X_I32, y);
+
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     "CHECK OUR",
                     ComplexRenderOption::new()
                         .with_center()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += Y_BUFFER;
+                render_pos.y += Y_BUFFER;
                 let str = fixedstr::str_format!(
                     fixedstr::str12,
                     "{} WARES",
                     self.for_sale.iter().filter(|i| i.is_some()).count()
                 );
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     &str,
                     ComplexRenderOption::new()
                         .with_center()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += Y_BUFFER;
+                render_pos.y += Y_BUFFER;
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     "NEW WARES IN",
                     ComplexRenderOption::new()
                         .with_center()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += Y_BUFFER;
-                let tomrrow = match args.timestamp.inner().date().checked_add_days(Days::new(1)) {
+                render_pos.y += Y_BUFFER;
+                let tomorrow = match args.timestamp.inner().date().checked_add_days(Days::new(1)) {
                     Some(val) => val,
                     None => NaiveDate::MAX,
                 };
                 // Set time to open
-                let open_time = SHOP_OPEN_TIMES[tomrrow.weekday() as usize][0];
-                let tomrrow = NaiveDateTime::new(tomrrow, open_time);
-                let mut midnight_in = tomrrow - *args.timestamp.inner();
+                let open_time = SHOP_OPEN_TIMES[tomorrow.weekday() as usize][0];
+                let tomorrow = NaiveDateTime::new(tomorrow, open_time);
+                let mut midnight_in = tomorrow - *args.timestamp.inner();
                 let hours = midnight_in.num_hours();
                 midnight_in -= TimeDelta::hours(hours);
-                let miniutes = midnight_in.num_minutes();
-                midnight_in -= TimeDelta::minutes(miniutes);
+                let mins = midnight_in.num_minutes();
+                midnight_in -= TimeDelta::minutes(mins);
                 let seconds = midnight_in.num_seconds();
                 midnight_in -= TimeDelta::seconds(seconds);
                 let str = fixedstr::str_format!(
                     fixedstr::str12,
                     "{:0>2}:{:0>2}:{:0>2}",
                     hours,
-                    miniutes,
+                    mins,
                     seconds
                 );
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     &str,
                     ComplexRenderOption::new()
                         .with_center()
@@ -339,31 +342,34 @@ impl Scene for ShopScene {
                 );
             }
             State::Selected(selected) => {
-                const BUFFER_Y: f32 = 8.;
+                const BUFFER_Y: i32 = 8;
                 let item = self.for_sale[selected];
-                let mut y = 4.;
+                let y = 4;
+
+                let mut render_pos = IVec2::new(CENTER_X_I32, y);
+
                 let str = fixedstr::str_format!(fixedstr::str12, "BANK ${}", args.game_ctx.money);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     &str,
                     ComplexRenderOption::new()
                         .with_center()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += BUFFER_Y;
+                render_pos.y += BUFFER_Y;
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     item.name(),
                     ComplexRenderOption::new()
                         .with_center()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                y += BUFFER_Y;
+                render_pos.y += BUFFER_Y;
                 let str = fixedstr::str_format!(fixedstr::str12, "CST ${}", item.cost());
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &render_pos,
                     &str,
                     ComplexRenderOption::new()
                         .with_center()
@@ -371,24 +377,24 @@ impl Scene for ShopScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
                 display.render_image_complex(
-                    CENTER_X as i32,
-                    (y + 30.) as i32,
+                    CENTER_X_I32,
+                    render_pos.y + 30,
                     item.image(),
                     ComplexRenderOption::new().with_white().with_center(),
                 );
-                y = 80.;
+                render_pos.y = 80;
                 let own_count = args.game_ctx.inventory.item_count(item);
                 if !item.unique() {
                     let str = fixedstr::str_format!(fixedstr::str12, "OWN {}", own_count);
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
+                        &render_pos,
                         &str,
                         ComplexRenderOption::new()
                             .with_center()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += BUFFER_Y;
+                    render_pos.y += BUFFER_Y;
                 }
                 if item.unique() && own_count > 0 {
                     display.render_image_center(
@@ -398,7 +404,7 @@ impl Scene for ShopScene {
                             } else {
                                 0
                             },
-                        (y + assets::IMAGE_ALREADY_OWN_SIGN.size_vec2().y / 2.) as i32,
+                        render_pos.y + assets::IMAGE_ALREADY_OWN_SIGN.isize.y / 2,
                         &assets::IMAGE_ALREADY_OWN_SIGN,
                     );
                 } else {
@@ -410,14 +416,14 @@ impl Scene for ShopScene {
                             item.cost() - args.game_ctx.money
                         );
                         display.render_text_complex(
-                            Vec2::new(CENTER_X, y),
+                            &render_pos,
                             &str,
                             ComplexRenderOption::new()
                                 .with_center()
                                 .with_white()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        y += 10.;
+                        render_pos.y += 10;
                     }
 
                     if !too_much {
@@ -428,7 +434,7 @@ impl Scene for ShopScene {
                                 } else {
                                     0
                                 },
-                            (y + assets::IMAGE_BUY_SIGN.size_vec2().y / 2.) as i32,
+                            render_pos.y + assets::IMAGE_BUY_SIGN.isize.y / 2,
                             &assets::IMAGE_BUY_SIGN,
                         );
                     } else {
@@ -439,7 +445,7 @@ impl Scene for ShopScene {
                                 } else {
                                     0
                                 },
-                            (y + assets::IMAGE_CANT_BUY_SIGN.size_vec2().y / 2.) as i32,
+                            render_pos.y + assets::IMAGE_CANT_BUY_SIGN.isize.y / 2,
                             &assets::IMAGE_CANT_BUY_SIGN,
                         );
                     };

@@ -1,13 +1,13 @@
 use chrono::Datelike;
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
     assets::{self, Image},
     date_utils::DurationExt,
     death::DeathCause,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     pet::{planet_location_from_upid, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
@@ -82,16 +82,17 @@ impl Scene for PetRecordsScene {
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
-        const TEXT_X_OFFSET: f32 = 2.;
-        const Y_BUFFER: f32 = 7.;
+        const TEXT_X_OFFSET: i32 = 2;
+        const Y_BUFFER: i32 = 7;
 
         if let Some(record) = args.game_ctx.pet_history.get_by_index(self.selected) {
             match self.state {
                 State::Select => {
                     let str = str_format!(fixedstr::str32, "PID:{:010X}", record.upid);
 
+                    let mut render_pos = IVec2::new(CENTER_X_I32, 10);
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, 10.),
+                        &render_pos,
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -101,12 +102,12 @@ impl Scene for PetRecordsScene {
 
                     display.render_sprite(&self.pet_render);
 
-                    let mut current_y = self.pet_render.pos.y
-                        + self.pet_render.image().size().y as f32 / 2.
+                    render_pos.y = self.pet_render.pos.y as i32
+                        + self.pet_render.static_image().isize.y / 2
                         + Y_BUFFER;
 
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &render_pos,
                         &record.name,
                         ComplexRenderOption::new()
                             .with_center()
@@ -114,7 +115,8 @@ impl Scene for PetRecordsScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    current_y += Y_BUFFER;
+                    render_pos.y += Y_BUFFER;
+                    render_pos.x = TEXT_X_OFFSET;
 
                     let str = fixedstr::str_format!(
                         fixedstr::str24,
@@ -124,13 +126,13 @@ impl Scene for PetRecordsScene {
                         record.born.inner().day()
                     );
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, current_y),
+                        &render_pos,
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += Y_BUFFER;
+                    render_pos.y += Y_BUFFER;
 
                     if !matches!(record.died_of, DeathCause::Leaving) {
                         let str = fixedstr::str_format!(
@@ -141,67 +143,66 @@ impl Scene for PetRecordsScene {
                             record.death.inner().day()
                         );
                         display.render_text_complex(
-                            Vec2::new(TEXT_X_OFFSET, current_y),
+                            &render_pos,
                             &str,
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        current_y += Y_BUFFER;
+                        render_pos.y += Y_BUFFER;
                     }
 
                     let age = record.age();
 
                     display.render_image_top_left(
-                        TEXT_X_OFFSET as i32,
-                        current_y as i32,
+                        TEXT_X_OFFSET,
+                        render_pos.y,
                         &assets::IMAGE_AGE_SYMBOL,
                     );
                     let hours = age.as_hours() as i32;
                     let days = hours / 24;
                     let hours = hours % 24;
                     let str = str_format!(fixedstr::str32, "{}d{}h", days, hours);
+                    render_pos.x = TEXT_X_OFFSET + assets::IMAGE_AGE_SYMBOL.isize.x + 2;
                     display.render_text_complex(
-                        Vec2::new(
-                            TEXT_X_OFFSET + assets::IMAGE_AGE_SYMBOL.size.x as f32 + 2.,
-                            current_y,
-                        ),
+                        &render_pos,
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    current_y += Y_BUFFER + assets::IMAGE_AGE_SYMBOL.size.y as f32 / 2.;
-
+                    render_pos.y += Y_BUFFER + assets::IMAGE_AGE_SYMBOL.isize.y / 2;
+                    render_pos.x = TEXT_X_OFFSET;
                     let str = fixedstr::str_format!(fixedstr::str24, "WT:{:.0}g", record.weight());
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, current_y),
+                        &render_pos,
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += Y_BUFFER * 2.;
-
+                    render_pos.y += Y_BUFFER * 2;
+                    render_pos.x = CENTER_X_I32;
                     if matches!(record.died_of, DeathCause::Leaving) {
                         display.render_text_complex(
-                            Vec2::new(CENTER_X, current_y),
+                            &render_pos,
                             "WHEREABOUTS",
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        current_y += Y_BUFFER;
+                        render_pos.y += Y_BUFFER;
 
                         let (planet, number) = planet_location_from_upid(record.upid);
 
                         let str =
                             fixedstr::str_format!(fixedstr::str24, "{}-{:03}", planet, number);
 
+                        render_pos.x = CENTER_X_I32;
                         display.render_text_complex(
-                            Vec2::new(CENTER_X, current_y),
+                            &render_pos,
                             &str,
                             ComplexRenderOption::new()
                                 .with_white()
@@ -211,18 +212,19 @@ impl Scene for PetRecordsScene {
 
                         // current_y += Y_BUFFER;
                     } else {
+                        render_pos.x = CENTER_X_I32;
                         display.render_text_complex(
-                            Vec2::new(CENTER_X, current_y),
+                            &render_pos,
                             "DIED OF",
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
-                        current_y += Y_BUFFER;
+                        render_pos.y += Y_BUFFER;
 
                         display.render_text_complex(
-                            Vec2::new(CENTER_X, current_y),
+                            &render_pos,
                             record.died_of.name(),
                             ComplexRenderOption::new()
                                 .with_white()

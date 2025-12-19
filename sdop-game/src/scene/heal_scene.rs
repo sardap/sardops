@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
@@ -9,7 +9,8 @@ use crate::{
     assets,
     clock::{AnalogueClockKind, AnalogueRenderClock},
     display::{
-        CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, PostionMode, WIDTH_F32,
+        CENTER_X, CENTER_X_I32, CENTER_Y, CENTER_Y_I32, ComplexRenderOption, GameDisplay,
+        HEIGHT_F32, PostionMode, WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
@@ -19,7 +20,8 @@ use crate::{
     sprite::BasicAnimeSprite,
 };
 
-const HOPITAL_FLOOR_Y: f32 = CENTER_Y + 20.;
+const HOPITAL_FLOOR_Y: i32 = CENTER_Y_I32 + 20;
+const HOPITAL_FLOOR_Y_F32: f32 = HOPITAL_FLOOR_Y as f32;
 
 enum State {
     Entering,
@@ -55,12 +57,12 @@ impl HealScene {
                 &assets::FRAMES_DOCOR_FULL,
             ),
             hopstial_screen: BasicAnimeSprite::new(
-                Vec2::new(10., HOPITAL_FLOOR_Y),
+                Vec2::new(10., HOPITAL_FLOOR_Y_F32),
                 &assets::FRAMES_HOSPITAL_SCREEN,
             )
             .with_pos_mode(PostionMode::Bottomleft),
             hopstial_screen_off: BasicAnimeSprite::new(
-                Vec2::new(10., HOPITAL_FLOOR_Y),
+                Vec2::new(10., HOPITAL_FLOOR_Y_F32),
                 &assets::FRAMES_HOSPITAL_SCREEN_OFF,
             )
             .with_pos_mode(PostionMode::Bottomleft),
@@ -142,7 +144,8 @@ impl Scene for HealScene {
                 self.pet_render.set_animation(PetAnimationSet::Sleeping);
                 self.pet_render.pos = Vec2::new(
                     CENTER_X,
-                    HOPITAL_FLOOR_Y - (self.pet_render.anime.current_frame().size.y as f32) / 2.,
+                    HOPITAL_FLOOR_Y_F32
+                        - (self.pet_render.anime.current_frame().size.y as f32) / 2.,
                 );
 
                 if self.state_elapsed > self.heal_time {
@@ -185,22 +188,22 @@ impl Scene for HealScene {
                     ComplexRenderOption::new().with_white().with_black(),
                 );
 
-                let mut current_y = self.doctor_full.pos.y
-                    + self.doctor_full.anime.current_frame().size.y as f32 / 2.
-                    + 3.;
+                let mut current_y = self.doctor_full.pos.y as i32
+                    + self.doctor_full.anime.current_frame().isize.y / 2
+                    + 3;
 
                 display.render_sprite(&self.doctor_full);
 
                 if args.game_ctx.pet.heal_cost() > args.game_ctx.money {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "YOU NEED",
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 7.;
+                    current_y += 7;
 
                     let str = str_format!(
                         fixedstr::str32,
@@ -208,37 +211,37 @@ impl Scene for HealScene {
                         args.game_ctx.pet.heal_cost() - args.game_ctx.money
                     );
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 7.;
+                    current_y += 7;
 
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "MORE SO",
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 7.;
+                    current_y += 7;
 
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "YOU DON'T DIE",
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 14.;
+                    current_y += 14;
 
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "GO DIE",
                         ComplexRenderOption::new()
                             .with_white()
@@ -247,29 +250,32 @@ impl Scene for HealScene {
                     );
 
                     display.render_rect_outline(
-                        Rect::new_center(Vec2::new(CENTER_X, current_y), Vec2::new(30., 10.)),
+                        Rect::new_center(
+                            Vec2::new(CENTER_X, current_y as f32),
+                            Vec2::new(30., 10.),
+                        ),
                         true,
                     );
                 } else {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "PAY ME OR",
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 7.;
+                    current_y += 7;
 
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         "OR",
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 7.;
+                    current_y += 7;
 
                     let str = str_format!(
                         fixedstr::str32,
@@ -277,7 +283,7 @@ impl Scene for HealScene {
                         args.game_ctx.pet.name.trim()
                     );
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -285,21 +291,21 @@ impl Scene for HealScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    current_y += 7.;
+                    current_y += 7;
 
                     let str = str_format!(fixedstr::str32, "{}$", args.game_ctx.pet.heal_cost());
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, current_y),
+                        &IVec2::new(CENTER_X_I32, current_y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    current_y += 14.;
+                    current_y += 14;
 
                     display.render_text_complex(
-                        Vec2::new(20., current_y),
+                        &IVec2::new(20, current_y),
                         "PAY",
                         ComplexRenderOption::new()
                             .with_white()
@@ -308,7 +314,7 @@ impl Scene for HealScene {
                     );
 
                     display.render_text_complex(
-                        Vec2::new(45., current_y),
+                        &IVec2::new(45, current_y),
                         "DIE",
                         ComplexRenderOption::new()
                             .with_white()
@@ -318,7 +324,7 @@ impl Scene for HealScene {
 
                     display.render_rect_outline(
                         Rect::new_center(
-                            Vec2::new(if self.will_pay { 20. } else { 45. }, current_y),
+                            Vec2::new(if self.will_pay { 20. } else { 45. }, current_y as f32),
                             Vec2::new(18., 10.),
                         ),
                         true,
@@ -336,15 +342,15 @@ impl Scene for HealScene {
                     ComplexRenderOption::new().with_white().with_center(),
                 );
                 display.render_line(
-                    Vec2::new(0., HOPITAL_FLOOR_Y),
-                    Vec2::new(WIDTH_F32, HOPITAL_FLOOR_Y),
+                    Vec2::new(0., HOPITAL_FLOOR_Y_F32),
+                    Vec2::new(WIDTH_F32, HOPITAL_FLOOR_Y_F32),
                     true,
                 );
 
-                let mut current_y = HOPITAL_FLOOR_Y + 10.;
+                let mut current_y = HOPITAL_FLOOR_Y + 10;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, current_y),
+                    &IVec2::new(CENTER_X_I32, current_y),
                     "HEALING",
                     ComplexRenderOption::new()
                         .with_white()
@@ -352,13 +358,13 @@ impl Scene for HealScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                current_y += 7.;
+                current_y += 7;
 
                 let percent =
                     (self.state_elapsed.as_millis_f32() / self.heal_time.as_millis_f32()) * 100.;
                 let str = str_format!(fixedstr::str12, "{:0>2}%", percent as i32);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, current_y),
+                    &IVec2::new(CENTER_X_I32, current_y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -379,8 +385,8 @@ impl Scene for HealScene {
                     ComplexRenderOption::new().with_white().with_center(),
                 );
                 display.render_line(
-                    Vec2::new(0., HOPITAL_FLOOR_Y),
-                    Vec2::new(WIDTH_F32, HOPITAL_FLOOR_Y),
+                    Vec2::new(0., HOPITAL_FLOOR_Y_F32),
+                    Vec2::new(WIDTH_F32, HOPITAL_FLOOR_Y_F32),
                     true,
                 );
             }

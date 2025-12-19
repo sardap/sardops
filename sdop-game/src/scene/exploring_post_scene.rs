@@ -1,9 +1,9 @@
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32},
     fonts::FONT_VARIABLE_SMALL,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -33,7 +33,7 @@ impl Scene for ExploringPostScene {
 
         let mut y = 8;
         display.render_text_complex(
-            Vec2::new(CENTER_X, y as f32),
+            &IVec2::new(CENTER_X_I32, y),
             "BACK HOME",
             ComplexRenderOption::new()
                 .with_white()
@@ -51,7 +51,7 @@ impl Scene for ExploringPostScene {
                 libm::roundf(completed * 100.) as i32
             );
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -60,7 +60,7 @@ impl Scene for ExploringPostScene {
             );
             y += 6;
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 "hurdles",
                 ComplexRenderOption::new()
                     .with_white()
@@ -71,7 +71,7 @@ impl Scene for ExploringPostScene {
         } else {
             let str = str_format!(fixedstr::str24, "{} IS A", args.game_ctx.pet.name.trim());
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -80,7 +80,7 @@ impl Scene for ExploringPostScene {
             );
             y += 6;
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 "COMPLETE",
                 ComplexRenderOption::new()
                     .with_white()
@@ -89,7 +89,7 @@ impl Scene for ExploringPostScene {
             );
             y += 6;
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 "FAILURE",
                 ComplexRenderOption::new()
                     .with_white()
@@ -106,7 +106,7 @@ impl Scene for ExploringPostScene {
                 libm::roundf(completed * 100.) as i32
             );
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32),
+                &IVec2::new(CENTER_X_I32, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -117,7 +117,7 @@ impl Scene for ExploringPostScene {
             y += 6;
             if result.items.len() == 0 {
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     "NOTHING ELSE",
                     ComplexRenderOption::new()
                         .with_white()
@@ -129,7 +129,7 @@ impl Scene for ExploringPostScene {
             for (i, item) in result.items.iter().enumerate() {
                 let str = str_format!(fixedstr::str24, "{}.{}", i + 1, item.name());
                 display.render_text_complex(
-                    Vec2::new(1., y as f32 + (i as f32 * 6.)),
+                    &IVec2::new(1, y + (i as i32 * 6)),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -138,7 +138,7 @@ impl Scene for ExploringPostScene {
             }
         } else {
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32 + 5.),
+                &IVec2::new(CENTER_X_I32, y + 5),
                 "YOU GET...",
                 ComplexRenderOption::new()
                     .with_white()
@@ -147,7 +147,7 @@ impl Scene for ExploringPostScene {
             );
 
             display.render_text_complex(
-                Vec2::new(CENTER_X, y as f32 + 15.),
+                &IVec2::new(CENTER_X_I32, y + 15),
                 "NOTHING",
                 ComplexRenderOption::new()
                     .with_white()

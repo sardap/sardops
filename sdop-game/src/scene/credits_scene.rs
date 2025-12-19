@@ -1,5 +1,5 @@
 use crate::{
-    display::{CENTER_VEC, ComplexRenderOption, GameDisplay},
+    display::{CENTER_IVEC, CENTER_VEC, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -32,7 +32,7 @@ impl Scene for CreditsScene {
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         display.render_text_complex(
-            CENTER_VEC,
+            &CENTER_IVEC,
             "CREDITS TBD",
             ComplexRenderOption::new()
                 .with_white()

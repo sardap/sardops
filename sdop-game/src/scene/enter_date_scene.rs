@@ -1,11 +1,11 @@
 use chrono::{Datelike, Days, Months, NaiveDate, NaiveTime, Timelike};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, assets,
     date_utils::{END_YEAR, START_YEAR},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
@@ -236,7 +236,7 @@ impl Scene for EnterDateScene {
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         display.render_text_complex(
-            Vec2::new(CENTER_X, 30.),
+            &IVec2::new(CENTER_X_I32, 30),
             &self.display_text,
             ComplexRenderOption::new()
                 .with_white()
@@ -244,23 +244,23 @@ impl Scene for EnterDateScene {
                 .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        let mut y = 50.;
+        let mut y = 50;
 
         // Seprate each part so I can better point to a section
-        const SLASH_WIDTH: f32 = 5.;
-        const X_START: f32 = 6.;
-        const YEAR_WIDTH: f32 = 4. * 5.;
-        const X_MONTH: f32 = X_START + YEAR_WIDTH + SLASH_WIDTH;
-        const MONTH_WIDTH: f32 = 2. * 5.;
-        const X_DAY: f32 = X_MONTH + MONTH_WIDTH + SLASH_WIDTH;
-        const DAY_WIDTH: f32 = 2. * 5.;
+        const SLASH_WIDTH: i32 = 5;
+        const X_START: i32 = 6;
+        const YEAR_WIDTH: i32 = 4 * 5;
+        const X_MONTH: i32 = X_START + YEAR_WIDTH + SLASH_WIDTH;
+        const MONTH_WIDTH: i32 = 2 * 5;
+        const X_DAY: i32 = X_MONTH + MONTH_WIDTH + SLASH_WIDTH;
+        const DAY_WIDTH: i32 = 2 * 5;
 
         let y_date = y;
 
         if self.need_date {
             let str = str_format!(fixedstr::str5, "{}", self.date.year());
             display.render_text_complex(
-                Vec2::new(X_START, y),
+                &IVec2::new(X_START, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -268,7 +268,7 @@ impl Scene for EnterDateScene {
             );
 
             display.render_text_complex(
-                Vec2::new(X_START + YEAR_WIDTH + 1., y),
+                &IVec2::new(X_START + YEAR_WIDTH + 1, y),
                 "/",
                 ComplexRenderOption::new()
                     .with_white()
@@ -277,7 +277,7 @@ impl Scene for EnterDateScene {
 
             let str = str_format!(fixedstr::str5, "{:0>2}", self.date.month());
             display.render_text_complex(
-                Vec2::new(X_MONTH, y),
+                &IVec2::new(X_MONTH, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -285,7 +285,7 @@ impl Scene for EnterDateScene {
             );
 
             display.render_text_complex(
-                Vec2::new(X_MONTH + MONTH_WIDTH + 1., y),
+                &IVec2::new(X_MONTH + MONTH_WIDTH + 1, y),
                 "/",
                 ComplexRenderOption::new()
                     .with_white()
@@ -294,36 +294,36 @@ impl Scene for EnterDateScene {
 
             let str = str_format!(fixedstr::str5, "{:0>2}", self.date.day());
             display.render_text_complex(
-                Vec2::new(X_DAY, y),
+                &IVec2::new(X_DAY, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
                     .with_font(&FONT_VARIABLE_SMALL),
             );
 
-            y += 25.
+            y += 25;
         }
 
         let y_time = y;
 
-        const X_HOUR: f32 = 12.;
-        const HOUR_WIDTH: f32 = 2. * 5.;
-        const X_MINIUTE: f32 = X_HOUR + HOUR_WIDTH + SLASH_WIDTH;
-        const MINIUTE_WIDTH: f32 = 2. * 5.;
-        const X_SECOND: f32 = X_MINIUTE + MINIUTE_WIDTH + SLASH_WIDTH;
-        const SECOND_WIDTH: f32 = 2. * 5.;
+        const X_HOUR: i32 = 12;
+        const HOUR_WIDTH: i32 = 2 * 5;
+        const X_MINIUTE: i32 = X_HOUR + HOUR_WIDTH + SLASH_WIDTH;
+        const MINIUTE_WIDTH: i32 = 2 * 5;
+        const X_SECOND: i32 = X_MINIUTE + MINIUTE_WIDTH + SLASH_WIDTH;
+        const SECOND_WIDTH: i32 = 2 * 5;
 
         if self.need_time {
             let str = str_format!(fixedstr::str5, "{:0>2}", self.time.hour());
             display.render_text_complex(
-                Vec2::new(X_HOUR, y),
+                &IVec2::new(X_HOUR, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
                     .with_font(&FONT_VARIABLE_SMALL),
             );
             display.render_text_complex(
-                Vec2::new(X_HOUR + HOUR_WIDTH + 1., y),
+                &IVec2::new(X_HOUR + HOUR_WIDTH + 1, y),
                 ":",
                 ComplexRenderOption::new()
                     .with_white()
@@ -332,14 +332,14 @@ impl Scene for EnterDateScene {
 
             let str = str_format!(fixedstr::str5, "{:0>2}", self.time.minute());
             display.render_text_complex(
-                Vec2::new(X_MINIUTE, y),
+                &IVec2::new(X_MINIUTE, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
                     .with_font(&FONT_VARIABLE_SMALL),
             );
             display.render_text_complex(
-                Vec2::new(X_MINIUTE + MINIUTE_WIDTH + 1., y),
+                &IVec2::new(X_MINIUTE + MINIUTE_WIDTH + 1, y),
                 ":",
                 ComplexRenderOption::new()
                     .with_white()
@@ -348,14 +348,14 @@ impl Scene for EnterDateScene {
 
             let str = str_format!(fixedstr::str5, "{:0>2}", self.time.second());
             display.render_text_complex(
-                Vec2::new(X_SECOND, y),
+                &IVec2::new(X_SECOND, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
                     .with_font(&FONT_VARIABLE_SMALL),
             );
 
-            y += 25.
+            y += 25;
         }
 
         display.render_image_complex(
@@ -366,20 +366,20 @@ impl Scene for EnterDateScene {
         );
 
         let (x, y) = match self.selected {
-            FieldOption::Year => (X_START + (YEAR_WIDTH / 2.), y_date),
-            FieldOption::Month => (X_MONTH + (MONTH_WIDTH / 2.), y_date),
-            FieldOption::Day => (X_DAY + (DAY_WIDTH / 2.), y_date),
-            FieldOption::Hour => (X_HOUR + (HOUR_WIDTH / 2.), y_time),
-            FieldOption::Miniute => (X_MINIUTE + (MINIUTE_WIDTH / 2.), y_time),
-            FieldOption::Second => (X_SECOND + (SECOND_WIDTH / 2.), y_time),
-            FieldOption::Submit => (CENTER_X, y),
+            FieldOption::Year => (X_START + (YEAR_WIDTH / 2), y_date),
+            FieldOption::Month => (X_MONTH + (MONTH_WIDTH / 2), y_date),
+            FieldOption::Day => (X_DAY + (DAY_WIDTH / 2), y_date),
+            FieldOption::Hour => (X_HOUR + (HOUR_WIDTH / 2), y_time),
+            FieldOption::Miniute => (X_MINIUTE + (MINIUTE_WIDTH / 2), y_time),
+            FieldOption::Second => (X_SECOND + (SECOND_WIDTH / 2), y_time),
+            FieldOption::Submit => (CENTER_X_I32, y),
         };
 
         match self.state {
             State::SelectField => {
                 if matches!(self.selected, FieldOption::Submit) {
                     let rect = Rect::new_center(
-                        Vec2::new(x, y),
+                        Vec2::new(x as f32, y as f32),
                         assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
                     )
                     .grow(4.);
@@ -405,7 +405,10 @@ impl Scene for EnterDateScene {
                     FieldOption::Submit => unreachable!(),
                 };
 
-                let rect = Rect::new_center(Vec2::new(x, y + 10.), Vec2::new(width, 2.));
+                let rect = Rect::new_center(
+                    Vec2::new(x as f32, y as f32 + 10.),
+                    Vec2::new(width as f32, 2.),
+                );
 
                 display.render_rect_solid(rect, true);
             }

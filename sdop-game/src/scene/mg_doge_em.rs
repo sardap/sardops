@@ -1,7 +1,7 @@
 use core::{ops::Range, time::Duration};
 
 use fixedstr::{str_format, str12, str16};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp,
@@ -297,7 +297,7 @@ impl Scene for MgDogeEmScene {
 
                 let elapsed = args.timestamp - self.start_time;
                 let text = fixedstr::str_format!(str16, "{:.1}", elapsed.as_secs_f32());
-                display.render_text(Vec2::new(4., 2.), &text);
+                display.render_text(&IVec2::new(4, 2), &text);
             }
             State::GameOverFreeze { won, elapsed } => {
                 let text = if won {
@@ -307,23 +307,25 @@ impl Scene for MgDogeEmScene {
                 };
                 const FAILURE_RECT: Rect =
                     Rect::new_center(Vec2::new(CENTER_X, 20.), Vec2::new(WIDTH_F32, 20.));
+                const FAILURE_RECT_POS: IVec2 =
+                    IVec2::new(FAILURE_RECT.pos.x as i32, FAILURE_RECT.pos.y as i32);
                 display.render_rect_solid(FAILURE_RECT, false);
                 display.render_text_complex(
-                    FAILURE_RECT.pos - Vec2::new(0., 8.),
+                    &(FAILURE_RECT_POS - IVec2::new(0, 8)),
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "ELAPSED");
                 display.render_text_complex(
-                    FAILURE_RECT.pos,
+                    &FAILURE_RECT_POS,
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "{:.2}", elapsed.as_secs_f32());
                 display.render_text_complex(
-                    FAILURE_RECT.pos + Vec2::new(0., 9.),
+                    &(FAILURE_RECT_POS + IVec2::new(0, 9)),
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );

@@ -71,7 +71,7 @@ impl Anime {
         self.frames
     }
 
-    pub fn current_frame(&self) -> &'static StaticImage {
+    pub const fn current_frame(&self) -> &'static StaticImage {
         self.frames[self.current_index].frame
     }
 

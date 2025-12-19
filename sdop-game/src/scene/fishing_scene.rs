@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use fixedstr::{str_format, str32};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
@@ -9,7 +9,7 @@ use crate::{
     assets::{
         self, FRAMES_FISHING_POND_MOVING, IMAGE_FISHING_POND_LINE_MASK_0, IMAGE_FISHING_POND_STILL,
     },
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     geo::Rect,
     input::random_button,
@@ -382,13 +382,13 @@ impl Scene for FishingScene {
                         Winning::Money(money) => {
                             let total = str_format!(str32, "${}", args.game_ctx.money);
                             display.render_text_complex(
-                                Vec2::new(10., 20.),
+                                &IVec2::new(10, 20),
                                 &total,
                                 ComplexRenderOption::new().with_white(),
                             );
                             let winnings = str_format!(str32, "+${}", money);
                             display.render_text_complex(
-                                Vec2::new(10., 30.),
+                                &IVec2::new(10, 30),
                                 &winnings,
                                 ComplexRenderOption::new().with_white(),
                             );
@@ -396,7 +396,7 @@ impl Scene for FishingScene {
                     }
                 } else {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, 10.),
+                        &IVec2::new(CENTER_X_I32, 10),
                         "NOTHING",
                         ComplexRenderOption::new()
                             .with_white()

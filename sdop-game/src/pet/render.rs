@@ -2,7 +2,7 @@ use glam::Vec2;
 
 use crate::{
     anime::Anime,
-    assets::Image,
+    assets::{Image, StaticImage},
     display::PostionMode,
     pet::definition::{PET_BLOB_ID, PetAnimationSet, PetDefinition, PetDefinitionId},
     sprite::{Sprite, SpriteMask, SpritePostionMode},
@@ -29,6 +29,10 @@ impl PetRender {
             anime: create_pet_anime(def_id, Default::default()),
             ..Default::default()
         }
+    }
+
+    pub const fn static_image(&self) -> &'static StaticImage {
+        self.anime.current_frame()
     }
 
     pub fn with_pos_mode(mut self, pos_mode: PostionMode) -> Self {

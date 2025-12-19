@@ -1,9 +1,9 @@
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, assets,
-    display::{CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X, CENTER_X_I32, CENTER_Y, CENTER_Y_I32, ComplexRenderOption, GameDisplay},
     fonts,
     geo::Rect,
     pet::{definition::PetDefinitionId, render::PetRender},
@@ -132,7 +132,7 @@ impl Scene for EnterTextScene {
         );
 
         display.render_text_complex(
-            Vec2::new(CENTER_X, 50.),
+            &IVec2::new(CENTER_X_I32, 50),
             &self.display_text,
             ComplexRenderOption::new()
                 .with_white()
@@ -140,19 +140,20 @@ impl Scene for EnterTextScene {
                 .with_font(&fonts::FONT_VARIABLE_SMALL),
         );
 
-        const LETTER_BUFFER_X: f32 = 2.;
-        const LETTER_START_X: f32 = 7.;
+        const LETTER_BUFFER_X: i32 = 2;
+        const LETTER_START_X: i32 = 7;
         let mut rect = Rect::new_top_left(Vec2::new(0., CENTER_Y + 5.), Vec2::new(8., 2.));
 
         for i in 0..self.max_len {
-            rect.pos.x = LETTER_START_X + (i as f32 * (rect.size.x + LETTER_BUFFER_X));
+            rect.pos.x =
+                LETTER_START_X as f32 + (i as f32 * (rect.size.x as f32 + LETTER_BUFFER_X as f32));
             display.render_rect_solid(rect, true);
         }
 
         for (i, c) in self.text.chars().enumerate() {
-            let x = LETTER_START_X + (i as f32 * (rect.size.x + LETTER_BUFFER_X));
+            let x = LETTER_START_X + (i as i32 * (rect.size.x as i32 + LETTER_BUFFER_X));
             display.render_text_complex(
-                Vec2::new(x, CENTER_Y),
+                &IVec2::new(x, CENTER_Y_I32),
                 &str_format!(fixedstr::str4, "{}", c),
                 ComplexRenderOption::new()
                     .with_white()
@@ -175,10 +176,10 @@ impl Scene for EnterTextScene {
                 if self.selected_index < self.max_len {
                     display.render_image_center(
                         (LETTER_START_X
-                            + (self.selected_index as f32 * (rect.size.x + LETTER_BUFFER_X)))
-                            as i32
+                            + (self.selected_index as i32
+                                * (rect.size.x as i32 + LETTER_BUFFER_X)))
                             - 1,
-                        CENTER_Y as i32 + 15,
+                        CENTER_Y_I32 + 15,
                         &assets::IMAGE_NAME_ARROW,
                     );
                 } else {
@@ -191,10 +192,10 @@ impl Scene for EnterTextScene {
                 }
             }
             State::SelectChar => {
-                let x =
-                    LETTER_START_X + (self.selected_index as f32 * (rect.size.x + LETTER_BUFFER_X));
+                let x = LETTER_START_X
+                    + (self.selected_index as i32 * (rect.size.x as i32 + LETTER_BUFFER_X));
                 display.render_text_complex(
-                    Vec2::new(x, CENTER_Y),
+                    &IVec2::new(x, CENTER_Y_I32),
                     &str_format!(
                         fixedstr::str4,
                         "{}",

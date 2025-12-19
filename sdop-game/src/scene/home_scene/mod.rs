@@ -6,7 +6,8 @@ use core::{time::Duration, u8};
 
 use chrono::{Datelike, Timelike};
 use fixedstr::{str_format, str32};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
+use heapless::Vec;
 
 use crate::{
     Button, Timestamp, WIDTH,
@@ -19,8 +20,8 @@ use crate::{
     book::on_book_completed,
     date_utils::DurationExt,
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
-        WIDTH_I32,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32,
+        WIDTH_F32, WIDTH_I32,
     },
     dream_bubble::DreamBubble,
     egg::EggRender,
@@ -946,7 +947,7 @@ impl Scene for HomeScene {
             }
             State::ReadingBook { book } => {
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, 34.),
+                    &IVec2::new(CENTER_X_I32, 34),
                     "CHAPTER",
                     ComplexRenderOption::new()
                         .with_white()
@@ -961,7 +962,7 @@ impl Scene for HomeScene {
                     book.book_info().chapters
                 );
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, 40.),
+                    &IVec2::new(CENTER_X_I32, 40),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -975,7 +976,7 @@ impl Scene for HomeScene {
                         .as_millis_f32();
                 let str = str_format!(fixedstr::str24, "{:.0}%", percent_complete * 100.,);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, 46.),
+                    &IVec2::new(CENTER_X_I32, 46),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -985,7 +986,7 @@ impl Scene for HomeScene {
 
                 for word in args.game_ctx.home.floating_words.iter().flatten() {
                     display.render_text_complex(
-                        word.pos,
+                        &IVec2::new(word.pos.x as i32, word.pos.y as i32),
                         word.text,
                         ComplexRenderOption::new()
                             .with_white()
@@ -1079,7 +1080,7 @@ impl Scene for HomeScene {
                 y += assets::IMAGE_CURRENTLY_EXPLORING.size.y as i32;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32 + 4.),
+                    &IVec2::new(CENTER_X_I32, y + 4),
                     explore.current_location().name,
                     ComplexRenderOption::new()
                         .with_white()
@@ -1100,7 +1101,7 @@ impl Scene for HomeScene {
 
                     let str = str_format!(fixedstr::str12, "{}h{:02}m{:02}s", hours, mins, seconds);
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y as f32),
+                        &IVec2::new(CENTER_X_I32, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -1137,7 +1138,7 @@ impl Scene for HomeScene {
 
                 let str = str_format!(fixedstr::str32, "{} now is", pet.name.trim());
                 display.render_text_complex(
-                    Vec2::new(CENTER_X + 1., y as f32),
+                    &IVec2::new(CENTER_X_I32 + 1, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -1148,7 +1149,7 @@ impl Scene for HomeScene {
                 y += 7;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X + 1., y as f32),
+                    &IVec2::new(CENTER_X_I32 + 1, y),
                     explore.current_activity(),
                     ComplexRenderOption::new()
                         .with_white()
@@ -1185,17 +1186,14 @@ impl Scene for HomeScene {
                 total_filled,
             );
 
-            const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.size.y as i32 + 1;
+            const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.isize.y + 1;
             display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
             let hours = pet.age.as_hours() as i32;
             let days = hours / 24;
             let hours = hours % 24;
             let str = str_format!(str32, "{}d{}h", days, hours);
             display.render_text_complex(
-                Vec2::new(
-                    STOMACH_END_X as f32 + assets::IMAGE_AGE_SYMBOL.size.x as f32 + 2.,
-                    1.,
-                ),
+                &IVec2::new(STOMACH_END_X + assets::IMAGE_AGE_SYMBOL.isize.x + 2, 1),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -1204,7 +1202,7 @@ impl Scene for HomeScene {
 
             let money_str = fixedstr::str_format!(str32, "${}", args.game_ctx.money);
             display.render_text_complex(
-                Vec2::new(STOMACH_END_X as f32, 10.),
+                &IVec2::new(STOMACH_END_X, 10),
                 &money_str,
                 ComplexRenderOption::new()
                     .with_white()

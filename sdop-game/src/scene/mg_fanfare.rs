@@ -1,11 +1,11 @@
 use core::time::Duration;
 
 use fixedstr::{str_format, str32};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Timestamp,
-    display::{CENTER_VEC, CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     money::Money,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -105,14 +105,14 @@ impl Scene for MgFanFareScene {
             State::Intro => {
                 let total = str_format!(str32, "${}", args.game_ctx.money);
                 display.render_text_complex(
-                    Vec2::new(10., 10.),
+                    &IVec2::new(10, 10),
                     &total,
                     ComplexRenderOption::new().with_white(),
                 );
                 if self.show_earned {
                     let winnings = str_format!(str32, "+${}", self.money);
                     display.render_text_complex(
-                        Vec2::new(10., 20.),
+                        &IVec2::new(10, 20),
                         &winnings,
                         ComplexRenderOption::new().with_white(),
                     );
@@ -121,7 +121,7 @@ impl Scene for MgFanFareScene {
             State::ShowingTotal => {
                 let winnings = str_format!(str32, "${}", args.game_ctx.money + self.money);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, 10.),
+                    &IVec2::new(CENTER_X_I32, 10),
                     &winnings,
                     ComplexRenderOption::new().with_white().with_center(),
                 );

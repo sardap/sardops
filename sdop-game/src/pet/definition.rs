@@ -60,7 +60,7 @@ impl PetDefinition {
     pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
         let hour = timestamp.inner().hour();
         match self.life_stage {
-            LifeStage::Baby => false,
+            LifeStage::Baby => !(6..20).contains(&hour),
             LifeStage::Child => !(8..21).contains(&hour),
             LifeStage::Adult => !(7..22).contains(&hour),
         }
