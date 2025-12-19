@@ -68,12 +68,12 @@ impl ComplexRender for CalendarRender {
 
         let mut top = NaiveDate::from_ymd_opt(self.date.year(), self.date.month(), 1).unwrap();
 
-        let mut col = top.weekday().days_since(Weekday::Mon) as usize;
+        let mut col = top.weekday().days_since(Weekday::Mon) as i32;
         let mut row = 0;
         while top <= self.date {
             display.render_point(
-                top_left.x as i32 + 3 + (X_OFFSET * col as i32),
-                top_left.y as i32 + 1 + ROWS_Y[row],
+                top_left.x + 3 + (X_OFFSET * col),
+                top_left.y + 1 + ROWS_Y[row],
                 true,
             );
 

@@ -523,7 +523,11 @@ impl Inventory {
         &self.contents[item as usize]
     }
 
-    pub fn add_item(&mut self, item: ItemKind, qty: i32) {
+    pub fn add_item(&mut self, item: ItemKind, qty: i32) -> bool {
+        if item.unique() && self.has_item(item) {
+            return false;
+        }
+
         let entry = self.get_entry_mut(item);
         if entry.owned <= 0 && qty > 0 {
             entry.item_extra = ItemExtra::new_from_kind(item);
@@ -535,6 +539,8 @@ impl Inventory {
             updated = 0;
         }
         entry.owned = updated as u32;
+
+        true
     }
 
     pub fn clear_item(&mut self, item: ItemKind) {

@@ -164,11 +164,6 @@ impl GameDisplay {
     }
 
     pub fn render_point(&mut self, x: i32, y: i32, value: bool) {
-        if !(x >= 0 && x < WIDTH as i32 && y >= 0 && y < HEIGHT as i32) {
-            return;
-        }
-        let x = x as usize;
-        let y = y as usize;
         self.bits.set_pixel(x, y, value);
     }
 
@@ -226,12 +221,10 @@ impl GameDisplay {
                 let dx = x_plus + rx;
                 let dy = y_plus + ry;
 
-                if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
-                    if options.invert {
-                        self.render_point(dx, dy, !self.bits.get_bit(dx as usize, dy as usize));
-                    } else {
-                        self.render_point(dx, dy, bit_set);
-                    }
+                if options.invert {
+                    self.render_point(dx, dy, !self.bits.get_bit(dx as usize, dy as usize));
+                } else {
+                    self.render_point(dx, dy, bit_set);
                 }
             }
         }
@@ -711,10 +704,13 @@ where
         (self.data[byte_index] & (1 << bit_index)) != 0
     }
 
-    pub fn set_pixel(&mut self, x: usize, y: usize, value: bool) {
-        if x >= W || y >= H {
+    pub fn set_pixel(&mut self, x: i32, y: i32, value: bool) {
+        if !(x >= 0 && x < W as i32 && y >= 0 && y < H as i32) {
             return;
         }
+
+        let x = x as usize;
+        let y = y as usize;
 
         // BMP stores rows bottom-up
         let flipped_y = H - 1 - y;

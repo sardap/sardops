@@ -292,8 +292,9 @@ impl ExploreSystem {
 
                 for reward in current.rewards.items {
                     if rng.f32() < reward.odds * percent_passed {
-                        let _ = result.items.push(reward.item);
-                        inventory.add_item(reward.item, 1);
+                        if inventory.add_item(reward.item, 1) {
+                            let _ = result.items.push(reward.item);
+                        }
                     }
                 }
 

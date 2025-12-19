@@ -19,6 +19,7 @@
             money_start: 0,
             money_end: 0,
             items: [
+                (item: "Telescope", odds: 0.8),
                 (item: "Painting Dude", odds: 0.2),
                 (item: "Map To The Ninch", odds: 0.15),
 

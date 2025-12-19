@@ -18,10 +18,11 @@
 
 ### Issues / Bugs
 - [] should not go out if egg will hatch soon
-- [] After new pet somehow gone out instantly probably not reseting the state but should have validates 
-- [] Babies should poo more
+- [X] After new pet somehow gone out instantly probably not reseting the state but should have validates 
+- [X] Babies should poo more (Poop was broken unless coffee was being drunk)
 - [] Need more to do with baby
 - [X] Stomach shake needs to be more
+
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait
