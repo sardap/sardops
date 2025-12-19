@@ -6,7 +6,7 @@ use crate::{
     assets::{self, DynamicImage},
     date_utils::{MoonRender, time_in_range},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32,
+        CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay,
         HEIGHT_I32, WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,

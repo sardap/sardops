@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Button, Timestamp, assets,

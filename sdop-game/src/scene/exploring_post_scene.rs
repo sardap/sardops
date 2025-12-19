@@ -1,5 +1,5 @@
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     assets,

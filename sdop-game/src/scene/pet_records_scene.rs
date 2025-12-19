@@ -4,7 +4,7 @@ use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
-    assets::{self, Image},
+    assets::{self},
     date_utils::DurationExt,
     death::DeathCause,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},

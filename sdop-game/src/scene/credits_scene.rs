@@ -1,5 +1,5 @@
 use crate::{
-    display::{CENTER_IVEC, CENTER_VEC, ComplexRenderOption, GameDisplay},
+    display::{CENTER_IVEC, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };

@@ -2,7 +2,6 @@ use core::time::Duration;
 
 use glam::{IVec2, U16Vec2, Vec2, usize};
 
-use crate::display::WIDTH_I32;
 
 include!(concat!(env!("OUT_DIR"), "/dist_assets.rs"));
 

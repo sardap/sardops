@@ -5,7 +5,7 @@ use strum::EnumCount;
 
 use crate::{
     Button,
-    assets::{self, Image},
+    assets::{self},
     date_utils::DurationExt,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts,

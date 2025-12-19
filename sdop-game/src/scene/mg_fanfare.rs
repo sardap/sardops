@@ -1,11 +1,11 @@
 use core::time::Duration;
 
 use fixedstr::{str_format, str32};
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Timestamp,
-    display::{CENTER_VEC, CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
+    display::{CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     money::Money,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},

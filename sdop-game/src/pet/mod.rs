@@ -1,4 +1,3 @@
-use const_for::const_for;
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
@@ -6,7 +5,6 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use fastrand::Rng;
 use heapless::Vec;
 use strum::EnumCount;
-use strum_macros::{EnumCount, EnumIter};
 
 use crate::{
     Timestamp,

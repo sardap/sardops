@@ -5,7 +5,7 @@ use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
-    display::{CENTER_X, CENTER_X_I32, ComplexRender, ComplexRenderOption},
+    display::{CENTER_X_I32, ComplexRender, ComplexRenderOption},
     fonts,
     pet::definition::{PetDefinition, PetDefinitionId},
 };
