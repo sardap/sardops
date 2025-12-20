@@ -25,6 +25,7 @@ use crate::{
     dream_bubble::DreamBubble,
     egg::EggRender,
     fonts::FONT_VARIABLE_SMALL,
+    food::FOOD_COFFEE,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::{Rect, vec2_direction, vec2_distance},
     items::ItemKind,
@@ -521,21 +522,31 @@ impl Scene for HomeScene {
                         .random_point_inside(&mut args.game_ctx.rng);
                 }
 
-                args.game_ctx.home.pet_render.pos +=
-                    vec2_direction(args.game_ctx.home.pet_render.pos, args.game_ctx.home.target)
-                        * args.game_ctx.pet.definition().wonder_speed()
-                        * if args.game_ctx.pet.is_starving() {
-                            0.5
+                {
+                    let pet = &mut args.game_ctx.pet;
+                    let home = &mut args.game_ctx.home;
+
+                    home.pet_render.pos += vec2_direction(home.pet_render.pos, home.target)
+                        * pet.definition().wonder_speed()
+                        * if pet.is_starving() { 0.5 } else { 1. }
+                        * if pet.is_ill() { 0.5 } else { 1. }
+                        * if home.weather.is_weather_none() {
+                            1.
                         } else {
-                            1.
+                            0.5
                         }
-                        * if args.game_ctx.pet.is_ill() { 0.5 } else { 1. }
-                        * if args.game_ctx.home.weather.is_weather_none() {
-                            1.
+                        * if pet.food_history.sick_of(&FOOD_COFFEE)
+                            && pet.food_history.ate_since_time(
+                                &FOOD_COFFEE,
+                                args.timestamp - Duration::from_hours(2),
+                            )
+                        {
+                            3.
                         } else {
                             0.5
                         }
                         * args.delta.as_secs_f32();
+                }
             }
             State::Sleeping => {
                 self.egg_render.pos = EGG_RIGHT;
