@@ -353,6 +353,12 @@ impl Inventory {
         true
     }
 
+    pub fn add_items(&mut self, items: &[ItemKind]) {
+        for item in items {
+            self.add_item(*item, 1);
+        }
+    }
+
     pub fn clear_item(&mut self, item: ItemKind) {
         let entry = self.get_entry_mut(item);
         if entry.owned <= 0 {

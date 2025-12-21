@@ -627,7 +627,11 @@ impl PetInstance {
     }
 
     pub fn heal_cost(&self) -> Money {
-        self.illness.cost
+        match self.definition().life_stage {
+            LifeStage::Baby => self.illness.cost / 6,
+            LifeStage::Child => self.illness.cost / 2,
+            LifeStage::Adult => self.illness.cost,
+        }
     }
 
     pub fn cure(&mut self) {
@@ -644,9 +648,6 @@ impl PetInstance {
             let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
             if is_starved {
                 odds += ILLNESS_STARVING_ODDS;
-            }
-            if self.since_game > ILLNESS_SINCE_GAME_DURATION {
-                odds += ILLNESS_SINCE_GAME_ODDS;
             }
 
             odds += match self.definition().life_stage {

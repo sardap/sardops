@@ -123,6 +123,10 @@ impl Scene for EvolveScene {
         args.game_ctx
             .pet
             .evolve(self.to_pet_render.def_id(), args.timestamp);
+
+        args.game_ctx
+            .inventory
+            .add_items(args.game_ctx.pet.definition().life_stage_items());
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {

@@ -118,14 +118,13 @@ pub const EGG_HATCH_MAX: Duration = Duration::from_days(1);
 pub const ILLNESS_SINCE_GAME_DURATION: Duration = Duration::from_hours(6);
 
 pub const ILLNESS_BASE_ODDS: f32 = sim_tick_odds_per_day(0.05);
-pub const ILLNESS_STARVING_ODDS: f32 = sim_tick_odds_per_day(0.3);
-pub const ILLNESS_SINCE_GAME_ODDS: f32 = sim_tick_odds_per_day(0.05);
+pub const ILLNESS_STARVING_ODDS: f32 = sim_tick_odds_per_day(0.1);
 pub const ILLNESS_BABY_ODDS: f32 = sim_tick_odds_per_day(0.2);
 pub const ILLNESS_CHILD_ODDS: f32 = sim_tick_odds_per_day(0.1);
 
 pub const ILLNESS_SINCE_ODDS: &[Threshold<Duration>] = &[
     Threshold::new(Duration::from_hours(4), sim_tick_odds_per_day(0.0)),
-    Threshold::new(Duration::from_hours(8), sim_tick_odds_per_hour(0.025)),
+    Threshold::new(Duration::from_hours(8), sim_tick_odds_per_hour(0.05)),
     Threshold::new(Duration::from_days(2), sim_tick_odds_per_hour(0.1)),
     Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.15)),
 ];

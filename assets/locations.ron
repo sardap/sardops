@@ -16,11 +16,12 @@
             "dodging dog poop",
         ],
         rewards: (
-            money_start: 0,
-            money_end: 0,
+            money_start: 500,
+            money_end: 1000,
             items: [
                 (item: "Telescope", odds: 0.8),
                 (item: "Painting Dude", odds: 0.2),
+                (item: "Book The Divine Comedy", odds: 0.2),
                 (item: "Map To The Ninch", odds: 0.15),
 
             ]
@@ -49,6 +50,7 @@
             items: [
                 (item: "Recipe Office Slop", odds: 0.2),
                 (item: "Book Vic 1981-1992", odds: 0.2),
+                (item: "Book Meditations", odds: 0.2),
             ]
         ),
     ),
@@ -81,6 +83,7 @@
                 (item: "Recipe Pizza", odds: 0.2),
                 (item: "Recipe Chips", odds: 0.2),
                 (item: "Fishing Rod", odds: 0.1),
+                (item: "Book Homers Iliad", odds: 0.2),
                 (item: "Map 1000 steps", odds: 0.8),
             ]
         ),
@@ -104,6 +107,7 @@
             money_start: 0,
             money_end: 0,
             items: [
+                (item: "Book Nevile Wran", odds: 0.2),
                 (item: "Map Riding the 109", odds: 0.8),
             ]
         ),
@@ -131,6 +135,7 @@
             items: [
                 (item: "Recipe Bubble Tea", odds: 0.2),
                 (item: "Recipe Meatballs", odds: 0.2),
+                (item: "Book Dracula", odds: 0.2),
                 (item: "Map Flagstaff Station", odds: 0.8),
             ]
         ),
@@ -258,6 +263,7 @@
             money_end: 0,
             items: [
                 (item: "Recipe Fried Chicken", odds: 0.2),
+                (item: "Book The Art of war", odds: 0.2),
                 (item: "Map Gangnam Style Sculpture", odds: 0.8),
             ]
         ),
@@ -281,6 +287,7 @@
             money_start: 0,
             money_end: 0,
             items: [
+                (item: "Book Homers odyssey", odds: 0.2),
                 (item: "Recipe Gopchang", odds: 0.2),
                 (item: "Map Cyberspace", odds: 0.5),
             ]

@@ -252,6 +252,7 @@
         desc: "A ancient tale of a great journey around the sea.",
         fishing_odds: 0.05,
         skill: 30,
+        in_shop: false,
     ),
     ItemTemplate(
         name: "Book The Art of war",
