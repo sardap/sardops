@@ -7,6 +7,7 @@ use crate::{
     assets::{self, MaskedFramesSet},
     explore::ExploreSkill,
     food::Food,
+    game_consts::{ADULT_LIFE_STAGE_ITEMS, BABY_LIFE_STAGE_ITEMS, CHILD_LIFE_STAGE_ITEMS},
     items::ItemKind,
     pet::LifeStage,
 };
@@ -100,9 +101,9 @@ impl PetDefinition {
 
     pub fn life_stage_items(&self) -> &[ItemKind] {
         let items: &[ItemKind] = match self.life_stage {
-            LifeStage::Baby => &[],
-            LifeStage::Child => &[],
-            LifeStage::Adult => &[ItemKind::MapIntoTheOffice],
+            LifeStage::Baby => BABY_LIFE_STAGE_ITEMS,
+            LifeStage::Child => CHILD_LIFE_STAGE_ITEMS,
+            LifeStage::Adult => ADULT_LIFE_STAGE_ITEMS,
         };
 
         items

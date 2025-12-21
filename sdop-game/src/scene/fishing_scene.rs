@@ -227,9 +227,9 @@ impl Scene for FishingScene {
                     let percent = if hits == 0. { 0.05 } else { possible / hits };
                     if args.game_ctx.rng.f32() < percent {
                         let percent = args.game_ctx.rng.f32();
-                        self.winning = Some(if percent < 0.6 {
+                        self.winning = Some(if percent < 0.3 {
                             Winning::Garbage
-                        } else if percent < 0.7 {
+                        } else if percent < 0.6 {
                             Winning::Money(args.game_ctx.rng.i32(100..5000))
                         } else {
                             Winning::Item(pick_item_from_set(

@@ -236,3 +236,7 @@ pub const COFFEE_POOP_MODIFER: Duration = Duration::from_mins(30);
 pub const ITEMS_CLEAR_ON_NEW_PET: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
 
 pub const STARTING_ITEMS: &[ItemKind] = &[ItemKind::RecipeBiscuit, ItemKind::MapDownTheRoad];
+
+pub const BABY_LIFE_STAGE_ITEMS: &[ItemKind] = &[];
+pub const CHILD_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapToTheNinch];
+pub const ADULT_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
