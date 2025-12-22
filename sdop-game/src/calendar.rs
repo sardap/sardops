@@ -72,7 +72,7 @@ impl ComplexRender for CalendarRender {
         let mut row = 0;
         while top <= self.date {
             display.render_point(
-                top_left.x + 3 + (X_OFFSET * col),
+                top_left.x + 2 + (X_OFFSET * col),
                 top_left.y + 1 + ROWS_Y[row],
                 true,
             );
