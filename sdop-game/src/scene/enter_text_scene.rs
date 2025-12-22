@@ -5,7 +5,7 @@ use crate::{
     Button, assets,
     display::{CENTER_X, CENTER_X_I32, CENTER_Y, CENTER_Y_I32, ComplexRenderOption, GameDisplay},
     fonts,
-    geo::Rect,
+    geo::RectVec2,
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
@@ -142,7 +142,7 @@ impl Scene for EnterTextScene {
 
         const LETTER_BUFFER_X: i32 = 2;
         const LETTER_START_X: i32 = 7;
-        let mut rect = Rect::new_top_left(Vec2::new(0., CENTER_Y + 5.), Vec2::new(8., 2.));
+        let mut rect = RectVec2::new_top_left(Vec2::new(0., CENTER_Y + 5.), Vec2::new(8., 2.));
 
         for i in 0..self.max_len {
             rect.pos.x =
@@ -183,7 +183,7 @@ impl Scene for EnterTextScene {
                         &assets::IMAGE_NAME_ARROW,
                     );
                 } else {
-                    let rect = Rect::new_center(
+                    let rect = RectVec2::new_center(
                         Vec2::new(CENTER_X, CENTER_Y + 30.),
                         assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
                     )

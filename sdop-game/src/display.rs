@@ -8,7 +8,7 @@ use strum_macros::EnumIter;
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
 use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
-use crate::{assets::Image, geo::Rect, sprite::Sprite};
+use crate::{assets::Image, geo::RectVec2, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
 pub const WIDTH_I32: i32 = WIDTH as i32;
@@ -243,7 +243,7 @@ impl GameDisplay {
         self.render_image_complex(x, y, image, ComplexRenderOption::new().with_white());
     }
 
-    pub fn render_rect_solid(&mut self, rect: Rect, white: bool) {
+    pub fn render_rect_solid(&mut self, rect: RectVec2, white: bool) {
         let top_left = rect.pos_top_left();
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
             for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
@@ -252,7 +252,7 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_rect_outline(&mut self, rect: Rect, white: bool) {
+    pub fn render_rect_outline(&mut self, rect: RectVec2, white: bool) {
         let top_left = rect.pos_top_left();
         let bottom_right_x = top_left.x + rect.size.x - 1.;
         let bottom_right_y = top_left.y + rect.size.y - 1.;
@@ -270,7 +270,7 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_rect_outline_dashed(&mut self, rect: Rect, white: bool, dash_width: usize) {
+    pub fn render_rect_outline_dashed(&mut self, rect: RectVec2, white: bool, dash_width: usize) {
         let top_left = rect.pos_top_left();
         let bottom_right_x = top_left.x + rect.size.x - 1.;
         let bottom_right_y = top_left.y + rect.size.y - 1.;
@@ -475,7 +475,7 @@ impl GameDisplay {
     pub fn render_stomach(&mut self, pos_center: Vec2, filled: f32) {
         use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};
 
-        let filled_rect = Rect::new_top_left(
+        let filled_rect = RectVec2::new_top_left(
             Vec2::new(
                 pos_center.x - (IMAGE_STOMACH_MASK.size.x / 2) as f32,
                 pos_center.y - IMAGE_STOMACH_MASK.size.y as f32
@@ -507,7 +507,7 @@ impl GameDisplay {
     }
 
     #[allow(dead_code)]
-    pub fn invert_rect(&mut self, rect: Rect) {
+    pub fn invert_rect(&mut self, rect: RectVec2) {
         let top_left = rect.pos_top_left();
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
             for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
@@ -568,7 +568,7 @@ impl GameDisplay {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
-            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
+            RectVec2::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
             false,
         );
         self.render_text_complex(
@@ -585,7 +585,7 @@ impl GameDisplay {
         let str = str_format!(str16, "{:.0}", temperature);
         let width = str.len() as i32 * 5 + 3;
         self.render_rect_solid(
-            Rect::new_top_left(
+            RectVec2::new_top_left(
                 Vec2::new(WIDTH_F32 - width as f32, 0.),
                 Vec2::new(width as f32, 9.),
             ),

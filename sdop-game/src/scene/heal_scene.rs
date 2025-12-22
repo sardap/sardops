@@ -13,7 +13,7 @@ use crate::{
         HEIGHT_F32, PostionMode, WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_HEAL, SongPlayOptions},
@@ -250,7 +250,7 @@ impl Scene for HealScene {
                     );
 
                     display.render_rect_outline(
-                        Rect::new_center(
+                        RectVec2::new_center(
                             Vec2::new(CENTER_X, current_y as f32),
                             Vec2::new(30., 10.),
                         ),
@@ -323,7 +323,7 @@ impl Scene for HealScene {
                     );
 
                     display.render_rect_outline(
-                        Rect::new_center(
+                        RectVec2::new_center(
                             Vec2::new(if self.will_pay { 20. } else { 45. }, current_y as f32),
                             Vec2::new(18., 10.),
                         ),

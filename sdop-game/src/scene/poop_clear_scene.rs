@@ -5,7 +5,7 @@ use glam::Vec2;
 use crate::{
     anime::tick_all_anime,
     display::{CENTER_VEC, GameDisplay, HEIGHT_F32, WIDTH_F32},
-    geo::Rect,
+    geo::RectVec2,
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, update_poop_renders},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene},
@@ -105,7 +105,7 @@ impl Scene for PoopClearScene {
             State::Wiping { x } => {
                 display.render_sprites(&self.poops);
                 display.invert();
-                let rect = Rect::new_top_left(Vec2::ZERO, Vec2::new(*x, HEIGHT_F32));
+                let rect = RectVec2::new_top_left(Vec2::ZERO, Vec2::new(*x, HEIGHT_F32));
                 display.render_rect_solid(rect, false);
             }
             State::Cheering { elapsed: _elapsed } => {

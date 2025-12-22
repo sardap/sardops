@@ -5,7 +5,7 @@ use crate::{
     assets::{self, Image},
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    geo::Rect,
+    geo::RectVec2,
     items::{FURNITURE_ITEMS, ItemKind},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -196,7 +196,7 @@ impl Scene for PlaceFurnitureScene {
         match self.state {
             State::SelectingPlace => {
                 if let Some(location) = self.selected.to_location() {
-                    let rect: Rect = Rect::new_center(
+                    let rect: RectVec2 = RectVec2::new_center(
                         location.pos()
                             + match location {
                                 HomeFurnitureLocation::Top => {
@@ -218,7 +218,7 @@ impl Scene for PlaceFurnitureScene {
                     .grow(11.);
                     display.render_rect_outline(rect, true);
                 } else {
-                    let rect: Rect = Rect::new_center(
+                    let rect: RectVec2 = RectVec2::new_center(
                         Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
                     )

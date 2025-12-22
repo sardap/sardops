@@ -5,7 +5,7 @@ use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
     display::{HEIGHT_F32, PostionMode, Rotation, WIDTH_F32},
-    geo::Rect,
+    geo::RectVec2,
 };
 
 pub trait Sprite {
@@ -13,8 +13,8 @@ pub trait Sprite {
 
     fn image(&self) -> &impl Image;
 
-    fn rect(&self) -> Rect {
-        Rect::new_center(*self.pos(), self.image().size_vec2())
+    fn rect(&self) -> RectVec2 {
+        RectVec2::new_center(*self.pos(), self.image().size_vec2())
     }
 
     fn x1(&self) -> f32 {

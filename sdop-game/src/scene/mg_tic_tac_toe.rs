@@ -5,7 +5,7 @@ use glam::Vec2;
 use crate::{
     Button, Timestamp,
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::Rect,
+    geo::RectVec2,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
     tic_tac_toe::{
@@ -81,8 +81,8 @@ const COL_COUNT: usize = 3;
 const ROW_COUNT: usize = 3;
 const BOARD_SIZE: usize = COL_COUNT * ROW_COUNT;
 
-const fn generate_board_rects() -> [Rect; BOARD_SIZE] {
-    let mut rects = [Rect::new(); BOARD_SIZE];
+const fn generate_board_rects() -> [RectVec2; BOARD_SIZE] {
+    let mut rects = [RectVec2::new(); BOARD_SIZE];
     let mut i = 0;
     while i < BOARD_SIZE {
         let row = i / ROW_COUNT;
@@ -91,13 +91,13 @@ const fn generate_board_rects() -> [Rect; BOARD_SIZE] {
         let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as f32;
         let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as f32;
 
-        rects[i] = Rect::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
+        rects[i] = RectVec2::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
         i += 1;
     }
     rects
 }
 
-const RECTANGLES: [Rect; BOARD_SIZE] = generate_board_rects();
+const RECTANGLES: [RectVec2; BOARD_SIZE] = generate_board_rects();
 
 impl Scene for MgTicTacToeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {

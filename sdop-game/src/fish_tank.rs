@@ -8,7 +8,7 @@ use crate::{
     anime::{Anime, HasAnime},
     assets,
     display::{ComplexRender, ComplexRenderOption},
-    geo::Rect,
+    geo::RectVec2,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -71,7 +71,7 @@ pub struct FishTankRender {
     anime: Anime,
 }
 
-const FISH_AREA: Rect = Rect::new_top_left(Vec2::new(1., 4.), Vec2::new(16., 10.));
+const FISH_AREA: RectVec2 = RectVec2::new_top_left(Vec2::new(1., 4.), Vec2::new(16., 10.));
 
 impl FishTankRender {
     pub fn new(pos: Vec2) -> Self {

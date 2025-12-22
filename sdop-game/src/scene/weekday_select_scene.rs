@@ -6,7 +6,7 @@ use crate::{
     Button, assets,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -190,7 +190,7 @@ impl Scene for WeekdaySelectScene {
 
             if self.days.contains(*day) {
                 display.render_rect_solid(
-                    Rect::new_bottom_left(
+                    RectVec2::new_bottom_left(
                         Vec2::new(x as f32 - 2., y as f32 + 4.),
                         Vec2::new(width + 4., 1.),
                     ),
@@ -202,7 +202,7 @@ impl Scene for WeekdaySelectScene {
                 let selected = WEEKDAYS.get(self.current as usize).unwrap_or(&Weekday::Mon);
                 if day == selected {
                     display.render_rect_outline_dashed(
-                        Rect::new_bottom_left(
+                        RectVec2::new_bottom_left(
                             Vec2::new(x as f32 - 2., y as f32 + 2.),
                             Vec2::new(width + 4., 10.),
                         ),
@@ -221,7 +221,7 @@ impl Scene for WeekdaySelectScene {
         );
 
         if self.current < 0 {
-            let rect = Rect::new_center(
+            let rect = RectVec2::new_center(
                 Vec2::new(CENTER_X, (y + GAP_Y * 4) as f32),
                 assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
             )

@@ -12,7 +12,7 @@ use crate::{
     display::{
         CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
     },
-    geo::Rect,
+    geo::RectVec2,
     pet::{
         definition::{PET_BABIES, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -155,7 +155,7 @@ impl DeathScene {
     }
 }
 
-const AREA: Rect = Rect::new_top_left(Vec2::ZERO, Vec2::new(WIDTH_F32, HEIGHT_F32));
+const AREA: RectVec2 = RectVec2::new_top_left(Vec2::ZERO, Vec2::new(WIDTH_F32, HEIGHT_F32));
 
 impl Scene for DeathScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
@@ -173,7 +173,7 @@ impl Scene for DeathScene {
         );
 
         if self.cause == DeathCause::ToxicShock {
-            let pet_rect = Rect::new_center(
+            let pet_rect = RectVec2::new_center(
                 self.pet_render.pos,
                 self.pet_render.anime.current_frame().size.as_vec2(),
             )
@@ -484,13 +484,13 @@ impl Scene for DeathScene {
                     .min(1.)
                         * 0.5;
 
-                    let left_door = Rect::new_top_left(
+                    let left_door = RectVec2::new_top_left(
                         Vec2::new(0., 0.),
                         Vec2::new(WIDTH_F32 * x_percent, HEIGHT_F32),
                     );
                     display.render_rect_solid(left_door, false);
 
-                    let right_door = Rect::new_top_left(
+                    let right_door = RectVec2::new_top_left(
                         Vec2::new(WIDTH_F32 - WIDTH_F32 * x_percent, 0.),
                         Vec2::new(WIDTH_F32, HEIGHT_F32),
                     );

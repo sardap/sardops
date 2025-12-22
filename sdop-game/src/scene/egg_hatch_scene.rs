@@ -7,7 +7,7 @@ use crate::{
     death::DeathCause,
     display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
     egg::{EggRender, SavedEgg},
-    geo::Rect,
+    geo::RectVec2,
     pet::{
         definition::{PET_BABIES, PET_BLOB_ID, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -242,7 +242,7 @@ impl Scene for EggHatchScene {
             }
             State::UfoTake => {
                 display.render_sprite(&self.parent_pet_render);
-                const BLOCK_OUT_RECT: Rect = Rect::new_top_left(
+                const BLOCK_OUT_RECT: RectVec2 = RectVec2::new_top_left(
                     Vec2::ZERO,
                     Vec2::new(WIDTH_F32, 30. + (assets::IMAGE_UFO.size.y / 2) as f32),
                 );

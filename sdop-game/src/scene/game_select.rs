@@ -4,7 +4,7 @@ use crate::{
     Button, HEIGHT,
     assets::{self, Image, StaticImage},
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::Rect,
+    geo::RectVec2,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_doge_em::MgDogeEmScene,
         mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
@@ -120,7 +120,7 @@ impl Scene for GameSelectScene {
         display.render_image_center(CENTER_X as i32, BACK_Y, &assets::IMAGE_BACK_SYMBOL);
 
         if self.selected as usize == self.active_minigames.len() {
-            const RECT: Rect = Rect::new_center(
+            const RECT: RectVec2 = RectVec2::new_center(
                 Vec2::new(CENTER_X, BACK_Y as f32),
                 Vec2::new(
                     assets::IMAGE_BACK_SYMBOL.size.x as f32,
@@ -130,7 +130,7 @@ impl Scene for GameSelectScene {
 
             display.render_rect_outline(RECT, true);
         } else {
-            let rect = Rect::new_center(
+            let rect = RectVec2::new_center(
                 get_pos(self.selected as usize),
                 assets::IMAGE_MG_DOGE_ICON.size_vec2(),
             )

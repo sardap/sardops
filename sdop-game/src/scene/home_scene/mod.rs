@@ -27,7 +27,7 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     food::FOOD_COFFEE,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    geo::{Rect, vec2_direction, vec2_distance},
+    geo::{RectVec2, vec2_direction, vec2_distance},
     items::ItemKind,
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
@@ -65,19 +65,19 @@ use crate::{
 
 const WONDER_SPEED: f32 = 5.;
 const DANCING_SPEED: f32 = 15.;
-pub const WONDER_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
-pub const DANCING_RECT: Rect = Rect::new_center(CENTER_VEC, Vec2::new(10., 10.));
+pub const WONDER_RECT: RectVec2 = RectVec2::new_center(CENTER_VEC, Vec2::new(WIDTH as f32, 90.0));
+pub const DANCING_RECT: RectVec2 = RectVec2::new_center(CENTER_VEC, Vec2::new(10., 10.));
 
-pub const GREATER_WONDER_RECT: Rect = WONDER_RECT.grow(50.);
+pub const GREATER_WONDER_RECT: RectVec2 = WONDER_RECT.grow(50.);
 
 const BORDER_HEIGHT: f32 = 1.;
 
-pub const HOME_SCENE_TOP_BORDER_RECT: Rect = Rect::new_center(
+pub const HOME_SCENE_TOP_BORDER_RECT: RectVec2 = RectVec2::new_center(
     Vec2::new(CENTER_X, 24.),
     Vec2::new(WIDTH_F32, BORDER_HEIGHT),
 );
 
-pub const HOME_SCENE_TOP_AREA_RECT: Rect = Rect::new_top_left(
+pub const HOME_SCENE_TOP_AREA_RECT: RectVec2 = RectVec2::new_top_left(
     Vec2::new(0., 0.),
     Vec2::new(WIDTH_F32, HOME_SCENE_TOP_BORDER_RECT.y2()),
 );
@@ -203,8 +203,8 @@ impl Default for HomeSceneData {
 }
 
 impl HomeSceneData {
-    fn wonder_rect(&self) -> Rect {
-        Rect::new_center(
+    fn wonder_rect(&self) -> RectVec2 {
+        RectVec2::new_center(
             WONDER_RECT.pos,
             WONDER_RECT.size - self.pet_render.anime.current_frame().size.x as f32,
         )
@@ -226,7 +226,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
     |args| {
         const LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
             Duration::from_secs(10)..Duration::from_secs(20),
-            Rect::new_top_left(
+            RectVec2::new_top_left(
                 Vec2::new(
                     HOME_SCENE_TOP_AREA_RECT.x2() + 20.,
                     HOME_SCENE_TOP_AREA_RECT.y2(),
@@ -238,7 +238,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
         );
         const RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
             Duration::from_secs(1)..Duration::from_secs(10),
-            Rect::new_top_left(
+            RectVec2::new_top_left(
                 Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2()),
                 Vec2::new(1., 20.),
             ),
@@ -1067,12 +1067,12 @@ impl Scene for HomeScene {
                 );
 
                 display.render_rect_solid(
-                    Rect::new_bottom_left(Vec2::new(0., y as f32), Vec2::new(WIDTH_F32, 20.)),
+                    RectVec2::new_bottom_left(Vec2::new(0., y as f32), Vec2::new(WIDTH_F32, 20.)),
                     false,
                 );
 
                 display.render_rect_solid(
-                    Rect::new_top_left(
+                    RectVec2::new_top_left(
                         Vec2::new(0., (y + PREVIEW_RECT_HEIGHT - 1) as f32),
                         Vec2::new(WIDTH_F32, 20.),
                     ),
@@ -1130,14 +1130,14 @@ impl Scene for HomeScene {
                 // Render percent
                 const PROGRESS_RECT_HEIGHT: f32 = 5.;
                 display.render_rect_outline(
-                    Rect::new_top_left(
+                    RectVec2::new_top_left(
                         Vec2::new(0., y as f32),
                         Vec2::new(WIDTH_F32, PROGRESS_RECT_HEIGHT),
                     ),
                     true,
                 );
                 display.render_rect_solid(
-                    Rect::new_top_left(
+                    RectVec2::new_top_left(
                         Vec2::new(0., y as f32),
                         Vec2::new(WIDTH_F32 * explore.percent_complete(), PROGRESS_RECT_HEIGHT),
                     ),

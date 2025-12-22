@@ -9,7 +9,7 @@ use crate::{
     display::{CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
     game_consts::SHOP_OPEN_TIMES,
-    geo::Rect,
+    geo::RectVec2,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
@@ -151,7 +151,7 @@ impl Scene for ShopScene {
                             |args| {
                                 const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
                                     Duration::from_millis(1000)..Duration::from_millis(2000),
-                                    Rect::new_top_left(Vec2::new(10., 80.), Vec2::new(40., 40.)),
+                                    RectVec2::new_top_left(Vec2::new(10., 80.), Vec2::new(40., 40.)),
                                     Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
                                     &[&assets::IMAGE_MONEY_PARTICLE],
                                 );

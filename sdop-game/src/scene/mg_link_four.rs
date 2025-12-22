@@ -5,7 +5,7 @@ use glam::Vec2;
 use crate::{
     Button, Timestamp,
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::Rect,
+    geo::RectVec2,
     link_four::{BestMoveSearch, COLUMNS, Game, GameStatus, Side},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -105,8 +105,8 @@ const COL_COUNT: usize = 7;
 const ROW_COUNT: usize = 6;
 const BOARD_SIZE: usize = COL_COUNT * ROW_COUNT;
 
-const fn generate_board_rects() -> [Rect; BOARD_SIZE] {
-    let mut rects = [Rect::new(); BOARD_SIZE];
+const fn generate_board_rects() -> [RectVec2; BOARD_SIZE] {
+    let mut rects = [RectVec2::new(); BOARD_SIZE];
     let mut row = 0;
     while row < ROW_COUNT {
         let mut col = 0;
@@ -116,7 +116,7 @@ const fn generate_board_rects() -> [Rect; BOARD_SIZE] {
             let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as f32;
             let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as f32;
 
-            rects[index] = Rect::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
+            rects[index] = RectVec2::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
 
             col += 1;
         }
@@ -126,7 +126,7 @@ const fn generate_board_rects() -> [Rect; BOARD_SIZE] {
     rects
 }
 
-const RECTANGLES: [Rect; BOARD_SIZE] = generate_board_rects();
+const RECTANGLES: [RectVec2; BOARD_SIZE] = generate_board_rects();
 
 impl Scene for MgLinkFourScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {

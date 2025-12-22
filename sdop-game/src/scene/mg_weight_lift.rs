@@ -11,7 +11,7 @@ use crate::{
         WIDTH_F32,
     },
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     input::{ALL_BUTTONS, random_button},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -288,7 +288,7 @@ impl Scene for MgWeightLift {
                     );
                 }
 
-                let lift_line = Rect::new_top_left(
+                let lift_line = RectVec2::new_top_left(
                     Vec2::new(2., self.pet_render.y2() - self.target_y() - 5.),
                     Vec2::new(WIDTH_F32 - 4., 1.),
                 );

@@ -39,6 +39,7 @@ struct ContentOut {
     dates_definitions: String,
     sounds_definitions: String,
     locations_definitions: String,
+    geo_definitions: String,
 }
 
 impl ContentOut {
@@ -51,6 +52,7 @@ impl ContentOut {
         self.sounds_definitions.push_str(&other.sounds_definitions);
         self.locations_definitions
             .push_str(&other.locations_definitions);
+        self.geo_definitions.push_str(&other.geo_definitions);
     }
 }
 
@@ -1038,12 +1040,12 @@ fn generate_locations() -> ContentOut {
     let locations_path = PathBuf::from_str(LOCATIONS_RON_PATH).unwrap();
 
     let contents = std::fs::read_to_string(locations_path).unwrap();
-    let location_tempaltes: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
+    let location_templates: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
 
     let mut locations_def = String::new();
     let mut names = Vec::new();
 
-    for (i, entry) in location_tempaltes.iter().enumerate() {
+    for (i, entry) in location_templates.iter().enumerate() {
         let mut rewards = format!(
             "LocationRewards::new({}..{}, &[",
             entry.rewards.money_start, entry.rewards.money_end
@@ -1105,11 +1107,183 @@ fn generate_locations() -> ContentOut {
 
     locations_def.push_str(&format!(
         "pub const LOCATION_COUNT: usize = {};",
-        location_tempaltes.len() + 1
+        location_templates.len() + 1
     ));
 
     ContentOut {
         locations_definitions: locations_def,
+        ..Default::default()
+    }
+}
+
+fn generate_geo() -> ContentOut {
+    const TEMPLATE: &'static str = r#"
+const ZERO__*T_REP_UPPER*_: _*T_REP*_ = 0 as _*T_REP*_;
+const TWO__*T_REP_UPPER*_: _*T_REP*_ = 2 as _*T_REP*_;
+const ONE_THOUSAND__*T_REP_UPPER*_: _*T_REP*_ = 1000 as _*T_REP*_;
+
+#[derive(Copy, Clone, Default)]
+pub struct Rect_*V_REP*_ {
+    pub pos: _*V_REP*_,
+    pub size: _*V_REP*_,
+}
+
+impl Rect_*V_REP*_ {
+    pub const fn new() -> Self {
+        Self {
+            pos: _*V_REP*_::new(ZERO__*T_REP_UPPER*_, ZERO__*T_REP_UPPER*_),
+            size: _*V_REP*_::new(ZERO__*T_REP_UPPER*_, ZERO__*T_REP_UPPER*_),
+        }
+    }
+
+    pub const fn new_center(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        Self { pos, size }
+    }
+
+    pub const fn new_top_left(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        // Move pos to center
+        let center_pos = _*V_REP*_::new(pos.x + size.x / TWO__*T_REP_UPPER*_, pos.y + size.y / TWO__*T_REP_UPPER*_);
+
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_left(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        // Move pos to center
+        let center_pos = _*V_REP*_::new(pos.x + size.x / TWO__*T_REP_UPPER*_, pos.y - size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_right(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        let center_pos = _*V_REP*_::new(pos.x - size.x / TWO__*T_REP_UPPER*_, pos.y - size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_top_right(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        let center_pos = _*V_REP*_::new(pos.x - size.x / TWO__*T_REP_UPPER*_, pos.y + size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn pos_top_left(&self) -> _*V_REP*_ {
+        let x_top_left = self.pos.x - self.size.x / TWO__*T_REP_UPPER*_;
+        let y_top_left = self.pos.y - self.size.y / TWO__*T_REP_UPPER*_;
+        _*V_REP*_::new(x_top_left, y_top_left)
+    }
+
+    pub fn random_point_inside(&self, rng: &mut fastrand::Rng) -> _*V_REP*_ {
+        let top_left = self.pos_top_left();
+        _*V_REP*_::new(
+            (rng.i32((self.x() as i32 * 1000)..(self.x2() as i32 * 1000)) as _*T_REP*_) / ONE_THOUSAND__*T_REP_UPPER*_,
+            (rng.i32((self.y() as i32 * 1000)..(self.y2() as i32 * 1000)) as _*T_REP*_) / ONE_THOUSAND__*T_REP_UPPER*_,
+        )
+    }
+
+    pub fn point_inside(&self, pos: &_*V_REP*_) -> bool {
+        pos.x > self.x() && pos.x < self.x2() && pos.y > self.y() && pos.y < self.y2()
+    }
+
+    pub fn overlapping(&self, other: &Self) -> bool {
+        let half_self = self.size / TWO__*T_REP_UPPER*_;
+        let half_other = other.size / TWO__*T_REP_UPPER*_;
+
+        // delta between centers on each axis
+        let delta = (self.pos - other.pos).abs();
+
+        // overlap exists only if both axes satisfy the half-size sum condition
+        delta.x <= (half_self.x + half_other.x) && delta.y <= (half_self.y + half_other.y)
+    }
+
+    pub const fn x(&self) -> _*T_REP*_ {
+        self.pos.x - self.size.x / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn y(&self) -> _*T_REP*_ {
+        self.pos.y - self.size.y / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn x2(&self) -> _*T_REP*_ {
+        self.pos.x + self.size.x / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn y2(&self) -> _*T_REP*_ {
+        self.pos.y + self.size.y / TWO__*T_REP_UPPER*_
+    }
+
+    #[allow(dead_code)]
+    pub fn shrink(mut self, by: _*T_REP*_) -> Self {
+        self.size.x = (self.size.x - by).max(ZERO__*T_REP_UPPER*_);
+        self.size.y = (self.size.y - by).max(ZERO__*T_REP_UPPER*_);
+
+        self
+    }
+
+    pub const fn grow(mut self, by: _*T_REP*_) -> Self {
+        let mut pos = self.pos_top_left();
+        self.size.x += by;
+        self.size.y += by;
+        pos.x -= by / TWO__*T_REP_UPPER*_;
+        pos.y -= by / TWO__*T_REP_UPPER*_;
+        self.pos = _*V_REP*_::new(pos.x + self.size.x / TWO__*T_REP_UPPER*_, pos.y + self.size.y / TWO__*T_REP_UPPER*_);
+
+        self
+    }
+}
+"#;
+
+    const INTO_TEMPLATE: &'static str = r#"
+impl Into<Rect_*V1_REP*_> for Rect_*V2_REP*_ {
+    fn into(self) -> Rect_*V1_REP*_ {
+        Rect_*V1_REP*_::new_center(
+            _*V1_REP*_::new(self.x() as _*T1_REP*_, self.y() as _*T1_REP*_),
+            _*V1_REP*_::new(self.size.x as _*T1_REP*_, self.size.y as _*T1_REP*_),
+        )
+    }
+}
+"#;
+
+    let mut geo_def = String::new();
+
+    let replace_fn = |t: &str, v: &str| {
+        TEMPLATE
+            .replace("_*T_REP*_", t)
+            .replace("_*V_REP*_", v)
+            .replace("_*T_REP_UPPER*_", &t.to_uppercase())
+    };
+
+    let kinds = &[("f32", "Vec2"), ("i32", "IVec2"), ("i16", "I16Vec2")];
+
+    for (t, v) in kinds {
+        geo_def.push_str(&(replace_fn)(t, v));
+    }
+
+    for (i, (ot, ov)) in kinds.iter().enumerate() {
+        for (j, (it, iv)) in kinds.iter().enumerate() {
+            if i == j {
+                continue;
+            }
+
+            geo_def.push_str(
+                &INTO_TEMPLATE
+                    .replace("_*V1_REP*_", ov)
+                    .replace("_*V2_REP*_", iv)
+                    .replace("_*T1_REP*_", ot),
+            );
+        }
+    }
+
+    ContentOut {
+        geo_definitions: geo_def,
         ..Default::default()
     }
 }
@@ -1138,6 +1312,7 @@ fn main() {
         Box::new(|| generate_dates()),
         Box::new(|| generate_sounds()),
         Box::new(|| generate_locations()),
+        Box::new(|| generate_geo()),
     ];
 
     for func in gen_fun {
@@ -1157,6 +1332,7 @@ fn main() {
         "dist_locations.rs",
         contents.locations_definitions,
     );
+    write_file(&out_dir, "dist_geo.rs", contents.geo_definitions);
 
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ASSETS_PATH);

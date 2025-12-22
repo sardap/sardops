@@ -7,7 +7,7 @@ use crate::{
     date_utils::{END_YEAR, START_YEAR},
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
@@ -378,7 +378,7 @@ impl Scene for EnterDateScene {
         match self.state {
             State::SelectField => {
                 if matches!(self.selected, FieldOption::Submit) {
-                    let rect = Rect::new_center(
+                    let rect = RectVec2::new_center(
                         Vec2::new(x as f32, y as f32),
                         assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
                     )
@@ -405,7 +405,7 @@ impl Scene for EnterDateScene {
                     FieldOption::Submit => unreachable!(),
                 };
 
-                let rect = Rect::new_center(
+                let rect = RectVec2::new_center(
                     Vec2::new(x as f32, y as f32 + 10.),
                     Vec2::new(width as f32, 2.),
                 );

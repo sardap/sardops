@@ -7,7 +7,7 @@ use crate::{
     Button, Timestamp,
     assets::{self, Image, StaticImage},
     display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
-    geo::Rect,
+    geo::RectVec2,
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
@@ -186,7 +186,7 @@ impl Scene for MgDogeEmScene {
                 }
 
                 // Make it so the hit box is only on top
-                let player_rect = Rect::new_center(
+                let player_rect = RectVec2::new_center(
                     self.pet_render.pos
                         - Vec2::new(0., self.pet_render.image().size().y as f32 / 2.),
                     Vec2::new(LANE_WIDTH / 2., 3.),
@@ -287,12 +287,14 @@ impl Scene for MgDogeEmScene {
 
         match self.state {
             State::Playing => {
-                const SCORE_RECT: Rect =
-                    Rect::new_top_left(Vec2::new(0., 0.), Vec2::new(WIDTH_F32, 15.));
+                const SCORE_RECT: RectVec2 =
+                    RectVec2::new_top_left(Vec2::new(0., 0.), Vec2::new(WIDTH_F32, 15.));
                 display.render_rect_solid(SCORE_RECT, false);
 
-                const SCORE_BOTTOM_RECT: Rect =
-                    Rect::new_top_left(Vec2::new(0., SCORE_RECT.size.y), Vec2::new(WIDTH_F32, 2.));
+                const SCORE_BOTTOM_RECT: RectVec2 = RectVec2::new_top_left(
+                    Vec2::new(0., SCORE_RECT.size.y),
+                    Vec2::new(WIDTH_F32, 2.),
+                );
                 display.render_rect_solid(SCORE_BOTTOM_RECT, true);
 
                 let elapsed = args.timestamp - self.start_time;
@@ -305,8 +307,8 @@ impl Scene for MgDogeEmScene {
                 } else {
                     str_format!(str12, "FAILURE")
                 };
-                const FAILURE_RECT: Rect =
-                    Rect::new_center(Vec2::new(CENTER_X, 20.), Vec2::new(WIDTH_F32, 20.));
+                const FAILURE_RECT: RectVec2 =
+                    RectVec2::new_center(Vec2::new(CENTER_X, 20.), Vec2::new(WIDTH_F32, 20.));
                 const FAILURE_RECT_POS: IVec2 =
                     IVec2::new(FAILURE_RECT.pos.x as i32, FAILURE_RECT.pos.y as i32);
                 display.render_rect_solid(FAILURE_RECT, false);

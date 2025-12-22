@@ -11,7 +11,7 @@ use crate::{
     },
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     input::random_button,
     items::{FISHING_ITEM_ODDS, ItemKind, pick_item_from_set},
     money::Money,
@@ -320,13 +320,13 @@ impl Scene for FishingScene {
 
                 display.render_complex(&self.fishing_line_pulled);
 
-                const HIT_RECTNAGLE: Rect =
-                    Rect::new_top_left(Vec2::new(10., 90.), Vec2::new(WIDTH_F32 - 20., 20.));
+                const HIT_RECTNAGLE: RectVec2 =
+                    RectVec2::new_top_left(Vec2::new(10., 90.), Vec2::new(WIDTH_F32 - 20., 20.));
 
                 display.render_rect_outline(HIT_RECTNAGLE, true);
 
                 let percent_of_hit = self.state_elasped.as_secs_f32() / PULL_TIME.as_secs_f32();
-                let postion_rec = Rect::new_top_left(
+                let postion_rec = RectVec2::new_top_left(
                     HIT_RECTNAGLE.pos_top_left()
                         + Vec2::new(HIT_RECTNAGLE.size.x * percent_of_hit - 1., 0.),
                     Vec2::new(3., 20.),
@@ -336,7 +336,7 @@ impl Scene for FishingScene {
                 for (i, entry) in self.seq.iter().enumerate() {
                     if let Some(entry) = entry {
                         let percent_of_hit = entry.elasped.as_secs_f32() / PULL_TIME.as_secs_f32();
-                        let postion_rec = Rect::new_top_left(
+                        let postion_rec = RectVec2::new_top_left(
                             HIT_RECTNAGLE.pos_top_left()
                                 + Vec2::new(
                                     HIT_RECTNAGLE.size.x * percent_of_hit,

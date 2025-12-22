@@ -3,7 +3,7 @@ use glam::Vec2;
 use crate::{
     assets::{IMAGE_STOMACH_MASK, Image},
     display::{ComplexRender, ComplexRenderOption},
-    geo::Rect,
+    geo::RectVec2,
 };
 
 #[derive(Default)]
@@ -22,7 +22,7 @@ impl ComplexRender for StomachRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};
 
-        let filled_rect = Rect::new_top_left(
+        let filled_rect = RectVec2::new_top_left(
             Vec2::new(
                 self.pos_center.x - (IMAGE_STOMACH_MASK.size.x / 2) as f32,
                 self.pos_center.y - IMAGE_STOMACH_MASK.size.y as f32

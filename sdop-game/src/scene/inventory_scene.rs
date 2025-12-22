@@ -11,12 +11,11 @@ use crate::{
     assets::{self, Image},
     date_utils::DurationExt,
     display::{
-        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32,
-        WIDTH_F32, WIDTH_I32,
+        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
     },
     fonts::FONT_VARIABLE_SMALL,
     game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
-    geo::Rect,
+    geo::RectVec2,
     items::{ITEM_COUNT, Inventory, ItemKind, icon_for_cata, items_for_cata},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -208,7 +207,7 @@ impl Scene for InventoryScene {
 
                     if self.flash && i as isize == self.selected_cata {
                         let rect =
-                            Rect::new_top_left(Vec2::new(x, y), icon_for_cata(cata).size_vec2())
+                            RectVec2::new_top_left(Vec2::new(x, y), icon_for_cata(cata).size_vec2())
                                 .grow(4.);
                         display.render_rect_outline(rect, true);
                     }
@@ -225,7 +224,7 @@ impl Scene for InventoryScene {
                     ComplexRenderOption::new().with_white().with_center(),
                 );
                 if self.flash && self.selected_cata == -1 {
-                    let rect = Rect::new_center(
+                    let rect = RectVec2::new_center(
                         Vec2::new(CENTER_X, 105.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
                     )
@@ -338,7 +337,8 @@ impl Scene for InventoryScene {
                             .with_center()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    let rect = Rect::new_center(Vec2::new(CENTER_X, y as f32), Vec2::new(20., 10.));
+                    let rect =
+                        RectVec2::new_center(Vec2::new(CENTER_X, y as f32), Vec2::new(20., 10.));
                     display.render_rect_outline(rect, true);
                 } else if item.toggleable() {
                     display.render_text_complex(
@@ -354,7 +354,7 @@ impl Scene for InventoryScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     let rect =
-                        Rect::new_center(Vec2::new(CENTER_X, y as f32 + 6.), Vec2::new(20., 1.));
+                        RectVec2::new_center(Vec2::new(CENTER_X, y as f32 + 6.), Vec2::new(20., 1.));
                     display.render_rect_outline(rect, true);
                 }
             }

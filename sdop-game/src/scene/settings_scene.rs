@@ -8,7 +8,7 @@ use crate::{
     assets::{self, Image},
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectVec2,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
@@ -218,7 +218,7 @@ impl Scene for SettingsScene {
 
                     if self.option == option {
                         display.render_rect_solid(
-                            Rect::new_center(
+                            RectVec2::new_center(
                                 Vec2::new(CENTER_X, render_pos.y as f32 + 7.),
                                 Vec2::new(width, 1.),
                             ),
@@ -235,7 +235,7 @@ impl Scene for SettingsScene {
                 );
 
                 if self.option == Option::Back {
-                    let rect: Rect = Rect::new_center(
+                    let rect: RectVec2 = RectVec2::new_center(
                         Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
                     )
@@ -263,7 +263,7 @@ impl Scene for SettingsScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    let rect = Rect::new_bottom_left(
+                    let rect = RectVec2::new_bottom_left(
                         Vec2::new(5., render_pos.y as f32),
                         Vec2::new(10., 10.),
                     );
@@ -286,7 +286,7 @@ impl Scene for SettingsScene {
                 );
 
                 if self.sound_selected == SoundSelection::Back {
-                    let rect: Rect = Rect::new_center(
+                    let rect: RectVec2 = RectVec2::new_center(
                         Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
                         assets::IMAGE_BACK_SYMBOL.size_vec2(),
                     )
