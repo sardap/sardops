@@ -1,17 +1,16 @@
 use core::{ops::Sub, time::Duration};
 
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Button,
     assets::{self, Image},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation,
-        WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32,
     },
     fonts::FONT_VARIABLE_SMALL,
-    geo::RectVec2,
+    geo::RectIVec2,
     input::{ALL_BUTTONS, random_button},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -288,12 +287,12 @@ impl Scene for MgWeightLift {
                     );
                 }
 
-                let lift_line = RectVec2::new_top_left(
-                    Vec2::new(2., self.pet_render.y2() - self.target_y() - 5.),
-                    Vec2::new(WIDTH_F32 - 4., 1.),
+                let lift_line = RectIVec2::new_top_left(
+                    IVec2::new(2, self.pet_render.y2_i32() - self.target_y() as i32 - 5),
+                    IVec2::new(WIDTH_I32 - 4, 1),
                 );
 
-                display.render_rect_outline_dashed(lift_line, true, 2);
+                display.render_rect_outline_dashed(&lift_line, true, 2);
 
                 let mut y =
                     self.pet_render.pos.y as i32 + self.pet_render.static_image().isize.y / 2 + 15;

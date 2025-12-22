@@ -1,9 +1,9 @@
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets::{IMAGE_STOMACH_MASK, Image},
     display::{ComplexRender, ComplexRenderOption},
-    geo::RectVec2,
+    geo::RectIVec2,
 };
 
 #[derive(Default)]
@@ -22,19 +22,19 @@ impl ComplexRender for StomachRender {
     fn render(&self, display: &mut crate::display::GameDisplay) {
         use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};
 
-        let filled_rect = RectVec2::new_top_left(
-            Vec2::new(
-                self.pos_center.x - (IMAGE_STOMACH_MASK.size.x / 2) as f32,
-                self.pos_center.y - IMAGE_STOMACH_MASK.size.y as f32
-                    + (IMAGE_STOMACH_MASK.size.y as f32
-                        - (IMAGE_STOMACH_MASK.size.y as f32 * self.filled)),
+        let filled_rect = RectIVec2::new_top_left(
+            IVec2::new(
+                self.pos_center.x as i32 - (IMAGE_STOMACH_MASK.isize.x / 2),
+                self.pos_center.y as i32 - IMAGE_STOMACH_MASK.isize.y
+                    + (IMAGE_STOMACH_MASK.isize.y
+                        - (IMAGE_STOMACH_MASK.isize.y as f32 * self.filled) as i32),
             ),
-            Vec2::new(
-                IMAGE_STOMACH_MASK.size.x as f32,
-                IMAGE_STOMACH_MASK.size.y as f32 * self.filled,
+            IVec2::new(
+                IMAGE_STOMACH_MASK.isize.x,
+                (IMAGE_STOMACH_MASK.isize.y as f32 * self.filled) as i32,
             ),
         );
-        display.render_rect_solid(filled_rect, true);
+        display.render_rect_solid(&filled_rect, true);
         display.render_image_complex(
             self.pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
             self.pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,

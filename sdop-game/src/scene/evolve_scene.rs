@@ -41,6 +41,14 @@ impl Sprite for Star {
     fn image(&self) -> &impl crate::assets::Image {
         &assets::IMAGE_EVOLVE_STAR
     }
+
+    fn size_x(&self) -> i32 {
+        assets::IMAGE_EVOLVE_STAR.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        assets::IMAGE_EVOLVE_STAR.isize.y
+    }
 }
 
 impl Default for Star {

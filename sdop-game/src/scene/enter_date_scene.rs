@@ -1,13 +1,13 @@
 use chrono::{Datelike, Days, Months, NaiveDate, NaiveTime, Timelike};
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Button, assets,
     date_utils::{END_YEAR, START_YEAR},
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    geo::RectVec2,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
@@ -378,13 +378,11 @@ impl Scene for EnterDateScene {
         match self.state {
             State::SelectField => {
                 if matches!(self.selected, FieldOption::Submit) {
-                    let rect = RectVec2::new_center(
-                        Vec2::new(x as f32, y as f32),
-                        assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
-                    )
-                    .grow(4.);
+                    let rect =
+                        RectIVec2::new_center(IVec2::new(x, y), assets::IMAGE_SUBMIT_BUTTON.isize)
+                            .grow(4);
 
-                    display.render_rect_outline(rect, true);
+                    display.render_rect_outline(&rect, true);
                 } else {
                     display.render_image_complex(
                         x as i32,
@@ -405,12 +403,9 @@ impl Scene for EnterDateScene {
                     FieldOption::Submit => unreachable!(),
                 };
 
-                let rect = RectVec2::new_center(
-                    Vec2::new(x as f32, y as f32 + 10.),
-                    Vec2::new(width as f32, 2.),
-                );
+                let rect = RectIVec2::new_center(IVec2::new(x, y + 10), IVec2::new(width, 2));
 
-                display.render_rect_solid(rect, true);
+                display.render_rect_solid(&rect, true);
             }
         }
     }

@@ -18,8 +18,8 @@ impl RenderThermometerMercury {
         Self { pos, temperature }
     }
 
-    pub fn size() -> Vec2 {
-        assets::IMAGE_THERMOMETER_MERCURY.size_vec2()
+    pub fn size() -> IVec2 {
+        assets::IMAGE_THERMOMETER_MERCURY.isize
     }
 }
 
@@ -60,8 +60,8 @@ impl RenderThermometerDigital {
         Self { pos, temperature }
     }
 
-    pub fn size() -> Vec2 {
-        assets::IMAGE_THERMOMETER_DIGITAL.size_vec2()
+    pub fn size() -> IVec2 {
+        assets::IMAGE_THERMOMETER_DIGITAL.isize
     }
 }
 

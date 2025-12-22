@@ -26,11 +26,8 @@ impl CalendarRender {
         self.date = date;
     }
 
-    pub const fn size() -> Vec2 {
-        Vec2::new(
-            assets::IMAGE_CALENDAR.size.x as f32,
-            assets::IMAGE_CALENDAR.size.y as f32,
-        )
+    pub const fn size() -> IVec2 {
+        assets::IMAGE_CALENDAR.isize
     }
 }
 

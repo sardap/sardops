@@ -1,11 +1,11 @@
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Button, assets,
     display::{CENTER_X, CENTER_X_I32, CENTER_Y, CENTER_Y_I32, ComplexRenderOption, GameDisplay},
     fonts,
-    geo::RectVec2,
+    geo::RectIVec2,
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
@@ -142,12 +142,11 @@ impl Scene for EnterTextScene {
 
         const LETTER_BUFFER_X: i32 = 2;
         const LETTER_START_X: i32 = 7;
-        let mut rect = RectVec2::new_top_left(Vec2::new(0., CENTER_Y + 5.), Vec2::new(8., 2.));
+        let mut rect = RectIVec2::new_top_left(IVec2::new(0, CENTER_Y_I32 + 5), IVec2::new(8, 2));
 
         for i in 0..self.max_len {
-            rect.pos.x =
-                LETTER_START_X as f32 + (i as f32 * (rect.size.x as f32 + LETTER_BUFFER_X as f32));
-            display.render_rect_solid(rect, true);
+            rect.pos.x = LETTER_START_X + (i as i32 * (rect.size.x + LETTER_BUFFER_X));
+            display.render_rect_solid(&rect, true);
         }
 
         for (i, c) in self.text.chars().enumerate() {
@@ -183,12 +182,12 @@ impl Scene for EnterTextScene {
                         &assets::IMAGE_NAME_ARROW,
                     );
                 } else {
-                    let rect = RectVec2::new_center(
-                        Vec2::new(CENTER_X, CENTER_Y + 30.),
-                        assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, CENTER_Y_I32 + 30),
+                        assets::IMAGE_SUBMIT_BUTTON.isize,
                     )
-                    .grow(4.);
-                    display.render_rect_outline(rect, true);
+                    .grow(4);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::SelectChar => {

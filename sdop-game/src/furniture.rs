@@ -1,6 +1,6 @@
 use bincode::{Decode, Encode};
 use chrono::NaiveDate;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -13,6 +13,7 @@ use crate::{
     clock::{AnalogueClockKind, AnalogueRenderClock, DigitalClockRender},
     display::{CENTER_X, ComplexRender, HEIGHT_F32, WIDTH_F32},
     fish_tank::FishTankRender,
+    geo::ivec_to_vec2,
     invetro_light::InvetroLightRender,
     scene::{SceneTickArgs, home_scene::HOME_SCENE_TOP_BORDER_RECT},
     sprite::BasicSprite,
@@ -43,25 +44,25 @@ pub enum HomeFurnitureKind {
 }
 
 impl HomeFurnitureKind {
-    pub fn size(&self) -> Vec2 {
+    pub fn size(&self) -> IVec2 {
         match self {
-            Self::None => Vec2::ZERO,
+            Self::None => IVec2::ZERO,
             Self::DigitalClock => DigitalClockRender::size(),
             Self::AnalogueClock => AnalogueClockKind::Clock21.size(),
             Self::Alarm => AlarmRender::size(),
             Self::ThermometerMercury => RenderThermometerMercury::size(),
             Self::ThermometerDigital => RenderThermometerDigital::size(),
-            Self::SpaceHeater => assets::IMAGE_SPACE_HEATER.size_vec2(),
-            Self::AirCon => assets::IMAGE_AIR_CONDITIONER.size_vec2(),
+            Self::SpaceHeater => assets::IMAGE_SPACE_HEATER.isize,
+            Self::AirCon => assets::IMAGE_AIR_CONDITIONER.isize,
             Self::FishTank => FishTankRender::size(),
             Self::InvertroLight => InvetroLightRender::size(),
             Self::Calendar => CalendarRender::size(),
-            Self::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.size_vec2(),
-            Self::PaintingDude => assets::IMAGE_PAINTING_DUDE.size_vec2(),
-            Self::PaintingMan => assets::IMAGE_PAINTING_MAN.size_vec2(),
-            Self::PaintingPc => assets::IMAGE_PAINTING_PC.size_vec2(),
-            Self::PaintingSun => assets::IMAGE_PAINTING_SUN.size_vec2(),
-            Self::PaintingMallsBalls => assets::IMAGE_PAINTING_MALLS_BALLS.size_vec2(),
+            Self::PaintingBranch => assets::IMAGE_PAINTING_BRANCH.isize,
+            Self::PaintingDude => assets::IMAGE_PAINTING_DUDE.isize,
+            Self::PaintingMan => assets::IMAGE_PAINTING_MAN.isize,
+            Self::PaintingPc => assets::IMAGE_PAINTING_PC.isize,
+            Self::PaintingSun => assets::IMAGE_PAINTING_SUN.isize,
+            Self::PaintingMallsBalls => assets::IMAGE_PAINTING_MALLS_BALLS.isize,
         }
     }
 
@@ -129,7 +130,9 @@ pub enum HomeFurnitureLocation {
 impl HomeFurnitureLocation {
     pub const fn pos(&self) -> Vec2 {
         match self {
-            HomeFurnitureLocation::Top => Vec2::new(CENTER_X, HOME_SCENE_TOP_BORDER_RECT.y2()),
+            HomeFurnitureLocation::Top => {
+                Vec2::new(CENTER_X, HOME_SCENE_TOP_BORDER_RECT.y2() as f32)
+            }
             HomeFurnitureLocation::Left => Vec2::new(0., HEIGHT_F32 / 2.),
             HomeFurnitureLocation::Right => Vec2::new(WIDTH_F32, HEIGHT_F32 / 2.),
         }
@@ -173,11 +176,11 @@ impl HomeFurnitureRender {
 
     pub fn new(location: HomeFurnitureLocation, kind: Self::Kind) -> Self {
         let pos = location.pos()
-            + match location {
-                HomeFurnitureLocation::Top => Vec2::new(0., kind.size().y / 2.),
-                HomeFurnitureLocation::Left => Vec2::new(kind.size().x / 2. + 1., 0.),
-                HomeFurnitureLocation::Right => Vec2::new(-(kind.size().x / 2. + 1.), 0.),
-            };
+            + ivec_to_vec2(match location {
+                HomeFurnitureLocation::Top => IVec2::new(0, kind.size().y / 2),
+                HomeFurnitureLocation::Left => IVec2::new(kind.size().x / 2 + 1, 0),
+                HomeFurnitureLocation::Right => IVec2::new(-(kind.size().x / 2 + 1), 0),
+            });
 
         match kind {
             Self::Kind::None => HomeFurnitureRender::None,
@@ -229,9 +232,9 @@ impl HomeFurnitureRender {
         }
     }
 
-    pub fn size(&self) -> Vec2 {
+    pub fn size(&self) -> IVec2 {
         match self {
-            Self::None => Vec2::ZERO,
+            Self::None => IVec2::ZERO,
             Self::DigitalClock(_) => Self::Kind::DigitalClock.size(),
             Self::AnalogueClock(_) => Self::Kind::AnalogueClock.size(),
             Self::Alarm(_) => AlarmRender::size(),
@@ -240,7 +243,7 @@ impl HomeFurnitureRender {
             Self::FishTank(_) => Self::Kind::FishTank.size(),
             Self::Calendar(_) => CalendarRender::size(),
             Self::InvetroLight(_) => Self::Kind::InvertroLight.size(),
-            Self::Sprite(basic_sprite) => basic_sprite.image.size_vec2(),
+            Self::Sprite(basic_sprite) => basic_sprite.image.size_ivec2(),
         }
     }
 

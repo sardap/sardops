@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use chrono::{NaiveTime, TimeDelta};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     anime::{Anime, HasAnime, MaskedAnimeRender},
@@ -10,9 +10,10 @@ use crate::{
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32,
+        WIDTH_F32, WIDTH_I32,
     },
-    geo::RectVec2,
+    geo::{RectIVec2, RectVec2},
     pet::{
         definition::{PET_BABIES, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -484,18 +485,18 @@ impl Scene for DeathScene {
                     .min(1.)
                         * 0.5;
 
-                    let left_door = RectVec2::new_top_left(
-                        Vec2::new(0., 0.),
-                        Vec2::new(WIDTH_F32 * x_percent, HEIGHT_F32),
+                    let left_door = RectIVec2::new_top_left(
+                        IVec2::new(0, 0),
+                        IVec2::new((WIDTH_F32 * x_percent) as i32, HEIGHT_I32),
                     );
-                    display.render_rect_solid(left_door, false);
+                    display.render_rect_solid(&left_door, false);
 
-                    let right_door = RectVec2::new_top_left(
-                        Vec2::new(WIDTH_F32 - WIDTH_F32 * x_percent, 0.),
-                        Vec2::new(WIDTH_F32, HEIGHT_F32),
+                    let right_door = RectIVec2::new_top_left(
+                        IVec2::new(WIDTH_I32 - (WIDTH_F32 * x_percent) as i32, 0),
+                        IVec2::new(WIDTH_I32, HEIGHT_I32),
                     );
 
-                    display.render_rect_solid(right_door, false);
+                    display.render_rect_solid(&right_door, false);
                 }
                 DeathCause::Hypothermia => {
                     display.render_sprite(&self.pet_render);

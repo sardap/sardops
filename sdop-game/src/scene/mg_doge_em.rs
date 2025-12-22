@@ -6,8 +6,10 @@ use glam::{IVec2, Vec2};
 use crate::{
     Button, Timestamp,
     assets::{self, Image, StaticImage},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
-    geo::RectVec2,
+    display::{
+        CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32,
+    },
+    geo::{RectIVec2, RectVec2},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
@@ -105,6 +107,14 @@ impl Sprite for Garbage {
 
     fn image(&self) -> &impl Image {
         self.sprite.image
+    }
+
+    fn size_x(&self) -> i32 {
+        self.sprite.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.sprite.image.isize.y
     }
 }
 
@@ -287,15 +297,15 @@ impl Scene for MgDogeEmScene {
 
         match self.state {
             State::Playing => {
-                const SCORE_RECT: RectVec2 =
-                    RectVec2::new_top_left(Vec2::new(0., 0.), Vec2::new(WIDTH_F32, 15.));
-                display.render_rect_solid(SCORE_RECT, false);
+                const SCORE_RECT: RectIVec2 =
+                    RectIVec2::new_top_left(IVec2::new(0, 0), IVec2::new(WIDTH_I32, 15));
+                display.render_rect_solid(&SCORE_RECT, false);
 
-                const SCORE_BOTTOM_RECT: RectVec2 = RectVec2::new_top_left(
-                    Vec2::new(0., SCORE_RECT.size.y),
-                    Vec2::new(WIDTH_F32, 2.),
+                const SCORE_BOTTOM_RECT: RectIVec2 = RectIVec2::new_top_left(
+                    IVec2::new(0, SCORE_RECT.y()),
+                    IVec2::new(WIDTH_I32, 2),
                 );
-                display.render_rect_solid(SCORE_BOTTOM_RECT, true);
+                display.render_rect_solid(&SCORE_BOTTOM_RECT, true);
 
                 let elapsed = args.timestamp - self.start_time;
                 let text = fixedstr::str_format!(str16, "{:.1}", elapsed.as_secs_f32());
@@ -307,11 +317,11 @@ impl Scene for MgDogeEmScene {
                 } else {
                     str_format!(str12, "FAILURE")
                 };
-                const FAILURE_RECT: RectVec2 =
-                    RectVec2::new_center(Vec2::new(CENTER_X, 20.), Vec2::new(WIDTH_F32, 20.));
+                const FAILURE_RECT: RectIVec2 =
+                    RectIVec2::new_center(IVec2::new(CENTER_X_I32, 20), IVec2::new(WIDTH_I32, 20));
                 const FAILURE_RECT_POS: IVec2 =
                     IVec2::new(FAILURE_RECT.pos.x as i32, FAILURE_RECT.pos.y as i32);
-                display.render_rect_solid(FAILURE_RECT, false);
+                display.render_rect_solid(&FAILURE_RECT, false);
                 display.render_text_complex(
                     &(FAILURE_RECT_POS - IVec2::new(0, 8)),
                     &text,

@@ -1,12 +1,12 @@
 use chrono::{Weekday, WeekdaySet};
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     Button, assets,
-    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    geo::RectVec2,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -186,14 +186,11 @@ impl Scene for WeekdaySelectScene {
                         .with_white()
                         .with_bottom_left(),
                 )
-                .x as f32;
+                .x;
 
             if self.days.contains(*day) {
                 display.render_rect_solid(
-                    RectVec2::new_bottom_left(
-                        Vec2::new(x as f32 - 2., y as f32 + 4.),
-                        Vec2::new(width + 4., 1.),
-                    ),
+                    &RectIVec2::new_bottom_left(IVec2::new(x - 2, y + 4), IVec2::new(width + 4, 1)),
                     true,
                 );
             }
@@ -202,9 +199,9 @@ impl Scene for WeekdaySelectScene {
                 let selected = WEEKDAYS.get(self.current as usize).unwrap_or(&Weekday::Mon);
                 if day == selected {
                     display.render_rect_outline_dashed(
-                        RectVec2::new_bottom_left(
-                            Vec2::new(x as f32 - 2., y as f32 + 2.),
-                            Vec2::new(width + 4., 10.),
+                        &RectIVec2::new_bottom_left(
+                            IVec2::new(x - 2, y + 2),
+                            IVec2::new(width + 4, 10),
                         ),
                         true,
                         1,
@@ -221,12 +218,12 @@ impl Scene for WeekdaySelectScene {
         );
 
         if self.current < 0 {
-            let rect = RectVec2::new_center(
-                Vec2::new(CENTER_X, (y + GAP_Y * 4) as f32),
-                assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
+            let rect = RectIVec2::new_center(
+                IVec2::new(CENTER_X_I32, y + GAP_Y * 4),
+                assets::IMAGE_SUBMIT_BUTTON.isize,
             )
-            .grow(4.);
-            display.render_rect_outline(rect, true);
+            .grow(4);
+            display.render_rect_outline(&rect, true);
         }
     }
 }

@@ -27,7 +27,7 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     food::FOOD_COFFEE,
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    geo::{RectVec2, vec2_direction, vec2_distance},
+    geo::{RectIVec2, RectVec2, vec2_direction, vec2_distance},
     items::ItemKind,
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
@@ -59,6 +59,7 @@ use crate::{
     },
     sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
     sprite::{BasicAnimeSprite, MusicNote, Sprite},
+    stomach::StomachRender,
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
 };
@@ -70,16 +71,16 @@ pub const DANCING_RECT: RectVec2 = RectVec2::new_center(CENTER_VEC, Vec2::new(10
 
 pub const GREATER_WONDER_RECT: RectVec2 = WONDER_RECT.grow(50.);
 
-const BORDER_HEIGHT: f32 = 1.;
+const BORDER_HEIGHT: i32 = 1;
 
-pub const HOME_SCENE_TOP_BORDER_RECT: RectVec2 = RectVec2::new_center(
-    Vec2::new(CENTER_X, 24.),
-    Vec2::new(WIDTH_F32, BORDER_HEIGHT),
+pub const HOME_SCENE_TOP_BORDER_RECT: RectIVec2 = RectIVec2::new_center(
+    IVec2::new(CENTER_X_I32, 24),
+    IVec2::new(WIDTH_I32, BORDER_HEIGHT),
 );
 
-pub const HOME_SCENE_TOP_AREA_RECT: RectVec2 = RectVec2::new_top_left(
-    Vec2::new(0., 0.),
-    Vec2::new(WIDTH_F32, HOME_SCENE_TOP_BORDER_RECT.y2()),
+pub const HOME_SCENE_TOP_AREA_RECT: RectIVec2 = RectIVec2::new_top_left(
+    IVec2::new(0, 0),
+    IVec2::new(WIDTH_I32, HOME_SCENE_TOP_BORDER_RECT.y2()),
 );
 
 pub const PROGRAM_RUN_TIME_RANGE: core::ops::Range<Duration> =
@@ -228,8 +229,8 @@ const STAR_SPAWNER: Spawner = Spawner::new(
             Duration::from_secs(10)..Duration::from_secs(20),
             RectVec2::new_top_left(
                 Vec2::new(
-                    HOME_SCENE_TOP_AREA_RECT.x2() + 20.,
-                    HOME_SCENE_TOP_AREA_RECT.y2(),
+                    HOME_SCENE_TOP_AREA_RECT.x2() as f32 + 20.,
+                    HOME_SCENE_TOP_AREA_RECT.y2() as f32,
                 ),
                 Vec2::new(1., 20.),
             ),
@@ -239,7 +240,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
         const RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
             Duration::from_secs(1)..Duration::from_secs(10),
             RectVec2::new_top_left(
-                Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2()),
+                Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2() as f32),
                 Vec2::new(1., 20.),
             ),
             Vec2::new(20.0, -2.0)..Vec2::new(50.0, 2.0),
@@ -924,15 +925,6 @@ impl Scene for HomeScene {
             display.render_complex(&self.right_render);
         }
 
-        if args.game_ctx.pet.is_ill()
-            && !matches!(
-                args.game_ctx.home.state,
-                State::GoneOut { outing_end_time: _ } | State::Exploring
-            )
-        {
-            display.render_complex(&args.game_ctx.home.skull);
-        }
-
         match args.game_ctx.home.state {
             State::Wondering => {
                 display.render_sprite(&args.game_ctx.home.pet_render);
@@ -1067,20 +1059,20 @@ impl Scene for HomeScene {
                 );
 
                 display.render_rect_solid(
-                    RectVec2::new_bottom_left(Vec2::new(0., y as f32), Vec2::new(WIDTH_F32, 20.)),
+                    &RectIVec2::new_bottom_left(IVec2::new(0, y), IVec2::new(WIDTH_I32, 20)),
                     false,
                 );
 
                 display.render_rect_solid(
-                    RectVec2::new_top_left(
-                        Vec2::new(0., (y + PREVIEW_RECT_HEIGHT - 1) as f32),
-                        Vec2::new(WIDTH_F32, 20.),
+                    &RectIVec2::new_top_left(
+                        IVec2::new(0, y + PREVIEW_RECT_HEIGHT - 1),
+                        IVec2::new(WIDTH_I32, 20),
                     ),
                     false,
                 );
 
                 display.render_image_complex(
-                    CENTER_X as i32,
+                    CENTER_X_I32,
                     y + PREVIEW_RECT_HEIGHT / 2,
                     &assets::IMAGE_EXPLORE_HOME_WINDOW,
                     ComplexRenderOption::new().with_center().with_white(),
@@ -1128,18 +1120,21 @@ impl Scene for HomeScene {
                 y += 4;
 
                 // Render percent
-                const PROGRESS_RECT_HEIGHT: f32 = 5.;
+                const PROGRESS_RECT_HEIGHT: i32 = 5;
                 display.render_rect_outline(
-                    RectVec2::new_top_left(
-                        Vec2::new(0., y as f32),
-                        Vec2::new(WIDTH_F32, PROGRESS_RECT_HEIGHT),
+                    &RectIVec2::new_top_left(
+                        IVec2::new(0, y),
+                        IVec2::new(WIDTH_I32, PROGRESS_RECT_HEIGHT),
                     ),
                     true,
                 );
                 display.render_rect_solid(
-                    RectVec2::new_top_left(
-                        Vec2::new(0., y as f32),
-                        Vec2::new(WIDTH_F32 * explore.percent_complete(), PROGRESS_RECT_HEIGHT),
+                    &RectIVec2::new_top_left(
+                        IVec2::new(0, y as i32),
+                        IVec2::new(
+                            (WIDTH_F32 * explore.percent_complete()) as i32,
+                            PROGRESS_RECT_HEIGHT,
+                        ),
                     ),
                     true,
                 );
@@ -1187,11 +1182,11 @@ impl Scene for HomeScene {
         if !matches!(args.game_ctx.home.state, State::Exploring) {
             let pet = &args.game_ctx.pet;
 
-            display.render_rect_solid(HOME_SCENE_TOP_AREA_RECT, false);
+            display.render_rect_solid(&HOME_SCENE_TOP_AREA_RECT, false);
 
             let total_filled = pet.stomach_filled / pet.definition().stomach_size;
-            display.render_stomach(
-                Vec2::new(
+            display.render_complex(&StomachRender {
+                pos_center: Vec2::new(
                     9. + if total_filled < 0.05 && args.frames % 10 == 0 {
                         args.game_ctx.rng.i32(-2..=2) as f32
                     } else {
@@ -1199,8 +1194,8 @@ impl Scene for HomeScene {
                     },
                     IMAGE_STOMACH_MASK.size.y as f32,
                 ),
-                total_filled,
-            );
+                filled: total_filled,
+            });
 
             const STOMACH_END_X: i32 = IMAGE_STOMACH_MASK.isize.y + 1;
             display.render_image_top_left(STOMACH_END_X, 0, &assets::IMAGE_AGE_SYMBOL);
@@ -1225,7 +1220,7 @@ impl Scene for HomeScene {
                     .with_font(&FONT_VARIABLE_SMALL),
             );
 
-            display.render_rect_solid(HOME_SCENE_TOP_BORDER_RECT, true);
+            display.render_rect_solid(&HOME_SCENE_TOP_BORDER_RECT, true);
 
             if args.game_ctx.egg.is_some()
                 && matches!(
@@ -1234,6 +1229,15 @@ impl Scene for HomeScene {
                 )
             {
                 display.render_complex(&self.egg_render);
+            }
+
+            if args.game_ctx.pet.is_ill()
+                && !matches!(
+                    args.game_ctx.home.state,
+                    State::GoneOut { outing_end_time: _ } | State::Exploring
+                )
+            {
+                display.render_complex(&args.game_ctx.home.skull);
             }
 
             // No lights if sleeping

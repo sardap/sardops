@@ -1,11 +1,11 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp,
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::RectVec2,
+    geo::RectIVec2,
     pet::{definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_fanfare::MgFanFareScene},
     tic_tac_toe::{
@@ -74,30 +74,30 @@ impl MgTicTacToeScene {
     }
 }
 
-const SQUARE_SIZE: Vec2 = Vec2::new(20., 20.);
-const SQUARE_X_OFFSET: f32 = 1.;
-const SQUARE_Y_OFFSET: f32 = 30.;
+const SQUARE_SIZE: IVec2 = IVec2::new(20, 20);
+const SQUARE_X_OFFSET: i32 = 1;
+const SQUARE_Y_OFFSET: i32 = 30;
 const COL_COUNT: usize = 3;
 const ROW_COUNT: usize = 3;
 const BOARD_SIZE: usize = COL_COUNT * ROW_COUNT;
 
-const fn generate_board_rects() -> [RectVec2; BOARD_SIZE] {
-    let mut rects = [RectVec2::new(); BOARD_SIZE];
+const fn generate_board_rects() -> [RectIVec2; BOARD_SIZE] {
+    let mut rects = [RectIVec2::new(); BOARD_SIZE];
     let mut i = 0;
     while i < BOARD_SIZE {
         let row = i / ROW_COUNT;
         let col = i % COL_COUNT;
 
-        let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as f32;
-        let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as f32;
+        let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as i32;
+        let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as i32;
 
-        rects[i] = RectVec2::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
+        rects[i] = RectIVec2::new_top_left(IVec2::new(x, y), SQUARE_SIZE);
         i += 1;
     }
     rects
 }
 
-const RECTANGLES: [RectVec2; BOARD_SIZE] = generate_board_rects();
+const RECTANGLES: [RectIVec2; BOARD_SIZE] = generate_board_rects();
 
 impl Scene for MgTicTacToeScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
@@ -254,7 +254,7 @@ impl Scene for MgTicTacToeScene {
         display.render_sprite(&self.opponent_pet_render);
 
         for i in 0..self.game.board().size() {
-            let rect = RECTANGLES[i as usize];
+            let rect = &RECTANGLES[i as usize];
             if self.selected == i as i8 && self.game.board().side_to_move() == self.player_side {
                 if self.flash_state {
                     display.render_rect_outline_dashed(rect, true, 2);

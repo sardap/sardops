@@ -1,21 +1,21 @@
 use core::time::Duration;
 
 use fixedstr::str_format;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 use heapless::Vec;
 use sdop_common::ItemCategory;
 use strum::IntoEnumIterator;
 
 use crate::{
     ALL_ITEMS, Button,
-    assets::{self, Image},
+    assets::{self},
     date_utils::DurationExt,
     display::{
         CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
     },
     fonts::FONT_VARIABLE_SMALL,
     game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
-    geo::RectVec2,
+    geo::RectIVec2,
     items::{ITEM_COUNT, Inventory, ItemKind, icon_for_cata, items_for_cata},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -194,26 +194,26 @@ impl Scene for InventoryScene {
 
         match self.state {
             State::SelectCategory => {
-                let mut y = 10.;
+                let mut y = 10;
                 for (i, cata) in self.available_cata.iter().enumerate() {
-                    let x = if i % 2 == 0 { 5. } else { 37. };
+                    let x = if i % 2 == 0 { 5 } else { 37 };
 
                     display.render_image_complex(
-                        x as i32,
-                        y as i32,
+                        x,
+                        y,
                         icon_for_cata(cata),
                         ComplexRenderOption::new().with_white(),
                     );
 
                     if self.flash && i as isize == self.selected_cata {
                         let rect =
-                            RectVec2::new_top_left(Vec2::new(x, y), icon_for_cata(cata).size_vec2())
-                                .grow(4.);
-                        display.render_rect_outline(rect, true);
+                            RectIVec2::new_top_left(IVec2::new(x, y), icon_for_cata(cata).isize)
+                                .grow(4);
+                        display.render_rect_outline(&rect, true);
                     }
 
                     if i % 2 != 0 {
-                        y += icon_for_cata(cata).size.y as f32 + 5.;
+                        y += icon_for_cata(cata).isize.y + 5;
                     }
                 }
 
@@ -224,12 +224,12 @@ impl Scene for InventoryScene {
                     ComplexRenderOption::new().with_white().with_center(),
                 );
                 if self.flash && self.selected_cata == -1 {
-                    let rect = RectVec2::new_center(
-                        Vec2::new(CENTER_X, 105.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, 105),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(4.);
-                    display.render_rect_outline(rect, true);
+                    .grow(4);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::View => {
@@ -338,8 +338,8 @@ impl Scene for InventoryScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     let rect =
-                        RectVec2::new_center(Vec2::new(CENTER_X, y as f32), Vec2::new(20., 10.));
-                    display.render_rect_outline(rect, true);
+                        RectIVec2::new_center(IVec2::new(CENTER_X_I32, y), IVec2::new(20, 10));
+                    display.render_rect_outline(&rect, true);
                 } else if item.toggleable() {
                     display.render_text_complex(
                         &IVec2::new(CENTER_X_I32, y),
@@ -354,8 +354,8 @@ impl Scene for InventoryScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     let rect =
-                        RectVec2::new_center(Vec2::new(CENTER_X, y as f32 + 6.), Vec2::new(20., 1.));
-                    display.render_rect_outline(rect, true);
+                        RectIVec2::new_center(IVec2::new(CENTER_X_I32, y + 6), IVec2::new(20, 1));
+                    display.render_rect_outline(&rect, true);
                 }
             }
         }

@@ -7,6 +7,7 @@ use strum_macros::EnumIter;
 
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
+use crate::geo::RectIVec2;
 use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
 use crate::{assets::Image, geo::RectVec2, sprite::Sprite};
 
@@ -243,53 +244,53 @@ impl GameDisplay {
         self.render_image_complex(x, y, image, ComplexRenderOption::new().with_white());
     }
 
-    pub fn render_rect_solid(&mut self, rect: RectVec2, white: bool) {
+    pub fn render_rect_solid(&mut self, rect: &RectIVec2, white: bool) {
         let top_left = rect.pos_top_left();
-        for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
-            for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
+        for x in top_left.x..(top_left.x + rect.size.x) {
+            for y in top_left.y..(top_left.y + rect.size.y) {
                 self.render_point(x, y, white);
             }
         }
     }
 
-    pub fn render_rect_outline(&mut self, rect: RectVec2, white: bool) {
+    pub fn render_rect_outline(&mut self, rect: &RectIVec2, white: bool) {
         let top_left = rect.pos_top_left();
-        let bottom_right_x = top_left.x + rect.size.x - 1.;
-        let bottom_right_y = top_left.y + rect.size.y - 1.;
+        let bottom_right_x = top_left.x + rect.size.x - 1;
+        let bottom_right_y = top_left.y + rect.size.y - 1;
 
         // Top and bottom borders
-        for x in top_left.x as i32..=bottom_right_x as i32 {
-            self.render_point(x, top_left.y as i32, white); // Top
-            self.render_point(x, bottom_right_y as i32, white); // Bottom
+        for x in top_left.x..=bottom_right_x {
+            self.render_point(x, top_left.y, white); // Top
+            self.render_point(x, bottom_right_y, white); // Bottom
         }
 
         // Left and right borders (excluding corners, already set above)
-        for y in (top_left.y as i32 + 1)..(bottom_right_y as i32) {
-            self.render_point(top_left.x as i32, y, white); // Left
-            self.render_point(bottom_right_x as i32, y, white); // Right
+        for y in (top_left.y + 1)..(bottom_right_y) {
+            self.render_point(top_left.x, y, white); // Left
+            self.render_point(bottom_right_x, y, white); // Right
         }
     }
 
-    pub fn render_rect_outline_dashed(&mut self, rect: RectVec2, white: bool, dash_width: usize) {
+    pub fn render_rect_outline_dashed(&mut self, rect: &RectIVec2, white: bool, dash_width: usize) {
         let top_left = rect.pos_top_left();
-        let bottom_right_x = top_left.x + rect.size.x - 1.;
-        let bottom_right_y = top_left.y + rect.size.y - 1.;
+        let bottom_right_x = top_left.x + rect.size.x - 1;
+        let bottom_right_y = top_left.y + rect.size.y - 1;
 
         let dash_width = dash_width.max(1); // avoid division by zero
 
         // Top and bottom borders
-        for (i, x) in (top_left.x as i32..=bottom_right_x as i32).enumerate() {
+        for (i, x) in (top_left.x..=bottom_right_x).enumerate() {
             if (i / dash_width).is_multiple_of(2) {
-                self.render_point(x, top_left.y as i32, white); // Top
-                self.render_point(x, bottom_right_y as i32, white); // Bottom
+                self.render_point(x, top_left.y, white); // Top
+                self.render_point(x, bottom_right_y, white); // Bottom
             }
         }
 
         // Left and right borders
-        for (i, y) in ((top_left.y as i32 + 1)..(bottom_right_y as i32)).enumerate() {
+        for (i, y) in ((top_left.y + 1)..(bottom_right_y)).enumerate() {
             if (i / dash_width).is_multiple_of(2) {
-                self.render_point(top_left.x as i32, y, white); // Left
-                self.render_point(bottom_right_x as i32, y, white); // Right
+                self.render_point(top_left.x, y, white); // Left
+                self.render_point(bottom_right_x, y, white); // Right
             }
         }
     }
@@ -472,36 +473,6 @@ impl GameDisplay {
         IVec2::new(x_offset, y_end)
     }
 
-    pub fn render_stomach(&mut self, pos_center: Vec2, filled: f32) {
-        use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};
-
-        let filled_rect = RectVec2::new_top_left(
-            Vec2::new(
-                pos_center.x - (IMAGE_STOMACH_MASK.size.x / 2) as f32,
-                pos_center.y - IMAGE_STOMACH_MASK.size.y as f32
-                    + (IMAGE_STOMACH_MASK.size.y as f32
-                        - (IMAGE_STOMACH_MASK.size.y as f32 * filled)),
-            ),
-            Vec2::new(
-                IMAGE_STOMACH_MASK.size.x as f32,
-                IMAGE_STOMACH_MASK.size.y as f32 * filled,
-            ),
-        );
-        self.render_rect_solid(filled_rect, true);
-        self.render_image_complex(
-            pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
-            pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
-            &IMAGE_STOMACH,
-            ComplexRenderOption::new().with_white(),
-        );
-        self.render_image_complex(
-            pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
-            pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
-            &IMAGE_STOMACH_MASK,
-            ComplexRenderOption::new().with_flip().with_black(),
-        );
-    }
-
     pub fn invert(&mut self) {
         self.bits.invert();
     }
@@ -568,7 +539,7 @@ impl GameDisplay {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
-            RectVec2::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
+            &RectIVec2::new_top_left(IVec2::default(), IVec2::new(str.len() as i32 * 5, 6)),
             false,
         );
         self.render_text_complex(
@@ -585,10 +556,7 @@ impl GameDisplay {
         let str = str_format!(str16, "{:.0}", temperature);
         let width = str.len() as i32 * 5 + 3;
         self.render_rect_solid(
-            RectVec2::new_top_left(
-                Vec2::new(WIDTH_F32 - width as f32, 0.),
-                Vec2::new(width as f32, 9.),
-            ),
+            &RectIVec2::new_top_left(IVec2::new(WIDTH_I32 - width, 0), IVec2::new(width, 9)),
             false,
         );
         self.render_text_complex(

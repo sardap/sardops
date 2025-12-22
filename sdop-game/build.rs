@@ -1268,7 +1268,7 @@ impl Into<Rect_*V1_REP*_> for Rect_*V2_REP*_ {
     }
 
     for (i, (ot, ov)) in kinds.iter().enumerate() {
-        for (j, (it, iv)) in kinds.iter().enumerate() {
+        for (j, (_it, iv)) in kinds.iter().enumerate() {
             if i == j {
                 continue;
             }

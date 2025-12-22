@@ -1,11 +1,11 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp,
     display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::RectVec2,
+    geo::RectIVec2,
     link_four::{BestMoveSearch, COLUMNS, Game, GameStatus, Side},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -98,25 +98,25 @@ impl MgLinkFourScene {
     }
 }
 
-const SQUARE_SIZE: Vec2 = Vec2::new(8., 8.);
-const SQUARE_X_OFFSET: f32 = 4.;
-const SQUARE_Y_OFFSET: f32 = 30.;
+const SQUARE_SIZE: IVec2 = IVec2::new(8, 8);
+const SQUARE_X_OFFSET: i32 = 4;
+const SQUARE_Y_OFFSET: i32 = 30;
 const COL_COUNT: usize = 7;
 const ROW_COUNT: usize = 6;
 const BOARD_SIZE: usize = COL_COUNT * ROW_COUNT;
 
-const fn generate_board_rects() -> [RectVec2; BOARD_SIZE] {
-    let mut rects = [RectVec2::new(); BOARD_SIZE];
+const fn generate_board_rects() -> [RectIVec2; BOARD_SIZE] {
+    let mut rects = [RectIVec2::new(); BOARD_SIZE];
     let mut row = 0;
     while row < ROW_COUNT {
         let mut col = 0;
         while col < COL_COUNT {
             let index = row * COL_COUNT + col;
 
-            let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as f32;
-            let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as f32;
+            let x = SQUARE_X_OFFSET + SQUARE_SIZE.x * col as i32;
+            let y = SQUARE_Y_OFFSET + SQUARE_SIZE.y * row as i32;
 
-            rects[index] = RectVec2::new_top_left(Vec2::new(x, y), SQUARE_SIZE);
+            rects[index] = RectIVec2::new_top_left(IVec2::new(x, y), SQUARE_SIZE);
 
             col += 1;
         }
@@ -126,7 +126,7 @@ const fn generate_board_rects() -> [RectVec2; BOARD_SIZE] {
     rects
 }
 
-const RECTANGLES: [RectVec2; BOARD_SIZE] = generate_board_rects();
+const RECTANGLES: [RectIVec2; BOARD_SIZE] = generate_board_rects();
 
 impl Scene for MgLinkFourScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
@@ -292,7 +292,7 @@ impl Scene for MgLinkFourScene {
         display.render_sprite(&self.opponent_pet_render);
 
         for i in 0..self.game.size() {
-            let rect = RECTANGLES[i];
+            let rect = &RECTANGLES[i];
             if self.selected == i as isize
                 && self.game.side_to_move() == self.player_side
                 && !matches!(self.state, State::Dropping { dur: _, col: _ })
@@ -314,12 +314,8 @@ impl Scene for MgLinkFourScene {
             let target = RECTANGLES[row_count * COLUMNS + col];
             let start = RECTANGLES[col];
             let diff = target.pos.y - start.pos.y;
-            let y = diff * percent + start.pos.y;
-            display.render_image_center(
-                target.pos.x as i32,
-                y as i32,
-                self.game.side_to_move().get_image(),
-            );
+            let y = diff * percent as i32 + start.pos.y;
+            display.render_image_center(target.pos.x, y, self.game.side_to_move().get_image());
         }
 
         if let GameStatus::Win(win) = self.game.status() {

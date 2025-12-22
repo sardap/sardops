@@ -1,13 +1,13 @@
 use core::time::Duration;
 
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 
 use crate::{
     assets,
     display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
     food::{FOODS, Food, MAX_FOOD_X},
-    geo::RectVec2,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -222,9 +222,9 @@ impl Scene for FoodSelectScene {
 
             if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
                 display.render_rect_outline(
-                    RectVec2::new_top_left(
-                        Vec2::new(1., select_rect_y as f32 - 4.),
-                        Vec2::new(WIDTH_F32 - 3., (y_end - select_rect_y) as f32 + 5.),
+                    &RectIVec2::new_top_left(
+                        IVec2::new(1, select_rect_y - 4),
+                        IVec2::new(WIDTH_I32 - 3, (y_end - select_rect_y) + 5),
                     ),
                     true,
                 );

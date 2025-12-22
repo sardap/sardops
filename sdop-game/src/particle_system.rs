@@ -79,6 +79,14 @@ impl Sprite for Particle {
     fn image(&self) -> &impl crate::assets::Image {
         self.image
     }
+
+    fn size_x(&self) -> i32 {
+        self.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.image.isize.y
+    }
 }
 
 #[derive(Debug, Clone)]

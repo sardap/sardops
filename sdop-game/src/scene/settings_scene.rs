@@ -1,14 +1,14 @@
 use chrono::NaiveDateTime;
-use glam::{IVec2, Vec2};
+use glam::IVec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
     Button, Timestamp,
-    assets::{self, Image},
-    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    assets::{self},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32},
     fonts::FONT_VARIABLE_SMALL,
-    geo::RectVec2,
+    geo::RectIVec2,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
@@ -214,13 +214,13 @@ impl Scene for SettingsScene {
                             option.text(),
                             ComplexRenderOption::new().with_white().with_center(),
                         )
-                        .x as f32;
+                        .x;
 
                     if self.option == option {
                         display.render_rect_solid(
-                            RectVec2::new_center(
-                                Vec2::new(CENTER_X, render_pos.y as f32 + 7.),
-                                Vec2::new(width, 1.),
+                            &RectIVec2::new_center(
+                                IVec2::new(CENTER_X_I32, render_pos.y + 7),
+                                IVec2::new(width, 1),
                             ),
                             true,
                         );
@@ -228,19 +228,19 @@ impl Scene for SettingsScene {
                 }
 
                 display.render_image_complex(
-                    CENTER_X as i32,
-                    (HEIGHT_F32 - 20.) as i32,
+                    CENTER_X_I32,
+                    HEIGHT_I32 - 20,
                     &assets::IMAGE_BACK_SYMBOL,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 if self.option == Option::Back {
-                    let rect: RectVec2 = RectVec2::new_center(
-                        Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, HEIGHT_I32 - 20),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(6.);
-                    display.render_rect_outline(rect, true);
+                    .grow(6);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::Sounds => {
@@ -263,18 +263,16 @@ impl Scene for SettingsScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    let rect = RectVec2::new_bottom_left(
-                        Vec2::new(5., render_pos.y as f32),
-                        Vec2::new(10., 10.),
-                    );
+                    let rect =
+                        RectIVec2::new_bottom_left(IVec2::new(5, render_pos.y), IVec2::new(10, 10));
                     if self.sound_selected == option {
-                        display.render_rect_outline_dashed(rect, true, 1);
+                        display.render_rect_outline_dashed(&rect, true, 1);
                     } else {
-                        display.render_rect_outline(rect, true);
+                        display.render_rect_outline(&rect, true);
                     }
 
                     if option.enabled(args.game_ctx.sound_system.sound_options()) {
-                        display.render_rect_solid(rect.shrink(4.), true);
+                        display.render_rect_solid(&rect.shrink(4), true);
                     }
                 }
 
@@ -286,12 +284,12 @@ impl Scene for SettingsScene {
                 );
 
                 if self.sound_selected == SoundSelection::Back {
-                    let rect: RectVec2 = RectVec2::new_center(
-                        Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, HEIGHT_I32 - 20),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(6.);
-                    display.render_rect_outline(rect, true);
+                    .grow(6);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::GettingTime => {}

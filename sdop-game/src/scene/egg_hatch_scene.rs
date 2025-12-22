@@ -1,13 +1,13 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
     death::DeathCause,
-    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32},
+    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32, WIDTH_I32},
     egg::{EggRender, SavedEgg},
-    geo::RectVec2,
+    geo::RectIVec2,
     pet::{
         definition::{PET_BABIES, PET_BLOB_ID, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -242,11 +242,11 @@ impl Scene for EggHatchScene {
             }
             State::UfoTake => {
                 display.render_sprite(&self.parent_pet_render);
-                const BLOCK_OUT_RECT: RectVec2 = RectVec2::new_top_left(
-                    Vec2::ZERO,
-                    Vec2::new(WIDTH_F32, 30. + (assets::IMAGE_UFO.size.y / 2) as f32),
+                const BLOCK_OUT_RECT: RectIVec2 = RectIVec2::new_top_left(
+                    IVec2::ZERO,
+                    IVec2::new(WIDTH_I32, 30 + (assets::IMAGE_UFO.isize.y / 2)),
                 );
-                display.render_rect_solid(BLOCK_OUT_RECT, false);
+                display.render_rect_solid(&BLOCK_OUT_RECT, false);
                 display.render_image_complex(
                     self.ufo_render.pos.x as i32,
                     self.ufo_render.pos.y as i32

@@ -75,6 +75,14 @@ impl Sprite for PetRender {
     fn image(&self) -> &impl Image {
         self.anime.current_frame()
     }
+
+    fn size_x(&self) -> i32 {
+        self.anime.current_frame().isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.anime.current_frame().isize.y
+    }
 }
 
 impl SpriteMask for PetRender {
