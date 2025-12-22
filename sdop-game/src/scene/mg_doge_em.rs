@@ -6,9 +6,7 @@ use glam::{IVec2, Vec2};
 use crate::{
     Button, Timestamp,
     assets::{self, Image, StaticImage},
-    display::{
-        CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32,
-    },
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32},
     geo::{RectIVec2, RectVec2},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},

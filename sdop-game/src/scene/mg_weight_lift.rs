@@ -7,7 +7,8 @@ use crate::{
     Button,
     assets::{self, Image},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation,
+        WIDTH_I32,
     },
     fonts::FONT_VARIABLE_SMALL,
     geo::RectIVec2,

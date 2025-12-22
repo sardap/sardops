@@ -5,10 +5,7 @@ use crate::{
     HEIGHT, WIDTH,
     assets::{self, DynamicImage},
     date_utils::{MoonRender, time_in_range},
-    display::{
-        CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay,
-        HEIGHT_I32, WIDTH_F32,
-    },
+    display::{CENTER_VEC, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     game_consts::{ALIEN_ODDS, TELESCOPE_USE_RANGE},
     night_sky::generate_night_sky_image,

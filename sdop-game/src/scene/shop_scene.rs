@@ -151,7 +151,10 @@ impl Scene for ShopScene {
                             |args| {
                                 const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
                                     Duration::from_millis(1000)..Duration::from_millis(2000),
-                                    RectVec2::new_top_left(Vec2::new(10., 80.), Vec2::new(40., 40.)),
+                                    RectVec2::new_top_left(
+                                        Vec2::new(10., 80.),
+                                        Vec2::new(40., 40.),
+                                    ),
                                     Vec2::new(-50.0, -50.0)..Vec2::new(50.0, 50.0),
                                     &[&assets::IMAGE_MONEY_PARTICLE],
                                 );

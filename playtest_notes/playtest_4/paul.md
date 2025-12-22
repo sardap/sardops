@@ -22,6 +22,7 @@
 - [X] Babies should poo more (Poop was broken unless coffee was being drunk)
 - [] Need more to do with baby
 - [X] Stomach shake needs to be more
+- [X] Sick too much
 
 
 ### Concerns

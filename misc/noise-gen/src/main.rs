@@ -1,4 +1,4 @@
-use image::{imageops, RgbaImage};
+use image::{RgbaImage, imageops};
 
 const WIDTH: u32 = 30;
 const HEIGHT: u32 = 22;

@@ -1,4 +1,3 @@
-
 use bincode::{Decode, Encode};
 use const_for::const_for;
 use glam::usize;

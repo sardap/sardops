@@ -7,10 +7,7 @@ use crate::{
     Song,
     anime::Anime,
     assets::{self},
-    display::{
-        CENTER_X_I32, ComplexRender, ComplexRenderOption, GameDisplay,
-        WIDTH_I32,
-    },
+    display::{CENTER_X_I32, ComplexRender, ComplexRenderOption, GameDisplay, WIDTH_I32},
     geo::RectIVec2,
     items::Inventory,
     pet::{PetInstance, record::PetHistory},
