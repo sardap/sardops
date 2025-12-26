@@ -132,6 +132,8 @@ pub enum LifeStage {
     Adult = 0b001,
 }
 
+pub type LifeStageMask = u8;
+
 impl LifeStage {
     pub fn from_index(index: usize) -> Self {
         match index {
@@ -150,16 +152,15 @@ impl LifeStage {
         }
     }
 
-    pub const fn create_bitmask(stages: &[LifeStage]) -> u8 {
+    pub const fn create_bitmask(stages: &[LifeStage]) -> LifeStageMask {
         let mut result = 0;
         const_for!(i in 0..stages.len() => {
             result |= stages[i].bitmask();
         });
-
         result
     }
 
-    pub const fn bitmask(&self) -> u8 {
+    pub const fn bitmask(&self) -> LifeStageMask {
         *self as u8
     }
 }

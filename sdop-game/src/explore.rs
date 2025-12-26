@@ -8,6 +8,7 @@ use crate::{
     pet::{LifeStage, PetInstance},
 };
 use bincode::{Decode, Encode};
+use sdop_common::LifeStageMask;
 
 include!(concat!(env!("OUT_DIR"), "/dist_locations.rs"));
 
@@ -48,7 +49,7 @@ pub struct Location {
     pub cover: StaticImage,
     pub activities: &'static [&'static str],
     pub item: ItemKind,
-    pub ls_mask: u8,
+    pub ls_mask: LifeStageMask,
 }
 
 impl Location {

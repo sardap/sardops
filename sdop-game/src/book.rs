@@ -1,6 +1,7 @@
 use const_for::const_for;
 use core::{slice::Iter, time::Duration};
 use heapless::Vec;
+use sdop_common::{LifeStage, LifeStageMask};
 
 use bincode::{Decode, Encode};
 
@@ -16,6 +17,7 @@ pub struct BookInfo {
     pub length: Duration,
     pub chapters: u8,
     pub open_book: &'static StaticImage,
+    pub ls_mask: LifeStageMask,
     pub word_bank: &'static [&'static str],
 }
 
@@ -94,9 +96,13 @@ impl BookHistory {
         &mut self.books[BOOK_INDEXES[item as usize]]
     }
 
-    pub fn has_book_to_read(&self, inventory: &Inventory) -> bool {
+    pub fn has_book_to_read(&self, life_stage: LifeStage, inventory: &Inventory) -> bool {
         for read in &self.books {
-            if inventory.has_item(read.item) && !read.completed() {
+            if inventory.has_item(read.item)
+                && !read.completed()
+                && inventory.get_entry(read.item).item_extra.enabled
+                && read.item.book_info().ls_mask & life_stage.bitmask() > 0
+            {
                 return true;
             }
         }
@@ -117,6 +123,7 @@ impl BookHistory {
     pub fn pick_random_unread_book(
         &self,
         rng: &mut fastrand::Rng,
+        life_stage: LifeStage,
         inventory: &Inventory,
     ) -> Option<ItemKind> {
         let mut books: Vec<ItemKind, BOOK_COUNT> = Vec::new();
@@ -124,6 +131,7 @@ impl BookHistory {
             if !read.completed()
                 && inventory.has_item(read.item)
                 && inventory.get_entry(read.item).item_extra.enabled
+                && read.item.book_info().ls_mask & life_stage.bitmask() > 0
             {
                 let _ = books.push(read.item);
             }
@@ -182,12 +190,32 @@ impl Default for BookHistory {
 
 pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
     match item {
+        ItemKind::BookForBabies => {
+            const BABIES: BookInfo = BookInfo {
+                item: ItemKind::BookMeditations,
+                length: Duration::from_hours(1),
+                chapters: 6,
+                open_book: &assets::IMAGE_BOOK_FOR_BABIES_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Baby]),
+                word_bank: &[
+                    "cat", "bat", "hat", "rat", "mat", "pat", "sat", "fat", "dog", "log", "hog",
+                    "bog", "pig", "wig", "dig", "fig", "bug", "hug", "mug", "rug", "jug", "bed",
+                    "red", "led", "fed", "net", "pet", "sun", "fun", "run", "bun", "gun", "cup",
+                    "pup", "sup", "mud", "pen", "hen", "ten", "men", "man", "fan", "pan", "tan",
+                    "box", "fox", "pox", "leg", "beg", "peg", "jam", "ram", "ham", "yam", "top",
+                    "mop", "hop", "pop", "lip", "sip", "tip", "dip", "web", "cob", "rob", "van",
+                    "can", "pan", "tan",
+                ],
+            };
+            &BABIES
+        }
         ItemKind::BookVic19811992 => {
             const VIC: BookInfo = BookInfo {
                 item: ItemKind::BookVic19811992,
                 length: Duration::from_hours(2),
                 chapters: 9,
                 open_book: &assets::IMAGE_BOOK_0_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "John", "Cain", "Jr", "Debt", "Bundoora", "Union", "City", "Loop", "Dock",
                     "Lands", "Trams", "Metcard",
@@ -201,6 +229,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(3),
                 chapters: 24,
                 open_book: &assets::IMAGE_BOOK_WRAN_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Neville",
                     "Wran",
@@ -226,6 +255,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(4),
                 chapters: 17,
                 open_book: &assets::IMAGE_BOOK_C_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Segfault",
                     "Recursion",
@@ -253,6 +283,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(1),
                 chapters: 27,
                 open_book: &assets::IMAGE_BOOK_DRACULA_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Dracula",
                     "vampire",
@@ -283,6 +314,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_mins(45),
                 chapters: 9,
                 open_book: &assets::IMAGE_BOOK_GREAT_GATSBY_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Gatsby",
                     "Daisy",
@@ -314,6 +346,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_mins(45),
                 chapters: 12,
                 open_book: &assets::IMAGE_BOOK_GILGAMESH_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Enkidu",
                     "Uruk",
@@ -344,6 +377,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(5),
                 chapters: 24,
                 open_book: &assets::IMAGE_BOOK_ODYSSEY_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Homer",
                     "Odysseus",
@@ -375,6 +409,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(5),
                 chapters: 12,
                 open_book: &assets::IMAGE_BOOK_ART_OF_WAR_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "weak",
                     "strong",
@@ -401,6 +436,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(5),
                 chapters: 18,
                 open_book: &assets::IMAGE_BOOK_ILIAD_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Homer",
                     "Achilles",
@@ -430,6 +466,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(4),
                 chapters: 16,
                 open_book: &assets::IMAGE_BOOK_DIVINE_COMEDY_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Dante",
                     "Virgil",
@@ -462,6 +499,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::from_hours(3),
                 chapters: 12,
                 open_book: &assets::IMAGE_BOOK_MEDITATIONS_CLOSED,
+                ls_mask: LifeStage::create_bitmask(&[LifeStage::Child, LifeStage::Adult]),
                 word_bank: &[
                     "Mind",
                     "Beauty",
@@ -485,6 +523,7 @@ pub const fn item_to_book(item: &ItemKind) -> &'static BookInfo {
                 length: Duration::ZERO,
                 chapters: 0,
                 open_book: &assets::IMAGE_BOOK_0_OPEN,
+                ls_mask: LifeStage::create_bitmask(&[]),
                 word_bank: &[],
             };
             &DEFAULT

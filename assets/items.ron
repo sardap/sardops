@@ -180,6 +180,18 @@
         fishing_odds: 0.05,
     ),
     ItemTemplate(
+        name: "Book for Babies",
+        category: Book,
+        rarity: Common,
+        cost: 1000,
+        image: "book_for_babies_closed",
+        unique: true,
+        desc: "Teaches your dop the basics of exploring.",
+        fishing_odds: 0.0,
+        in_shop: false,
+        skill: 12,
+    ),
+    ItemTemplate(
         name: "Book Vic 1981-1992",
         category: Book,
         rarity: Common,

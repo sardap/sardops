@@ -3,8 +3,8 @@
         name: "Down the road",
         life_stages: [Baby],
         length: "45m",
-        cooldown: "3h",
-        difficulty: 20,
+        cooldown: "1m",
+        difficulty: 6,
         activities: [
             "Waiting at the lights",
             "staring at the sun",

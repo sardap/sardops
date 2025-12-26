@@ -203,10 +203,12 @@ impl Scene for ExploreSelectScene {
 
                 y += self.location().cover.isize.y + 3;
 
-                let mins = (self.next_explore_time - args.timestamp).as_mins() as i32;
-                let hours = mins / 60;
-                let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m", hours, mins);
+                let total_secs = (self.next_explore_time - args.timestamp).as_secs() as i32;
+                let hours = total_secs / 3600;
+                let mins = (total_secs % 3600) / 60;
+                let seconds = total_secs % 60;
+                let str =
+                    fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m{}s", hours, mins, seconds);
                 display.render_text_complex(
                     &IVec2::new(CENTER_X_I32, y),
                     &str,
@@ -271,41 +273,29 @@ impl Scene for ExploreSelectScene {
                     );
                     y += assets::IMAGE_LENGTH_SYMBOL.isize.y + 1;
 
-                    display.render_image_complex(
-                        SKILL_X_OFFSET,
-                        y,
-                        &assets::IMAGE_SKILL_SYMBOL,
-                        ComplexRenderOption::new().with_black().with_white(),
-                    );
-                    let str = fixedstr::str_format!(
-                        fixedstr::str12,
-                        "{}",
-                        args.game_ctx.pet.explore_skill()
-                    );
-                    display.render_text_complex(
-                        &IVec2::new(TEXT_X_OFFSET, y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
-
-                    display.render_image_complex(
-                        SKILL_X_OFFSET,
-                        y,
-                        &assets::IMAGE_CHALLENGE_SYMBOL,
-                        ComplexRenderOption::new().with_black().with_white(),
-                    );
-                    let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
-                    display.render_text_complex(
-                        &IVec2::new(TEXT_X_OFFSET, y),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+                    {
+                        let delta = args.game_ctx.pet.explore_skill() - location.difficulty;
+                        display.render_image_complex(
+                            SKILL_X_OFFSET,
+                            y,
+                            &assets::IMAGE_SYMBOL_SKILL_GAP,
+                            ComplexRenderOption::new().with_black().with_white(),
+                        );
+                        let str = fixedstr::str_format!(
+                            fixedstr::str12,
+                            "{}{}",
+                            if delta > 0 { "+" } else { "" },
+                            delta
+                        );
+                        display.render_text_complex(
+                            &IVec2::new(TEXT_X_OFFSET, y),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+                    }
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -325,6 +315,31 @@ impl Scene for ExploreSelectScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
                     y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+
+                    {
+                        let history = args.game_ctx.pet.explore.get_by_id(self.selected_location);
+                        let percent = if history.runs == 0 || history.successful == 0 {
+                            0
+                        } else {
+                            libm::floorf((history.successful as f32 / history.runs as f32) * 100.)
+                                as i32
+                        };
+                        let str = fixedstr::str_format!(
+                            fixedstr::str32,
+                            "RUNS:{} WIN:{}%",
+                            history.runs,
+                            percent
+                        );
+                        display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 3),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+                    }
 
                     y += 5;
                 } else {
