@@ -38,7 +38,7 @@ impl Activity {
             Activity::WatchTv => Duration::from_mins(15),
             Activity::ReadBook => Duration::from_mins(10),
             Activity::ListenMusic => Duration::from_mins(10),
-            Activity::GoOut => Duration::from_mins(45),
+            Activity::GoOut => Duration::from_hours(1),
             Activity::Telescope => Duration::from_mins(45),
         }
     }
@@ -89,11 +89,10 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
     }
 
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
-        && args
-            .game_ctx
-            .pet
-            .book_history
-            .has_book_to_read(&args.game_ctx.inventory)
+        && args.game_ctx.pet.book_history.has_book_to_read(
+            args.game_ctx.pet.definition().life_stage,
+            &args.game_ctx.inventory,
+        )
     {
         add_option(
             &mut options,
@@ -177,7 +176,11 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
                 args.game_ctx.home.change_state(State::ReadingBook {
                     book: book_history.get_reading_book(inventory).unwrap_or(
                         book_history
-                            .pick_random_unread_book(&mut args.game_ctx.rng, inventory)
+                            .pick_random_unread_book(
+                                &mut args.game_ctx.rng,
+                                args.game_ctx.pet.definition().life_stage,
+                                inventory,
+                            )
                             .unwrap_or_default(),
                     ),
                 });

@@ -109,6 +109,18 @@ impl FoodHistory {
         self.entries[food.id].history[food.max_eat - 1].is_some()
     }
 
+    pub fn ate_since_time(&self, food: &Food, cutoff: Timestamp) -> bool {
+        for entry in self.entries[food.id].history.iter().rev() {
+            if let Some(entry) = entry
+                && *entry > cutoff
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn consumed_count(&self, food: &Food) -> usize {
         for i in (0..food.max_eat).rev() {
             if self.entries[food.id].history[i].is_some() {

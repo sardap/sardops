@@ -1,5 +1,5 @@
 use chrono::{NaiveTime, Timelike};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets::{self, IMAGE_DIGITAL_CLOCK_EMPTY, StaticImage},
@@ -47,8 +47,8 @@ impl AnalogueClockKind {
         }
     }
 
-    pub const fn size(&self) -> Vec2 {
-        Vec2::new(self.image().size.x as f32, self.image().size.y as f32)
+    pub const fn size(&self) -> IVec2 {
+        self.image().isize
     }
 }
 
@@ -170,11 +170,8 @@ pub struct DigitalClockRender {
 }
 
 impl DigitalClockRender {
-    pub const fn size() -> Vec2 {
-        Vec2::new(
-            IMAGE_DIGITAL_CLOCK_EMPTY.size.x as f32,
-            IMAGE_DIGITAL_CLOCK_EMPTY.size.y as f32,
-        )
+    pub const fn size() -> IVec2 {
+        IMAGE_DIGITAL_CLOCK_EMPTY.isize
     }
 
     pub fn update_time(&mut self, now: &NaiveTime) {
@@ -232,9 +229,9 @@ impl ComplexRender for DigitalClockRender {
                 .with_black(),
         );
 
-        let number_top_left = Vec2::new(
-            self.pos.x - Self::size().x / 2. + 3.,
-            self.pos.y - Self::size().y / 2. + 3.,
+        let number_top_left = IVec2::new(
+            self.pos.x as i32 - Self::size().x / 2 + 3,
+            self.pos.y as i32 - Self::size().y / 2 + 3,
         );
 
         let hours = get_images(self.hour);
@@ -242,8 +239,8 @@ impl ComplexRender for DigitalClockRender {
 
         for (i, image) in hours.iter().chain(mins.iter()).enumerate() {
             display.render_image_complex(
-                number_top_left.x as i32 + (i as i32 * 5) + if i >= 2 { 2 } else { 0 },
-                number_top_left.y as i32,
+                number_top_left.x + (i as i32 * 5) + if i >= 2 { 2 } else { 0 },
+                number_top_left.y,
                 *image,
                 ComplexRenderOption::new().with_white(),
             );

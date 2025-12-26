@@ -6,7 +6,7 @@ use heapless::Vec;
 use crate::{
     assets::StaticImage,
     display::{ComplexRender, ComplexRenderOption, GameDisplay},
-    geo::Rect,
+    geo::RectVec2,
     sprite::Sprite,
 };
 
@@ -23,7 +23,7 @@ impl<'a> ParticleTickArgs<'a> {
 
 pub struct ParticleTemplate {
     remaining: Range<Duration>,
-    area: Rect,
+    area: RectVec2,
     dir: Range<Vec2>,
     images: &'static [&'static StaticImage],
 }
@@ -31,7 +31,7 @@ pub struct ParticleTemplate {
 impl ParticleTemplate {
     pub const fn new(
         remaining: Range<Duration>,
-        area: Rect,
+        area: RectVec2,
         dir: Range<Vec2>,
         images: &'static [&'static StaticImage],
     ) -> Self {
@@ -78,6 +78,14 @@ impl Sprite for Particle {
 
     fn image(&self) -> &impl crate::assets::Image {
         self.image
+    }
+
+    fn size_x(&self) -> i32 {
+        self.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.image.isize.y
     }
 }
 

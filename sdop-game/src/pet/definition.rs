@@ -7,6 +7,8 @@ use crate::{
     assets::{self, MaskedFramesSet},
     explore::ExploreSkill,
     food::Food,
+    game_consts::{ADULT_LIFE_STAGE_ITEMS, BABY_LIFE_STAGE_ITEMS, CHILD_LIFE_STAGE_ITEMS},
+    items::ItemKind,
     pet::LifeStage,
 };
 use const_for::const_for;
@@ -51,18 +53,33 @@ impl PetDefinition {
 
     pub const fn poop_interval_range(&self) -> Range<Duration> {
         match self.life_stage {
-            LifeStage::Baby => Duration::from_mins(30)..Duration::from_mins(60),
+            LifeStage::Baby => Duration::from_mins(30)..Duration::from_mins(90),
             LifeStage::Child => (Duration::from_mins(90))..(Duration::from_hours(3)),
             LifeStage::Adult => (Duration::from_mins(150))..(Duration::from_hours(4)),
         }
     }
 
-    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
-        let hour = timestamp.inner().hour();
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
+        let hour = timestamp.inner().hour() as i32;
+        let (mut start, mut end) = match self.life_stage {
+            LifeStage::Baby => (6, 20),
+            LifeStage::Child => (8, 21),
+            LifeStage::Adult => (7, 22),
+        };
+
+        if coffee {
+            start -= 1;
+            end += 1;
+        }
+
+        !(start..end).contains(&hour)
+    }
+
+    pub const fn wonder_speed(&self) -> f32 {
         match self.life_stage {
-            LifeStage::Baby => false,
-            LifeStage::Child => !(8..21).contains(&hour),
-            LifeStage::Adult => !(7..22).contains(&hour),
+            LifeStage::Baby => 15.,
+            LifeStage::Child => 10.,
+            LifeStage::Adult => 5.,
         }
     }
 
@@ -80,6 +97,16 @@ impl PetDefinition {
             return PET_DEFINITIONS[0];
         }
         PET_DEFINITIONS[id]
+    }
+
+    pub fn life_stage_items(&self) -> &[ItemKind] {
+        let items: &[ItemKind] = match self.life_stage {
+            LifeStage::Baby => BABY_LIFE_STAGE_ITEMS,
+            LifeStage::Child => CHILD_LIFE_STAGE_ITEMS,
+            LifeStage::Adult => ADULT_LIFE_STAGE_ITEMS,
+        };
+
+        items
     }
 }
 

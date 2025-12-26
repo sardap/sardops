@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use bincode::{Decode, Encode};
 use chrono::{Datelike, NaiveTime, TimeDelta, WeekdaySet};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Timestamp,
@@ -35,8 +35,8 @@ impl AlarmRender {
         self.rining = rining;
     }
 
-    pub const fn size() -> Vec2 {
-        IMAGE_ALARM_0.const_size_vec2()
+    pub const fn size() -> IVec2 {
+        IMAGE_ALARM_0.isize
     }
 }
 
@@ -57,6 +57,14 @@ impl Sprite for AlarmRender {
         } else {
             FRAMES_ALARM[0].frame
         }
+    }
+
+    fn size_x(&self) -> i32 {
+        FRAMES_ALARM[0].frame.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        FRAMES_ALARM[0].frame.isize.y
     }
 }
 

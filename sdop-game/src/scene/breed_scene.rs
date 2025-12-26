@@ -1,12 +1,14 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets::{IMAGE_HEART, IMAGE_HEART_MASK},
-    display::{CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{
+        CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32,
+    },
     egg::{EggRender, SavedEgg},
-    geo::Rect,
+    geo::RectIVec2,
     pet::{ParentInfo, PetParents, combine_pid, definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_BREEDING, SONG_FAN_FARE, SongPlayOptions},
@@ -206,7 +208,10 @@ impl Scene for BreedScene {
         }
 
         display.render_rect_solid(
-            Rect::new_top_left(Vec2::new(0., 0.), Vec2::new(WIDTH_F32, self.blinds_y)),
+            &RectIVec2::new_top_left(
+                IVec2::new(0, 0),
+                IVec2::new(WIDTH_I32, self.blinds_y as i32),
+            ),
             true,
         );
     }

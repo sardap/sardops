@@ -1,13 +1,13 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
     food::{FOODS, Food, MAX_FOOD_X},
-    geo::Rect,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -102,7 +102,7 @@ impl Scene for FoodSelectScene {
         let str =
             fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(current_filled * 100.),);
         display.render_text_complex(
-            Vec2::new(CENTER_X, 5.),
+            &IVec2::new(CENTER_X_I32, 5),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -134,7 +134,7 @@ impl Scene for FoodSelectScene {
 
             let text_y_height = display
                 .render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     food.name,
                     ComplexRenderOption::new()
                         .with_white()
@@ -160,7 +160,7 @@ impl Scene for FoodSelectScene {
                 fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(fill_percent * 100.),);
             display
                 .render_text_complex(
-                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &IVec2::new(INFO_COL_X, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -176,7 +176,7 @@ impl Scene for FoodSelectScene {
                 libm::roundf((fill_percent - current_filled) * 100.),
             );
             display.render_text_complex(
-                Vec2::new(INFO_COL_X as f32, y as f32),
+                &IVec2::new(INFO_COL_X, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -192,7 +192,7 @@ impl Scene for FoodSelectScene {
                         (pet.stomach_filled + food.fill_factor) - pet.definition().stomach_size;
                     let str = fixedstr::str_format!(fixedstr::str12, "+{}g", extra as i32);
                     display.render_text_complex(
-                        Vec2::new(INFO_COL_X as f32, y as f32),
+                        &IVec2::new(INFO_COL_X, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -208,7 +208,7 @@ impl Scene for FoodSelectScene {
                 let str =
                     fixedstr::str_format!(fixedstr::str12, "ate {}/{}", ate_count, food.max_eat);
                 display.render_text_complex(
-                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &IVec2::new(INFO_COL_X, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -222,9 +222,9 @@ impl Scene for FoodSelectScene {
 
             if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
                 display.render_rect_outline(
-                    Rect::new_top_left(
-                        Vec2::new(1., select_rect_y as f32 - 4.),
-                        Vec2::new(WIDTH_F32 - 3., (y_end - select_rect_y) as f32 + 5.),
+                    &RectIVec2::new_top_left(
+                        IVec2::new(1, select_rect_y - 4),
+                        IVec2::new(WIDTH_I32 - 3, (y_end - select_rect_y) + 5),
                     ),
                     true,
                 );

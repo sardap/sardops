@@ -14,6 +14,7 @@ const SHOWS: &[Show] = &[
     &assets::FRAMES_TV_SHOW_SPORT,
     &assets::FRAMES_TV_SHOW_SUBWAY,
     &assets::FRAMES_TV_SHOW_WEIGHT_LIFTING,
+    &assets::FRAMES_TV_SHOW_STATIC,
 ];
 
 pub const SHOW_RUN_TIME: u8 = 15;

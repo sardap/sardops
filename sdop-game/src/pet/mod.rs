@@ -1,4 +1,3 @@
-use const_for::const_for;
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
@@ -6,23 +5,21 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use fastrand::Rng;
 use heapless::Vec;
 use strum::EnumCount;
-use strum_macros::{EnumCount, EnumIter};
 
 use crate::{
     Timestamp,
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     explore::{ExploreHistory, ExploreSkill},
-    food::{Food, FoodHistory},
+    food::{FOOD_COFFEE, Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
         BREED_ODDS_THRESHOLD, COFFEE_POOP_MODIFER, DEATH_BY_HYPOTHERMIA_THRESHOLD,
         DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
         DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
         HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS,
-        ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS,
-        ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES,
-        SPLACE_LOCATIONS,
+        ILLNESS_CHILD_ODDS, ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD,
+        RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -417,7 +414,7 @@ impl PetInstance {
 
         let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
 
-        if !sleeping && (coffees_consumed > 0 && self.until_poop <= Duration::ZERO)
+        if !sleeping && self.until_poop <= Duration::ZERO
             || (coffees_consumed > 0
                 && self
                     .until_poop
@@ -629,7 +626,11 @@ impl PetInstance {
     }
 
     pub fn heal_cost(&self) -> Money {
-        self.illness.cost
+        match self.definition().life_stage {
+            LifeStage::Baby => self.illness.cost / 6,
+            LifeStage::Child => self.illness.cost / 2,
+            LifeStage::Adult => self.illness.cost,
+        }
     }
 
     pub fn cure(&mut self) {
@@ -646,9 +647,6 @@ impl PetInstance {
             let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
             if is_starved {
                 odds += ILLNESS_STARVING_ODDS;
-            }
-            if self.since_game > ILLNESS_SINCE_GAME_DURATION {
-                odds += ILLNESS_SINCE_GAME_ODDS;
             }
 
             odds += match self.definition().life_stage {
@@ -683,9 +681,14 @@ impl PetInstance {
         self.is_sleeping
     }
 
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
+        self.definition()
+            .should_be_sleeping(timestamp, self.food_history.sick_of(&FOOD_COFFEE))
+    }
+
     pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {
         if self.is_sleeping || !matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ }) {
-            self.is_sleeping = self.definition().should_be_sleeping(timestamp);
+            self.is_sleeping = self.should_be_sleeping(timestamp);
         }
     }
 }

@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use chrono::{NaiveTime, TimeDelta};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     anime::{Anime, HasAnime, MaskedAnimeRender},
@@ -10,9 +10,10 @@ use crate::{
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32,
+        WIDTH_F32, WIDTH_I32,
     },
-    geo::Rect,
+    geo::{RectIVec2, RectVec2},
     pet::{
         definition::{PET_BABIES, PetAnimationSet, PetDefinitionId},
         record::PetRecord,
@@ -155,7 +156,7 @@ impl DeathScene {
     }
 }
 
-const AREA: Rect = Rect::new_top_left(Vec2::ZERO, Vec2::new(WIDTH_F32, HEIGHT_F32));
+const AREA: RectVec2 = RectVec2::new_top_left(Vec2::ZERO, Vec2::new(WIDTH_F32, HEIGHT_F32));
 
 impl Scene for DeathScene {
     fn setup(&mut self, args: &mut SceneTickArgs) {
@@ -173,7 +174,7 @@ impl Scene for DeathScene {
         );
 
         if self.cause == DeathCause::ToxicShock {
-            let pet_rect = Rect::new_center(
+            let pet_rect = RectVec2::new_center(
                 self.pet_render.pos,
                 self.pet_render.anime.current_frame().size.as_vec2(),
             )
@@ -484,18 +485,18 @@ impl Scene for DeathScene {
                     .min(1.)
                         * 0.5;
 
-                    let left_door = Rect::new_top_left(
-                        Vec2::new(0., 0.),
-                        Vec2::new(WIDTH_F32 * x_percent, HEIGHT_F32),
+                    let left_door = RectIVec2::new_top_left(
+                        IVec2::new(0, 0),
+                        IVec2::new((WIDTH_F32 * x_percent) as i32, HEIGHT_I32),
                     );
-                    display.render_rect_solid(left_door, false);
+                    display.render_rect_solid(&left_door, false);
 
-                    let right_door = Rect::new_top_left(
-                        Vec2::new(WIDTH_F32 - WIDTH_F32 * x_percent, 0.),
-                        Vec2::new(WIDTH_F32, HEIGHT_F32),
+                    let right_door = RectIVec2::new_top_left(
+                        IVec2::new(WIDTH_I32 - (WIDTH_F32 * x_percent) as i32, 0),
+                        IVec2::new(WIDTH_I32, HEIGHT_I32),
                     );
 
-                    display.render_rect_solid(right_door, false);
+                    display.render_rect_solid(&right_door, false);
                 }
                 DeathCause::Hypothermia => {
                     display.render_sprite(&self.pet_render);

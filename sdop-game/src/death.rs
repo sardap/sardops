@@ -1,11 +1,11 @@
 use bincode::{Decode, Encode};
 use chrono::{Datelike, NaiveDate};
 use fixedstr::str12;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
-    display::{CENTER_X, ComplexRender, ComplexRenderOption},
+    display::{CENTER_X_I32, ComplexRender, ComplexRenderOption},
     fonts,
     pet::definition::{PetDefinition, PetDefinitionId},
 };
@@ -80,7 +80,6 @@ impl GraveStone {
 
 impl ComplexRender for GraveStone {
     fn render(&self, display: &mut crate::display::GameDisplay) {
-        let mut top = self.pos.y - assets::IMAGE_GRAVESTONE.size.y as f32 / 2. + 20.;
         display.render_image_complex(
             self.pos.x as i32,
             self.pos.y as i32,
@@ -88,8 +87,13 @@ impl ComplexRender for GraveStone {
             ComplexRenderOption::new().with_white().with_center(),
         );
 
+        let mut render_pos = IVec2::new(
+            CENTER_X_I32,
+            self.pos.y as i32 - assets::IMAGE_GRAVESTONE.isize.y / 2 + 20,
+        );
+
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             "HERE LIES",
             ComplexRenderOption::new()
                 .with_flip()
@@ -97,10 +101,10 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 7.;
+        render_pos.y += 7;
 
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             &self.name,
             ComplexRenderOption::new()
                 .with_flip()
@@ -108,10 +112,10 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 7.;
+        render_pos.y += 7;
 
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             PetDefinition::get_by_id(self.def_id).name,
             ComplexRenderOption::new()
                 .with_flip()
@@ -119,10 +123,10 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 10.;
+        render_pos.y += 10;
 
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             "Died from",
             ComplexRenderOption::new()
                 .with_flip()
@@ -130,10 +134,10 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 7.;
+        render_pos.y += 7;
 
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             self.cause.name(),
             ComplexRenderOption::new()
                 .with_flip()
@@ -141,7 +145,7 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 10.;
+        render_pos.y += 10;
 
         let str = fixedstr::str_format!(
             fixedstr::str12,
@@ -151,7 +155,7 @@ impl ComplexRender for GraveStone {
             self.born.day()
         );
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             &str,
             ComplexRenderOption::new()
                 .with_flip()
@@ -159,7 +163,7 @@ impl ComplexRender for GraveStone {
                 .with_font(&fonts::FONT_VARIABLE_SMALL)
                 .with_center(),
         );
-        top += 7.;
+        render_pos.y += 7;
 
         let str = fixedstr::str_format!(
             fixedstr::str12,
@@ -169,7 +173,7 @@ impl ComplexRender for GraveStone {
             self.died.day()
         );
         display.render_text_complex(
-            Vec2::new(CENTER_X, top),
+            &render_pos,
             &str,
             ComplexRenderOption::new()
                 .with_flip()

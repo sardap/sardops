@@ -1,11 +1,11 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     anime::tick_all_anime,
-    display::{CENTER_VEC, GameDisplay, HEIGHT_F32, WIDTH_F32},
-    geo::Rect,
+    display::{CENTER_VEC, GameDisplay, HEIGHT_I32, WIDTH_F32},
+    geo::RectIVec2,
     pet::{definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, update_poop_renders},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, home_scene},
@@ -105,8 +105,10 @@ impl Scene for PoopClearScene {
             State::Wiping { x } => {
                 display.render_sprites(&self.poops);
                 display.invert();
-                let rect = Rect::new_top_left(Vec2::ZERO, Vec2::new(*x, HEIGHT_F32));
-                display.render_rect_solid(rect, false);
+                display.render_rect_solid(
+                    &RectIVec2::new_top_left(IVec2::ZERO, IVec2::new(*x as i32, HEIGHT_I32)),
+                    false,
+                );
             }
             State::Cheering { elapsed: _elapsed } => {
                 display.render_sprite(&self.pet_render);

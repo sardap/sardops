@@ -1,12 +1,12 @@
 use chrono::{Weekday, WeekdaySet};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     Button, assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -152,7 +152,7 @@ impl Scene for WeekdaySelectScene {
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         display.render_text_complex(
-            Vec2::new(CENTER_X, 30.),
+            &IVec2::new(CENTER_X_I32, 30),
             &self.display_text,
             ComplexRenderOption::new()
                 .with_white()
@@ -160,36 +160,37 @@ impl Scene for WeekdaySelectScene {
                 .with_font(&FONT_VARIABLE_SMALL),
         );
 
-        let y = 50.;
+        let y = 50;
 
-        const BUFFER_X: f32 = 5.;
-        const GAP_X: f32 = 20.;
-        const GAP_Y: f32 = 12.;
+        const BUFFER_X: i32 = 5;
+        const GAP_X: i32 = 20;
+        const GAP_Y: i32 = 12;
 
         for (i, day) in WEEKDAYS.iter().enumerate() {
+            let i = i as i32;
             let (x, y) = if i < 3 {
-                (BUFFER_X + (i as f32 * GAP_X), y)
+                (BUFFER_X + (i * GAP_X), y)
             } else if i < 6 {
-                (BUFFER_X + ((i - 3) as f32 * GAP_X), y + GAP_Y)
+                (BUFFER_X + ((i - 3) * GAP_X), y + GAP_Y)
             } else {
-                (BUFFER_X + GAP_X, y + GAP_Y * 2.)
+                (BUFFER_X + GAP_X, y + GAP_Y * 2)
             };
 
             let str = str_format!(fixedstr::str12, "{}", day);
             let width = display
                 .render_text_complex(
-                    Vec2::new(x, y),
+                    &IVec2::new(x, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_font(&FONT_VARIABLE_SMALL)
                         .with_white()
                         .with_bottom_left(),
                 )
-                .x as f32;
+                .x;
 
             if self.days.contains(*day) {
                 display.render_rect_solid(
-                    Rect::new_bottom_left(Vec2::new(x - 2., y + 4.), Vec2::new(width + 4., 1.)),
+                    &RectIVec2::new_bottom_left(IVec2::new(x - 2, y + 4), IVec2::new(width + 4, 1)),
                     true,
                 );
             }
@@ -198,9 +199,9 @@ impl Scene for WeekdaySelectScene {
                 let selected = WEEKDAYS.get(self.current as usize).unwrap_or(&Weekday::Mon);
                 if day == selected {
                     display.render_rect_outline_dashed(
-                        Rect::new_bottom_left(
-                            Vec2::new(x - 2., y + 2.),
-                            Vec2::new(width + 4., 10.),
+                        &RectIVec2::new_bottom_left(
+                            IVec2::new(x - 2, y + 2),
+                            IVec2::new(width + 4, 10),
                         ),
                         true,
                         1,
@@ -210,19 +211,19 @@ impl Scene for WeekdaySelectScene {
         }
 
         display.render_image_complex(
-            CENTER_X as i32,
-            (y + GAP_Y * 4.) as i32,
+            CENTER_X_I32,
+            y + GAP_Y * 4,
             &assets::IMAGE_SUBMIT_BUTTON,
             ComplexRenderOption::new().with_white().with_center(),
         );
 
         if self.current < 0 {
-            let rect = Rect::new_center(
-                Vec2::new(CENTER_X, y + GAP_Y * 4.),
-                assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
+            let rect = RectIVec2::new_center(
+                IVec2::new(CENTER_X_I32, y + GAP_Y * 4),
+                assets::IMAGE_SUBMIT_BUTTON.isize,
             )
-            .grow(4.);
-            display.render_rect_outline(rect, true);
+            .grow(4);
+            display.render_rect_outline(&rect, true);
         }
     }
 }

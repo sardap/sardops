@@ -1,10 +1,10 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32},
     fonts::FONT_VARIABLE_SMALL,
     pet::{ParentInfo, definition::PetAnimationSet, render::PetRender},
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, breed_scene::BreedScene},
@@ -124,10 +124,10 @@ impl Scene for SuitersScene {
             State::Intro => {}
             State::Waiting => {}
             State::Question => {
-                let mut y = self.suiter_render.pos.y + 30.;
+                let mut y = self.suiter_render.pos.y as i32 + 30;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &IVec2::new(CENTER_X_I32, y),
                     "ENGAGE",
                     ComplexRenderOption::new()
                         .with_white()
@@ -135,12 +135,12 @@ impl Scene for SuitersScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                y += 6.;
+                y += 6;
 
                 let str = fixedstr::str_format!(fixedstr::str12, "{}?", self.suiter.name.as_str());
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y),
+                    &IVec2::new(CENTER_X_I32, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -148,24 +148,24 @@ impl Scene for SuitersScene {
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                y += 20.;
+                y += 20;
 
                 let embrace_y = y;
 
                 display.render_text_complex(
-                    Vec2::new(20., embrace_y),
+                    &IVec2::new(20, embrace_y),
                     "EMBRACE",
                     ComplexRenderOption::new()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
-                y += 10.;
+                y += 10;
 
                 let leave_y = y;
 
                 display.render_text_complex(
-                    Vec2::new(20., leave_y),
+                    &IVec2::new(20, leave_y),
                     "LEAVE",
                     ComplexRenderOption::new()
                         .with_white()

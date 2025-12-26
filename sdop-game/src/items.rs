@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use bincode::{Decode, Encode};
 use const_for::const_for;
 use glam::usize;
@@ -106,197 +104,7 @@ impl ItemKind {
     }
 
     pub const fn book_info(&self) -> &'static BookInfo {
-        const DEFAULT: BookInfo = BookInfo {
-            item: ItemKind::None,
-            length: Duration::ZERO,
-            chapters: 0,
-            open_book: &assets::IMAGE_BOOK_0_OPEN,
-            word_bank: &[],
-        };
-
-        const VIC: BookInfo = BookInfo {
-            item: ItemKind::BookVic19811992,
-            length: Duration::from_hours(2),
-            chapters: 9,
-            open_book: &assets::IMAGE_BOOK_0_OPEN,
-            word_bank: &[
-                "John", "Cain", "Jr", "Debt", "Bundoora", "Union", "City", "Loop", "Dock", "Lands",
-                "Trams", "Metcard",
-            ],
-        };
-
-        const WRAN: BookInfo = BookInfo {
-            item: ItemKind::BookNevileWran,
-            length: Duration::from_hours(3),
-            chapters: 24,
-            open_book: &assets::IMAGE_BOOK_WRAN_OPEN,
-            word_bank: &[
-                "Neville",
-                "Wran",
-                "Wranslide",
-                "Health",
-                "Train",
-                "Strike",
-                "Economy",
-                "Women",
-                "Reform",
-                "Shelter",
-                "Vote",
-                "One",
-                "Person",
-                "Rainforest",
-            ],
-        };
-
-        const C_PROGRAMMING: BookInfo = BookInfo {
-            item: ItemKind::BookCProgramming,
-            length: Duration::from_hours(4),
-            chapters: 17,
-            open_book: &assets::IMAGE_BOOK_C_OPEN,
-            word_bank: &[
-                "Segfault",
-                "Recursion",
-                "Stack",
-                "Malloc",
-                "Null",
-                "float*",
-                "float**",
-                "void****",
-                "&top",
-                "Pointer",
-                "Pointer-Pointer",
-                "Array",
-                "Struct",
-                "Typedef",
-                "Macro",
-                "Static",
-            ],
-        };
-
-        const DRACULA: BookInfo = BookInfo {
-            item: ItemKind::BookDracula,
-            length: Duration::from_hours(1),
-            chapters: 27,
-            open_book: &assets::IMAGE_BOOK_DRACULA_OPEN,
-            word_bank: &[
-                "Dracula",
-                "vampire",
-                "Transylvania",
-                "Count",
-                "Blood",
-                "Undead",
-                "Fangs",
-                "Night",
-                "Castle",
-                "Ghoul",
-                "Renfield",
-                "Lucy",
-                "Mina",
-                "Jonathan",
-                "Van Helsing",
-                "Stake",
-                "Garlic",
-                "Cross",
-                "Coffin",
-            ],
-        };
-
-        const GATSBY: BookInfo = BookInfo {
-            item: ItemKind::BookGreatGatsby,
-            length: Duration::from_mins(45),
-            chapters: 9,
-            open_book: &assets::IMAGE_BOOK_GREAT_GATSBY_OPEN,
-            word_bank: &[
-                "Gatsby",
-                "Daisy",
-                "Nick",
-                "Tom",
-                "Jordan",
-                "Myrtle",
-                "Valley of Ashes",
-                "Green Light",
-                "American Dream",
-                "Parties",
-                "Bootlegging",
-                "Affair",
-                "Infidelity",
-                "Class",
-                "Wealth",
-                "Illusion",
-                "Hope",
-                "Tragedy",
-                "WW1",
-                "Veteran",
-            ],
-        };
-
-        const GILGAMESH: BookInfo = BookInfo {
-            item: ItemKind::BookEpicOfGilgamesh,
-            length: Duration::from_mins(45),
-            chapters: 12,
-            open_book: &assets::IMAGE_BOOK_GILGAMESH_OPEN,
-            word_bank: &[
-                "Enkidu",
-                "Uruk",
-                "Immortality",
-                "Death",
-                "Friendship",
-                "Gods",
-                "Humbaba",
-                "Ishtar",
-                "Eanna",
-                "Council",
-                "Journey",
-                "Flood",
-                "Utnapishtim",
-                "Wild man",
-                "Temple",
-                "Cuneiform",
-                "Epic",
-                "Hero",
-                "Quest",
-            ],
-        };
-
-        const ODYSSEY: BookInfo = BookInfo {
-            item: ItemKind::BookHomersOdyssey,
-            length: Duration::from_hours(5),
-            chapters: 24,
-            open_book: &assets::IMAGE_BOOK_ODYSSEY_OPEN,
-            word_bank: &[
-                "Homer",
-                "Odysseus",
-                "Ithaca",
-                "Penelope",
-                "Telemachus",
-                "Athena",
-                "Poseidon",
-                "Zeus",
-                "Calypso",
-                "Circe",
-                "Cyclops",
-                "Polyphemus",
-                "Sirens",
-                "Scylla",
-                "Charybdis",
-                "Trojan",
-                "War",
-                "Suitors",
-                "Revenge",
-                "Homecoming",
-            ],
-        };
-
-        match self {
-            ItemKind::BookVic19811992 => &VIC,
-            ItemKind::BookNevileWran => &WRAN,
-            ItemKind::BookCProgramming => &C_PROGRAMMING,
-            ItemKind::BookDracula => &DRACULA,
-            ItemKind::BookGreatGatsby => &GATSBY,
-            ItemKind::BookEpicOfGilgamesh => &GILGAMESH,
-            ItemKind::BookHomersOdyssey => &ODYSSEY,
-            _ => &DEFAULT,
-        }
+        crate::book::item_to_book(self)
     }
 }
 
@@ -523,7 +331,11 @@ impl Inventory {
         &self.contents[item as usize]
     }
 
-    pub fn add_item(&mut self, item: ItemKind, qty: i32) {
+    pub fn add_item(&mut self, item: ItemKind, qty: i32) -> bool {
+        if item.unique() && self.has_item(item) {
+            return false;
+        }
+
         let entry = self.get_entry_mut(item);
         if entry.owned <= 0 && qty > 0 {
             entry.item_extra = ItemExtra::new_from_kind(item);
@@ -535,6 +347,14 @@ impl Inventory {
             updated = 0;
         }
         entry.owned = updated as u32;
+
+        true
+    }
+
+    pub fn add_items(&mut self, items: &[ItemKind]) {
+        for item in items {
+            self.add_item(*item, 1);
+        }
     }
 
     pub fn clear_item(&mut self, item: ItemKind) {

@@ -513,6 +513,14 @@ impl Sprite for MoonRender {
     fn image(&self) -> &impl assets::Image {
         assets::FRAMES_MOON_ANIME[self.frame_index()].frame
     }
+
+    fn size_x(&self) -> i32 {
+        assets::FRAMES_MOON_ANIME[self.frame_index()].frame.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        assets::FRAMES_MOON_ANIME[self.frame_index()].frame.isize.y
+    }
 }
 
 impl SpriteMask for MoonRender {

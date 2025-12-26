@@ -54,6 +54,14 @@ impl Sprite for PoopRender {
     fn image(&self) -> &impl crate::assets::Image {
         self.anime.current_frame()
     }
+
+    fn size_x(&self) -> i32 {
+        self.anime.current_frame().isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.anime.current_frame().isize.y
+    }
 }
 
 impl HasAnime for PoopRender {
