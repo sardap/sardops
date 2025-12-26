@@ -124,7 +124,6 @@ impl ComplexRenderOption {
         self
     }
 
-    #[allow(dead_code)]
     pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
         self.pos_mode = value;
         self
@@ -377,7 +376,7 @@ impl GameDisplay {
         T::render_with_mask(
             self,
             sprite,
-            T::get_postion_mode(sprite),
+            T::get_position_mode(sprite),
             T::get_rotation(sprite),
         );
     }
@@ -544,23 +543,6 @@ impl GameDisplay {
         );
         self.render_text_complex(
             &IVec2::new(0, 0),
-            &str,
-            ComplexRenderOption::new()
-                .with_white()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
-    }
-
-    pub fn render_temperature(&mut self, temperature: f32) {
-        use fixedstr::{str_format, str16};
-        let str = str_format!(str16, "{:.0}", temperature);
-        let width = str.len() as i32 * 5 + 3;
-        self.render_rect_solid(
-            &RectIVec2::new_top_left(IVec2::new(WIDTH_I32 - width, 0), IVec2::new(width, 9)),
-            false,
-        );
-        self.render_text_complex(
-            &IVec2::new(WIDTH_I32 - width + 3, 0),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -806,17 +788,17 @@ trait HasPostionMode {}
 impl<T: SpritePostionMode> HasPostionMode for T {}
 
 pub trait SpriteWithPostionMode<T: Sprite> {
-    fn get_postion_mode(sprite: &T) -> PostionMode;
+    fn get_position_mode(sprite: &T) -> PostionMode;
 }
 
 impl<T: Sprite + HasPostionMode + SpritePostionMode> SpriteWithPostionMode<T> for T {
-    fn get_postion_mode(sprite: &T) -> PostionMode {
+    fn get_position_mode(sprite: &T) -> PostionMode {
         sprite.sprite_postion_mode()
     }
 }
 
 impl<T: Sprite> SpriteWithPostionMode<T> for T {
-    default fn get_postion_mode(_: &T) -> PostionMode {
+    default fn get_position_mode(_: &T) -> PostionMode {
         PostionMode::Center
     }
 }
@@ -918,7 +900,7 @@ fn measure_next_chunk(text: &str, start: usize, options: &ComplexRenderOption) -
             continue;
         }
         let image = (options.font.convert)(ch);
-        width += image.size.x as i32 + options.font.between_spacing;
+        width += image.isize.x + options.font.between_spacing;
     }
     (width, start + end)
 }

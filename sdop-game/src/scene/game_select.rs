@@ -2,7 +2,7 @@ use glam::{IVec2, usize};
 
 use crate::{
     Button, HEIGHT,
-    assets::{self, Image, StaticImage},
+    assets::{self, StaticImage},
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
     geo::RectIVec2,
     scene::{

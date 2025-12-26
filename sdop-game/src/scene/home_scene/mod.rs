@@ -32,7 +32,11 @@ use crate::{
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
     pc::{PcKind, PcRender},
-    pet::{Mood, definition::PetAnimationSet, render::PetRender},
+    pet::{
+        Mood,
+        definition::{PET_BLOB_ID, PET_DEVIL_ID, PetAnimationSet},
+        render::PetRender,
+    },
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -1179,6 +1183,15 @@ impl Scene for HomeScene {
 
         display.render_complex(&self.particle_system);
 
+        if args.game_ctx.pet.is_ill()
+            && !matches!(
+                args.game_ctx.home.state,
+                State::GoneOut { outing_end_time: _ } | State::Exploring
+            )
+        {
+            display.render_complex(&args.game_ctx.home.skull);
+        }
+
         if !matches!(args.game_ctx.home.state, State::Exploring) {
             let pet = &args.game_ctx.pet;
 
@@ -1229,15 +1242,6 @@ impl Scene for HomeScene {
                 )
             {
                 display.render_complex(&self.egg_render);
-            }
-
-            if args.game_ctx.pet.is_ill()
-                && !matches!(
-                    args.game_ctx.home.state,
-                    State::GoneOut { outing_end_time: _ } | State::Exploring
-                )
-            {
-                display.render_complex(&args.game_ctx.home.skull);
             }
 
             // No lights if sleeping

@@ -1,8 +1,7 @@
 use glam::IVec2;
 
 use crate::{
-    Button,
-    assets::{self, Image},
+    Button, assets,
     display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
     geo::{RectIVec2, vec2_to_ivec2},

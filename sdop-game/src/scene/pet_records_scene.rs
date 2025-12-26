@@ -11,7 +11,6 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     pet::{planet_location_from_upid, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
-    sprite::Sprite,
 };
 
 enum State {

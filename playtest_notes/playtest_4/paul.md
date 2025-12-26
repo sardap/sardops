@@ -23,7 +23,9 @@
 - [] Need more to do with baby
 - [X] Stomach shake needs to be more
 - [X] Sick too much
-
+- [X] Evolve is super laggy on pico
+- [X] Freezing at end of explore
+- [X] Sleeping Z's missing
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

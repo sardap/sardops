@@ -1,14 +1,16 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![feature(duration_constructors)]
-#![feature(duration_millis_float)]
-#![feature(inherent_associated_types)]
-#![feature(duration_constructors_lite)]
-#![feature(specialization)]
-#![feature(generic_const_exprs)]
-#![feature(trait_alias)]
-#![feature(variant_count)]
-#![feature(const_trait_impl)]
+#![allow(incomplete_features)]
+#![feature(
+    duration_constructors,
+    duration_millis_float,
+    trait_alias,
+    variant_count,
+    const_trait_impl,
+    inherent_associated_types,
+    specialization,
+    generic_const_exprs
+)]
 #![no_std]
 
 use core::time::Duration;

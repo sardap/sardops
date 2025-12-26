@@ -153,7 +153,7 @@ impl Scene for EvolveScene {
             self.flash_timer = Duration::ZERO;
         }
 
-        if !matches!(self.state, State::Complete) {
+        if !matches!(self.state, State::Complete) && !args.game_ctx.sound_system.get_playing() {
             args.game_ctx.sound_system.push_song(
                 crate::sounds::SONG_EVOLVE,
                 SongPlayOptions::new().with_essential(),
@@ -199,7 +199,6 @@ impl Scene for EvolveScene {
                         if circle.size > 75 {
                             circle.size = 0;
                         }
-                        log::info!("{}", circle.size);
                     }
                 }
             }

@@ -1,7 +1,7 @@
 use glam::{IVec2, Vec2};
 
 use crate::{
-    assets::{self, Image},
+    assets::{self},
     display::{ComplexRender, ComplexRenderOption},
     fonts::FONT_VARIABLE_SMALL,
     temperature::TemperatureLevel,
