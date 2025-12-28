@@ -200,7 +200,7 @@ impl Game {
         if self.scene_output.next_scene.is_some() {
             self.scene_manger
                 .set_next(self.scene_output.next_scene.take().unwrap());
-        } else if self.since_input > Duration::from_mins(5)
+        } else if self.since_input > Duration::from_mins(10)
             && self.scene_manger.scene_enum().should_quit_on_idle()
         {
             self.scene_manger

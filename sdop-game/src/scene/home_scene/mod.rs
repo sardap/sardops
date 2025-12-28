@@ -32,11 +32,7 @@ use crate::{
     night_sky::generate_night_sky_image,
     particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
     pc::{PcKind, PcRender},
-    pet::{
-        Mood,
-        definition::{PET_BLOB_ID, PET_DEVIL_ID, PetAnimationSet},
-        render::PetRender,
-    },
+    pet::{Mood, definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -560,46 +556,37 @@ impl Scene for HomeScene {
                 self.left_render.tick(args);
                 self.right_render.tick(args);
 
-                args.game_ctx.home.dream_bubble_timer = args
-                    .game_ctx
-                    .home
+                let home = &mut args.game_ctx.home;
+
+                home.dream_bubble_timer = home
                     .dream_bubble_timer
                     .checked_sub(args.delta)
                     .unwrap_or_default();
 
-                if args.game_ctx.home.dream_bubble_timer <= Duration::ZERO {
-                    if args.game_ctx.home.show_dream_bubble {
-                        args.game_ctx.home.show_dream_bubble = false;
-                        args.game_ctx.home.dream_bubble_timer =
-                            Duration::from_mins(args.game_ctx.rng.u64(3..30));
+                if home.dream_bubble_timer <= Duration::ZERO {
+                    if home.show_dream_bubble {
+                        home.show_dream_bubble = false;
+                        home.dream_bubble_timer = Duration::from_mins(args.game_ctx.rng.u64(3..30));
                     } else {
-                        args.game_ctx.home.show_dream_bubble = true;
-                        args.game_ctx.home.dream_bubble_timer =
+                        home.show_dream_bubble = true;
+                        home.dream_bubble_timer =
                             Duration::from_secs(args.game_ctx.rng.u64(60..600));
                     }
                 }
 
-                args.game_ctx
-                    .home
-                    .dream_bubble
-                    .tick(args.delta, &mut args.game_ctx.rng);
+                home.dream_bubble.tick(args.delta, &mut args.game_ctx.rng);
 
-                args.game_ctx
-                    .home
-                    .pet_render
-                    .set_animation(PetAnimationSet::Sleeping);
+                home.pet_render.set_animation(PetAnimationSet::Sleeping);
 
-                args.game_ctx.home.dream_bubble.pos.y = CENTER_Y
-                    - args.game_ctx.home.pet_render.anime.current_frame().size.y as f32 / 2.;
+                home.dream_bubble.pos.y =
+                    CENTER_Y - home.pet_render.anime.current_frame().size.y as f32 / 2.;
 
-                args.game_ctx.home.sleeping_z.anime().tick(args.delta);
+                home.sleeping_z.anime().tick(args.delta);
 
-                args.game_ctx.home.pet_render.pos = CENTER_VEC + Vec2::new(0., 10.);
-                args.game_ctx.home.sleeping_z.pos = Vec2::new(
-                    args.game_ctx.home.pet_render.pos.x
-                        + (args.game_ctx.home.pet_render.image().size_vec2().x * 0.5),
-                    args.game_ctx.home.pet_render.pos.y
-                        - (args.game_ctx.home.pet_render.image().size_vec2().y * 0.7),
+                home.pet_render.pos = CENTER_VEC + Vec2::new(0., 10.);
+                home.sleeping_z.pos = Vec2::new(
+                    home.pet_render.pos.x + (home.pet_render.static_image().size.x as f32 * 0.5),
+                    home.pet_render.pos.y - (home.pet_render.static_image().size.x as f32 * 0.7),
                 );
             }
             State::WatchingTv {
@@ -1200,8 +1187,8 @@ impl Scene for HomeScene {
             let total_filled = pet.stomach_filled / pet.definition().stomach_size;
             display.render_complex(&StomachRender {
                 pos_center: Vec2::new(
-                    9. + if total_filled < 0.05 && args.frames % 10 == 0 {
-                        args.game_ctx.rng.i32(-2..=2) as f32
+                    9. + if total_filled < 0.05 && args.frames % 5 == 0 {
+                        if args.game_ctx.rng.bool() { 2. } else { -2. }
                     } else {
                         0.
                     },

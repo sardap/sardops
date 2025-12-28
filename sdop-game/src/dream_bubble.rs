@@ -19,7 +19,7 @@ const DREAMS: &[&[Frame]] = &[
     &assets::FRAMES_DREAM_CONNECTIONS_MASK,
     &assets::FRAMES_DREAM_SMILE_MASK,
     &assets::FRAMES_DREAM_WORM_MASK,
-    &assets::FRAMES_DREAM_BUBBLE_MASK,
+    &assets::FRAMES_DREAM_CIRICLES_MASK,
     &assets::FRAMES_DREAM_EXAM_MASK,
 ];
 

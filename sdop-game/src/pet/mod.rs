@@ -289,12 +289,12 @@ impl PetInstance {
 
     pub fn tick_hunger(&mut self, delta: Duration, now: Timestamp, sleep: bool) {
         const GRAMS_LOSS_PER_SECOND: f32 = 0.005;
-        let sleep_modifer = if sleep { 0.4 } else { 1. };
+        let sleep_modifier = if sleep { 0.25 } else { 1. };
         self.extra_weight = (self.extra_weight
-            - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifier)
             .max(0.);
         self.stomach_filled = (self.stomach_filled
-            - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifier)
             .max(0.);
         if !sleep && self.stomach_filled <= 0. {
             let elapsed = if let StomachMood::Starving { elapsed } = self.stomach_mood {

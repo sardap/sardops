@@ -21,9 +21,9 @@
             items: [
                 (item: "Telescope", odds: 0.8),
                 (item: "Painting Dude", odds: 0.2),
-                (item: "Book The Divine Comedy", odds: 0.2),
+                (item: "Book The Divine Comedy", odds: 0.5),
+                (item: "Recipe Spinach Risotto", odds: 0.5),
                 (item: "Map To The Ninch", odds: 0.8),
-
             ]
         ),
     ),

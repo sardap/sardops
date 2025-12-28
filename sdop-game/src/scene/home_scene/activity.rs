@@ -88,12 +88,10 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
-        && args.game_ctx.pet.book_history.has_book_to_read(
-            args.game_ctx.pet.definition().life_stage,
-            &args.game_ctx.inventory,
-        )
-    {
+    if args.game_ctx.pet.book_history.has_book_to_read(
+        args.game_ctx.pet.definition().life_stage,
+        &args.game_ctx.inventory,
+    ) {
         add_option(
             &mut options,
             &args.game_ctx.home.activity_history,
