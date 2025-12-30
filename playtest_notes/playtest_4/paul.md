@@ -34,6 +34,9 @@
 - [] Need some indaction of when sick of food will expire
 - [] Food select movement is strange near the top
 - [X] Should stay up on NYE
+- [] Should not be able to start exploring if sick
+- [X] healing needs to be cheaper across the board
+- [X] sickness should have a chance to just go away
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

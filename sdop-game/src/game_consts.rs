@@ -129,7 +129,11 @@ pub const ILLNESS_SINCE_ODDS: &[Threshold<Duration>] = &[
     Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.15)),
 ];
 
-pub const HEALING_COST_RANGE: Range<Money> = 1000..10000;
+pub const ILLNESS_AUTO_HEAL_ODDS_BABY: f32 = sim_tick_odds_per_hour(0.05);
+pub const ILLNESS_AUTO_HEAL_ODDS_CHILD: f32 = sim_tick_odds_per_hour(0.1);
+pub const ILLNESS_AUTO_HEAL_ODDS_ADULT: f32 = sim_tick_odds_per_hour(0.1);
+
+pub const HEALING_COST_RANGE: Range<Money> = 100..1000;
 
 pub const RANDOM_NAMES: &[&str] = &[
     "Abel", "Adam", "Amos", "Cain", "Caleb", "Dan", "David", "Eli", "Esau", "Gad", "Hagar",

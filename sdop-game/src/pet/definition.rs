@@ -95,7 +95,7 @@ impl PetDefinition {
         match self.life_stage {
             LifeStage::Baby => 5,
             LifeStage::Child => 40,
-            LifeStage::Adult => 100,
+            LifeStage::Adult => 70,
         }
     }
 
