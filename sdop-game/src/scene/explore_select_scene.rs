@@ -150,6 +150,7 @@ impl Scene for ExploreSelectScene {
                             .game_ctx
                             .pet
                             .should_be_sleeping(&(args.timestamp + self.location().length))
+                        && !args.game_ctx.pet.is_ill()
                     {
                         args.game_ctx
                             .explore_system
@@ -236,9 +237,11 @@ impl Scene for ExploreSelectScene {
                     .game_ctx
                     .pet
                     .should_be_sleeping(&(args.timestamp + self.location().length));
+                let is_ill = args.game_ctx.pet.is_ill();
                 let unlocked = args.game_ctx.inventory.has_item(location.item)
                     && right_life_stage
-                    && !bed_soon;
+                    && !bed_soon
+                    && !is_ill;
 
                 // Gotta handle cooldown here
                 display.render_image_complex(
@@ -343,7 +346,18 @@ impl Scene for ExploreSelectScene {
 
                     y += 5;
                 } else {
-                    if bed_soon {
+                    if !right_life_stage {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "NOT RIGHT LIFE STAGE",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    } else if bed_soon {
                         let text_area = display.render_text_complex(
                             &IVec2::new(CENTER_X_I32, y + 5),
                             "BEDTIME BEFORE BACK",
@@ -357,7 +371,7 @@ impl Scene for ExploreSelectScene {
                     } else {
                         let text_area = display.render_text_complex(
                             &IVec2::new(CENTER_X_I32, y + 5),
-                            "NOT RIGHT LIFE STAGE",
+                            "DOP IS SICK",
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
