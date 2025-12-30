@@ -5,7 +5,7 @@ use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
-    anime::{HasAnime, MaskedAnimeRender},
+    anime::{HasAnime, MaskedAnimeSprite},
     assets::{
         self, FRAMES_FISHING_POND_MOVING, IMAGE_FISHING_POND_LINE_MASK_0, IMAGE_FISHING_POND_STILL,
     },
@@ -51,12 +51,12 @@ pub struct FishingScene {
     seq: HitSeq,
     pet_render: PetRender,
     fishing_pond_moving: BasicAnimeSprite,
-    fishing_line: MaskedAnimeRender,
-    fishing_line_pulled: MaskedAnimeRender,
-    fishing_line_item: MaskedAnimeRender,
-    fishing_line_nothing: MaskedAnimeRender,
+    fishing_line: MaskedAnimeSprite,
+    fishing_line_pulled: MaskedAnimeSprite,
+    fishing_line_item: MaskedAnimeSprite,
+    fishing_line_nothing: MaskedAnimeSprite,
     winning: Option<Winning>,
-    garbage: MaskedAnimeRender,
+    garbage: MaskedAnimeSprite,
 }
 
 const FISHING_POND_POS_CENTER: Vec2 = Vec2::new(
@@ -79,13 +79,13 @@ impl Default for FishingScene {
 
 impl FishingScene {
     pub fn new() -> Self {
-        let fishing_line = MaskedAnimeRender::new(
+        let fishing_line = MaskedAnimeSprite::new(
             FISHING_ROD_POS_CENTER,
             &assets::FRAMES_FISHING_POND_LINE,
             &assets::FRAMES_FISHING_POND_LINE_MASK,
         );
 
-        let fishing_line_pulled = MaskedAnimeRender::new(
+        let fishing_line_pulled = MaskedAnimeSprite::new(
             FISHING_ROD_POS_CENTER,
             &assets::FRAMES_FISHING_POND_LINE_PULLED,
             &assets::FRAMES_FISHING_POND_LINE_PULLED_MASK,
@@ -104,18 +104,18 @@ impl FishingScene {
             pet_render: PetRender::default(),
             fishing_line,
             fishing_line_pulled,
-            fishing_line_item: MaskedAnimeRender::new(
+            fishing_line_item: MaskedAnimeSprite::new(
                 FISHING_ROD_POS_CENTER,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_ITEM,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_ITEM_MASK,
             ),
-            fishing_line_nothing: MaskedAnimeRender::new(
+            fishing_line_nothing: MaskedAnimeSprite::new(
                 FISHING_ROD_POS_CENTER,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_NOTHIN,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_NOTHIN_MASK,
             ),
             winning: None,
-            garbage: MaskedAnimeRender::new(
+            garbage: MaskedAnimeSprite::new(
                 Vec2::new(CENTER_X, 20.),
                 &assets::FRAMES_GARBAGE,
                 &assets::FRAMES_GARBAGE_MASK,
@@ -313,14 +313,14 @@ impl Scene for FishingScene {
                     ComplexRenderOption::new().with_center().with_white(),
                 );
 
-                display.render_complex(&self.fishing_line);
+                display.render_sprite(&self.fishing_line);
             }
             State::Pulling => {
                 display.render_sprite(&self.pet_render);
 
                 display.render_sprite(&self.fishing_pond_moving);
 
-                display.render_complex(&self.fishing_line_pulled);
+                display.render_sprite(&self.fishing_line_pulled);
 
                 const HIT_RECTNAGLE: RectIVec2 =
                     RectIVec2::new_top_left(IVec2::new(10, 90), IVec2::new(WIDTH_I32 - 20, 20));
@@ -362,16 +362,16 @@ impl Scene for FishingScene {
                 display.render_sprite(&self.fishing_pond_moving);
 
                 if self.winning.is_some() {
-                    display.render_complex(&self.fishing_line_item);
+                    display.render_sprite(&self.fishing_line_item);
                 } else {
-                    display.render_complex(&self.fishing_line_nothing);
+                    display.render_sprite(&self.fishing_line_nothing);
                 }
             }
             State::FanFare => {
                 if let Some(winnings) = &self.winning {
                     match winnings {
                         Winning::Garbage => {
-                            display.render_complex(&self.garbage);
+                            display.render_sprite(&self.garbage);
                         }
                         Winning::Item(item_kind) => {
                             display.render_image_complex(

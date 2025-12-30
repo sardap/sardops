@@ -3,7 +3,7 @@
         name: "Down the road",
         life_stages: [Baby],
         length: "45m",
-        cooldown: "1m",
+        cooldown: "2h",
         difficulty: 6,
         activities: [
             "Waiting at the lights",
@@ -57,8 +57,8 @@
     (
         name: "to the ninch",
         life_stages: [Child, Adult],
-        length: "1m",
-        cooldown: "10m",
+        length: "1h30m",
+        cooldown: "2h",
         difficulty: 100,
         activities: [
             "Fighting the traffic",
@@ -77,13 +77,13 @@
             "Ohhh pizza",
         ],
         rewards: (
-            money_start: 0,
-            money_end: 0,
+            money_start: 1000,
+            money_end: 2000,
             items: [
-                (item: "Recipe Pizza", odds: 0.2),
-                (item: "Recipe Chips", odds: 0.2),
-                (item: "Fishing Rod", odds: 0.1),
-                (item: "Book Homers Iliad", odds: 0.2),
+                (item: "Recipe Pizza", odds: 0.4),
+                (item: "Recipe Chips", odds: 0.4),
+                (item: "Fishing Rod", odds: 0.4),
+                (item: "Book Homers Iliad", odds: 0.4),
                 (item: "Map 1000 steps", odds: 0.8),
             ]
         ),

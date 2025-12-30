@@ -10,7 +10,7 @@ use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp, WIDTH,
-    anime::{HasAnime, MaskedAnimeRender, tick_all_anime},
+    anime::{HasAnime, MaskedAnimeSprite, tick_all_anime},
     assets::{
         self, DynamicImage, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
@@ -139,7 +139,6 @@ pub struct HomeSceneData {
     pub state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
-    skull: MaskedAnimeRender,
     weather: weather::Weather,
     shake_duration: Duration,
     shake_right: bool,
@@ -148,8 +147,8 @@ pub struct HomeSceneData {
     last_poop_sound: Timestamp,
     last_is_sick: bool,
     last_was_hungry: bool,
-    gone_out_sign: MaskedAnimeRender,
-    telescope: MaskedAnimeRender,
+    gone_out_sign: MaskedAnimeSprite,
+    telescope: MaskedAnimeSprite,
     activity_history: ActivityHistory,
 }
 
@@ -179,7 +178,6 @@ impl Default for HomeSceneData {
             state: State::Wondering,
             state_elapsed: Duration::ZERO,
             wonder_end: Duration::ZERO,
-            skull: MaskedAnimeRender::new(CENTER_VEC, &FRAMES_SKULL, &FRAMES_SKULL_MASK),
             weather: weather::Weather::default(),
             shake_duration: Duration::ZERO,
             shake_right: false,
@@ -188,12 +186,12 @@ impl Default for HomeSceneData {
             last_poop_sound: Timestamp::default(),
             last_is_sick: false,
             last_was_hungry: false,
-            gone_out_sign: MaskedAnimeRender::new(
+            gone_out_sign: MaskedAnimeSprite::new(
                 CENTER_VEC,
                 &FRAMES_GONE_OUT_SIGN,
                 &FRAMES_GONE_OUT_SIGN_MASK,
             ),
-            telescope: MaskedAnimeRender::new(
+            telescope: MaskedAnimeSprite::new(
                 CENTER_VEC,
                 &FRAMES_TELESCOPE_HOME,
                 &FRAMES_TELESCOPE_HOME_MASK,
@@ -280,6 +278,7 @@ pub struct HomeScene {
     egg_bounce: f32,
     particle_system: ParticleSystem<20, 2>,
     night_sky: PartialNightSky,
+    skull: MaskedAnimeSprite,
 }
 
 impl Default for HomeScene {
@@ -298,6 +297,7 @@ impl HomeScene {
             egg_bounce: 0.,
             particle_system: ParticleSystem::default(),
             night_sky: PartialNightSky::default(),
+            skull: MaskedAnimeSprite::new(CENTER_VEC, &FRAMES_SKULL, &FRAMES_SKULL_MASK),
         }
     }
 }
@@ -476,14 +476,14 @@ impl Scene for HomeScene {
         }
 
         if args.game_ctx.pet.is_ill() {
-            args.game_ctx.home.skull.pos = args.game_ctx.home.pet_render.pos
+            self.skull.pos = args.game_ctx.home.pet_render.pos
                 - Vec2::new(
                     0.,
                     args.game_ctx.home.pet_render.anime.current_frame().size.y as f32 / 2.
-                        + args.game_ctx.home.skull.anime.current_frame().size.y as f32 / 2.
+                        + self.skull.anime.current_frame().size.y as f32 / 2.
                         + 2.,
                 );
-            args.game_ctx.home.skull.anime().tick(args.delta);
+            self.skull.anime().tick(args.delta);
         }
 
         args.game_ctx.home.weather.tick(
@@ -1023,7 +1023,7 @@ impl Scene for HomeScene {
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
             State::GoneOut { outing_end_time } => {
-                display.render_complex(&args.game_ctx.home.gone_out_sign);
+                display.render_sprite(&args.game_ctx.home.gone_out_sign);
             }
             State::Telescope { end_time } => {
                 display.render_image_complex(
@@ -1033,7 +1033,7 @@ impl Scene for HomeScene {
                     ComplexRenderOption::new().with_white(),
                 );
 
-                display.render_complex(&args.game_ctx.home.telescope);
+                display.render_sprite(&args.game_ctx.home.telescope);
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
             State::Exploring => {
@@ -1176,7 +1176,7 @@ impl Scene for HomeScene {
                 State::GoneOut { outing_end_time: _ } | State::Exploring
             )
         {
-            display.render_complex(&args.game_ctx.home.skull);
+            display.render_sprite(&self.skull);
         }
 
         if !matches!(args.game_ctx.home.state, State::Exploring) {

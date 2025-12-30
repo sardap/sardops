@@ -5,7 +5,7 @@ use fixedstr::str_format;
 use glam::{IVec2, Vec2};
 
 use crate::{
-    anime::{Anime, HasAnime, MaskedAnimeRender},
+    anime::{Anime, HasAnime, MaskedAnimeSprite},
     assets::{self, Image},
     clock::AnalogueRenderClock,
     death::{DeathCause, GraveStone},
@@ -91,13 +91,13 @@ const POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 const PET_POOP_SPAWN_DURATION: Duration = Duration::from_secs(7);
 
 struct Illness {
-    skull: MaskedAnimeRender,
+    skull: MaskedAnimeSprite,
 }
 
 impl Default for Illness {
     fn default() -> Self {
         Self {
-            skull: MaskedAnimeRender::new(
+            skull: MaskedAnimeSprite::new(
                 CENTER_VEC,
                 &assets::FRAMES_SKULL,
                 &assets::FRAMES_SKULL_MASK,
@@ -475,7 +475,7 @@ impl Scene for DeathScene {
                     }
                 }
                 DeathCause::Illness => {
-                    display.render_complex(&self.ilness.skull);
+                    display.render_sprite(&self.ilness.skull);
                     display.render_sprite(&self.pet_render);
 
                     const DOORS_CLOSE_TIME: Duration = Duration::from_secs(6);

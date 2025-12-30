@@ -4,7 +4,8 @@ use glam::Vec2;
 
 use crate::{
     assets::{Frame, StaticImage},
-    display::{ComplexRender, ComplexRenderOption, PostionMode},
+    display::PostionMode,
+    sprite::{Sprite, SpriteMask, SpritePostionMode},
 };
 
 const DEFAULT_FRAMES: [Frame; 1] = [Frame::new(
@@ -107,58 +108,64 @@ pub fn tick_all_anime<T: HasAnime>(animes: &mut [Option<T>], delta: Duration) {
 }
 
 #[derive(Copy, Clone)]
-pub struct MaskedAnimeRender {
+pub struct MaskedAnimeSprite {
     pub pos: Vec2,
     pub anime: Anime,
-    pub masked: &'static [Frame],
     pub pos_mode: PostionMode,
 }
 
-impl MaskedAnimeRender {
+impl MaskedAnimeSprite {
     pub fn new(pos: Vec2, frames: &'static [Frame], masked_frames: &'static [Frame]) -> Self {
         Self {
             pos,
-            anime: Anime::new(frames),
-            masked: masked_frames,
+            anime: Anime::new(frames).with_mask(masked_frames),
             pos_mode: PostionMode::Center,
         }
     }
 }
 
-impl Default for MaskedAnimeRender {
+impl Default for MaskedAnimeSprite {
     fn default() -> Self {
         Self {
             pos: Vec2::default(),
             anime: Default::default(),
-            masked: Default::default(),
             pos_mode: PostionMode::Center,
         }
     }
 }
 
-impl HasAnime for MaskedAnimeRender {
+impl HasAnime for MaskedAnimeSprite {
     fn anime(&mut self) -> &mut Anime {
         &mut self.anime
     }
 }
 
-impl ComplexRender for MaskedAnimeRender {
-    fn render(&self, display: &mut crate::display::GameDisplay) {
-        display.render_image_complex(
-            self.pos.x as i32,
-            self.pos.y as i32,
-            self.anime.current_frame(),
-            ComplexRenderOption::new()
-                .with_pos_mode(self.pos_mode)
-                .with_white(),
-        );
-        display.render_image_complex(
-            self.pos.x as i32,
-            self.pos.y as i32,
-            self.masked[self.anime.current_frame_index()].frame,
-            ComplexRenderOption::new()
-                .with_pos_mode(self.pos_mode)
-                .with_black(),
-        );
+impl Sprite for MaskedAnimeSprite {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl crate::assets::Image {
+        self.anime.current_frame()
+    }
+
+    fn size_x(&self) -> i32 {
+        self.anime.current_frame().isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.anime.current_frame().isize.y
+    }
+}
+
+impl SpriteMask for MaskedAnimeSprite {
+    fn image_mask(&self) -> &impl crate::assets::Image {
+        self.anime.current_frame_mask().unwrap()
+    }
+}
+
+impl SpritePostionMode for MaskedAnimeSprite {
+    fn sprite_postion_mode(&self) -> PostionMode {
+        self.pos_mode
     }
 }

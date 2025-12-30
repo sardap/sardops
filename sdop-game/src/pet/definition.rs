@@ -1,6 +1,6 @@
 use core::{ops::Range, time::Duration};
 
-use chrono::Timelike;
+use chrono::{Datelike, Timelike};
 
 use crate::{
     Timestamp,
@@ -60,7 +60,15 @@ impl PetDefinition {
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
-        let hour = timestamp.inner().hour() as i32;
+        let datetime = timestamp.inner();
+        //  NYE edge-case
+        if (datetime.month() == 12 && datetime.day() == 31 && datetime.hour() > 10)
+            || (datetime.month() == 1 && datetime.day() == 1 && datetime.hour() < 10)
+        {
+            return false;
+        }
+
+        let hour = datetime.hour() as i32;
         let (mut start, mut end) = match self.life_stage {
             LifeStage::Baby => (6, 20),
             LifeStage::Child => (8, 21),
