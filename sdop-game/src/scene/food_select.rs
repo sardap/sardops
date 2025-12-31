@@ -4,7 +4,9 @@ use glam::IVec2;
 
 use crate::{
     assets,
-    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
+    display::{
+        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
+    },
     fonts::FONT_VARIABLE_SMALL,
     food::{FOODS, Food, MAX_FOOD_X},
     geo::RectIVec2,
@@ -218,7 +220,11 @@ impl Scene for FoodSelectScene {
                 y += 7;
             }
 
-            let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
+            let is_sick_of = args.game_ctx.pet.food_history.sick_of(food);
+
+            let y_end = y.max(
+                select_rect_y + food.image.size.y as i32 + 7 + if is_sick_of { 15 } else { 0 },
+            );
 
             if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
                 display.render_rect_outline(
@@ -230,7 +236,7 @@ impl Scene for FoodSelectScene {
                 );
             }
 
-            if args.game_ctx.pet.food_history.sick_of(food) {
+            if is_sick_of {
                 let x_offset =
                     if self.sick_of_shake_remaining > Duration::ZERO && food == &self.current {
                         args.game_ctx.rng.i32(-2..2)
@@ -249,6 +255,40 @@ impl Scene for FoodSelectScene {
                     &assets::IMAGE_SICK_OF_LABEL_MASK,
                     ComplexRenderOption::new().with_black(),
                 );
+
+                if let Some(last) = args.game_ctx.pet.food_history.get_entry(food).first_ate() {
+                    let expires = last + food.expire;
+
+                    y += 5;
+
+                    display.render_text_complex(
+                        &IVec2::new(CENTER_X_I32, y),
+                        "EAT IN",
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 7;
+
+                    let total_secs = (expires - args.timestamp).as_secs() as i32;
+                    let hours = total_secs / 3600;
+                    let mins = (total_secs % 3600) / 60;
+                    let seconds = total_secs % 60;
+                    let str =
+                        fixedstr::str_format!(fixedstr::str32, "{}h{}m{}s", hours, mins, seconds);
+                    display.render_text_complex(
+                        &IVec2::new(CENTER_X_I32, y),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 5;
+                }
             }
 
             y += 10;

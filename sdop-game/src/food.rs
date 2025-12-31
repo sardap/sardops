@@ -84,6 +84,18 @@ pub struct FoodHistoryEntry {
     total: u32,
 }
 
+impl FoodHistoryEntry {
+    pub fn first_ate(&self) -> Option<Timestamp> {
+        for i in self.history {
+            if i.is_some() {
+                return i;
+            }
+        }
+
+        None
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone, Default)]
 pub struct FoodHistory {

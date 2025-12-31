@@ -31,7 +31,7 @@
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
 - [] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [] Need to rethink books and chapters for activity cooldown can be like an hour without books being impossible to complete I think if books are always broken into like 20 min chunks that would be for the best
-- [] Need some indaction of when sick of food will expire
+- [X] Need some indaction of when sick of food will expire
 - [] Food select movement is strange near the top
 - [X] Should stay up on NYE
 - [X] Should not be able to start exploring if sick
