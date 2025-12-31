@@ -37,6 +37,7 @@
 - [X] Should not be able to start exploring if sick
 - [X] healing needs to be cheaper across the board
 - [X] sickness should have a chance to just go away
+- [] NYE Fireworks at midnight
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

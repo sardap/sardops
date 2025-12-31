@@ -4,9 +4,7 @@ use glam::IVec2;
 
 use crate::{
     assets,
-    display::{
-        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
-    },
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
     food::{FOODS, Food, MAX_FOOD_X},
     geo::RectIVec2,
@@ -49,12 +47,19 @@ impl Scene for FoodSelectScene {
             .unwrap_or_default();
 
         if args.input.pressed(crate::Button::Right) {
-            self.current = FOODS
-                .iter()
-                .skip(self.current.id as usize + 1)
-                .filter(|f| args.game_ctx.inventory.has_item(f.item))
-                .next()
-                .unwrap_or(&FOODS[0]);
+            loop {
+                let mut next = self.current.id + 1;
+                if next >= FOODS.len() {
+                    next = FOODS[0].id;
+                }
+
+                if args.game_ctx.inventory.has_item(FOODS[next].item) {
+                    self.current = FOODS[next];
+                    break;
+                }
+
+                self.current = FOODS[next];
+            }
         }
 
         if args.input.pressed(crate::Button::Left) {
@@ -65,16 +70,16 @@ impl Scene for FoodSelectScene {
 
             loop {
                 let next = match self.current.id.checked_sub(1) {
-                    Some(index) => index as usize,
+                    Some(index) => FOODS[index],
                     None => break,
                 };
 
-                if args.game_ctx.inventory.has_item(self.current.item) {
-                    self.current = FOODS[next];
+                if args.game_ctx.inventory.has_item(next.item) {
+                    self.current = next;
                     break;
                 }
 
-                self.current = FOODS[next];
+                self.current = next;
             }
         }
 
@@ -220,23 +225,7 @@ impl Scene for FoodSelectScene {
                 y += 7;
             }
 
-            let is_sick_of = args.game_ctx.pet.food_history.sick_of(food);
-
-            let y_end = y.max(
-                select_rect_y + food.image.size.y as i32 + 7 + if is_sick_of { 15 } else { 0 },
-            );
-
-            if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
-                display.render_rect_outline(
-                    &RectIVec2::new_top_left(
-                        IVec2::new(1, select_rect_y - 4),
-                        IVec2::new(WIDTH_I32 - 3, (y_end - select_rect_y) + 5),
-                    ),
-                    true,
-                );
-            }
-
-            if is_sick_of {
+            if args.game_ctx.pet.food_history.sick_of(food) {
                 let x_offset =
                     if self.sick_of_shake_remaining > Duration::ZERO && food == &self.current {
                         args.game_ctx.rng.i32(-2..2)
@@ -289,6 +278,18 @@ impl Scene for FoodSelectScene {
 
                     y += 5;
                 }
+            }
+
+            let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
+
+            if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
+                display.render_rect_outline(
+                    &RectIVec2::new_top_left(
+                        IVec2::new(1, select_rect_y - 4),
+                        IVec2::new(WIDTH_I32 - 3, (y_end - select_rect_y) + 5),
+                    ),
+                    true,
+                );
             }
 
             y += 10;
