@@ -3,10 +3,7 @@ use glam::IVec2;
 
 use crate::{
     Button, assets,
-    display::{
-        CENTER_X, CENTER_X_I32, CENTER_Y, CENTER_Y_I32, ComplexRenderOption, GameDisplay,
-        HEIGHT_I32,
-    },
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32},
     fonts,
     geo::RectIVec2,
     pet::{definition::PetDefinitionId, render::PetRender},

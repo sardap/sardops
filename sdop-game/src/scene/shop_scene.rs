@@ -10,7 +10,7 @@ use crate::{
     fonts::FONT_VARIABLE_SMALL,
     game_consts::SHOP_OPEN_TIMES,
     geo::RectVec2,
-    particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs},
+    particle_system::{ParticleSpawnArgs, ParticleSystem, ParticleTemplate, TemplateCullTatic},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     shop::ShopItemSet,
     sounds::{self, SONG_SHOP, SONG_SHOP_CLOSED, SongPlayOptions},
@@ -76,7 +76,7 @@ impl Scene for ShopScene {
             || args.timestamp.inner().time() > opening_times[1]
             || args.game_ctx.speical_days.is_non_trading_day()
         {
-            self.state = State::Closed;
+            // self.state = State::Closed;
         }
     }
 
@@ -92,9 +92,10 @@ impl Scene for ShopScene {
             .checked_sub(args.delta)
             .unwrap_or_default();
 
-        self.particle_system.tick(&mut ParticleTickArgs::new(
+        self.particle_system.tick(&mut ParticleSpawnArgs::new(
             args.delta,
             &mut args.game_ctx.rng,
+            &Vec2::default(),
         ));
 
         match self.state {
@@ -148,9 +149,11 @@ impl Scene for ShopScene {
                             SongPlayOptions::new().with_effect(),
                         );
                         self.particle_system.run_once_spawner(
-                            |args| {
+                            |particles, args| {
                                 const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
-                                    Duration::from_millis(1000)..Duration::from_millis(2000),
+                                    TemplateCullTatic::Remaning(
+                                        Duration::from_millis(1000)..Duration::from_millis(2000),
+                                    ),
                                     RectVec2::new_top_left(
                                         Vec2::new(10., 80.),
                                         Vec2::new(40., 40.),
@@ -159,9 +162,15 @@ impl Scene for ShopScene {
                                     &[&assets::IMAGE_MONEY_PARTICLE],
                                 );
 
-                                (&TEMPLATE, 20)
+                                for _ in 0..20 {
+                                    particles.add(TEMPLATE.instantiate(&mut args.rng));
+                                }
                             },
-                            &mut ParticleTickArgs::new(args.delta, &mut args.game_ctx.rng),
+                            &mut ParticleSpawnArgs::new(
+                                args.delta,
+                                &mut args.game_ctx.rng,
+                                &Vec2::default(),
+                            ),
                         );
                         self.sign_shake_remaining = SIGN_SHAKE_DURATION;
                     } else {

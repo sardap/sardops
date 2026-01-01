@@ -12,13 +12,14 @@ use crate::{
     pet::{LifeStage, Mood, definition::PET_BRAINO_ID},
     scene::{
         SceneTickArgs,
-        home_scene::{PROGRAM_RUN_TIME_RANGE, State},
+        home_scene::{MUSIC_NOTE_SPAWNER, PROGRAM_RUN_TIME_RANGE, State},
     },
     tv::TvKind,
 };
 
 pub fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
-    Duration::from_secs(rng.u64(0..(5 * 60)))
+    // Duration::from_secs(rng.u64(0..(5 * 60)))
+    Duration::ZERO
 }
 
 #[derive(Debug, Copy, Clone, EnumCount)]
@@ -136,6 +137,13 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
+    add_option(
+        &mut options,
+        &args.game_ctx.home.activity_history,
+        &args.timestamp,
+        Activity::ListenMusic,
+    );
+
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
         args.game_ctx.home.activity_history[option as usize] = args.timestamp;
@@ -186,6 +194,10 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
             Activity::ListenMusic => {
                 args.game_ctx.home.pet_render.pos = CENTER_VEC;
                 args.game_ctx.home.target = CENTER_VEC;
+                args.game_ctx
+                    .home
+                    .particle_system
+                    .add_spawner(MUSIC_NOTE_SPAWNER);
                 args.game_ctx.home.change_state(State::PlayingMp3 {
                     jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
                 });

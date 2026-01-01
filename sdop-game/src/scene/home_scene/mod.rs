@@ -19,8 +19,8 @@ use crate::{
     book::on_book_completed,
     date_utils::DurationExt,
     display::{
-        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32,
-        WIDTH_F32, WIDTH_I32,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32,
+        WIDTH_I32,
     },
     dream_bubble::DreamBubble,
     egg::EggRender,
@@ -30,7 +30,10 @@ use crate::{
     geo::{RectIVec2, RectVec2, vec2_direction, vec2_distance},
     items::ItemKind,
     night_sky::generate_night_sky_image,
-    particle_system::{ParticleSystem, ParticleTemplate, ParticleTickArgs, SpawnTrigger, Spawner},
+    particle_system::{
+        ParticleSpawnArgs, ParticleSystem, ParticleTemplate, SpawnTrigger, Spawner,
+        TemplateCullTatic,
+    },
     pc::{PcKind, PcRender},
     pet::{Mood, definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
@@ -58,7 +61,7 @@ use crate::{
         suiters_scene::SuitersScene,
     },
     sounds::{SONG_ALARM, SONG_HUNGRY, SONG_POOPED, SONG_SICK, SongPlayOptions},
-    sprite::{BasicAnimeSprite, MusicNote, Sprite},
+    sprite::{BasicAnimeSprite, Sprite},
     stomach::StomachRender,
     temperature::TemperatureLevel,
     tv::{SHOW_RUN_TIME, TvKind, TvRender, get_show_for_time},
@@ -125,7 +128,6 @@ struct Word {
 
 pub struct HomeSceneData {
     pet_render: PetRender,
-    poops: [Option<PoopRender>; MAX_POOPS],
     target: Vec2,
     options: MenuOptions,
     sleeping_z: BasicAnimeSprite,
@@ -135,14 +137,12 @@ pub struct HomeSceneData {
     tv: TvRender,
     pc: PcRender,
     next_word_spawn: Duration,
-    floating_words: [Option<Word>; 5],
     pub state: State,
     state_elapsed: Duration,
     wonder_end: Duration,
     weather: weather::Weather,
     shake_duration: Duration,
     shake_right: bool,
-    music_notes: [MusicNote; 7],
     last_poop_count: usize,
     last_poop_sound: Timestamp,
     last_is_sick: bool,
@@ -150,6 +150,9 @@ pub struct HomeSceneData {
     gone_out_sign: MaskedAnimeSprite,
     telescope: MaskedAnimeSprite,
     activity_history: ActivityHistory,
+    poops: [Option<PoopRender>; MAX_POOPS],
+    floating_words: [Option<Word>; 5],
+    particle_system: ParticleSystem<50, 3>,
 }
 
 impl Default for HomeSceneData {
@@ -181,7 +184,6 @@ impl Default for HomeSceneData {
             weather: weather::Weather::default(),
             shake_duration: Duration::ZERO,
             shake_right: false,
-            music_notes: Default::default(),
             last_poop_count: 0,
             last_poop_sound: Timestamp::default(),
             last_is_sick: false,
@@ -197,6 +199,7 @@ impl Default for HomeSceneData {
                 &FRAMES_TELESCOPE_HOME_MASK,
             ),
             activity_history: Default::default(),
+            particle_system: ParticleSystem::default(),
         }
     }
 }
@@ -222,9 +225,9 @@ impl HomeSceneData {
 const STAR_SPAWNER: Spawner = Spawner::new(
     "star",
     SpawnTrigger::timer_range(Duration::from_secs(1)..Duration::from_secs(10)),
-    |args| {
+    |particles, args| {
         const LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
-            Duration::from_secs(10)..Duration::from_secs(20),
+            TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
             RectVec2::new_top_left(
                 Vec2::new(
                     HOME_SCENE_TOP_AREA_RECT.x2() as f32 + 20.,
@@ -236,7 +239,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
             &[&assets::IMAGE_SHOOTING_STAR],
         );
         const RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
-            Duration::from_secs(1)..Duration::from_secs(10),
+            TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
             RectVec2::new_top_left(
                 Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2() as f32),
                 Vec2::new(1., 20.),
@@ -245,14 +248,45 @@ const STAR_SPAWNER: Spawner = Spawner::new(
             &[&assets::IMAGE_SHOOTING_STAR],
         );
 
-        return (
+        particles.add(
             if args.rng.bool() {
                 &LEFT_STAR
             } else {
                 &RIGHT_STAR
-            },
-            1,
+            }
+            .instantiate(&mut args.rng),
         );
+    },
+);
+
+const MUSIC_NOTE_SPAWNER: Spawner = Spawner::new(
+    "music_notes",
+    SpawnTrigger::timer_range(Duration::from_millis(250)..Duration::from_millis(1000)),
+    |particles, args| {
+        let mut x = args.rng.i32(10..25);
+        if args.rng.bool() {
+            x = -x;
+        }
+        let mut y = args.rng.i32(10..25);
+        if args.rng.bool() {
+            y = -y;
+        }
+
+        let x = x as f32;
+        let y = y as f32;
+
+        let template = ParticleTemplate::new(
+            TemplateCullTatic::Remaning(Duration::from_millis(3000)..Duration::from_millis(5000)),
+            RectVec2::new_top_left(*args.pet_pos, Vec2::new(1., 1.)),
+            Vec2::new(x, y)..Vec2::new(x, y),
+            &[
+                &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
+                &assets::IMAGE_MUSIC_NOTE_CROTCHET,
+                &assets::IMAGE_MUSIC_NOTE_QUAVER,
+                &assets::IMAGE_MUSIC_NOTE_SEMI_QUAVER,
+            ],
+        );
+        particles.add(template.instantiate(&mut args.rng));
     },
 );
 
@@ -276,7 +310,6 @@ pub struct HomeScene {
     right_render: HomeFurnitureRender,
     egg_render: EggRender,
     egg_bounce: f32,
-    particle_system: ParticleSystem<20, 2>,
     night_sky: PartialNightSky,
     skull: MaskedAnimeSprite,
 }
@@ -295,7 +328,6 @@ impl HomeScene {
             right_render: HomeFurnitureRender::None,
             egg_render: Default::default(),
             egg_bounce: 0.,
-            particle_system: ParticleSystem::default(),
             night_sky: PartialNightSky::default(),
             skull: MaskedAnimeSprite::new(CENTER_VEC, &FRAMES_SKULL, &FRAMES_SKULL_MASK),
         }
@@ -318,10 +350,6 @@ impl Scene for HomeScene {
             args.game_ctx.home.target = args.game_ctx.home.pet_render.pos;
 
             args.game_ctx.home.weather.setup(&mut args.game_ctx.rng);
-
-            for note in &mut args.game_ctx.home.music_notes {
-                note.pos = Vec2::new(-100., -100.);
-            }
 
             generate_night_sky_image::<NIGHT_SKY_HEIGHT>(
                 &mut self.night_sky,
@@ -368,10 +396,14 @@ impl Scene for HomeScene {
             .pet_render
             .set_def_id(args.game_ctx.pet.def_id);
 
-        self.particle_system.tick(&mut ParticleTickArgs {
-            delta: args.delta,
-            rng: &mut args.game_ctx.rng,
-        });
+        args.game_ctx
+            .home
+            .particle_system
+            .tick(&mut ParticleSpawnArgs {
+                delta: args.delta,
+                rng: &mut args.game_ctx.rng,
+                pet_pos: &args.game_ctx.home.pet_render.pos,
+            });
 
         update_poop_renders(&mut args.game_ctx.home.poops, &args.game_ctx.poops);
 
@@ -490,6 +522,7 @@ impl Scene for HomeScene {
             args.delta,
             &mut args.game_ctx.rng,
             TemperatureLevel::from(args.input.temperature()),
+            &mut args.game_ctx.home.particle_system,
         );
 
         if matches!(
@@ -759,20 +792,13 @@ impl Scene for HomeScene {
                         * DANCING_SPEED
                         * args.delta.as_secs_f32();
 
-                for note in &mut args.game_ctx.home.music_notes {
-                    note.pos += note.dir * args.delta.as_secs_f32();
-                    if note.pos.y < { -note.size().y }
-                        || note.pos.y > HEIGHT_F32 + note.size().y
-                        || note.pos.x > WIDTH_F32 + note.size().x
-                        || note.pos.x < -{ note.size().x }
-                    {
-                        note.reset(args.game_ctx.home.pet_render.pos, &mut args.game_ctx.rng);
-                    }
-                }
-
                 if args.game_ctx.home.state_elapsed > jam_end_time
                     || args.game_ctx.pet.mood() != Mood::Happy
                 {
+                    args.game_ctx
+                        .home
+                        .particle_system
+                        .remove_spawner(MUSIC_NOTE_SPAWNER.name);
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
@@ -805,14 +831,15 @@ impl Scene for HomeScene {
             }
             State::Telescope { end_time } => {
                 self.egg_render.pos = EGG_RIGHT;
+                let home = &mut args.game_ctx.home;
 
-                args.game_ctx.home.telescope.pos = Vec2::new(15., 80.);
-                args.game_ctx.home.pet_render.pos = Vec2::new(45., 85.);
+                home.telescope.pos = Vec2::new(15., 80.);
+                home.pet_render.pos = Vec2::new(45., 85.);
 
-                args.game_ctx.home.telescope.anime().tick(args.delta);
+                home.telescope.anime().tick(args.delta);
 
-                if args.game_ctx.home.state_elapsed > end_time {
-                    self.particle_system.remove_spawner(STAR_SPAWNER.name);
+                if home.state_elapsed > end_time {
+                    home.particle_system.remove_spawner(STAR_SPAWNER.name);
                     args.game_ctx.home.change_state(State::Wondering);
                 }
             }
@@ -1014,10 +1041,6 @@ impl Scene for HomeScene {
                     &assets::IMAGE_PORTABLE_AUDIO_PLAYER_0,
                     ComplexRenderOption::new().with_white().with_black(),
                 );
-
-                for note in &args.game_ctx.home.music_notes {
-                    display.render_sprite(note);
-                }
             }
             State::Alarm => {
                 display.render_sprite(&args.game_ctx.home.pet_render);
@@ -1168,7 +1191,7 @@ impl Scene for HomeScene {
             display.render_complex(&args.game_ctx.home.weather);
         }
 
-        display.render_complex(&self.particle_system);
+        display.render_complex(&args.game_ctx.home.particle_system);
 
         if args.game_ctx.pet.is_ill()
             && !matches!(

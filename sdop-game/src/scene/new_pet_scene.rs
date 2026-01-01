@@ -12,7 +12,6 @@ use crate::{
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
     },
-    sounds::{SONG_NEW_PET, SongPlayOptions},
 };
 
 #[derive(Clone)]

@@ -5,70 +5,138 @@ use heapless::Vec;
 
 use crate::{
     assets::StaticImage,
-    display::{ComplexRender, ComplexRenderOption, GameDisplay},
+    display::{ComplexRender, ComplexRenderOption, GameDisplay, Rotation},
     geo::RectVec2,
     sprite::Sprite,
 };
 
-pub struct ParticleTickArgs<'a> {
-    pub delta: Duration,
-    pub rng: &'a mut fastrand::Rng,
+pub struct Particles<'a> {
+    particles: &'a mut [Option<Particle>],
+    last_particle_index: &'a mut usize,
 }
 
-impl<'a> ParticleTickArgs<'a> {
-    pub const fn new(delta: Duration, rng: &'a mut fastrand::Rng) -> Self {
-        Self { delta, rng }
+impl<'a> Particles<'a> {
+    fn new(particles: &'a mut [Option<Particle>], last_particle_index: &'a mut usize) -> Self {
+        Self {
+            particles,
+            last_particle_index,
+        }
+    }
+
+    pub fn add(&mut self, particle: Particle) {
+        for _ in 0..self.particles.len() {
+            if *self.last_particle_index >= self.particles.len() {
+                *self.last_particle_index = 0;
+            }
+
+            if self.particles[*self.last_particle_index].is_none() {
+                self.particles[*self.last_particle_index] = Some(particle);
+                break;
+            }
+            *self.last_particle_index += 1;
+        }
     }
 }
 
+pub struct ParticleSpawnArgs<'a> {
+    pub delta: Duration,
+    pub rng: &'a mut fastrand::Rng,
+    // This 100% is bad and stupid
+    pub pet_pos: &'a Vec2,
+}
+
+impl<'a> ParticleSpawnArgs<'a> {
+    pub const fn new(delta: Duration, rng: &'a mut fastrand::Rng, pet_pos: &'a Vec2) -> Self {
+        Self {
+            delta,
+            rng,
+            pet_pos,
+        }
+    }
+}
+
+const DEFAULT_ROTATION: &'static [Rotation] = &[Rotation::R0];
+
+pub enum TemplateCullTatic {
+    Remaning(Range<Duration>),
+    OutsideRect(RectVec2),
+}
+
 pub struct ParticleTemplate {
-    remaining: Range<Duration>,
+    cull: TemplateCullTatic,
     area: RectVec2,
     dir: Range<Vec2>,
     images: &'static [&'static StaticImage],
+    rotation: &'static [Rotation],
 }
 
 impl ParticleTemplate {
     pub const fn new(
-        remaining: Range<Duration>,
+        cull: TemplateCullTatic,
         area: RectVec2,
         dir: Range<Vec2>,
         images: &'static [&'static StaticImage],
     ) -> Self {
         Self {
-            remaining,
+            cull,
             area,
             dir,
             images,
+            rotation: DEFAULT_ROTATION,
         }
+    }
+
+    pub const fn with_rotation(mut self, rotation: &'static [Rotation]) -> Self {
+        debug_assert!(rotation.len() > 0);
+        self.rotation = rotation;
+        self
     }
 
     pub fn instantiate(&self, rng: &mut fastrand::Rng) -> Particle {
         Particle {
-            remaining: Duration::from_micros(rng.u64(
-                (self.remaining.start.as_micros() as u64)..(self.remaining.end.as_micros() as u64),
-            )),
+            cull: match &self.cull {
+                TemplateCullTatic::Remaning(range) => CullTattic::Remaining(Duration::from_micros(
+                    rng.u64((range.start.as_micros() as u64)..(range.end.as_micros() as u64)),
+                )),
+                TemplateCullTatic::OutsideRect(rect_vec2) => CullTattic::OutsideRect(*rect_vec2),
+            },
             pos: Vec2::new(
                 rng.i32((self.area.x() as i32)..(self.area.x2() as i32)) as f32 + rng.f32(),
                 rng.i32((self.area.y() as i32)..(self.area.y2() as i32)) as f32 + rng.f32(),
             ),
             dir: Vec2::new(
-                rng.i32((self.dir.start.x as i32)..(self.dir.end.x as i32)) as f32 + rng.f32(),
-                rng.i32((self.dir.start.y as i32)..(self.dir.end.y as i32)) as f32 + rng.f32(),
+                if self.dir.start.x == self.dir.end.x {
+                    self.dir.start.x as f32
+                } else {
+                    rng.i32((self.dir.start.x as i32)..(self.dir.end.x as i32)) as f32 + rng.f32()
+                },
+                if self.dir.start.y == self.dir.end.y {
+                    self.dir.start.y as f32
+                } else {
+                    rng.i32((self.dir.start.y as i32)..(self.dir.end.y as i32)) as f32 + rng.f32()
+                },
             ),
             image: self.images[rng.usize(0..self.images.len())],
+            rotation: *rng.choice(self.rotation).unwrap_or(&Rotation::R0),
         }
     }
 }
 
-pub type ParticleSpawnFn = fn(args: &mut ParticleTickArgs) -> (&'static ParticleTemplate, u8);
+pub type ParticleSpawnFn = fn(particles: &mut Particles, args: &mut ParticleSpawnArgs);
+
+#[derive(Clone, Copy)]
+pub enum CullTattic {
+    Remaining(Duration),
+    OutsideRect(RectVec2),
+}
 
 #[derive(Clone, Copy)]
 pub struct Particle {
-    remaining: Duration,
+    cull: CullTattic,
     pos: Vec2,
     dir: Vec2,
     image: &'static StaticImage,
+    rotation: Rotation,
 }
 
 impl Sprite for Particle {
@@ -163,11 +231,9 @@ impl Spawner {
         }
     }
 
-    pub fn tick(&mut self, args: &mut ParticleTickArgs) -> Option<(&'static ParticleTemplate, u8)> {
+    fn tick(&mut self, particles: &mut Particles, args: &mut ParticleSpawnArgs) {
         if self.trigger.tick(args.delta, args.rng) {
-            Some((self.spawn_fn)(args))
-        } else {
-            None
+            (self.spawn_fn)(particles, args)
         }
     }
 }
@@ -220,48 +286,32 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
         }
     }
 
-    pub fn run_once_spawner(&mut self, spawner: ParticleSpawnFn, args: &mut ParticleTickArgs) {
+    pub fn run_once_spawner(&mut self, spawner: ParticleSpawnFn, args: &mut ParticleSpawnArgs) {
         let particles = &mut self.particles;
-        let (template, count) = spawner(args);
-        let mut remaining = count;
-        for range in &[
-            self.last_particle_index..particles.len(),
-            0..self.last_particle_index,
-        ] {
-            for i in range.start..range.end {
-                if particles[i].is_none() {
-                    particles[i] = Some(template.instantiate(args.rng));
-                    self.last_particle_index = i;
-                    remaining -= 1;
-
-                    if remaining <= 0 {
-                        break;
-                    }
-                }
-            }
-
-            if remaining <= 0 {
-                break;
-            }
-        }
+        spawner(
+            &mut Particles::new(&mut self.particles, &mut self.last_particle_index),
+            args,
+        );
     }
 
-    pub fn tick(&mut self, args: &mut ParticleTickArgs) {
+    pub fn tick(&mut self, args: &mut ParticleSpawnArgs) {
         let particles = &mut self.particles;
         // tick existing
         for i in 0..particles.len() {
             let mut should_drop = false;
             if let Some(particle) = particles.get_mut(i).unwrap() {
-                particle.remaining = particle
-                    .remaining
-                    .checked_sub(args.delta)
-                    .unwrap_or(Duration::ZERO);
-                if particle.remaining <= Duration::ZERO {
-                    should_drop = true;
-                } else {
-                    particle.pos.x += particle.dir.x * args.delta.as_secs_f32();
-                    particle.pos.y += particle.dir.y * args.delta.as_secs_f32();
+                match &mut particle.cull {
+                    CullTattic::Remaining(duration) => {
+                        *duration = duration.checked_sub(args.delta).unwrap_or(Duration::ZERO);
+                        should_drop = *duration <= Duration::ZERO;
+                    }
+                    CullTattic::OutsideRect(rect_vec2) => {
+                        should_drop = !rect_vec2.point_inside(&particle.pos);
+                    }
                 }
+
+                particle.pos.x += particle.dir.x * args.delta.as_secs_f32();
+                particle.pos.y += particle.dir.y * args.delta.as_secs_f32();
             }
 
             if should_drop {
@@ -269,31 +319,10 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
             }
         }
 
+        let mut particles = Particles::new(particles, &mut self.last_particle_index);
         // Spawn new
         for spawner in &mut self.spawners {
-            if let Some((template, count)) = spawner.tick(args) {
-                let mut remaining = count;
-                for range in &[
-                    self.last_particle_index..particles.len(),
-                    0..self.last_particle_index,
-                ] {
-                    for i in range.start..range.end {
-                        if particles[i].is_none() {
-                            particles[i] = Some(template.instantiate(args.rng));
-                            self.last_particle_index = i;
-                            remaining -= 1;
-
-                            if remaining <= 0 {
-                                break;
-                            }
-                        }
-                    }
-
-                    if remaining <= 0 {
-                        break;
-                    }
-                }
-            }
+            spawner.tick(&mut particles, args);
         }
     }
 }
@@ -308,7 +337,10 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize> ComplexRender
                     particle.pos.x as i32,
                     particle.pos.y as i32,
                     particle.image,
-                    ComplexRenderOption::new().with_white().with_center(),
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_center()
+                        .with_rotation(particle.rotation),
                 );
             }
         }
