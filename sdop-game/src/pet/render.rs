@@ -40,6 +40,16 @@ impl PetRender {
         self
     }
 
+    pub fn with_position(mut self, pos: Vec2) -> Self {
+        self.pos = pos;
+        self
+    }
+
+    pub fn with_anime(mut self, set: PetAnimationSet) -> Self {
+        self.set_animation(set);
+        self
+    }
+
     pub fn def_id(&self) -> PetDefinitionId {
         self.def_id
     }

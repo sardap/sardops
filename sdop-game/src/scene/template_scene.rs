@@ -1,7 +1,7 @@
 use crate::{
     display::GameDisplay,
     game_context::GameContext,
-    scene::{Scene, SceneOutput, SceneTickArgs},
+    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
 pub struct TemplateScene {}
@@ -17,9 +17,7 @@ impl Scene for TemplateScene {
 
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
-    fn tick(&mut self, _args: &mut SceneTickArgs, output: &mut SceneOutput) {
-        SceneOutput::default()
-    }
+    fn tick(&mut self, _args: &mut SceneTickArgs, output: &mut SceneOutput) {}
 
     fn render(&self, _display: &mut GameDisplay, _args: &mut RenderArgs) {}
 }

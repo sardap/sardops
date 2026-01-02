@@ -42,6 +42,7 @@ mod display;
 mod dream_bubble;
 mod egg;
 mod explore;
+mod firework;
 mod fish_tank;
 mod fonts;
 mod food;

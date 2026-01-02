@@ -21,6 +21,7 @@ pub mod mg_link_four;
 pub mod mg_tic_tac_toe;
 pub mod mg_weight_lift;
 pub mod new_pet_scene;
+pub mod nye_scene;
 pub mod pet_info_scene;
 pub mod pet_records_scene;
 pub mod place_furniture_scene;
@@ -124,6 +125,7 @@ define_scence_enum!(SceneEnum {
     Credits(credits_scene::CreditsScene),
     ExploreSelect(explore_select_scene::ExploreSelectScene),
     ExploringPost(exploring_post_scene::ExploringPostScene),
+    Nye(nye_scene::NyeScene),
     MgFanFare(mg_fanfare::MgFanFareScene),
     MgDogeEm(mg_doge_em::MgDogeEmScene),
     MgTicTacToe(mg_tic_tac_toe::MgTicTacToeScene),

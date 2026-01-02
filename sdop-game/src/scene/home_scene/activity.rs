@@ -137,13 +137,6 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
-    add_option(
-        &mut options,
-        &args.game_ctx.home.activity_history,
-        &args.timestamp,
-        Activity::ListenMusic,
-    );
-
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
         args.game_ctx.home.activity_history[option as usize] = args.timestamp;

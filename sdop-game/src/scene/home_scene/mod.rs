@@ -4,7 +4,7 @@ mod weather;
 
 use core::{time::Duration, u8};
 
-use chrono::{Datelike, Timelike};
+use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use fixedstr::{str_format, str32};
 use glam::{IVec2, Vec2};
 
@@ -52,6 +52,7 @@ use crate::{
             menu_options::{MenuOption, MenuOptions},
         },
         inventory_scene::InventoryScene,
+        nye_scene::NyeScene,
         pet_info_scene::PetInfoScene,
         pet_records_scene::PetRecordsScene,
         place_furniture_scene::PlaceFurnitureScene,
@@ -462,6 +463,26 @@ impl Scene for HomeScene {
                         .push_song(SONG_HUNGRY, SongPlayOptions::new().with_essential());
                 }
                 args.game_ctx.home.last_was_hungry = args.game_ctx.pet.is_starving();
+            }
+        }
+
+        // Check every 10 seconds
+        if args.frames % 600 == 0 {
+            let date = args.timestamp.inner().date();
+            let time = args.timestamp.inner().time();
+
+            let target = NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(date.year() + 1, 1, 1).unwrap(),
+                NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            );
+            let switch_time = target - Duration::from_mins(10);
+
+            if args.timestamp.inner() > &switch_time {
+                output.set(SceneEnum::Nye(NyeScene::new(
+                    args.game_ctx.pet.def_id,
+                    Timestamp(target),
+                )));
+                return;
             }
         }
 

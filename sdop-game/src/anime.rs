@@ -13,6 +13,13 @@ const DEFAULT_FRAMES: [Frame; 1] = [Frame::new(
     Duration::from_secs(1),
 )];
 
+#[derive(PartialEq, Eq)]
+pub enum AnimeTick {
+    SameFrame,
+    Changed,
+    Looped,
+}
+
 #[derive(Copy, Clone)]
 pub struct Anime {
     frames: &'static [Frame],
@@ -45,7 +52,7 @@ impl Anime {
         self
     }
 
-    pub fn tick(&mut self, delta: Duration) {
+    pub fn tick(&mut self, delta: Duration) -> AnimeTick {
         self.elapsed += delta;
         if self.elapsed > self.frames[self.current_index].duration {
             if self.current_index + 1 >= self.frames.len() {
@@ -54,7 +61,15 @@ impl Anime {
                 self.current_index += 1;
             }
             self.elapsed = Duration::ZERO;
+
+            if self.current_index == 0 {
+                return AnimeTick::Looped;
+            } else {
+                return AnimeTick::Changed;
+            }
         }
+
+        AnimeTick::SameFrame
     }
 
     pub fn set_frame(&mut self, index: usize) {

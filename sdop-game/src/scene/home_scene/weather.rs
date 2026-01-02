@@ -58,8 +58,7 @@ impl Weather {
         temperature_level: TemperatureLevel,
         particle_system: &mut ParticleSystem<MAX_PARTICLES, MAX_SPAWN_FUNCS>,
     ) {
-        // let next_kind = temperature_level.into();
-        let next_kind = WeatherKind::Snow;
+        let next_kind = temperature_level.into();
 
         if self.kind != next_kind {
             // Teardown
