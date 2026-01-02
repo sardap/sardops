@@ -76,7 +76,7 @@ impl Scene for ShopScene {
             || args.timestamp.inner().time() > opening_times[1]
             || args.game_ctx.speical_days.is_non_trading_day()
         {
-            // self.state = State::Closed;
+            self.state = State::Closed;
         }
     }
 
