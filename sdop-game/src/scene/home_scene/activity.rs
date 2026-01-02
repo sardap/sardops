@@ -18,23 +18,24 @@ use crate::{
 };
 
 pub fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
-    // Duration::from_secs(rng.u64(0..(5 * 60)))
-    Duration::ZERO
+    Duration::from_secs(rng.u64(0..(5 * 60)))
 }
 
 #[derive(Debug, Copy, Clone, EnumCount)]
 enum Activity {
-    PlayingComputer = 0,
-    WatchTv = 1,
-    ReadBook = 2,
-    ListenMusic = 3,
-    GoOut = 4,
-    Telescope = 5,
+    Wonder = 0,
+    PlayingComputer = 1,
+    WatchTv = 2,
+    ReadBook = 3,
+    ListenMusic = 4,
+    GoOut = 5,
+    Telescope = 6,
 }
 
 impl Activity {
     pub fn cooldown(&self) -> Duration {
         match self {
+            Activity::Wonder => Duration::ZERO,
             Activity::PlayingComputer => Duration::from_mins(15),
             Activity::WatchTv => Duration::from_mins(15),
             Activity::ReadBook => Duration::from_hours(2),
@@ -137,11 +138,21 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
+    add_option(
+        &mut options,
+        &args.game_ctx.home.activity_history,
+        &args.timestamp,
+        Activity::Wonder,
+    );
+
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
         args.game_ctx.home.activity_history[option as usize] = args.timestamp;
 
         match option {
+            Activity::Wonder => {
+                args.game_ctx.home.change_state(State::Wondering);
+            }
             Activity::PlayingComputer => {
                 args.game_ctx.home.change_state(State::PlayingComputer {
                     watch_end: reset_wonder_end(&mut args.game_ctx.rng),

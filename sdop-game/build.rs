@@ -3,6 +3,7 @@ use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
 use regex::Regex;
+use sdop_build_common::*;
 use sdop_common::{ItemCategory, MelodyEntry};
 use serde::{
     Deserialize, Deserializer, Serialize,
@@ -20,15 +21,6 @@ use std::{
     vec,
 };
 use strum_macros::{Display, EnumString};
-
-const ASSETS_PATH: &str = "../assets";
-const IMAGES_MISC_PATH: &str = "../assets/images/misc";
-const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
-const PETS_RON_PATH: &str = "../assets/pets.ron";
-const FOODS_RON_PATH: &str = "../assets/foods.ron";
-const ITEMS_RON_PATH: &str = "../assets/items.ron";
-const LOCATIONS_RON_PATH: &str = "../assets/locations.ron";
-const SOUNDS_PATH: &str = "../assets/sounds";
 
 #[derive(Default)]
 struct ContentOut {
@@ -533,31 +525,8 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
     }
 }
 
-#[derive(Serialize, Deserialize, EnumString, Display)]
-enum RarityEnum {
-    Common,
-    Rare,
-}
-
 fn default_true() -> bool {
     true
-}
-
-#[derive(Serialize, Deserialize)]
-struct ItemTemplate {
-    name: String,
-    category: ItemCategory,
-    cost: i32,
-    rarity: RarityEnum,
-    image: String,
-    unique: bool,
-    desc: String,
-    #[serde(default)]
-    fishing_odds: f32,
-    #[serde(default = "default_true")]
-    in_shop: bool,
-    #[serde(default)]
-    skill: i32,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -936,104 +905,6 @@ fn generate_sounds() -> ContentOut {
         sounds_definitions: sounds_def,
         ..Default::default()
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ItemReward {
-    item: String,
-    odds: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LocationRewards {
-    money_start: i32,
-    money_end: i32,
-    items: Vec<ItemReward>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct SdopDuration {
-    duration: Duration,
-}
-
-fn parse_duration_string(s: &str) -> Duration {
-    let re = Regex::new(r"(?P<hours>\d+h)?\s*(?P<minutes>\d+m)?\s*(?P<seconds>\d+s)?").unwrap();
-
-    let captures = re.captures(s).unwrap();
-
-    let mut total_duration = Duration::new(0, 0);
-
-    if let Some(m_match) = captures.name("hours") {
-        let val_str = m_match.as_str().trim_end_matches('h');
-        if let Ok(hours) = val_str.parse::<u64>() {
-            total_duration += Duration::from_hours(hours);
-        }
-    }
-
-    if let Some(m_match) = captures.name("minutes") {
-        let val_str = m_match.as_str().trim_end_matches('m');
-        if let Ok(minutes) = val_str.parse::<u64>() {
-            total_duration += Duration::from_mins(minutes);
-        }
-    }
-
-    if let Some(s_match) = captures.name("seconds") {
-        let val_str = s_match.as_str().trim_end_matches('s');
-        if let Ok(seconds) = val_str.parse::<u64>() {
-            total_duration += Duration::from_secs(seconds);
-        }
-    }
-
-    total_duration
-}
-
-struct SdopDurationVisitor;
-
-impl<'de> Visitor<'de> for SdopDurationVisitor {
-    type Value = SdopDuration;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a duration string like '5m 30s', '10m', or '45s'")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(SdopDuration {
-            duration: parse_duration_string(value),
-        })
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        let s = std::str::from_utf8(v).map_err(E::custom)?;
-        self.visit_str(s)
-    }
-}
-
-impl<'de> Deserialize<'de> for SdopDuration {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(SdopDurationVisitor)
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LocationTemplate {
-    pub name: String,
-    pub length: SdopDuration,
-    pub cooldown: SdopDuration,
-    pub difficulty: i32,
-    pub activities: Vec<String>,
-    pub rewards: LocationRewards,
-    #[serde(default = "default_true")]
-    in_shop: bool,
-    life_stages: Vec<sdop_common::LifeStage>,
 }
 
 fn generate_locations() -> ContentOut {

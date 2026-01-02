@@ -888,7 +888,7 @@ impl Scene for HomeScene {
                     .home
                     .pet_render
                     .set_animation(if passed > 0.8 {
-                        PetAnimationSet::Normal
+                        PetAnimationSet::Happy
                     } else if passed > 0.5 {
                         PetAnimationSet::Normal
                     } else {

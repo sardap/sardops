@@ -1,0 +1,11 @@
+[package]
+name = "sdop-build-common"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sdop-common = { path = "../sdop-common", features = ["serde"] }
+serde = { workspace = true }
+regex = { workspace = true }
+strum = { workspace = true, default-features = true }
+strum_macros = { workspace = true, default-features = true }

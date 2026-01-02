@@ -9,7 +9,10 @@ use crate::{
     explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
+    scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        exploring_post_scene::ExploringPostScene,
+    },
     sounds::{self, SongPlayOptions},
     sprite::Sprite,
 };
@@ -89,7 +92,11 @@ impl Scene for ExploreSelectScene {
                 }
 
                 if args.input.any_pressed() {
-                    output.set_home();
+                    if args.input.pressed(Button::Right) {
+                        output.set(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    } else {
+                        output.set_home();
+                    }
                     return;
                 }
             }

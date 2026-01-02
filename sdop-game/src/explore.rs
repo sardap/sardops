@@ -3,6 +3,7 @@ use core::{ops::Range, time::Duration};
 use crate::{
     Timestamp,
     assets::{self, StaticImage},
+    game_consts::EXPLORE_MONEY_RESET_TIME,
     items::{Inventory, ItemKind},
     money::Money,
     pet::{LifeStage, PetInstance},
@@ -171,6 +172,8 @@ pub struct LocationHistory {
     pub runs: u16,
     pub successful: u16,
     pub last_ran: Timestamp,
+    pub last_money_run: Timestamp,
+    pub running_money_earned: Money,
 }
 
 impl Default for LocationHistory {
@@ -179,6 +182,8 @@ impl Default for LocationHistory {
             runs: 0,
             successful: 0,
             last_ran: Timestamp::default(),
+            last_money_run: Timestamp::default(),
+            running_money_earned: 0,
         }
     }
 }
@@ -268,7 +273,7 @@ impl ExploreSystem {
     pub fn sim_tick(
         &mut self,
         delta: Duration,
-        timestamp: &Timestamp,
+        now: &Timestamp,
         rng: &mut fastrand::Rng,
         pet: &mut PetInstance,
         inventory: &mut Inventory,
@@ -285,9 +290,18 @@ impl ExploreSystem {
                 .unwrap_or(&PLACEHOLDER_ACTIVTY);
         }
 
-        self.elapsed += delta;
+        self.elapsed += (delta * 50);
         if self.elapsed > current.length {
             let mut result = ExploreDetailedResult::new(current, self.passes);
+            // Update money run
+            {
+                let history = pet.explore.get_mut_by_id(current.id);
+                if (*now - history.last_money_run) > EXPLORE_MONEY_RESET_TIME {
+                    history.last_money_run = *now;
+                    history.running_money_earned = 0;
+                }
+            }
+
             if result.completed() {
                 let percent_passed = result.percent_passed();
 
@@ -299,17 +313,27 @@ impl ExploreSystem {
                     }
                 }
 
-                result.earnings = (rng.i32(current.rewards.money.start..current.rewards.money.end)
-                    as f32
-                    * percent_passed) as Money;
+                result.earnings = {
+                    let raw = (rng.i32(current.rewards.money.start..current.rewards.money.end)
+                        as f32
+                        * percent_passed) as Money;
+
+                    let history = pet.explore.get_by_id(current.id);
+
+                    let max_earn =
+                        (current.rewards.money.end - history.running_money_earned).max(0);
+
+                    raw.min(max_earn)
+                };
                 *wallet += result.earnings;
             }
 
             {
                 let history = pet.explore.get_mut_by_id(current.id);
-                history.last_ran = timestamp.clone();
+                history.last_ran = now.clone();
                 history.runs += 1;
                 history.successful += if result.completed() { 1 } else { 0 };
+                history.running_money_earned += result.earnings;
             }
 
             self.last_result = result;

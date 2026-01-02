@@ -248,3 +248,5 @@ pub const STARTING_ITEMS: &[ItemKind] = &[
 pub const BABY_LIFE_STAGE_ITEMS: &[ItemKind] = &[];
 pub const CHILD_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapToTheNinch];
 pub const ADULT_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
+
+pub const EXPLORE_MONEY_RESET_TIME: Duration = Duration::from_days(1);

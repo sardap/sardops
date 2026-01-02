@@ -1,5 +1,5 @@
 [workspace]
-members = ["misc/gen_night_sky", "misc/noise-gen", "sdop-c","sdop-cli", "sdop-common", "sdop-game", "sdop-pc", "sdop-py", "sdop-save-edit", "sdop-web"]
+members = ["misc/gen_night_sky", "misc/noise-gen", "sdop-build-common", "sdop-c","sdop-cli", "sdop-common", "sdop-game", "sdop-pc", "sdop-py", "sdop-save-edit", "sdop-web", "spreadsheet-gen"]
 exclude = ["sdop-gba", "sdop-pico", "sdop-3ds", "sdop-psp", "sdop-psx", "sdop-psvita"]
 default-members = ["sdop-pc"]
 resolver = "2"
@@ -12,3 +12,5 @@ serde_bytes = "0.11.19"
 strum = { version = "0.27", default-features = false }
 strum_macros = { version = "0.27", default-features = false }
 const_for = "0.1.5"
+regex = "1.12.2"
+ron = "0.12.0"

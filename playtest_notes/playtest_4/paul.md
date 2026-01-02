@@ -30,7 +30,7 @@
 - [X] Need more idle before clearing
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
 - [] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
-- [] Need to rethink books and chapters for activity cooldown can be like an hour without books being impossible to complete I think if books are always broken into like 20 min chunks that would be for the best
+- [X] Need to rethink books and chapters for activity cooldown can be like an hour without books being impossible to complete I think if books are always broken into like 20 min chunks that would be for the best
 - [X] Need some indaction of when sick of food will expire
 - [X] Food select movement is strange near the top
 - [X] Should stay up on NYE
@@ -39,6 +39,8 @@
 - [X] sickness should have a chance to just go away
 - [X] NYE Fireworks at midnight
 - [] have low chance when they go out to bring back items or money
+- [] Skipping the explore results screen I think if it poos but that doesn't make sense But only after a long time to make it harder to debug Not related to poop
+- [] add 10% cost range add some variation rounded to closest 50 
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait
