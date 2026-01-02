@@ -34,7 +34,7 @@ const SNOW_SPAWNER: Spawner = Spawner::new(
     "snow",
     SpawnTrigger::timer_range(Duration::from_millis(500)..Duration::from_millis(2000)),
     |particles, args| {
-        const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
+        static TEMPLATE: ParticleTemplate = ParticleTemplate::new(
             TemplateCullTatic::OutsideRect(RectVec2::new_top_left(
                 Vec2::new(-10., -10.),
                 Vec2::new(WIDTH_F32 + 20., HEIGHT_F32 + 20.),

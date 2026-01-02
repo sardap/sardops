@@ -32,12 +32,13 @@
 - [] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [] Need to rethink books and chapters for activity cooldown can be like an hour without books being impossible to complete I think if books are always broken into like 20 min chunks that would be for the best
 - [X] Need some indaction of when sick of food will expire
-- [] Food select movement is strange near the top
+- [X] Food select movement is strange near the top
 - [X] Should stay up on NYE
 - [X] Should not be able to start exploring if sick
 - [X] healing needs to be cheaper across the board
 - [X] sickness should have a chance to just go away
-- [] NYE Fireworks at midnight
+- [X] NYE Fireworks at midnight
+- [] have low chance when they go out to bring back items or money
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

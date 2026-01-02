@@ -59,7 +59,19 @@ impl PetDefinition {
         }
     }
 
+    pub const fn read_multiplier(&self) -> f32 {
+        match self.id {
+            PET_BRAINO_ID => 2.,
+            _ => match self.life_stage {
+                LifeStage::Baby => 0.5,
+                LifeStage::Child => 0.7,
+                LifeStage::Adult => 1.,
+            },
+        }
+    }
+
     pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
+        return false;
         let datetime = timestamp.inner();
         //  NYE edge-case
         if (datetime.month() == 12 && datetime.day() == 31 && datetime.hour() > 10)

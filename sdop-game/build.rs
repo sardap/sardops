@@ -192,7 +192,7 @@ impl Tileset {
             };
             write_vec_to_contents(target, &data_name, &converted.data);
             target.push_str(&format!(
-                "pub const IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
+                "pub static IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
                 var_name, converted.width, converted.height, data_name
             ));
         }
@@ -233,7 +233,7 @@ fn write_image_base<T: ToString>(
         };
         write_vec_to_contents(target, &data_name, &converted.data);
         target.push_str(&format!(
-            "pub const IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
+            "pub static IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
             var_name, converted.width, converted.height, data_name
         ));
         image_names.push(var_name);
@@ -241,7 +241,7 @@ fn write_image_base<T: ToString>(
 
     if let ConvertOuput::Anime(frames) = &output {
         target.push_str(&format!(
-            "pub const FRAMES_{}: [Frame; {}] = [",
+            "pub static FRAMES_{}: [Frame; {}] = [",
             var_name_base,
             frames.len(),
         ));
@@ -420,7 +420,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         ));
 
         pet_definitions.push_str(&format!(
-            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
+            "pub static {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
             pet_var_name, pet_var_name, template.name, template.life_stage, template.stomach_size, template.base_weight, image_normal_var_name, image_normal_var_name, write_output.width, write_output.height
         ));
 
@@ -513,14 +513,14 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         write_image(&mut assets, &image_normal_var_name, image_path);
 
         food_definitions.push_str(&format!(
-            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{}, {}, Duration::from_secs({}));",
+            "pub static FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{}, {}, Duration::from_secs({}));",
             food_var_name, i, template.name, image_normal_var_name, template.fill_factor, template.name.to_case(Case::Pascal), template.max_ate, template.expire.duration.as_secs()
         ));
 
         food_vars.push(image_normal_var_name);
     }
 
-    food_definitions.push_str("pub const FOODS: [&'static Food; FOOD_COUNT] = [");
+    food_definitions.push_str("pub static FOODS: [&'static Food; FOOD_COUNT] = [");
     for var in &food_vars {
         food_definitions.push_str(&format!("&{}, ", var));
     }
@@ -792,7 +792,7 @@ fn generate_dates() -> ContentOut {
     let mut dates_definitions = String::new();
 
     // So lets start at 1970 and go until 2370
-    dates_definitions.push_str("pub const DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
+    dates_definitions.push_str("pub static DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
 
     for year in 2025..=2100 {
         let mut dates = vec![];
@@ -925,7 +925,7 @@ fn generate_sounds() -> ContentOut {
         }
 
         sounds_def.push_str(&format!(
-            "pub const SONG_{}: Song = Song::new(&[{}], {});",
+            "pub static SONG_{}: Song = Song::new(&[{}], {});",
             song.name.to_case(Case::UpperSnake),
             melody_def,
             song.tempo
@@ -1078,7 +1078,7 @@ fn generate_locations() -> ContentOut {
         }
 
         let location_def = &format!(
-            "pub const {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {}, crate::items::ItemKind::Map{}, &[{}]);",
+            "pub static {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {}, crate::items::ItemKind::Map{}, &[{}]);",
             const_name,
             i,
             entry.name,
@@ -1097,7 +1097,7 @@ fn generate_locations() -> ContentOut {
         names.push(const_name);
     }
 
-    locations_def.push_str("pub const LOCATIONS: &[&'static Location] = &[");
+    locations_def.push_str("pub static LOCATIONS: &[&'static Location] = &[");
     for name in names {
         locations_def.push('&');
         locations_def.push_str(&name);

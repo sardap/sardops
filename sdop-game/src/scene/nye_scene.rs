@@ -9,10 +9,7 @@ use crate::{
     Song, Timestamp,
     anime::{Anime, AnimeTick},
     assets::{self, FRAMES_SPARKLER, FRAMES_SPARKLER_START},
-    display::{
-        CENTER_IVEC, CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y_I32, ComplexRenderOption,
-        GameDisplay, HEIGHT_F32, HEIGHT_I32, WIDTH_I32,
-    },
+    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32, WIDTH_I32},
     firework::Firework,
     fonts::FONT_MONOSPACE_TALL,
     pet::{
@@ -21,7 +18,6 @@ use crate::{
     },
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_GREENSLEEVES, SongPlayOptions},
-    sprite::BasicAnimeSprite,
 };
 
 const SPAWN_TIME_RANGE: Range<Duration> = Duration::from_millis(250)..Duration::from_millis(1250);
@@ -83,12 +79,11 @@ impl Scene for NyeScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
-        self.pet_render.tick(args.delta);
-
         self.state_elapsed += args.delta;
 
         match self.state {
             State::CountingDown => {
+                self.pet_render.tick(args.delta / 2);
                 let left = self.start - args.timestamp;
                 if left.as_secs() <= 10 {
                     if self.said_number != left.as_secs() as u32 {
@@ -115,6 +110,7 @@ impl Scene for NyeScene {
                     }
                 } else {
                     self.pet_render.set_animation(PetAnimationSet::Normal);
+                    self.pet_render.tick(args.delta);
                 }
 
                 if args.timestamp > self.start {
@@ -128,6 +124,7 @@ impl Scene for NyeScene {
             }
             State::Fireworks => {
                 self.pet_render.set_animation(PetAnimationSet::Happy);
+                self.pet_render.tick(args.delta);
 
                 for sparkler in &mut self.sparklers {
                     if sparkler.frames() == FRAMES_SPARKLER {
@@ -197,6 +194,7 @@ impl Scene for NyeScene {
             }
             State::Complete => {
                 self.pet_render.set_animation(PetAnimationSet::Normal);
+                self.pet_render.tick(args.delta);
 
                 if args.input.any_pressed() {
                     output.set_home();

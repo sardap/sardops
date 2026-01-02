@@ -37,7 +37,7 @@ impl Activity {
         match self {
             Activity::PlayingComputer => Duration::from_mins(15),
             Activity::WatchTv => Duration::from_mins(15),
-            Activity::ReadBook => Duration::from_mins(10),
+            Activity::ReadBook => Duration::from_hours(2),
             Activity::ListenMusic => Duration::from_mins(10),
             Activity::GoOut => Duration::from_hours(1),
             Activity::Telescope => Duration::from_mins(45),
@@ -182,6 +182,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
                             )
                             .unwrap_or_default(),
                     ),
+                    read_time: Duration::from_secs(args.game_ctx.rng.u64(1200..3600)),
                 });
             }
             Activity::ListenMusic => {
@@ -203,7 +204,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
             }
             Activity::Telescope => {
                 args.game_ctx.home.change_state(State::Telescope {
-                    end_time: Duration::from_mins(args.game_ctx.rng.u64(1..10))
+                    end_time: Duration::from_mins(args.game_ctx.rng.u64(5..20))
                         + Duration::from_secs(args.game_ctx.rng.u64(1..60)),
                 });
             }

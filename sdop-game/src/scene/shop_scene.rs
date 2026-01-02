@@ -150,7 +150,7 @@ impl Scene for ShopScene {
                         );
                         self.particle_system.run_once_spawner(
                             |particles, args| {
-                                const TEMPLATE: ParticleTemplate = ParticleTemplate::new(
+                                static TEMPLATE: ParticleTemplate = ParticleTemplate::new(
                                     TemplateCullTatic::Remaning(
                                         Duration::from_millis(1000)..Duration::from_millis(2000),
                                     ),

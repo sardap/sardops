@@ -14,7 +14,7 @@ use crate::{
     assets::{
         self, DynamicImage, FRAMES_GONE_OUT_SIGN, FRAMES_GONE_OUT_SIGN_MASK, FRAMES_SKULL,
         FRAMES_SKULL_MASK, FRAMES_TELESCOPE_HOME, FRAMES_TELESCOPE_HOME_MASK, IMAGE_STOMACH_MASK,
-        Image,
+        Image, StaticImage,
     },
     book::on_book_completed,
     date_utils::DurationExt,
@@ -35,7 +35,11 @@ use crate::{
         TemplateCullTatic,
     },
     pc::{PcKind, PcRender},
-    pet::{Mood, definition::PetAnimationSet, render::PetRender},
+    pet::{
+        Mood,
+        definition::{PetAnimationSet, PetDefinition},
+        render::PetRender,
+    },
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -107,6 +111,7 @@ pub enum State {
     },
     ReadingBook {
         book: ItemKind,
+        read_time: Duration,
     },
     PlayingMp3 {
         jam_end_time: Duration,
@@ -227,7 +232,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
     "star",
     SpawnTrigger::timer_range(Duration::from_secs(1)..Duration::from_secs(10)),
     |particles, args| {
-        const LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
+        static LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
             TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
             RectVec2::new_top_left(
                 Vec2::new(
@@ -239,7 +244,7 @@ const STAR_SPAWNER: Spawner = Spawner::new(
             Vec2::new(-50.0, -2.0)..Vec2::new(-20.0, 2.0),
             &[&assets::IMAGE_SHOOTING_STAR],
         );
-        const RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
+        static RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
             TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
             RectVec2::new_top_left(
                 Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2() as f32),
@@ -276,16 +281,17 @@ const MUSIC_NOTE_SPAWNER: Spawner = Spawner::new(
         let x = x as f32;
         let y = y as f32;
 
+        static IMAGES: &[&'static StaticImage] = &[
+            &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
+            &assets::IMAGE_MUSIC_NOTE_CROTCHET,
+            &assets::IMAGE_MUSIC_NOTE_QUAVER,
+            &assets::IMAGE_MUSIC_NOTE_SEMI_QUAVER,
+        ];
         let template = ParticleTemplate::new(
             TemplateCullTatic::Remaning(Duration::from_millis(3000)..Duration::from_millis(5000)),
             RectVec2::new_top_left(*args.pet_pos, Vec2::new(1., 1.)),
             Vec2::new(x, y)..Vec2::new(x, y),
-            &[
-                &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
-                &assets::IMAGE_MUSIC_NOTE_CROTCHET,
-                &assets::IMAGE_MUSIC_NOTE_QUAVER,
-                &assets::IMAGE_MUSIC_NOTE_SEMI_QUAVER,
-            ],
+            IMAGES,
         );
         particles.add(template.instantiate(&mut args.rng));
     },
@@ -721,7 +727,7 @@ impl Scene for HomeScene {
                     }
                 }
             }
-            State::ReadingBook { book } => {
+            State::ReadingBook { book, read_time } => {
                 self.egg_render.pos = EGG_RIGHT;
 
                 args.game_ctx.home.next_word_spawn = args
@@ -783,19 +789,23 @@ impl Scene for HomeScene {
                     BOOK_POS.y - book.book_info().open_book.size.y as f32 / 2.,
                 );
 
-                if args.game_ctx.home.state_elapsed
-                    > book.book_info().chapter_length(args.game_ctx.pet.def_id)
                 {
-                    let completed = {
-                        let book = args.game_ctx.pet.book_history.get_mut_read(book);
-                        book.complete_chapter();
-                        book.completed()
-                    };
+                    let pet = &mut args.game_ctx.pet;
+                    let inventory = &mut args.game_ctx.inventory;
+                    let home = &mut args.game_ctx.home;
 
-                    if completed {
-                        on_book_completed(args.game_ctx, book);
+                    let read_multiplier = pet.definition().read_multiplier();
+                    pet.book_history
+                        .get_mut_read(book)
+                        .tick_read(args.delta, read_multiplier);
+                    // Update to read for a random amount of time
+                    if home.state_elapsed > read_time || pet.book_history.get_read(book).completed()
+                    {
+                        if pet.book_history.get_read(book).completed() {
+                            on_book_completed(pet, inventory, book);
+                        }
+                        home.change_state(State::Wondering);
                     }
-                    args.game_ctx.home.change_state(State::Wondering);
                 }
             }
             State::PlayingMp3 { jam_end_time } => {
@@ -992,7 +1002,7 @@ impl Scene for HomeScene {
                 display.render_complex(&args.game_ctx.home.pc);
                 display.render_sprite(&args.game_ctx.home.pet_render);
             }
-            State::ReadingBook { book } => {
+            State::ReadingBook { book, read_time: _ } => {
                 display.render_text_complex(
                     &IVec2::new(CENTER_X_I32, 34),
                     "CHAPTER",
@@ -1016,11 +1026,12 @@ impl Scene for HomeScene {
                         .with_center()
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
-                let percent_complete = args.game_ctx.home.state_elapsed.as_millis_f32()
-                    / book
-                        .book_info()
-                        .chapter_length(args.game_ctx.pet.def_id)
-                        .as_millis_f32();
+                let percent_complete = args
+                    .game_ctx
+                    .pet
+                    .book_history
+                    .get_read(book)
+                    .percent_of_next_complete();
                 let str = str_format!(fixedstr::str24, "{:.0}%", percent_complete * 100.,);
                 display.render_text_complex(
                     &IVec2::new(CENTER_X_I32, 46),
