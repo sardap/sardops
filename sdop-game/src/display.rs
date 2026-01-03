@@ -1,4 +1,4 @@
-use core::f32;
+use core::{f32, i32};
 
 use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
@@ -56,13 +56,21 @@ pub enum Rotation {
     R270,
 }
 
+#[derive(Clone, Copy, Default)]
+pub enum WrappingMode {
+    #[default]
+    None,
+    WholeWord(i32),
+    Partial(i32),
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
     color_mode: ColorMode,
     pos_mode: PostionMode,
     flip_colors: bool,
     font: &'static Font,
-    font_wrapping_x: Option<i32>,
+    font_wrapping_x: WrappingMode,
     rotation: Rotation,
     invert: bool,
 }
@@ -80,7 +88,7 @@ impl ComplexRenderOption {
             pos_mode: PostionMode::TopLeft,
             flip_colors: false,
             font: &FONT_MONOSPACE_8X8,
-            font_wrapping_x: None,
+            font_wrapping_x: WrappingMode::None,
             rotation: Rotation::R0,
             invert: false,
         }
@@ -139,8 +147,8 @@ impl ComplexRenderOption {
         self
     }
 
-    pub const fn with_font_wrapping_x(mut self, x: i32) -> Self {
-        self.font_wrapping_x = Some(x);
+    pub const fn with_font_wrapping_x(mut self, mode: WrappingMode) -> Self {
+        self.font_wrapping_x = mode;
         self
     }
 
@@ -400,6 +408,7 @@ impl GameDisplay {
     ) -> IVec2 {
         let max_height = {
             let mut max = 0u16;
+            // This can be faster if I just check every char once
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
                 if image.size.y > max {
@@ -409,64 +418,112 @@ impl GameDisplay {
             max + 1
         } as i32;
 
-        let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
         let bytes = text.as_bytes();
+
+        let wrapping_x = match options.font_wrapping_x {
+            WrappingMode::None => i32::MAX,
+            WrappingMode::WholeWord(wrapping_x) | WrappingMode::Partial(wrapping_x) => wrapping_x,
+        };
 
         let (x_start, y_start) = match options.pos_mode {
             PostionMode::TopLeft => (pos.x, pos.y + max_height),
-            PostionMode::Center => {
-                let mut current_x = 0;
-                let mut max_w = 0;
-                let mut i = 0;
-                while i < text.len() {
-                    let (word_w, next_idx) = measure_next_chunk(text, i, &options);
-                    if current_x + word_w > wrapping_x && current_x > 0 {
-                        max_w = max_w.max(current_x);
-                        current_x = word_w;
-                    } else {
-                        current_x += word_w;
+            PostionMode::Center => match options.font_wrapping_x {
+                WrappingMode::WholeWord(_) => {
+                    let mut current_x = 0;
+                    let mut max_w = 0;
+                    let mut i = 0;
+                    while i < text.len() {
+                        let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+                        if current_x + word_w > wrapping_x && current_x > 0 {
+                            max_w = max_w.max(current_x);
+                            current_x = word_w;
+                        } else {
+                            current_x += word_w;
+                        }
+                        i = next_idx;
                     }
-                    i = next_idx;
+                    let total_max = max_w.max(current_x);
+                    (pos.x - total_max / 2, pos.y + max_height / 2)
                 }
-                let total_max = max_w.max(current_x);
-                (pos.x - total_max / 2, pos.y + max_height / 2)
-            }
+                WrappingMode::Partial(_) | WrappingMode::None => {
+                    let mut max_width = 0;
+                    let mut width = 0;
+                    for ch in text.chars() {
+                        if ch == '\n' || width > wrapping_x {
+                            max_width = width.max(max_width);
+                            width = 0;
+                        }
+                        let image = (options.font.convert)(ch);
+                        width += image.size.x as i32 + options.font.between_spacing;
+                    }
+                    let width = width.max(max_width);
+                    (pos.x - width / 2, pos.y + max_height / 2)
+                }
+            },
             PostionMode::Bottomleft => (pos.x, pos.y),
             PostionMode::BottomRight => todo!(),
         };
 
         let sub_options = options.with_pos_mode(PostionMode::Bottomleft);
+
         let mut x_offset = 0;
         let mut y_offset = 0;
         let mut y_end = 0;
-        let mut i = 0;
 
-        while i < text.len() {
-            let (word_w, next_idx) = measure_next_chunk(text, i, &options);
-
-            if x_offset + word_w > wrapping_x && x_offset > 0 {
-                x_offset = 0;
-                y_offset += max_height as i32;
-            }
-
-            let chunk = &text[i..next_idx];
-            for ch in chunk.chars() {
-                if ch == '\n' {
-                    x_offset = 0;
-                    y_offset += max_height as i32;
-                    continue;
+        match options.font_wrapping_x {
+            WrappingMode::None | WrappingMode::Partial(_) => {
+                for ch in text.chars() {
+                    if ch == '\n' {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                        continue;
+                    }
+                    let image = (options.font.convert)(ch);
+                    if image.size.x as i32 + x_offset > wrapping_x {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                    }
+                    self.render_image_complex(
+                        x_start as i32 + x_offset,
+                        y_start as i32 + y_offset,
+                        image,
+                        sub_options,
+                    );
+                    x_offset += image.size.x as i32 + options.font.between_spacing;
+                    y_end = (y_offset + y_start as i32).max(y_end);
                 }
-                let image = (options.font.convert)(ch);
-                self.render_image_complex(
-                    x_start as i32 + x_offset,
-                    y_start as i32 + y_offset,
-                    image,
-                    sub_options,
-                );
-                x_offset += image.size.x as i32 + options.font.between_spacing;
-                y_end = (y_offset + y_start as i32).max(y_end);
             }
-            i = next_idx;
+            WrappingMode::WholeWord(_) => {
+                let mut i = 0;
+
+                while i < text.len() {
+                    let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+
+                    if x_offset + word_w > wrapping_x && x_offset > 0 {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                    }
+
+                    let chunk = &text[i..next_idx];
+                    for ch in chunk.chars() {
+                        if ch == '\n' {
+                            x_offset = 0;
+                            y_offset += max_height as i32;
+                            continue;
+                        }
+                        let image = (options.font.convert)(ch);
+                        self.render_image_complex(
+                            x_start as i32 + x_offset,
+                            y_start as i32 + y_offset,
+                            image,
+                            sub_options,
+                        );
+                        x_offset += image.size.x as i32 + options.font.between_spacing;
+                        y_end = (y_offset + y_start as i32).max(y_end);
+                    }
+                    i = next_idx;
+                }
+            }
         }
 
         IVec2::new(x_offset, y_end)

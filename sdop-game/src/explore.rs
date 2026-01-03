@@ -16,8 +16,9 @@ include!(concat!(env!("OUT_DIR"), "/dist_locations.rs"));
 pub type ExploreSkill = i32;
 
 const MAX_REWARD_ITEMS_LOCATION: usize = 10;
-const CHECK_INTERVAL: Duration = Duration::from_secs(60);
+const PHRASE_UPDATE_INTERVAL: Duration = Duration::from_secs(60);
 const PASSED_THRESHOLD: f32 = 0.5;
+const CHECKS_PER_LOCATION: u32 = 10;
 
 pub struct ItemReward {
     item: ItemKind,
@@ -80,8 +81,12 @@ impl Location {
         }
     }
 
-    pub const fn total_checks(&self) -> u64 {
-        (self.length.as_millis() / CHECK_INTERVAL.as_millis()) as u64
+    pub const fn total_checks(&self) -> u32 {
+        CHECKS_PER_LOCATION
+    }
+
+    pub const fn check_interval(&self) -> Duration {
+        Duration::from_millis((self.length.as_millis() as u32 / CHECKS_PER_LOCATION) as u64)
     }
 }
 
@@ -254,6 +259,7 @@ pub struct ExploreSystem {
     current_activity: &'static str,
     elapsed: Duration,
     passes: u32,
+    until_check: Duration,
     last_result: ExploreDetailedResult,
 }
 
@@ -264,6 +270,7 @@ impl Default for ExploreSystem {
             current_activity: PLACEHOLDER_ACTIVTY,
             elapsed: Duration::ZERO,
             passes: 0,
+            until_check: Duration::ZERO,
             last_result: Default::default(),
         }
     }
@@ -290,7 +297,7 @@ impl ExploreSystem {
                 .unwrap_or(&PLACEHOLDER_ACTIVTY);
         }
 
-        self.elapsed += (delta * 50);
+        self.elapsed += delta;
         if self.elapsed > current.length {
             let mut result = ExploreDetailedResult::new(current, self.passes);
             // Update money run
@@ -338,17 +345,15 @@ impl ExploreSystem {
 
             self.last_result = result;
             self.passes = 0;
+            self.until_check = Duration::ZERO;
             self.elapsed = Duration::ZERO;
             self.current = None;
         } else {
-            let since_check = Duration::from_millis(
-                (self.elapsed.as_millis() % CHECK_INTERVAL.as_millis()) as u64,
-            );
-            if since_check == Duration::ZERO {
-                self.current_activity = rng
-                    .choice(self.current_location().activities)
-                    .unwrap_or(&PLACEHOLDER_ACTIVTY);
+            self.until_check += delta;
 
+            if self.until_check > current.check_interval() {
+                // Get left overs
+                self.until_check = self.until_check - current.check_interval();
                 let skill = pet.explore_skill();
                 let odds = rng.i32((skill / 4)..=skill);
                 let location_odds = rng.i32(0..current.difficulty);
@@ -356,14 +361,25 @@ impl ExploreSystem {
                     self.passes += 1;
                 }
             }
+
+            let since_phrase = Duration::from_millis(
+                (self.elapsed.as_millis() % PHRASE_UPDATE_INTERVAL.as_millis()) as u64,
+            );
+            if since_phrase == Duration::ZERO {
+                self.current_activity = rng
+                    .choice(self.current_location().activities)
+                    .unwrap_or(&PLACEHOLDER_ACTIVTY);
+            }
         }
     }
 
     pub fn current_percent_passed(&self) -> f32 {
-        if self.elapsed < CHECK_INTERVAL {
+        let check_interval = self.current.unwrap_or(&LOCATION_UNKNOWN).check_interval();
+        if self.elapsed < check_interval {
             return 1.;
         }
-        let total_odds = (self.elapsed.as_millis() / CHECK_INTERVAL.as_millis()) as f32;
+
+        let total_odds = (self.elapsed.as_millis() / check_interval.as_millis()) as f32;
         self.passes as f32 / total_odds
     }
 
@@ -395,7 +411,12 @@ impl ExploreSystem {
     }
 
     pub fn current_check(&self) -> u32 {
-        (self.elapsed.as_millis() / CHECK_INTERVAL.as_millis()) as u32
+        (self.elapsed.as_millis()
+            / self
+                .current
+                .unwrap_or(&LOCATION_UNKNOWN)
+                .check_interval()
+                .as_millis()) as u32
     }
 
     pub fn last_result(&self) -> &ExploreDetailedResult {
@@ -439,6 +460,7 @@ impl From<ExploreSystemSave> for ExploreSystem {
             current_activity: PLACEHOLDER_ACTIVTY,
             elapsed: value.elapsed,
             passes: value.passes,
+            until_check: Duration::ZERO,
             last_result: Default::default(),
         }
     }

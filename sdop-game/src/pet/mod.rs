@@ -688,7 +688,8 @@ impl PetInstance {
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
         self.definition()
-            .should_be_sleeping(timestamp, self.food_history.sick_of(&FOOD_COFFEE))
+            .should_be_sleeping(timestamp, self.food_history.sick_of(&FOOD_COFFEE));
+        false
     }
 
     pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {

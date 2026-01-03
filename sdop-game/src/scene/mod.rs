@@ -155,8 +155,7 @@ impl SceneEnum {
             | SceneEnum::AlarmSet(_)
             | SceneEnum::Settings(_)
             | SceneEnum::Credits(_)
-            | SceneEnum::ExploreSelect(_)
-            | SceneEnum::ExploringPost(_) => true,
+            | SceneEnum::ExploreSelect(_) => true,
             _ => false,
         }
     }

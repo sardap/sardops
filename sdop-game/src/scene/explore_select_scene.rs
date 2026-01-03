@@ -5,7 +5,7 @@ use glam::IVec2;
 use crate::{
     Button, Timestamp, assets,
     date_utils::DurationExt,
-    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32, WrappingMode},
     explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
@@ -360,7 +360,7 @@ impl Scene for ExploreSelectScene {
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
-                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
                         y += (text_area.y - y) + 10;
@@ -371,7 +371,7 @@ impl Scene for ExploreSelectScene {
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
-                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
                         y += (text_area.y - y) + 10;
@@ -382,7 +382,7 @@ impl Scene for ExploreSelectScene {
                             ComplexRenderOption::new()
                                 .with_white()
                                 .with_center()
-                                .with_font_wrapping_x(WIDTH_I32 - 2)
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
                                 .with_font(&FONT_VARIABLE_SMALL),
                         );
                         y += (text_area.y - y) + 10;

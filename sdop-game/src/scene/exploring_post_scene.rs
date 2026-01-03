@@ -1,18 +1,26 @@
+use core::time::Duration;
+
 use fixedstr::str_format;
 use glam::IVec2;
 
 use crate::{
     assets,
-    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32},
+    display::{
+        CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_I32, WrappingMode,
+    },
     fonts::FONT_VARIABLE_SMALL,
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
 
-pub struct ExploringPostScene {}
+pub struct ExploringPostScene {
+    elapsed: Duration,
+}
 
 impl ExploringPostScene {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            elapsed: Duration::ZERO,
+        }
     }
 }
 
@@ -22,7 +30,9 @@ impl Scene for ExploringPostScene {
     fn teardown(&mut self, _args: &mut SceneTickArgs) {}
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
-        if args.input.any_pressed() {
+        self.elapsed += args.delta;
+
+        if args.input.any_pressed() || self.elapsed > Duration::from_hours(1) {
             output.set_home();
             return;
         }
@@ -31,16 +41,7 @@ impl Scene for ExploringPostScene {
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
         let result = args.game_ctx.explore_system.last_result();
 
-        let mut y = 8;
-        display.render_text_complex(
-            &IVec2::new(CENTER_X_I32, y),
-            "BACK HOME",
-            ComplexRenderOption::new()
-                .with_white()
-                .with_center()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
-        y += 8;
+        let mut y = 2;
 
         let completed = result.percent_passed();
 
@@ -100,11 +101,7 @@ impl Scene for ExploringPostScene {
         }
 
         if result.completed() {
-            let str = str_format!(
-                fixedstr::str24,
-                "found ${} AND",
-                libm::roundf(completed * 100.) as i32
-            );
+            let str = str_format!(fixedstr::str24, "found ${} AND", result.earnings);
             display.render_text_complex(
                 &IVec2::new(CENTER_X_I32, y),
                 &str,
@@ -127,14 +124,17 @@ impl Scene for ExploringPostScene {
                 y += 5;
             }
             for (i, item) in result.items.iter().enumerate() {
-                let str = str_format!(fixedstr::str24, "{}.{}", i + 1, item.name());
-                display.render_text_complex(
-                    &IVec2::new(1, y + (i as i32 * 6)),
+                log::info!("{} {} ", i, item.name());
+                let str = str_format!(fixedstr::str32, "{}.{}", i + 1, item.name());
+                let end = display.render_text_complex(
+                    &IVec2::new(1, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
-                        .with_font(&FONT_VARIABLE_SMALL),
+                        .with_font(&FONT_VARIABLE_SMALL)
+                        .with_font_wrapping_x(WrappingMode::Partial(WIDTH_I32 - 1)),
                 );
+                y += (end.y - y) + 1;
             }
         } else {
             display.render_text_complex(

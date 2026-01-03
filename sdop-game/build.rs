@@ -2,25 +2,19 @@ use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
-use regex::Regex;
 use sdop_build_common::*;
-use sdop_common::{ItemCategory, MelodyEntry};
-use serde::{
-    Deserialize, Deserializer, Serialize,
-    de::{self, Visitor},
-};
+use sdop_common::MelodyEntry;
+use serde::{Deserialize, Serialize};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
     env,
-    fmt::{self},
     fs::{self},
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
-    time::Duration,
     vec,
 };
-use strum_macros::{Display, EnumString};
+use strum_macros::Display;
 
 #[derive(Default)]
 struct ContentOut {
@@ -642,10 +636,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, i32::MAX));
 
-        name_fn_def.push_str(&format!(
-            "Self::{} => \"Map to {}\",\n",
-            enum_name, template.name
-        ));
+        name_fn_def.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.name));
 
         desc_fn.push_str(&format!(
             "Self::{} => \"Find a way to {}\",\n",

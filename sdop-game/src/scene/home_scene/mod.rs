@@ -20,7 +20,7 @@ use crate::{
     date_utils::DurationExt,
     display::{
         CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32,
-        WIDTH_I32,
+        WIDTH_I32, WrappingMode,
     },
     dream_bubble::DreamBubble,
     egg::EggRender,
@@ -1139,7 +1139,7 @@ impl Scene for HomeScene {
                     ComplexRenderOption::new()
                         .with_white()
                         .with_center()
-                        .with_font_wrapping_x(WIDTH_I32)
+                        .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32))
                         .with_font(&FONT_VARIABLE_SMALL),
                 );
 
@@ -1212,7 +1212,7 @@ impl Scene for HomeScene {
                         .with_white()
                         .with_center()
                         .with_font(&FONT_VARIABLE_SMALL)
-                        .with_font_wrapping_x(WIDTH_I32 - 2),
+                        .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2)),
                 );
             }
         }

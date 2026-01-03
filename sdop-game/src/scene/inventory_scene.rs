@@ -12,6 +12,7 @@ use crate::{
     date_utils::DurationExt,
     display::{
         CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
+        WrappingMode,
     },
     fonts::FONT_VARIABLE_SMALL,
     game_consts::{UI_FLASH_TIMER, UI_FLASHING_TIMER},
@@ -242,7 +243,7 @@ impl Scene for InventoryScene {
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL)
                             .with_center()
-                            .with_font_wrapping_x(WIDTH_I32 - 10),
+                            .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 10)),
                     );
                     y += 14;
                 }
@@ -323,7 +324,7 @@ impl Scene for InventoryScene {
                     ComplexRenderOption::new()
                         .with_white()
                         .with_font(&FONT_VARIABLE_SMALL)
-                        .with_font_wrapping_x((WIDTH_F32 - 10.) as i32),
+                        .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 10)),
                 );
 
                 y = HEIGHT_I32 - 10;

@@ -115,6 +115,8 @@ impl MenuOptions {
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
         ) && inventory.has_any_map()
             && !pet.is_sleeping()
+            && !pet.is_starving()
+            && poop_count == 0
         {
             let _ = options.push(MenuOption::Explore);
         }
