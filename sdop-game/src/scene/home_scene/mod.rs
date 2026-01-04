@@ -19,8 +19,8 @@ use crate::{
     book::on_book_completed,
     date_utils::DurationExt,
     display::{
-        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, WIDTH_F32,
-        WIDTH_I32, WrappingMode,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, HEIGHT_F32,
+        WIDTH_F32, WIDTH_I32, WrappingMode,
     },
     dream_bubble::DreamBubble,
     egg::EggRender,
@@ -230,22 +230,25 @@ impl HomeSceneData {
 
 const STAR_SPAWNER: Spawner = Spawner::new(
     "star",
-    SpawnTrigger::timer_range(Duration::from_secs(1)..Duration::from_secs(10)),
+    SpawnTrigger::timer_range(Duration::from_secs(30)..Duration::from_mins(4)),
     |particles, args| {
         static LEFT_STAR: ParticleTemplate = ParticleTemplate::new(
-            TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
+            TemplateCullTatic::OutsideRect(&RectVec2::new_top_left(
+                Vec2::new(-30., -30.),
+                Vec2::new(WIDTH_F32 + 60., HEIGHT_F32 + 20.),
+            )),
             RectVec2::new_top_left(
-                Vec2::new(
-                    HOME_SCENE_TOP_AREA_RECT.x2() as f32 + 20.,
-                    HOME_SCENE_TOP_AREA_RECT.y2() as f32,
-                ),
+                Vec2::new(WIDTH_F32 + 10., HOME_SCENE_TOP_AREA_RECT.y2() as f32),
                 Vec2::new(1., 20.),
             ),
-            Vec2::new(-50.0, -2.0)..Vec2::new(-20.0, 2.0),
+            Vec2::new(-50.0, 0.0)..Vec2::new(-20.0, 1.0),
             &[&assets::IMAGE_SHOOTING_STAR],
         );
         static RIGHT_STAR: ParticleTemplate = ParticleTemplate::new(
-            TemplateCullTatic::Remaning(Duration::from_secs(5)..Duration::from_secs(5)),
+            TemplateCullTatic::OutsideRect(&RectVec2::new_top_left(
+                Vec2::new(-50., -10.),
+                Vec2::new(WIDTH_F32 + 50., HEIGHT_F32 + 20.),
+            )),
             RectVec2::new_top_left(
                 Vec2::new(-20., HOME_SCENE_TOP_AREA_RECT.y2() as f32),
                 Vec2::new(1., 20.),
@@ -256,11 +259,11 @@ const STAR_SPAWNER: Spawner = Spawner::new(
 
         particles.add(
             if args.rng.bool() {
-                &LEFT_STAR
-            } else {
                 &RIGHT_STAR
+            } else {
+                &LEFT_STAR
             }
-            .instantiate(&mut args.rng),
+            .instantiate(&mut args.rng, "star"),
         );
     },
 );
@@ -293,7 +296,7 @@ const MUSIC_NOTE_SPAWNER: Spawner = Spawner::new(
             Vec2::new(x, y)..Vec2::new(x, y),
             IMAGES,
         );
-        particles.add(template.instantiate(&mut args.rng));
+        particles.add(template.instantiate(&mut args.rng, "music_notes"));
     },
 );
 

@@ -163,7 +163,7 @@ impl Scene for ShopScene {
                                 );
 
                                 for _ in 0..20 {
-                                    particles.add(TEMPLATE.instantiate(&mut args.rng));
+                                    particles.add(TEMPLATE.instantiate(&mut args.rng, "money"));
                                 }
                             },
                             &mut ParticleSpawnArgs::new(

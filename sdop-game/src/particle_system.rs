@@ -59,7 +59,7 @@ const DEFAULT_ROTATION: &'static [Rotation] = &[Rotation::R0];
 
 pub enum TemplateCullTatic {
     Remaning(Range<Duration>),
-    OutsideRect(RectVec2),
+    OutsideRect(&'static RectVec2),
 }
 
 pub struct ParticleTemplate {
@@ -92,8 +92,9 @@ impl ParticleTemplate {
         self
     }
 
-    pub fn instantiate(&self, rng: &mut fastrand::Rng) -> Particle {
+    pub fn instantiate(&self, rng: &mut fastrand::Rng, spawner: &'static str) -> Particle {
         Particle {
+            spawner,
             cull: match &self.cull {
                 TemplateCullTatic::Remaning(range) => CullTattic::Remaining(Duration::from_micros(
                     rng.u64((range.start.as_micros() as u64)..(range.end.as_micros() as u64)),
@@ -127,11 +128,12 @@ pub type ParticleSpawnFn = fn(particles: &mut Particles, args: &mut ParticleSpaw
 #[derive(Clone, Copy)]
 pub enum CullTattic {
     Remaining(Duration),
-    OutsideRect(RectVec2),
+    OutsideRect(&'static RectVec2),
 }
 
 #[derive(Clone, Copy)]
 pub struct Particle {
+    spawner: &'static str,
     cull: CullTattic,
     pos: Vec2,
     dir: Vec2,
@@ -283,6 +285,15 @@ impl<const MAX_PARTICLES: usize, const MAX_SPAWN_FUNCS: usize>
             .find(|(_, i)| i.name == name)
         {
             self.spawners.remove(index);
+        }
+
+        let particles = &mut self.particles;
+        for i in 0..particles.len() {
+            if let Some(particle) = particles.get_mut(i).unwrap()
+                && particle.spawner == name
+            {
+                particles[i] = None;
+            }
         }
     }
 

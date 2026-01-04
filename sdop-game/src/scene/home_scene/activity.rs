@@ -12,7 +12,7 @@ use crate::{
     pet::{LifeStage, Mood, definition::PET_BRAINO_ID},
     scene::{
         SceneTickArgs,
-        home_scene::{MUSIC_NOTE_SPAWNER, PROGRAM_RUN_TIME_RANGE, State},
+        home_scene::{MUSIC_NOTE_SPAWNER, PROGRAM_RUN_TIME_RANGE, STAR_SPAWNER, State},
     },
     tv::TvKind,
 };
@@ -125,7 +125,6 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
-    // This is broken
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.inventory.has_item(ItemKind::Telescope)
         && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
@@ -214,6 +213,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
                 });
             }
             Activity::Telescope => {
+                args.game_ctx.home.particle_system.add_spawner(STAR_SPAWNER);
                 args.game_ctx.home.change_state(State::Telescope {
                     end_time: Duration::from_mins(args.game_ctx.rng.u64(5..20))
                         + Duration::from_secs(args.game_ctx.rng.u64(1..60)),

@@ -243,6 +243,7 @@ pub const STARTING_ITEMS: &[ItemKind] = &[
     ItemKind::RecipeBiscuit,
     ItemKind::MapDownTheRoad,
     ItemKind::BookForBabies,
+    ItemKind::Telescope,
 ];
 
 pub const BABY_LIFE_STAGE_ITEMS: &[ItemKind] = &[];

@@ -40,7 +40,7 @@
 - [X] Explore post screen seems to be showing percent gotten not amount gotten 
 - [] should not go out if egg will hatch soon
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
-- [] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
+- [X] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [] add 10% cost range add some variation rounded to closest 50 
 - [] Beef bowel food that unlocks the beef dimsion
 - [] have low chance when they go out to bring back items or money

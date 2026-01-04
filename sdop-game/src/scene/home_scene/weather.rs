@@ -35,7 +35,7 @@ const SNOW_SPAWNER: Spawner = Spawner::new(
     SpawnTrigger::timer_range(Duration::from_millis(500)..Duration::from_millis(2000)),
     |particles, args| {
         static TEMPLATE: ParticleTemplate = ParticleTemplate::new(
-            TemplateCullTatic::OutsideRect(RectVec2::new_top_left(
+            TemplateCullTatic::OutsideRect(&RectVec2::new_top_left(
                 Vec2::new(-10., -10.),
                 Vec2::new(WIDTH_F32 + 20., HEIGHT_F32 + 20.),
             )),
@@ -44,7 +44,7 @@ const SNOW_SPAWNER: Spawner = Spawner::new(
             &[&assets::IMAGE_SNOWFLAKE],
         )
         .with_rotation(&[Rotation::R0, Rotation::R90, Rotation::R180, Rotation::R270]);
-        particles.add(TEMPLATE.instantiate(&mut args.rng));
+        particles.add(TEMPLATE.instantiate(&mut args.rng, "snow"));
     },
 );
 
