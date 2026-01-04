@@ -71,7 +71,6 @@ impl PetDefinition {
     }
 
     pub fn should_be_sleeping(&self, timestamp: &Timestamp, coffee: bool) -> bool {
-        return false;
         let datetime = timestamp.inner();
         //  NYE edge-case
         if (datetime.month() == 12 && datetime.day() == 31 && datetime.hour() > 10)

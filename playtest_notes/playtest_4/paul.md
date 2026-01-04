@@ -38,9 +38,10 @@
 - [X] Skipping the explore results screen I think if it poos but that doesn't make sense But only after a long time to make it harder to debug Not related to poop. Might be due if they get nothing? IT'S BECAUSE OF THE INPUT TIMER OMG
 - [X] Location should at most have 10 checks that run over the course should add more randomness
 - [X] Explore post screen seems to be showing percent gotten not amount gotten 
+- [X] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
+- [X] Should not poo while exploring or gone out
 - [] should not go out if egg will hatch soon
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
-- [X] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [] add 10% cost range add some variation rounded to closest 50 
 - [] Beef bowel food that unlocks the beef dimsion
 - [] have low chance when they go out to bring back items or money

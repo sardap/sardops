@@ -31,6 +31,7 @@ use crate::{
         PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
+    scene::home_scene,
     temperature::TemperatureLevel,
 };
 
@@ -407,7 +408,12 @@ impl PetInstance {
         Duration::from_millis(rng.u64(range.start.as_millis() as u64..range.end.as_millis() as u64))
     }
 
-    pub fn should_poop(&mut self, rng: &mut Rng, sleeping: bool) -> bool {
+    pub fn should_poop(
+        &mut self,
+        rng: &mut Rng,
+        sleeping: bool,
+        home_state: home_scene::State,
+    ) -> bool {
         // This is to set it up, I really should write comments for stupid lines of bullshit
         if self.until_poop > POOP_SPAWN_MAGIC_NUMBER {
             self.until_poop = self.get_next_poop_duration(rng);
@@ -415,13 +421,18 @@ impl PetInstance {
 
         let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
 
-        if !sleeping && self.until_poop <= Duration::ZERO
-            || (coffees_consumed > 0
-                && self
-                    .until_poop
-                    .checked_sub(COFFEE_POOP_MODIFER)
-                    .unwrap_or_default()
-                    <= Duration::ZERO)
+        if !sleeping
+            && !matches!(
+                home_state,
+                home_scene::State::GoneOut { outing_end_time: _ } | home_scene::State::Exploring,
+            )
+            && (self.until_poop <= Duration::ZERO
+                || (coffees_consumed > 0
+                    && self
+                        .until_poop
+                        .checked_sub(COFFEE_POOP_MODIFER)
+                        .unwrap_or_default()
+                        <= Duration::ZERO))
         {
             self.until_poop = self.get_next_poop_duration(rng);
             return true;
