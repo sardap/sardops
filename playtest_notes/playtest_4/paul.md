@@ -40,11 +40,13 @@
 - [X] Explore post screen seems to be showing percent gotten not amount gotten 
 - [X] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [X] Should not poo while exploring or gone out
+- [X] Using telescoe outside hours with no stars???
 - [] should not go out if egg will hatch soon
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
 - [] add 10% cost range add some variation rounded to closest 50 
 - [] Beef bowel food that unlocks the beef dimsion
 - [] have low chance when they go out to bring back items or money
+- [] Maybe have two cooldowns one for all and one for the location
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

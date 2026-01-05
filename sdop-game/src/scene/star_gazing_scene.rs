@@ -100,7 +100,7 @@ impl Scene for StarGazingScene {
     }
 
     fn render(&self, display: &mut GameDisplay, args: &mut RenderArgs) {
-        if time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE) {
+        if !time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE) {
             display.invert();
 
             const DAYTIME_RENDER_POS: IVec2 = IVec2::new(CENTER_X_I32, HEIGHT_I32 - 10);
