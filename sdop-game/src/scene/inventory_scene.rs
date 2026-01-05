@@ -11,7 +11,7 @@ use crate::{
     assets::{self},
     date_utils::DurationExt,
     display::{
-        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32,
+        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_I32,
         WrappingMode,
     },
     fonts::FONT_VARIABLE_SMALL,

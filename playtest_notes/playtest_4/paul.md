@@ -41,12 +41,15 @@
 - [X] Telescope sky is blank on home PICO ONLY CAN"T FIND ON PC
 - [X] Should not poo while exploring or gone out
 - [X] Using telescoe outside hours with no stars???
+- [X] Telescope still not showing stars sometimes maybe it's due if you lave home and go back, Nope this fucking thing, Okay it was becuase it was the 2nd activity which is why I couldn't catch it.
+- [] Each loaction should be a one success a day
 - [] should not go out if egg will hatch soon
 - [] Skull not showing when Sick PICO ONLY CAN"T FIND ON PC
 - [] add 10% cost range add some variation rounded to closest 50 
 - [] Beef bowel food that unlocks the beef dimsion
 - [] have low chance when they go out to bring back items or money
 - [] Maybe have two cooldowns one for all and one for the location
+- [] Hpostial bed is rendering mask for bed for devil at least
 
 ### Concerns
 -  When first booting the game there is nothing to do but wait

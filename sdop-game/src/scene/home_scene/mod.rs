@@ -35,11 +35,7 @@ use crate::{
         TemplateCullTatic,
     },
     pc::{PcKind, PcRender},
-    pet::{
-        Mood,
-        definition::{PetAnimationSet, PetDefinition},
-        render::PetRender,
-    },
+    pet::{Mood, definition::PetAnimationSet, render::PetRender},
     poop::{MAX_POOPS, PoopRender, poop_count, update_poop_renders},
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
@@ -361,14 +357,14 @@ impl Scene for HomeScene {
 
             args.game_ctx.home.weather.setup(&mut args.game_ctx.rng);
 
-            generate_night_sky_image::<NIGHT_SKY_HEIGHT>(
-                &mut self.night_sky,
-                args.timestamp.inner().num_days_from_ce(),
-            );
-
             args.game_ctx.home.show_dream_bubble = true;
             args.game_ctx.home.dream_bubble_timer = Duration::ZERO;
         }
+
+        generate_night_sky_image::<NIGHT_SKY_HEIGHT>(
+            &mut self.night_sky,
+            args.timestamp.inner().num_days_from_ce(),
+        );
 
         self.egg_render.pos = EGG_RIGHT;
         if let Some(egg) = &args.game_ctx.egg {

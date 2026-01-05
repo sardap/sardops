@@ -128,6 +128,7 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.inventory.has_item(ItemKind::Telescope)
         && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
+        || true
     {
         add_option(
             &mut options,

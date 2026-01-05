@@ -78,7 +78,7 @@
         ],
         rewards: (
             money_start: 1000,
-            money_end: 2000,
+            money_end: 1500,
             items: [
                 (item: "Recipe Pizza", odds: 0.4),
                 (item: "Recipe Chips", odds: 0.4),
@@ -93,7 +93,7 @@
         life_stages: [Child, Adult],
         length: "1m",
         cooldown: "10m",
-        difficulty: 100,
+        difficulty: 70,
         activities: [
             "Going up some steps",
             "Waiting for others to pass",
