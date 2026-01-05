@@ -1,14 +1,14 @@
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 use heapless::Vec;
 
 use crate::{
     anime::{Anime, HasAnime},
     assets,
     display::{ComplexRender, ComplexRenderOption},
-    geo::Rect,
+    geo::RectVec2,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -71,7 +71,7 @@ pub struct FishTankRender {
     anime: Anime,
 }
 
-const FISH_AREA: Rect = Rect::new_top_left(Vec2::new(1., 4.), Vec2::new(16., 10.));
+const FISH_AREA: RectVec2 = RectVec2::new_top_left(Vec2::new(1., 4.), Vec2::new(16., 10.));
 
 impl FishTankRender {
     pub fn new(pos: Vec2) -> Self {
@@ -82,11 +82,8 @@ impl FishTankRender {
         }
     }
 
-    pub const fn size() -> Vec2 {
-        Vec2::new(
-            assets::IMAGE_FISH_TANK_EMPTY_0.size.x as f32,
-            assets::IMAGE_FISH_TANK_EMPTY_0.size.y as f32,
-        )
+    pub const fn size() -> IVec2 {
+        assets::IMAGE_FISH_TANK_EMPTY_0.isize
     }
 
     pub fn add_fish(&mut self, rng: &mut fastrand::Rng, speed: f32) {
@@ -141,7 +138,7 @@ impl ComplexRender for FishTankRender {
             ComplexRenderOption::new().with_white().with_center(),
         );
 
-        let top_left = self.pos - Vec2::new(Self::size().x / 2., Self::size().y / 2.);
+        let top_left = self.pos - Vec2::new(Self::size().x as f32 / 2., Self::size().y as f32 / 2.);
         for fish in &self.fish {
             let pos = top_left + fish.pos;
             display.render_point(pos.x as i32, pos.y as i32, true);

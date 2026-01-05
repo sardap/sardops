@@ -1,13 +1,13 @@
 use core::{ops::Range, time::Duration};
 
 use fixedstr::{str_format, str12, str16};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button, Timestamp,
     assets::{self, Image, StaticImage},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
-    geo::Rect,
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32},
+    geo::{RectIVec2, RectVec2},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
         render::PetRender,
@@ -106,6 +106,14 @@ impl Sprite for Garbage {
     fn image(&self) -> &impl Image {
         self.sprite.image
     }
+
+    fn size_x(&self) -> i32 {
+        self.sprite.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.sprite.image.isize.y
+    }
 }
 
 const MAX_GARBAGE_COUNT: usize = 20;
@@ -186,7 +194,7 @@ impl Scene for MgDogeEmScene {
                 }
 
                 // Make it so the hit box is only on top
-                let player_rect = Rect::new_center(
+                let player_rect = RectVec2::new_center(
                     self.pet_render.pos
                         - Vec2::new(0., self.pet_render.image().size().y as f32 / 2.),
                     Vec2::new(LANE_WIDTH / 2., 3.),
@@ -287,17 +295,19 @@ impl Scene for MgDogeEmScene {
 
         match self.state {
             State::Playing => {
-                const SCORE_RECT: Rect =
-                    Rect::new_top_left(Vec2::new(0., 0.), Vec2::new(WIDTH_F32, 15.));
-                display.render_rect_solid(SCORE_RECT, false);
+                const SCORE_RECT: RectIVec2 =
+                    RectIVec2::new_top_left(IVec2::new(0, 0), IVec2::new(WIDTH_I32, 15));
+                display.render_rect_solid(&SCORE_RECT, false);
 
-                const SCORE_BOTTOM_RECT: Rect =
-                    Rect::new_top_left(Vec2::new(0., SCORE_RECT.size.y), Vec2::new(WIDTH_F32, 2.));
-                display.render_rect_solid(SCORE_BOTTOM_RECT, true);
+                const SCORE_BOTTOM_RECT: RectIVec2 = RectIVec2::new_top_left(
+                    IVec2::new(0, SCORE_RECT.y()),
+                    IVec2::new(WIDTH_I32, 2),
+                );
+                display.render_rect_solid(&SCORE_BOTTOM_RECT, true);
 
                 let elapsed = args.timestamp - self.start_time;
                 let text = fixedstr::str_format!(str16, "{:.1}", elapsed.as_secs_f32());
-                display.render_text(Vec2::new(4., 2.), &text);
+                display.render_text(&IVec2::new(4, 2), &text);
             }
             State::GameOverFreeze { won, elapsed } => {
                 let text = if won {
@@ -305,25 +315,27 @@ impl Scene for MgDogeEmScene {
                 } else {
                     str_format!(str12, "FAILURE")
                 };
-                const FAILURE_RECT: Rect =
-                    Rect::new_center(Vec2::new(CENTER_X, 20.), Vec2::new(WIDTH_F32, 20.));
-                display.render_rect_solid(FAILURE_RECT, false);
+                const FAILURE_RECT: RectIVec2 =
+                    RectIVec2::new_center(IVec2::new(CENTER_X_I32, 20), IVec2::new(WIDTH_I32, 20));
+                const FAILURE_RECT_POS: IVec2 =
+                    IVec2::new(FAILURE_RECT.pos.x as i32, FAILURE_RECT.pos.y as i32);
+                display.render_rect_solid(&FAILURE_RECT, false);
                 display.render_text_complex(
-                    FAILURE_RECT.pos - Vec2::new(0., 8.),
+                    &(FAILURE_RECT_POS - IVec2::new(0, 8)),
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "ELAPSED");
                 display.render_text_complex(
-                    FAILURE_RECT.pos,
+                    &FAILURE_RECT_POS,
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 let text = str_format!(str12, "{:.2}", elapsed.as_secs_f32());
                 display.render_text_complex(
-                    FAILURE_RECT.pos + Vec2::new(0., 9.),
+                    &(FAILURE_RECT_POS + IVec2::new(0, 9)),
                     &text,
                     ComplexRenderOption::new().with_white().with_center(),
                 );

@@ -1,4 +1,4 @@
-use core::f32;
+use core::{f32, i32};
 
 use embedded_graphics::prelude::*;
 use embedded_graphics::{Drawable, pixelcolor::BinaryColor, primitives::Rectangle};
@@ -7,8 +7,9 @@ use strum_macros::EnumIter;
 
 use crate::fonts::{FONT_MONOSPACE_8X8, FONT_VARIABLE_SMALL, Font};
 use crate::fps::FPSCounter;
+use crate::geo::RectIVec2;
 use crate::sprite::{SpriteMask, SpritePostionMode, SpriteRotation};
-use crate::{assets::Image, geo::Rect, sprite::Sprite};
+use crate::{assets::Image, geo::RectVec2, sprite::Sprite};
 
 pub const WIDTH: usize = 64;
 pub const WIDTH_I32: i32 = WIDTH as i32;
@@ -21,6 +22,7 @@ pub const CENTER_X_I32: i32 = (WIDTH_F32 / 2.) as i32;
 pub const CENTER_Y: f32 = HEIGHT_F32 / 2.;
 pub const CENTER_Y_I32: i32 = (HEIGHT_F32 / 2.) as i32;
 pub const CENTER_VEC: Vec2 = Vec2::new(CENTER_X, CENTER_Y);
+pub const CENTER_IVEC: IVec2 = IVec2::new(CENTER_X_I32, CENTER_Y_I32);
 
 pub type DisplayData = Bitmap<WIDTH, HEIGHT>;
 
@@ -54,13 +56,21 @@ pub enum Rotation {
     R270,
 }
 
+#[derive(Clone, Copy, Default)]
+pub enum WrappingMode {
+    #[default]
+    None,
+    WholeWord(i32),
+    Partial(i32),
+}
+
 #[derive(Clone, Copy)]
 pub struct ComplexRenderOption {
     color_mode: ColorMode,
     pos_mode: PostionMode,
     flip_colors: bool,
     font: &'static Font,
-    font_wrapping_x: Option<i32>,
+    font_wrapping_x: WrappingMode,
     rotation: Rotation,
     invert: bool,
 }
@@ -78,7 +88,7 @@ impl ComplexRenderOption {
             pos_mode: PostionMode::TopLeft,
             flip_colors: false,
             font: &FONT_MONOSPACE_8X8,
-            font_wrapping_x: None,
+            font_wrapping_x: WrappingMode::None,
             rotation: Rotation::R0,
             invert: false,
         }
@@ -122,7 +132,6 @@ impl ComplexRenderOption {
         self
     }
 
-    #[allow(dead_code)]
     pub const fn with_pos_mode(mut self, value: PostionMode) -> Self {
         self.pos_mode = value;
         self
@@ -138,8 +147,8 @@ impl ComplexRenderOption {
         self
     }
 
-    pub const fn with_font_wrapping_x(mut self, x: i32) -> Self {
-        self.font_wrapping_x = Some(x);
+    pub const fn with_font_wrapping_x(mut self, mode: WrappingMode) -> Self {
+        self.font_wrapping_x = mode;
         self
     }
 
@@ -163,11 +172,6 @@ impl GameDisplay {
     }
 
     pub fn render_point(&mut self, x: i32, y: i32, value: bool) {
-        if !(x >= 0 && x < WIDTH as i32 && y >= 0 && y < HEIGHT as i32) {
-            return;
-        }
-        let x = x as usize;
-        let y = y as usize;
         self.bits.set_pixel(x, y, value);
     }
 
@@ -182,18 +186,18 @@ impl GameDisplay {
             return;
         }
 
-        let image_size = image.size();
+        let image_size = image.size_ivec2();
         let texture = image.texture();
 
         let (x_plus, y_plus) = match options.pos_mode {
             PostionMode::TopLeft => (x, y),
-            PostionMode::Center => (x - (image_size.x as i32) / 2, y - (image_size.y as i32) / 2),
-            PostionMode::Bottomleft => (x, y - image_size.y as i32),
-            PostionMode::BottomRight => (x - image_size.x as i32, y - image_size.y as i32),
+            PostionMode::Center => (x - image_size.x / 2, y - image_size.y / 2),
+            PostionMode::Bottomleft => (x, y - image_size.y),
+            PostionMode::BottomRight => (x - image_size.x, y - image_size.y),
         };
 
-        let cx = (image_size.x as i32) / 2;
-        let cy = (image_size.y as i32) / 2;
+        let cx = image_size.x / 2;
+        let cy = image_size.y / 2;
 
         for iy in 0..image_size.y {
             for ix in 0..image_size.x {
@@ -225,12 +229,10 @@ impl GameDisplay {
                 let dx = x_plus + rx;
                 let dy = y_plus + ry;
 
-                if dx >= 0 && dx < WIDTH as i32 && dy >= 0 && dy < HEIGHT as i32 {
-                    if options.invert {
-                        self.render_point(dx, dy, !self.bits.get_bit(dx as usize, dy as usize));
-                    } else {
-                        self.render_point(dx, dy, bit_set);
-                    }
+                if options.invert {
+                    self.render_point(dx, dy, !self.bits.get_bit(dx as usize, dy as usize));
+                } else {
+                    self.render_point(dx, dy, bit_set);
                 }
             }
         }
@@ -249,53 +251,53 @@ impl GameDisplay {
         self.render_image_complex(x, y, image, ComplexRenderOption::new().with_white());
     }
 
-    pub fn render_rect_solid(&mut self, rect: Rect, white: bool) {
+    pub fn render_rect_solid(&mut self, rect: &RectIVec2, white: bool) {
         let top_left = rect.pos_top_left();
-        for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
-            for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
+        for x in top_left.x..(top_left.x + rect.size.x) {
+            for y in top_left.y..(top_left.y + rect.size.y) {
                 self.render_point(x, y, white);
             }
         }
     }
 
-    pub fn render_rect_outline(&mut self, rect: Rect, white: bool) {
+    pub fn render_rect_outline(&mut self, rect: &RectIVec2, white: bool) {
         let top_left = rect.pos_top_left();
-        let bottom_right_x = top_left.x + rect.size.x - 1.;
-        let bottom_right_y = top_left.y + rect.size.y - 1.;
+        let bottom_right_x = top_left.x + rect.size.x - 1;
+        let bottom_right_y = top_left.y + rect.size.y - 1;
 
         // Top and bottom borders
-        for x in top_left.x as i32..=bottom_right_x as i32 {
-            self.render_point(x, top_left.y as i32, white); // Top
-            self.render_point(x, bottom_right_y as i32, white); // Bottom
+        for x in top_left.x..=bottom_right_x {
+            self.render_point(x, top_left.y, white); // Top
+            self.render_point(x, bottom_right_y, white); // Bottom
         }
 
         // Left and right borders (excluding corners, already set above)
-        for y in (top_left.y as i32 + 1)..(bottom_right_y as i32) {
-            self.render_point(top_left.x as i32, y, white); // Left
-            self.render_point(bottom_right_x as i32, y, white); // Right
+        for y in (top_left.y + 1)..(bottom_right_y) {
+            self.render_point(top_left.x, y, white); // Left
+            self.render_point(bottom_right_x, y, white); // Right
         }
     }
 
-    pub fn render_rect_outline_dashed(&mut self, rect: Rect, white: bool, dash_width: usize) {
+    pub fn render_rect_outline_dashed(&mut self, rect: &RectIVec2, white: bool, dash_width: usize) {
         let top_left = rect.pos_top_left();
-        let bottom_right_x = top_left.x + rect.size.x - 1.;
-        let bottom_right_y = top_left.y + rect.size.y - 1.;
+        let bottom_right_x = top_left.x + rect.size.x - 1;
+        let bottom_right_y = top_left.y + rect.size.y - 1;
 
         let dash_width = dash_width.max(1); // avoid division by zero
 
         // Top and bottom borders
-        for (i, x) in (top_left.x as i32..=bottom_right_x as i32).enumerate() {
+        for (i, x) in (top_left.x..=bottom_right_x).enumerate() {
             if (i / dash_width).is_multiple_of(2) {
-                self.render_point(x, top_left.y as i32, white); // Top
-                self.render_point(x, bottom_right_y as i32, white); // Bottom
+                self.render_point(x, top_left.y, white); // Top
+                self.render_point(x, bottom_right_y, white); // Bottom
             }
         }
 
         // Left and right borders
-        for (i, y) in ((top_left.y as i32 + 1)..(bottom_right_y as i32)).enumerate() {
+        for (i, y) in ((top_left.y + 1)..(bottom_right_y)).enumerate() {
             if (i / dash_width).is_multiple_of(2) {
-                self.render_point(top_left.x as i32, y, white); // Left
-                self.render_point(bottom_right_x as i32, y, white); // Right
+                self.render_point(top_left.x, y, white); // Left
+                self.render_point(bottom_right_x, y, white); // Right
             }
         }
     }
@@ -382,7 +384,7 @@ impl GameDisplay {
         T::render_with_mask(
             self,
             sprite,
-            T::get_postion_mode(sprite),
+            T::get_position_mode(sprite),
             T::get_rotation(sprite),
         );
     }
@@ -393,19 +395,20 @@ impl GameDisplay {
         }
     }
 
-    pub fn render_text(&mut self, top_left: Vec2, text: &str) {
+    pub fn render_text(&mut self, top_left: &IVec2, text: &str) {
         const DEFAULT_RENDER: ComplexRenderOption = ComplexRenderOption::new().with_white();
         self.render_text_complex(top_left, text, DEFAULT_RENDER);
     }
 
     pub fn render_text_complex(
         &mut self,
-        pos: Vec2,
+        pos: &IVec2,
         text: &str,
         options: ComplexRenderOption,
     ) -> IVec2 {
         let max_height = {
             let mut max = 0u16;
+            // This can be faster if I just check every char once
             for ch in text.chars() {
                 let image = (options.font.convert)(ch);
                 if image.size.y > max {
@@ -413,99 +416,117 @@ impl GameDisplay {
                 }
             }
             max + 1
-        } as f32;
+        } as i32;
 
-        let wrapping_x = options.font_wrapping_x.unwrap_or(i32::MAX);
         let bytes = text.as_bytes();
+
+        let wrapping_x = match options.font_wrapping_x {
+            WrappingMode::None => i32::MAX,
+            WrappingMode::WholeWord(wrapping_x) | WrappingMode::Partial(wrapping_x) => wrapping_x,
+        };
 
         let (x_start, y_start) = match options.pos_mode {
             PostionMode::TopLeft => (pos.x, pos.y + max_height),
-            PostionMode::Center => {
-                let mut current_x = 0;
-                let mut max_w = 0;
-                let mut i = 0;
-                while i < text.len() {
-                    let (word_w, next_idx) = measure_next_chunk(text, i, &options);
-                    if current_x + word_w > wrapping_x && current_x > 0 {
-                        max_w = max_w.max(current_x);
-                        current_x = word_w;
-                    } else {
-                        current_x += word_w;
+            PostionMode::Center => match options.font_wrapping_x {
+                WrappingMode::WholeWord(_) => {
+                    let mut current_x = 0;
+                    let mut max_w = 0;
+                    let mut i = 0;
+                    while i < text.len() {
+                        let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+                        if current_x + word_w > wrapping_x && current_x > 0 {
+                            max_w = max_w.max(current_x);
+                            current_x = word_w;
+                        } else {
+                            current_x += word_w;
+                        }
+                        i = next_idx;
                     }
-                    i = next_idx;
+                    let total_max = max_w.max(current_x);
+                    (pos.x - total_max / 2, pos.y + max_height / 2)
                 }
-                let total_max = max_w.max(current_x);
-                (pos.x - total_max as f32 / 2., pos.y + max_height / 2.)
-            }
+                WrappingMode::Partial(_) | WrappingMode::None => {
+                    let mut max_width = 0;
+                    let mut width = 0;
+                    for ch in text.chars() {
+                        if ch == '\n' || width > wrapping_x {
+                            max_width = width.max(max_width);
+                            width = 0;
+                        }
+                        let image = (options.font.convert)(ch);
+                        width += image.size.x as i32 + options.font.between_spacing;
+                    }
+                    let width = width.max(max_width);
+                    (pos.x - width / 2, pos.y + max_height / 2)
+                }
+            },
             PostionMode::Bottomleft => (pos.x, pos.y),
             PostionMode::BottomRight => todo!(),
         };
 
         let sub_options = options.with_pos_mode(PostionMode::Bottomleft);
+
         let mut x_offset = 0;
         let mut y_offset = 0;
         let mut y_end = 0;
-        let mut i = 0;
 
-        while i < text.len() {
-            let (word_w, next_idx) = measure_next_chunk(text, i, &options);
-
-            if x_offset + word_w > wrapping_x && x_offset > 0 {
-                x_offset = 0;
-                y_offset += max_height as i32;
-            }
-
-            let chunk = &text[i..next_idx];
-            for ch in chunk.chars() {
-                if ch == '\n' {
-                    x_offset = 0;
-                    y_offset += max_height as i32;
-                    continue;
+        match options.font_wrapping_x {
+            WrappingMode::None | WrappingMode::Partial(_) => {
+                for ch in text.chars() {
+                    if ch == '\n' {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                        continue;
+                    }
+                    let image = (options.font.convert)(ch);
+                    if image.size.x as i32 + x_offset > wrapping_x {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                    }
+                    self.render_image_complex(
+                        x_start as i32 + x_offset,
+                        y_start as i32 + y_offset,
+                        image,
+                        sub_options,
+                    );
+                    x_offset += image.size.x as i32 + options.font.between_spacing;
+                    y_end = (y_offset + y_start as i32).max(y_end);
                 }
-                let image = (options.font.convert)(ch);
-                self.render_image_complex(
-                    x_start as i32 + x_offset,
-                    y_start as i32 + y_offset,
-                    image,
-                    sub_options,
-                );
-                x_offset += image.size.x as i32 + options.font.between_spacing;
-                y_end = (y_offset + y_start as i32).max(y_end);
             }
-            i = next_idx;
+            WrappingMode::WholeWord(_) => {
+                let mut i = 0;
+
+                while i < text.len() {
+                    let (word_w, next_idx) = measure_next_chunk(text, i, &options);
+
+                    if x_offset + word_w > wrapping_x && x_offset > 0 {
+                        x_offset = 0;
+                        y_offset += max_height as i32;
+                    }
+
+                    let chunk = &text[i..next_idx];
+                    for ch in chunk.chars() {
+                        if ch == '\n' {
+                            x_offset = 0;
+                            y_offset += max_height as i32;
+                            continue;
+                        }
+                        let image = (options.font.convert)(ch);
+                        self.render_image_complex(
+                            x_start as i32 + x_offset,
+                            y_start as i32 + y_offset,
+                            image,
+                            sub_options,
+                        );
+                        x_offset += image.size.x as i32 + options.font.between_spacing;
+                        y_end = (y_offset + y_start as i32).max(y_end);
+                    }
+                    i = next_idx;
+                }
+            }
         }
 
         IVec2::new(x_offset, y_end)
-    }
-
-    pub fn render_stomach(&mut self, pos_center: Vec2, filled: f32) {
-        use crate::assets::{IMAGE_STOMACH, IMAGE_STOMACH_MASK};
-
-        let filled_rect = Rect::new_top_left(
-            Vec2::new(
-                pos_center.x - (IMAGE_STOMACH_MASK.size.x / 2) as f32,
-                pos_center.y - IMAGE_STOMACH_MASK.size.y as f32
-                    + (IMAGE_STOMACH_MASK.size.y as f32
-                        - (IMAGE_STOMACH_MASK.size.y as f32 * filled)),
-            ),
-            Vec2::new(
-                IMAGE_STOMACH_MASK.size.x as f32,
-                IMAGE_STOMACH_MASK.size.y as f32 * filled,
-            ),
-        );
-        self.render_rect_solid(filled_rect, true);
-        self.render_image_complex(
-            pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
-            pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
-            &IMAGE_STOMACH,
-            ComplexRenderOption::new().with_white(),
-        );
-        self.render_image_complex(
-            pos_center.x as i32 - (IMAGE_STOMACH_MASK.size.x / 2) as i32,
-            pos_center.y as i32 - IMAGE_STOMACH_MASK.size.y as i32,
-            &IMAGE_STOMACH_MASK,
-            ComplexRenderOption::new().with_flip().with_black(),
-        );
     }
 
     pub fn invert(&mut self) {
@@ -513,7 +534,7 @@ impl GameDisplay {
     }
 
     #[allow(dead_code)]
-    pub fn invert_rect(&mut self, rect: Rect) {
+    pub fn invert_rect(&mut self, rect: RectVec2) {
         let top_left = rect.pos_top_left();
         for x in top_left.x as i32..(top_left.x + rect.size.x) as i32 {
             for y in top_left.y as i32..(top_left.y + rect.size.y) as i32 {
@@ -574,28 +595,11 @@ impl GameDisplay {
         use fixedstr::{str_format, str16};
         let str = str_format!(str16, "{:.0}", libm::ceil(fps.get_fps().into()));
         self.render_rect_solid(
-            Rect::new_top_left(Vec2::default(), Vec2::new(str.len() as f32 * 5., 6.)),
+            &RectIVec2::new_top_left(IVec2::default(), IVec2::new(str.len() as i32 * 5, 6)),
             false,
         );
         self.render_text_complex(
-            Vec2::new(0., 0.),
-            &str,
-            ComplexRenderOption::new()
-                .with_white()
-                .with_font(&FONT_VARIABLE_SMALL),
-        );
-    }
-
-    pub fn render_temperature(&mut self, temperature: f32) {
-        use fixedstr::{str_format, str16};
-        let str = str_format!(str16, "{:.0}", temperature);
-        let width = str.len() as f32 * 5. + 3.;
-        self.render_rect_solid(
-            Rect::new_top_left(Vec2::new(WIDTH_F32 - width, 0.), Vec2::new(width, 9.)),
-            false,
-        );
-        self.render_text_complex(
-            Vec2::new(WIDTH_F32 - width + 3., 0.),
+            &IVec2::new(0, 0),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -707,10 +711,13 @@ where
         (self.data[byte_index] & (1 << bit_index)) != 0
     }
 
-    pub fn set_pixel(&mut self, x: usize, y: usize, value: bool) {
-        if x >= W || y >= H {
+    pub fn set_pixel(&mut self, x: i32, y: i32, value: bool) {
+        if !(x >= 0 && x < W as i32 && y >= 0 && y < H as i32) {
             return;
         }
+
+        let x = x as usize;
+        let y = y as usize;
 
         // BMP stores rows bottom-up
         let flipped_y = H - 1 - y;
@@ -838,17 +845,17 @@ trait HasPostionMode {}
 impl<T: SpritePostionMode> HasPostionMode for T {}
 
 pub trait SpriteWithPostionMode<T: Sprite> {
-    fn get_postion_mode(sprite: &T) -> PostionMode;
+    fn get_position_mode(sprite: &T) -> PostionMode;
 }
 
 impl<T: Sprite + HasPostionMode + SpritePostionMode> SpriteWithPostionMode<T> for T {
-    fn get_postion_mode(sprite: &T) -> PostionMode {
+    fn get_position_mode(sprite: &T) -> PostionMode {
         sprite.sprite_postion_mode()
     }
 }
 
 impl<T: Sprite> SpriteWithPostionMode<T> for T {
-    default fn get_postion_mode(_: &T) -> PostionMode {
+    default fn get_position_mode(_: &T) -> PostionMode {
         PostionMode::Center
     }
 }
@@ -950,7 +957,7 @@ fn measure_next_chunk(text: &str, start: usize, options: &ComplexRenderOption) -
             continue;
         }
         let image = (options.font.convert)(ch);
-        width += image.size.x as i32 + options.font.between_spacing;
+        width += image.isize.x + options.font.between_spacing;
     }
     (width, start + end)
 }

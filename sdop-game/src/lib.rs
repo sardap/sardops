@@ -1,14 +1,16 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![feature(duration_constructors)]
-#![feature(duration_millis_float)]
-#![feature(inherent_associated_types)]
-#![feature(duration_constructors_lite)]
-#![feature(specialization)]
-#![feature(generic_const_exprs)]
-#![feature(trait_alias)]
-#![feature(variant_count)]
-#![feature(const_trait_impl)]
+#![allow(incomplete_features)]
+#![feature(
+    duration_constructors,
+    duration_millis_float,
+    trait_alias,
+    variant_count,
+    const_trait_impl,
+    inherent_associated_types,
+    specialization,
+    generic_const_exprs
+)]
 #![no_std]
 
 use core::time::Duration;
@@ -40,6 +42,7 @@ mod display;
 mod dream_bubble;
 mod egg;
 mod explore;
+mod firework;
 mod fish_tank;
 mod fonts;
 mod food;
@@ -198,7 +201,7 @@ impl Game {
         if self.scene_output.next_scene.is_some() {
             self.scene_manger
                 .set_next(self.scene_output.next_scene.take().unwrap());
-        } else if self.since_input > Duration::from_mins(5)
+        } else if self.since_input > Duration::from_mins(10)
             && self.scene_manger.scene_enum().should_quit_on_idle()
         {
             self.scene_manger

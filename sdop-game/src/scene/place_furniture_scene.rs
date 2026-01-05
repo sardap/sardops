@@ -1,11 +1,10 @@
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
-    Button,
-    assets::{self, Image},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    Button, assets,
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32},
     furniture::{HomeFurnitureKind, HomeFurnitureLocation, HomeFurnitureRender},
-    geo::Rect,
+    geo::{RectIVec2, vec2_to_ivec2},
     items::{FURNITURE_ITEMS, ItemKind},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
 };
@@ -196,17 +195,17 @@ impl Scene for PlaceFurnitureScene {
         match self.state {
             State::SelectingPlace => {
                 if let Some(location) = self.selected.to_location() {
-                    let rect: Rect = Rect::new_center(
-                        location.pos()
+                    let rect: RectIVec2 = RectIVec2::new_center(
+                        vec2_to_ivec2(location.pos())
                             + match location {
                                 HomeFurnitureLocation::Top => {
-                                    Vec2::new(0., self.top.render.size().y / 2.)
+                                    IVec2::new(0, self.top.render.size().y / 2)
                                 }
                                 HomeFurnitureLocation::Left => {
-                                    Vec2::new(self.left.render.size().x / 2., 0.)
+                                    IVec2::new(self.left.render.size().x / 2, 0)
                                 }
                                 HomeFurnitureLocation::Right => {
-                                    Vec2::new(-(self.right.render.size().x / 2.), 0.)
+                                    IVec2::new(-(self.right.render.size().x / 2), 0)
                                 }
                             },
                         match location {
@@ -215,15 +214,15 @@ impl Scene for PlaceFurnitureScene {
                             HomeFurnitureLocation::Right => self.right.render.size(),
                         },
                     )
-                    .grow(11.);
-                    display.render_rect_outline(rect, true);
+                    .grow(11);
+                    display.render_rect_outline(&rect, true);
                 } else {
-                    let rect: Rect = Rect::new_center(
-                        Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, HEIGHT_I32 - 20),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(2.);
-                    display.render_rect_outline(rect, true);
+                    .grow(2);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::SelectingFurniture => {}

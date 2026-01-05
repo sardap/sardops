@@ -1,14 +1,14 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::IVec2;
 use sdop_common::MelodyEntry;
 
 use crate::{
     Song,
     anime::Anime,
     assets::{self},
-    display::{CENTER_X, ComplexRender, ComplexRenderOption, GameDisplay, WIDTH_F32},
-    geo::Rect,
+    display::{CENTER_X_I32, ComplexRender, ComplexRenderOption, GameDisplay, WIDTH_I32},
+    geo::RectIVec2,
     items::Inventory,
     pet::{PetInstance, record::PetHistory},
     suiter::SuiterSystem,
@@ -72,6 +72,7 @@ impl MenuOptions {
         let mut options = heapless::Vec::new();
         let _ = options.push(MenuOption::PetInfo);
         let _ = options.push(MenuOption::Settings);
+        let _ = options.push(MenuOption::Shop);
         if suiter_system.suiter_waiting()
             && !matches!(
                 state,
@@ -99,21 +100,23 @@ impl MenuOptions {
             let _ = options.push(MenuOption::Heal);
         }
 
-        if state != super::State::Sleeping {
-            if !matches!(
-                state,
-                super::State::GoneOut { outing_end_time: _ } | super::State::Exploring
-            ) {
-                let _ = options.push(MenuOption::GameSelect);
-                let _ = options.push(MenuOption::FoodSelect);
-            }
-            let _ = options.push(MenuOption::Shop);
+        if !matches!(
+            state,
+            super::State::GoneOut { outing_end_time: _ }
+                | super::State::Exploring
+                | super::State::Sleeping
+        ) {
+            let _ = options.push(MenuOption::GameSelect);
+            let _ = options.push(MenuOption::FoodSelect);
         }
 
         if !matches!(
             state,
             super::State::Exploring | super::State::GoneOut { outing_end_time: _ }
         ) && inventory.has_any_map()
+            && !pet.is_sleeping()
+            && !pet.is_starving()
+            && poop_count == 0
         {
             let _ = options.push(MenuOption::Explore);
         }
@@ -163,18 +166,18 @@ impl ComplexRender for MenuOptions {
     fn render(&self, display: &mut GameDisplay) {
         use super::{BORDER_HEIGHT, WONDER_RECT};
 
-        const BOTTOM_BORDER_RECT: Rect = Rect::new_center(
-            Vec2::new(CENTER_X, WONDER_RECT.pos_top_left().y + WONDER_RECT.size.y),
-            Vec2::new(WIDTH_F32, BORDER_HEIGHT),
+        const BOTTOM_BORDER_RECT: RectIVec2 = RectIVec2::new_center(
+            IVec2::new(
+                CENTER_X_I32,
+                (WONDER_RECT.pos_top_left().y + WONDER_RECT.size.y) as i32,
+            ),
+            IVec2::new(WIDTH_I32, BORDER_HEIGHT),
         );
 
-        const SYMBOL_BUFFER: f32 = 2.;
-        const IMAGE_Y_START: f32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
+        const SYMBOL_BUFFER: i32 = 2;
+        const IMAGE_Y_START: i32 = BOTTOM_BORDER_RECT.pos.y + BORDER_HEIGHT + SYMBOL_BUFFER;
 
-        const SIZE: Vec2 = Vec2::new(
-            assets::IMAGE_SYMBOL_POOP.size.x as f32,
-            assets::IMAGE_SYMBOL_POOP.size.y as f32,
-        );
+        const SIZE: IVec2 = assets::IMAGE_SYMBOL_POOP.isize;
 
         for (i, option) in self.inner.iter().enumerate() {
             let image = match option {
@@ -193,9 +196,9 @@ impl ComplexRender for MenuOptions {
             };
             let x = if self.selected_index > 0 {
                 let x_index = i as i32 - self.selected_index as i32 + 1;
-                SYMBOL_BUFFER + (x_index as f32 * (SIZE.x + SYMBOL_BUFFER))
+                SYMBOL_BUFFER + (x_index * (SIZE.x + SYMBOL_BUFFER))
             } else {
-                SYMBOL_BUFFER + ((i + 1) as f32 * (SIZE.x + SYMBOL_BUFFER))
+                SYMBOL_BUFFER + ((i + 1) as i32 * (SIZE.x + SYMBOL_BUFFER))
             };
             display.render_image_complex(
                 x as i32,
@@ -205,13 +208,14 @@ impl ComplexRender for MenuOptions {
             );
         }
 
-        let select_rect = Rect::new_top_left(
-            Vec2::new(
-                SYMBOL_BUFFER + (1_f32 * (SIZE.x + SYMBOL_BUFFER)) - (SYMBOL_BUFFER),
+        let select_rect = RectIVec2::new_top_left(
+            IVec2::new(
+                // Why the heck is there a *1 here why?
+                SYMBOL_BUFFER + (1 * (SIZE.x + SYMBOL_BUFFER)) - (SYMBOL_BUFFER),
                 IMAGE_Y_START - (SYMBOL_BUFFER),
             ),
-            Vec2::new(SIZE.x + SYMBOL_BUFFER * 2., SIZE.y + SYMBOL_BUFFER * 2.),
+            IVec2::new(SIZE.x + SYMBOL_BUFFER * 2, SIZE.y + SYMBOL_BUFFER * 2),
         );
-        display.render_rect_outline(select_rect, true);
+        display.render_rect_outline(&select_rect, true);
     }
 }

@@ -1,10 +1,10 @@
-use glam::{Vec2, usize};
+use glam::{IVec2, usize};
 
 use crate::{
     Button, HEIGHT,
-    assets::{self, Image, StaticImage},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay},
-    geo::Rect,
+    assets::{self, StaticImage},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay},
+    geo::RectIVec2,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, mg_doge_em::MgDogeEmScene,
         mg_link_four::MgLinkFourScene, mg_tic_tac_toe::MgTicTacToeScene,
@@ -57,15 +57,15 @@ impl GameSelectScene {
     }
 }
 
-pub fn get_pos(i: usize) -> Vec2 {
-    const X_OFFSET: f32 = 20.;
-    const Y_OFFSET: f32 = 30.;
-    const X_GAP: f32 = 4.;
-    const Y_GAP: f32 = 6.;
-    let x = X_OFFSET + ((i % 2) as f32 * (assets::IMAGE_MG_DOGE_ICON.size.x as f32 + X_GAP));
+pub fn get_pos(i: i32) -> IVec2 {
+    const X_OFFSET: i32 = 20;
+    const Y_OFFSET: i32 = 30;
+    const X_GAP: i32 = 4;
+    const Y_GAP: i32 = 6;
+    let x = X_OFFSET + ((i % 2) * (assets::IMAGE_MG_DOGE_ICON.isize.x + X_GAP));
     let y = Y_OFFSET
-        + (libm::floorf(i as f32 / 2.) * (assets::IMAGE_MG_DOGE_ICON.size.y as f32 + Y_GAP));
-    Vec2::new(x, y)
+        + (libm::floorf(i as f32 / 2.) as i32 * (assets::IMAGE_MG_DOGE_ICON.isize.y + Y_GAP));
+    IVec2::new(x, y)
 }
 
 impl Scene for GameSelectScene {
@@ -107,7 +107,7 @@ impl Scene for GameSelectScene {
 
     fn render(&self, display: &mut GameDisplay, _args: &mut RenderArgs) {
         for (i, minigame) in self.active_minigames.iter().enumerate() {
-            let pos = get_pos(i);
+            let pos = get_pos(i as i32);
             display.render_image_complex(
                 pos.x as i32,
                 pos.y as i32,
@@ -120,22 +120,20 @@ impl Scene for GameSelectScene {
         display.render_image_center(CENTER_X as i32, BACK_Y, &assets::IMAGE_BACK_SYMBOL);
 
         if self.selected as usize == self.active_minigames.len() {
-            const RECT: Rect = Rect::new_center(
-                Vec2::new(CENTER_X, BACK_Y as f32),
-                Vec2::new(
-                    assets::IMAGE_BACK_SYMBOL.size.x as f32,
-                    assets::IMAGE_BACK_SYMBOL.size.y as f32 + 1.,
+            const RECT: RectIVec2 = RectIVec2::new_center(
+                IVec2::new(CENTER_X_I32, BACK_Y),
+                IVec2::new(
+                    assets::IMAGE_BACK_SYMBOL.isize.x,
+                    assets::IMAGE_BACK_SYMBOL.isize.y + 1,
                 ),
             );
 
-            display.render_rect_outline(RECT, true);
+            display.render_rect_outline(&RECT, true);
         } else {
-            let rect = Rect::new_center(
-                get_pos(self.selected as usize),
-                assets::IMAGE_MG_DOGE_ICON.size_vec2(),
-            )
-            .grow(2.);
-            display.render_rect_outline(rect, true);
+            let rect =
+                RectIVec2::new_center(get_pos(self.selected), assets::IMAGE_MG_DOGE_ICON.isize)
+                    .grow(2);
+            display.render_rect_outline(&rect, true);
         }
     }
 }

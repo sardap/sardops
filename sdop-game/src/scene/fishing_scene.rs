@@ -1,17 +1,19 @@
 use core::time::Duration;
 
 use fixedstr::{str_format, str32};
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     Button,
-    anime::{HasAnime, MaskedAnimeRender},
+    anime::{HasAnime, MaskedAnimeSprite},
     assets::{
         self, FRAMES_FISHING_POND_MOVING, IMAGE_FISHING_POND_LINE_MASK_0, IMAGE_FISHING_POND_STILL,
     },
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32},
+    display::{
+        CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, WIDTH_F32, WIDTH_I32,
+    },
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectIVec2,
     input::random_button,
     items::{FISHING_ITEM_ODDS, ItemKind, pick_item_from_set},
     money::Money,
@@ -49,12 +51,12 @@ pub struct FishingScene {
     seq: HitSeq,
     pet_render: PetRender,
     fishing_pond_moving: BasicAnimeSprite,
-    fishing_line: MaskedAnimeRender,
-    fishing_line_pulled: MaskedAnimeRender,
-    fishing_line_item: MaskedAnimeRender,
-    fishing_line_nothing: MaskedAnimeRender,
+    fishing_line: MaskedAnimeSprite,
+    fishing_line_pulled: MaskedAnimeSprite,
+    fishing_line_item: MaskedAnimeSprite,
+    fishing_line_nothing: MaskedAnimeSprite,
     winning: Option<Winning>,
-    garbage: MaskedAnimeRender,
+    garbage: MaskedAnimeSprite,
 }
 
 const FISHING_POND_POS_CENTER: Vec2 = Vec2::new(
@@ -77,13 +79,13 @@ impl Default for FishingScene {
 
 impl FishingScene {
     pub fn new() -> Self {
-        let fishing_line = MaskedAnimeRender::new(
+        let fishing_line = MaskedAnimeSprite::new(
             FISHING_ROD_POS_CENTER,
             &assets::FRAMES_FISHING_POND_LINE,
             &assets::FRAMES_FISHING_POND_LINE_MASK,
         );
 
-        let fishing_line_pulled = MaskedAnimeRender::new(
+        let fishing_line_pulled = MaskedAnimeSprite::new(
             FISHING_ROD_POS_CENTER,
             &assets::FRAMES_FISHING_POND_LINE_PULLED,
             &assets::FRAMES_FISHING_POND_LINE_PULLED_MASK,
@@ -102,18 +104,18 @@ impl FishingScene {
             pet_render: PetRender::default(),
             fishing_line,
             fishing_line_pulled,
-            fishing_line_item: MaskedAnimeRender::new(
+            fishing_line_item: MaskedAnimeSprite::new(
                 FISHING_ROD_POS_CENTER,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_ITEM,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_ITEM_MASK,
             ),
-            fishing_line_nothing: MaskedAnimeRender::new(
+            fishing_line_nothing: MaskedAnimeSprite::new(
                 FISHING_ROD_POS_CENTER,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_NOTHIN,
                 &assets::FRAMES_FISHING_POND_LINE_PULLOUT_NOTHIN_MASK,
             ),
             winning: None,
-            garbage: MaskedAnimeRender::new(
+            garbage: MaskedAnimeSprite::new(
                 Vec2::new(CENTER_X, 20.),
                 &assets::FRAMES_GARBAGE,
                 &assets::FRAMES_GARBAGE_MASK,
@@ -227,9 +229,9 @@ impl Scene for FishingScene {
                     let percent = if hits == 0. { 0.05 } else { possible / hits };
                     if args.game_ctx.rng.f32() < percent {
                         let percent = args.game_ctx.rng.f32();
-                        self.winning = Some(if percent < 0.6 {
+                        self.winning = Some(if percent < 0.3 {
                             Winning::Garbage
-                        } else if percent < 0.7 {
+                        } else if percent < 0.6 {
                             Winning::Money(args.game_ctx.rng.i32(100..5000))
                         } else {
                             Winning::Item(pick_item_from_set(
@@ -311,43 +313,43 @@ impl Scene for FishingScene {
                     ComplexRenderOption::new().with_center().with_white(),
                 );
 
-                display.render_complex(&self.fishing_line);
+                display.render_sprite(&self.fishing_line);
             }
             State::Pulling => {
                 display.render_sprite(&self.pet_render);
 
                 display.render_sprite(&self.fishing_pond_moving);
 
-                display.render_complex(&self.fishing_line_pulled);
+                display.render_sprite(&self.fishing_line_pulled);
 
-                const HIT_RECTNAGLE: Rect =
-                    Rect::new_top_left(Vec2::new(10., 90.), Vec2::new(WIDTH_F32 - 20., 20.));
+                const HIT_RECTNAGLE: RectIVec2 =
+                    RectIVec2::new_top_left(IVec2::new(10, 90), IVec2::new(WIDTH_I32 - 20, 20));
 
-                display.render_rect_outline(HIT_RECTNAGLE, true);
+                display.render_rect_outline(&HIT_RECTNAGLE, true);
 
                 let percent_of_hit = self.state_elasped.as_secs_f32() / PULL_TIME.as_secs_f32();
-                let postion_rec = Rect::new_top_left(
+                let position_rec = RectIVec2::new_top_left(
                     HIT_RECTNAGLE.pos_top_left()
-                        + Vec2::new(HIT_RECTNAGLE.size.x * percent_of_hit - 1., 0.),
-                    Vec2::new(3., 20.),
+                        + IVec2::new((HIT_RECTNAGLE.size.x as f32 * percent_of_hit) as i32 - 1, 0),
+                    IVec2::new(3, 20),
                 );
-                display.render_rect_outline(postion_rec, true);
+                display.render_rect_outline(&position_rec, true);
 
                 for (i, entry) in self.seq.iter().enumerate() {
                     if let Some(entry) = entry {
                         let percent_of_hit = entry.elasped.as_secs_f32() / PULL_TIME.as_secs_f32();
-                        let postion_rec = Rect::new_top_left(
+                        let position_rec = RectIVec2::new_top_left(
                             HIT_RECTNAGLE.pos_top_left()
-                                + Vec2::new(
-                                    HIT_RECTNAGLE.size.x * percent_of_hit,
-                                    if i % 2 == 0 { 0. } else { 10. },
+                                + IVec2::new(
+                                    (HIT_RECTNAGLE.size.x as f32 * percent_of_hit) as i32,
+                                    if i % 2 == 0 { 0 } else { 10 },
                                 ),
-                            Vec2::new(2., 10.),
+                            IVec2::new(2, 10),
                         );
                         if entry.hit {
-                            display.render_rect_outline_dashed(postion_rec, true, 1);
+                            display.render_rect_outline_dashed(&position_rec, true, 1);
                         } else {
-                            display.render_rect_outline(postion_rec, true);
+                            display.render_rect_outline(&position_rec, true);
                         }
                     }
                 }
@@ -360,16 +362,16 @@ impl Scene for FishingScene {
                 display.render_sprite(&self.fishing_pond_moving);
 
                 if self.winning.is_some() {
-                    display.render_complex(&self.fishing_line_item);
+                    display.render_sprite(&self.fishing_line_item);
                 } else {
-                    display.render_complex(&self.fishing_line_nothing);
+                    display.render_sprite(&self.fishing_line_nothing);
                 }
             }
             State::FanFare => {
                 if let Some(winnings) = &self.winning {
                     match winnings {
                         Winning::Garbage => {
-                            display.render_complex(&self.garbage);
+                            display.render_sprite(&self.garbage);
                         }
                         Winning::Item(item_kind) => {
                             display.render_image_complex(
@@ -382,13 +384,13 @@ impl Scene for FishingScene {
                         Winning::Money(money) => {
                             let total = str_format!(str32, "${}", args.game_ctx.money);
                             display.render_text_complex(
-                                Vec2::new(10., 20.),
+                                &IVec2::new(10, 20),
                                 &total,
                                 ComplexRenderOption::new().with_white(),
                             );
                             let winnings = str_format!(str32, "+${}", money);
                             display.render_text_complex(
-                                Vec2::new(10., 30.),
+                                &IVec2::new(10, 30),
                                 &winnings,
                                 ComplexRenderOption::new().with_white(),
                             );
@@ -396,7 +398,7 @@ impl Scene for FishingScene {
                     }
                 } else {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, 10.),
+                        &IVec2::new(CENTER_X_I32, 10),
                         "NOTHING",
                         ComplexRenderOption::new()
                             .with_white()

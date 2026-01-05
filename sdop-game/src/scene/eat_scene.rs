@@ -12,6 +12,7 @@ use crate::{
     },
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sounds::{SONG_EATING, SONG_FAN_FARE, SongPlayOptions},
+    stomach::StomachRender,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -131,9 +132,9 @@ impl Scene for EatScene {
         }
 
         let total_filled = (self.fill_factor / def.stomach_size).min(1.);
-        display.render_stomach(
-            Vec2::new(CENTER_X, IMAGE_STOMACH_MASK.size.y as f32 + 10.),
-            total_filled,
-        );
+        display.render_complex(&StomachRender {
+            pos_center: Vec2::new(CENTER_X, IMAGE_STOMACH_MASK.size.y as f32 + 10.),
+            filled: total_filled,
+        });
     }
 }

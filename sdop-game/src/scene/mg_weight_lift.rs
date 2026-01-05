@@ -1,16 +1,17 @@
 use core::{ops::Sub, time::Duration};
 
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     Button,
     assets::{self, Image},
     display::{
-        CENTER_VEC, CENTER_X, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation, WIDTH_F32,
+        CENTER_VEC, CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay, Rotation,
+        WIDTH_I32,
     },
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectIVec2,
     input::{ALL_BUTTONS, random_button},
     pet::{
         definition::{PetAnimationSet, PetDefinitionId},
@@ -255,14 +256,14 @@ impl Scene for MgWeightLift {
             State::Hyping => {}
             State::Lifting => {
                 let x = if self.shake_button_left > Duration::from_millis(100) {
-                    CENTER_X - 1.
+                    CENTER_X_I32 - 1
                 } else {
-                    CENTER_X
+                    CENTER_X_I32
                 };
 
                 if self.lifting_time > Duration::ZERO {
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, 5.),
+                        &IVec2::new(CENTER_X_I32, 5),
                         "REMAINING",
                         ComplexRenderOption::new()
                             .with_white()
@@ -278,7 +279,7 @@ impl Scene for MgWeightLift {
                         .as_millis()
                     );
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, 15.),
+                        &IVec2::new(CENTER_X_I32, 15),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -287,15 +288,15 @@ impl Scene for MgWeightLift {
                     );
                 }
 
-                let lift_line = Rect::new_top_left(
-                    Vec2::new(2., self.pet_render.y2() - self.target_y() - 5.),
-                    Vec2::new(WIDTH_F32 - 4., 1.),
+                let lift_line = RectIVec2::new_top_left(
+                    IVec2::new(2, self.pet_render.y2_i32() - self.target_y() as i32 - 5),
+                    IVec2::new(WIDTH_I32 - 4, 1),
                 );
 
-                display.render_rect_outline_dashed(lift_line, true, 2);
+                display.render_rect_outline_dashed(&lift_line, true, 2);
 
                 let mut y =
-                    self.pet_render.pos.y + self.pet_render.image().size().y as f32 / 2. + 15.;
+                    self.pet_render.pos.y as i32 + self.pet_render.static_image().isize.y / 2 + 15;
 
                 if self.hold_time > Duration::ZERO {
                     let str = str_format!(
@@ -304,7 +305,7 @@ impl Scene for MgWeightLift {
                         (HOLD_TIME.checked_sub(self.hold_time).unwrap_or_default()).as_millis()
                     );
                     display.render_text_complex(
-                        Vec2::new(CENTER_X, y),
+                        &IVec2::new(CENTER_X_I32, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -313,11 +314,11 @@ impl Scene for MgWeightLift {
                     );
                 }
 
-                y += 20.;
+                y += 20;
 
                 display.render_image_complex(
-                    x as i32,
-                    y as i32,
+                    x,
+                    y,
                     &assets::IMAGE_BUTTON_UP,
                     ComplexRenderOption::new()
                         .with_white()
@@ -330,8 +331,8 @@ impl Scene for MgWeightLift {
                 );
 
                 display.render_image_complex(
-                    x as i32,
-                    y as i32,
+                    x,
+                    y,
                     &assets::IMAGE_BUTTON_UP_MASK,
                     ComplexRenderOption::new()
                         .with_black()

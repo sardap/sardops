@@ -118,19 +118,22 @@ pub const EGG_HATCH_MAX: Duration = Duration::from_days(1);
 pub const ILLNESS_SINCE_GAME_DURATION: Duration = Duration::from_hours(6);
 
 pub const ILLNESS_BASE_ODDS: f32 = sim_tick_odds_per_day(0.05);
-pub const ILLNESS_STARVING_ODDS: f32 = sim_tick_odds_per_day(0.3);
-pub const ILLNESS_SINCE_GAME_ODDS: f32 = sim_tick_odds_per_day(0.05);
+pub const ILLNESS_STARVING_ODDS: f32 = sim_tick_odds_per_day(0.1);
 pub const ILLNESS_BABY_ODDS: f32 = sim_tick_odds_per_day(0.2);
 pub const ILLNESS_CHILD_ODDS: f32 = sim_tick_odds_per_day(0.1);
 
 pub const ILLNESS_SINCE_ODDS: &[Threshold<Duration>] = &[
     Threshold::new(Duration::from_hours(4), sim_tick_odds_per_day(0.0)),
-    Threshold::new(Duration::from_hours(8), sim_tick_odds_per_hour(0.025)),
+    Threshold::new(Duration::from_hours(8), sim_tick_odds_per_hour(0.05)),
     Threshold::new(Duration::from_days(2), sim_tick_odds_per_hour(0.1)),
     Threshold::new(Duration::MAX, sim_tick_odds_per_hour(0.15)),
 ];
 
-pub const HEALING_COST_RANGE: Range<Money> = 1000..10000;
+pub const ILLNESS_AUTO_HEAL_ODDS_BABY: f32 = sim_tick_odds_per_hour(0.05);
+pub const ILLNESS_AUTO_HEAL_ODDS_CHILD: f32 = sim_tick_odds_per_hour(0.1);
+pub const ILLNESS_AUTO_HEAL_ODDS_ADULT: f32 = sim_tick_odds_per_hour(0.1);
+
+pub const HEALING_COST_RANGE: Range<Money> = 100..1000;
 
 pub const RANDOM_NAMES: &[&str] = &[
     "Abel", "Adam", "Amos", "Cain", "Caleb", "Dan", "David", "Eli", "Esau", "Gad", "Hagar",
@@ -230,10 +233,21 @@ pub const SHOP_OPEN_TIMES: [[NaiveTime; 2]; 7] = [
 ];
 
 pub const TELESCOPE_USE_RANGE: Range<NaiveTime> =
-    NaiveTime::from_hms_opt(5, 30, 0).unwrap()..NaiveTime::from_hms_opt(20, 30, 0).unwrap();
+    NaiveTime::from_hms_opt(20, 0, 0).unwrap()..NaiveTime::from_hms_opt(23, 59, 0).unwrap();
 
 pub const COFFEE_POOP_MODIFER: Duration = Duration::from_mins(30);
 
 pub const ITEMS_CLEAR_ON_NEW_PET: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
 
-pub const STARTING_ITEMS: &[ItemKind] = &[ItemKind::RecipeBiscuit, ItemKind::MapDownTheRoad];
+pub const STARTING_ITEMS: &[ItemKind] = &[
+    ItemKind::RecipeBiscuit,
+    ItemKind::MapDownTheRoad,
+    ItemKind::BookForBabies,
+    ItemKind::Telescope,
+];
+
+pub const BABY_LIFE_STAGE_ITEMS: &[ItemKind] = &[];
+pub const CHILD_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapToTheNinch];
+pub const ADULT_LIFE_STAGE_ITEMS: &[ItemKind] = &[ItemKind::MapIntoTheOffice];
+
+pub const EXPLORE_MONEY_RESET_TIME: Duration = Duration::from_days(1);

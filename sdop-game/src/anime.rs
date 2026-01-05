@@ -4,13 +4,21 @@ use glam::Vec2;
 
 use crate::{
     assets::{Frame, StaticImage},
-    display::{ComplexRender, ComplexRenderOption, PostionMode},
+    display::PostionMode,
+    sprite::{Sprite, SpriteMask, SpritePostionMode},
 };
 
 const DEFAULT_FRAMES: [Frame; 1] = [Frame::new(
     &crate::assets::IMAGE_FOOD_BISCUIT,
     Duration::from_secs(1),
 )];
+
+#[derive(PartialEq, Eq)]
+pub enum AnimeTick {
+    SameFrame,
+    Changed,
+    Looped,
+}
 
 #[derive(Copy, Clone)]
 pub struct Anime {
@@ -44,7 +52,7 @@ impl Anime {
         self
     }
 
-    pub fn tick(&mut self, delta: Duration) {
+    pub fn tick(&mut self, delta: Duration) -> AnimeTick {
         self.elapsed += delta;
         if self.elapsed > self.frames[self.current_index].duration {
             if self.current_index + 1 >= self.frames.len() {
@@ -53,7 +61,15 @@ impl Anime {
                 self.current_index += 1;
             }
             self.elapsed = Duration::ZERO;
+
+            if self.current_index == 0 {
+                return AnimeTick::Looped;
+            } else {
+                return AnimeTick::Changed;
+            }
         }
+
+        AnimeTick::SameFrame
     }
 
     pub fn set_frame(&mut self, index: usize) {
@@ -71,7 +87,7 @@ impl Anime {
         self.frames
     }
 
-    pub fn current_frame(&self) -> &'static StaticImage {
+    pub const fn current_frame(&self) -> &'static StaticImage {
         self.frames[self.current_index].frame
     }
 
@@ -107,58 +123,64 @@ pub fn tick_all_anime<T: HasAnime>(animes: &mut [Option<T>], delta: Duration) {
 }
 
 #[derive(Copy, Clone)]
-pub struct MaskedAnimeRender {
+pub struct MaskedAnimeSprite {
     pub pos: Vec2,
     pub anime: Anime,
-    pub masked: &'static [Frame],
     pub pos_mode: PostionMode,
 }
 
-impl MaskedAnimeRender {
+impl MaskedAnimeSprite {
     pub fn new(pos: Vec2, frames: &'static [Frame], masked_frames: &'static [Frame]) -> Self {
         Self {
             pos,
-            anime: Anime::new(frames),
-            masked: masked_frames,
+            anime: Anime::new(frames).with_mask(masked_frames),
             pos_mode: PostionMode::Center,
         }
     }
 }
 
-impl Default for MaskedAnimeRender {
+impl Default for MaskedAnimeSprite {
     fn default() -> Self {
         Self {
             pos: Vec2::default(),
             anime: Default::default(),
-            masked: Default::default(),
             pos_mode: PostionMode::Center,
         }
     }
 }
 
-impl HasAnime for MaskedAnimeRender {
+impl HasAnime for MaskedAnimeSprite {
     fn anime(&mut self) -> &mut Anime {
         &mut self.anime
     }
 }
 
-impl ComplexRender for MaskedAnimeRender {
-    fn render(&self, display: &mut crate::display::GameDisplay) {
-        display.render_image_complex(
-            self.pos.x as i32,
-            self.pos.y as i32,
-            self.anime.current_frame(),
-            ComplexRenderOption::new()
-                .with_pos_mode(self.pos_mode)
-                .with_white(),
-        );
-        display.render_image_complex(
-            self.pos.x as i32,
-            self.pos.y as i32,
-            self.masked[self.anime.current_frame_index()].frame,
-            ComplexRenderOption::new()
-                .with_pos_mode(self.pos_mode)
-                .with_black(),
-        );
+impl Sprite for MaskedAnimeSprite {
+    fn pos(&self) -> &Vec2 {
+        &self.pos
+    }
+
+    fn image(&self) -> &impl crate::assets::Image {
+        self.anime.current_frame()
+    }
+
+    fn size_x(&self) -> i32 {
+        self.anime.current_frame().isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.anime.current_frame().isize.y
+    }
+}
+
+impl SpriteMask for MaskedAnimeSprite {
+    fn image_mask(&self) -> &impl crate::assets::Image {
+        self.anime.current_frame_mask().unwrap()
+    }
+}
+
+impl SpritePostionMode for MaskedAnimeSprite {
+    fn sprite_postion_mode(&self) -> PostionMode {
+        self.pos_mode
     }
 }

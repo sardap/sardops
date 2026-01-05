@@ -1,14 +1,14 @@
 use chrono::NaiveDateTime;
-use glam::Vec2;
+use glam::IVec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
     Button, Timestamp,
-    assets::{self, Image},
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_F32},
+    assets::{self},
+    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_F32, HEIGHT_I32},
     fonts::FONT_VARIABLE_SMALL,
-    geo::Rect,
+    geo::RectIVec2,
     scene::{
         RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
         enter_date_scene::{self, EnterDateScene},
@@ -196,50 +196,55 @@ impl Scene for SettingsScene {
 
         match self.state {
             State::Selecting => {
+                let mut render_pos = IVec2::new(CENTER_X_I32, 0);
                 for (i, option) in Option::iter().enumerate() {
                     if option == Option::Back {
                         break;
                     }
 
-                    let y = if option == Option::iter().last().unwrap() {
-                        110.
+                    render_pos.y = if option == Option::iter().last().unwrap() {
+                        110
                     } else {
-                        (40 + i * 17) as f32
+                        40 + i as i32 * 17
                     };
 
                     let width = display
                         .render_text_complex(
-                            Vec2::new(CENTER_X, y),
+                            &render_pos,
                             option.text(),
                             ComplexRenderOption::new().with_white().with_center(),
                         )
-                        .x as f32;
+                        .x;
 
                     if self.option == option {
                         display.render_rect_solid(
-                            Rect::new_center(Vec2::new(CENTER_X, y + 7.), Vec2::new(width, 1.)),
+                            &RectIVec2::new_center(
+                                IVec2::new(CENTER_X_I32, render_pos.y + 7),
+                                IVec2::new(width, 1),
+                            ),
                             true,
                         );
                     }
                 }
 
                 display.render_image_complex(
-                    CENTER_X as i32,
-                    (HEIGHT_F32 - 20.) as i32,
+                    CENTER_X_I32,
+                    HEIGHT_I32 - 20,
                     &assets::IMAGE_BACK_SYMBOL,
                     ComplexRenderOption::new().with_white().with_center(),
                 );
 
                 if self.option == Option::Back {
-                    let rect: Rect = Rect::new_center(
-                        Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, HEIGHT_I32 - 20),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(6.);
-                    display.render_rect_outline(rect, true);
+                    .grow(6);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::Sounds => {
+                let mut render_pos = IVec2::new(20, 0);
                 for (i, option) in [
                     SoundSelection::Music,
                     SoundSelection::Effect,
@@ -248,9 +253,9 @@ impl Scene for SettingsScene {
                 .into_iter()
                 .enumerate()
                 {
-                    let y = 50. + (i * 13) as f32;
+                    render_pos.y = 50 + (i as i32 * 13);
                     display.render_text_complex(
-                        Vec2::new(20., y),
+                        &render_pos,
                         option.text(),
                         ComplexRenderOption::new()
                             .with_white()
@@ -258,15 +263,16 @@ impl Scene for SettingsScene {
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
 
-                    let rect = Rect::new_bottom_left(Vec2::new(5., y), Vec2::new(10., 10.));
+                    let rect =
+                        RectIVec2::new_bottom_left(IVec2::new(5, render_pos.y), IVec2::new(10, 10));
                     if self.sound_selected == option {
-                        display.render_rect_outline_dashed(rect, true, 1);
+                        display.render_rect_outline_dashed(&rect, true, 1);
                     } else {
-                        display.render_rect_outline(rect, true);
+                        display.render_rect_outline(&rect, true);
                     }
 
                     if option.enabled(args.game_ctx.sound_system.sound_options()) {
-                        display.render_rect_solid(rect.shrink(4.), true);
+                        display.render_rect_solid(&rect.shrink(4), true);
                     }
                 }
 
@@ -278,12 +284,12 @@ impl Scene for SettingsScene {
                 );
 
                 if self.sound_selected == SoundSelection::Back {
-                    let rect: Rect = Rect::new_center(
-                        Vec2::new(CENTER_X, HEIGHT_F32 - 20.),
-                        assets::IMAGE_BACK_SYMBOL.size_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, HEIGHT_I32 - 20),
+                        assets::IMAGE_BACK_SYMBOL.isize,
                     )
-                    .grow(6.);
-                    display.render_rect_outline(rect, true);
+                    .grow(6);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::GettingTime => {}

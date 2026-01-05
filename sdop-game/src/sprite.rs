@@ -5,7 +5,7 @@ use crate::{
     anime::{Anime, HasAnime},
     assets::{self, Frame, Image, StaticImage},
     display::{HEIGHT_F32, PostionMode, Rotation, WIDTH_F32},
-    geo::Rect,
+    geo::RectVec2,
 };
 
 pub trait Sprite {
@@ -13,24 +13,44 @@ pub trait Sprite {
 
     fn image(&self) -> &impl Image;
 
-    fn rect(&self) -> Rect {
-        Rect::new_center(*self.pos(), self.image().size_vec2())
+    fn size_x(&self) -> i32;
+
+    fn size_y(&self) -> i32;
+
+    fn rect(&self) -> RectVec2 {
+        RectVec2::new_center(*self.pos(), self.image().size_vec2())
     }
 
     fn x1(&self) -> f32 {
-        self.pos().x - self.image().size().x as f32 / 2.
+        self.pos().x - (self.size_x() / 2) as f32
     }
 
     fn x2(&self) -> f32 {
-        self.pos().x + self.image().size().x as f32 / 2.
+        self.pos().x + (self.size_x() / 2) as f32
     }
 
     fn y1(&self) -> f32 {
-        self.pos().y - self.image().size().y as f32 / 2.
+        self.pos().y - (self.size_y() / 2) as f32
     }
 
     fn y2(&self) -> f32 {
-        self.pos().y + self.image().size().y as f32 / 2.
+        self.pos().y + (self.size_y() / 2) as f32
+    }
+
+    fn x1_i32(&self) -> i32 {
+        self.pos().x as i32 - (self.size_x() / 2)
+    }
+
+    fn x2_i32(&self) -> i32 {
+        self.pos().x as i32 + (self.size_x() / 2)
+    }
+
+    fn y1_i32(&self) -> i32 {
+        self.pos().y as i32 - (self.size_y() / 2)
+    }
+
+    fn y2_i32(&self) -> i32 {
+        self.pos().y as i32 + (self.size_y() / 2)
     }
 
     #[allow(dead_code)]
@@ -74,6 +94,14 @@ impl Sprite for BasicSprite {
     fn image(&self) -> &impl Image {
         self.image
     }
+
+    fn size_x(&self) -> i32 {
+        self.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.image.isize.y
+    }
 }
 
 impl Default for BasicSprite {
@@ -102,6 +130,14 @@ impl Sprite for BasicMaskedSprite {
 
     fn image(&self) -> &impl Image {
         self.image
+    }
+
+    fn size_x(&self) -> i32 {
+        self.image.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.image.isize.y
     }
 }
 
@@ -167,6 +203,14 @@ impl Sprite for BasicAnimeSprite {
     fn image(&self) -> &impl Image {
         self.anime.current_frame()
     }
+
+    fn size_x(&self) -> i32 {
+        self.anime.current_frame().isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        self.anime.current_frame().isize.y
+    }
 }
 
 impl SpritePostionMode for BasicAnimeSprite {
@@ -212,6 +256,14 @@ impl Sprite for Snowflake {
     fn image(&self) -> &impl Image {
         &assets::IMAGE_SNOWFLAKE
     }
+
+    fn size_x(&self) -> i32 {
+        assets::IMAGE_SNOWFLAKE.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        assets::IMAGE_SNOWFLAKE.isize.y
+    }
 }
 
 impl SpriteRotation for Snowflake {
@@ -225,63 +277,6 @@ impl Default for Snowflake {
         Self {
             pos: Vec2::new(-100., 0.),
             rotation: Default::default(),
-            dir: Default::default(),
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-pub struct MusicNote {
-    pub image: &'static StaticImage,
-    pub pos: Vec2,
-    pub dir: Vec2,
-}
-
-impl MusicNote {
-    pub fn reset(&mut self, center: Vec2, rng: &mut fastrand::Rng) {
-        const NOTES: &[&StaticImage] = &[
-            &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
-            &assets::IMAGE_MUSIC_NOTE_CROTCHET,
-            &assets::IMAGE_MUSIC_NOTE_QUAVER,
-            &assets::IMAGE_MUSIC_NOTE_SEMI_QUAVER,
-        ];
-
-        let x_min = center.x as i32 - 5;
-        let x_max = center.x as i32 + 5;
-
-        self.pos = Vec2::new(rng.i32(x_min..x_max) as f32, center.y);
-        self.image = rng.choice(NOTES.iter()).unwrap();
-        let mut y_speed = rng.i32(10..25);
-        if rng.bool() {
-            y_speed = -y_speed;
-        }
-        let mut x_speed = rng.i32(10..25);
-        if rng.bool() {
-            x_speed = -x_speed;
-        }
-        self.dir = Vec2::new(x_speed as f32, y_speed as f32);
-    }
-
-    pub fn size(&self) -> Vec2 {
-        self.image.size.as_vec2()
-    }
-}
-
-impl Sprite for MusicNote {
-    fn pos(&self) -> &Vec2 {
-        &self.pos
-    }
-
-    fn image(&self) -> &impl Image {
-        self.image
-    }
-}
-
-impl Default for MusicNote {
-    fn default() -> Self {
-        Self {
-            pos: Vec2::new(-100., 0.),
-            image: &assets::IMAGE_MUSIC_NOTE_BEAM_NOTE,
             dir: Default::default(),
         }
     }

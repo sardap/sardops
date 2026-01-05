@@ -7,7 +7,6 @@ use crate::{
     Timestamp,
     anime::Anime,
     assets,
-    death::passed_threshold_chance,
     display::{ComplexRender, ComplexRenderOption, GameDisplay},
     game_consts::EGG_HATCH_MAX,
     pet::{PetParents, UniquePetId},

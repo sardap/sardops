@@ -3,19 +3,22 @@ use core::{ops::Range, time::Duration};
 use crate::{
     Timestamp,
     assets::{self, StaticImage},
+    game_consts::EXPLORE_MONEY_RESET_TIME,
     items::{Inventory, ItemKind},
     money::Money,
     pet::{LifeStage, PetInstance},
 };
 use bincode::{Decode, Encode};
+use sdop_common::LifeStageMask;
 
 include!(concat!(env!("OUT_DIR"), "/dist_locations.rs"));
 
 pub type ExploreSkill = i32;
 
 const MAX_REWARD_ITEMS_LOCATION: usize = 10;
-const CHECK_INTERVAL: Duration = Duration::from_secs(60);
+const PHRASE_UPDATE_INTERVAL: Duration = Duration::from_secs(60);
 const PASSED_THRESHOLD: f32 = 0.5;
+const CHECKS_PER_LOCATION: u32 = 10;
 
 pub struct ItemReward {
     item: ItemKind,
@@ -48,7 +51,7 @@ pub struct Location {
     pub cover: StaticImage,
     pub activities: &'static [&'static str],
     pub item: ItemKind,
-    pub ls_mask: u8,
+    pub ls_mask: LifeStageMask,
 }
 
 impl Location {
@@ -78,8 +81,12 @@ impl Location {
         }
     }
 
-    pub const fn total_checks(&self) -> u64 {
-        (self.length.as_millis() / CHECK_INTERVAL.as_millis()) as u64
+    pub const fn total_checks(&self) -> u32 {
+        CHECKS_PER_LOCATION
+    }
+
+    pub const fn check_interval(&self) -> Duration {
+        Duration::from_millis((self.length.as_millis() as u32 / CHECKS_PER_LOCATION) as u64)
     }
 }
 
@@ -170,6 +177,8 @@ pub struct LocationHistory {
     pub runs: u16,
     pub successful: u16,
     pub last_ran: Timestamp,
+    pub last_money_run: Timestamp,
+    pub running_money_earned: Money,
 }
 
 impl Default for LocationHistory {
@@ -178,6 +187,8 @@ impl Default for LocationHistory {
             runs: 0,
             successful: 0,
             last_ran: Timestamp::default(),
+            last_money_run: Timestamp::default(),
+            running_money_earned: 0,
         }
     }
 }
@@ -248,6 +259,7 @@ pub struct ExploreSystem {
     current_activity: &'static str,
     elapsed: Duration,
     passes: u32,
+    until_check: Duration,
     last_result: ExploreDetailedResult,
 }
 
@@ -258,6 +270,7 @@ impl Default for ExploreSystem {
             current_activity: PLACEHOLDER_ACTIVTY,
             elapsed: Duration::ZERO,
             passes: 0,
+            until_check: Duration::ZERO,
             last_result: Default::default(),
         }
     }
@@ -267,7 +280,7 @@ impl ExploreSystem {
     pub fn sim_tick(
         &mut self,
         delta: Duration,
-        timestamp: &Timestamp,
+        now: &Timestamp,
         rng: &mut fastrand::Rng,
         pet: &mut PetInstance,
         inventory: &mut Inventory,
@@ -287,42 +300,60 @@ impl ExploreSystem {
         self.elapsed += delta;
         if self.elapsed > current.length {
             let mut result = ExploreDetailedResult::new(current, self.passes);
+            // Update money run
+            {
+                let history = pet.explore.get_mut_by_id(current.id);
+                if (*now - history.last_money_run) > EXPLORE_MONEY_RESET_TIME {
+                    history.last_money_run = *now;
+                    history.running_money_earned = 0;
+                }
+            }
+
             if result.completed() {
                 let percent_passed = result.percent_passed();
 
                 for reward in current.rewards.items {
                     if rng.f32() < reward.odds * percent_passed {
-                        let _ = result.items.push(reward.item);
-                        inventory.add_item(reward.item, 1);
+                        if inventory.add_item(reward.item, 1) {
+                            let _ = result.items.push(reward.item);
+                        }
                     }
                 }
 
-                result.earnings = (rng.i32(current.rewards.money.start..current.rewards.money.end)
-                    as f32
-                    * percent_passed) as Money;
+                result.earnings = {
+                    let raw = (rng.i32(current.rewards.money.start..current.rewards.money.end)
+                        as f32
+                        * percent_passed) as Money;
+
+                    let history = pet.explore.get_by_id(current.id);
+
+                    let max_earn =
+                        (current.rewards.money.end - history.running_money_earned).max(0);
+
+                    raw.min(max_earn)
+                };
                 *wallet += result.earnings;
             }
 
             {
                 let history = pet.explore.get_mut_by_id(current.id);
-                history.last_ran = timestamp.clone();
+                history.last_ran = now.clone();
                 history.runs += 1;
                 history.successful += if result.completed() { 1 } else { 0 };
+                history.running_money_earned += result.earnings;
             }
 
             self.last_result = result;
             self.passes = 0;
+            self.until_check = Duration::ZERO;
             self.elapsed = Duration::ZERO;
             self.current = None;
         } else {
-            let since_check = Duration::from_millis(
-                (self.elapsed.as_millis() % CHECK_INTERVAL.as_millis()) as u64,
-            );
-            if since_check == Duration::ZERO {
-                self.current_activity = rng
-                    .choice(self.current_location().activities)
-                    .unwrap_or(&PLACEHOLDER_ACTIVTY);
+            self.until_check += delta;
 
+            if self.until_check > current.check_interval() {
+                // Get left overs
+                self.until_check = self.until_check - current.check_interval();
                 let skill = pet.explore_skill();
                 let odds = rng.i32((skill / 4)..=skill);
                 let location_odds = rng.i32(0..current.difficulty);
@@ -330,14 +361,25 @@ impl ExploreSystem {
                     self.passes += 1;
                 }
             }
+
+            let since_phrase = Duration::from_millis(
+                (self.elapsed.as_millis() % PHRASE_UPDATE_INTERVAL.as_millis()) as u64,
+            );
+            if since_phrase == Duration::ZERO {
+                self.current_activity = rng
+                    .choice(self.current_location().activities)
+                    .unwrap_or(&PLACEHOLDER_ACTIVTY);
+            }
         }
     }
 
     pub fn current_percent_passed(&self) -> f32 {
-        if self.elapsed < CHECK_INTERVAL {
+        let check_interval = self.current.unwrap_or(&LOCATION_UNKNOWN).check_interval();
+        if self.elapsed < check_interval {
             return 1.;
         }
-        let total_odds = (self.elapsed.as_millis() / CHECK_INTERVAL.as_millis()) as f32;
+
+        let total_odds = (self.elapsed.as_millis() / check_interval.as_millis()) as f32;
         self.passes as f32 / total_odds
     }
 
@@ -369,7 +411,12 @@ impl ExploreSystem {
     }
 
     pub fn current_check(&self) -> u32 {
-        (self.elapsed.as_millis() / CHECK_INTERVAL.as_millis()) as u32
+        (self.elapsed.as_millis()
+            / self
+                .current
+                .unwrap_or(&LOCATION_UNKNOWN)
+                .check_interval()
+                .as_millis()) as u32
     }
 
     pub fn last_result(&self) -> &ExploreDetailedResult {
@@ -413,6 +460,7 @@ impl From<ExploreSystemSave> for ExploreSystem {
             current_activity: PLACEHOLDER_ACTIVTY,
             elapsed: value.elapsed,
             passes: value.passes,
+            until_check: Duration::ZERO,
             last_result: Default::default(),
         }
     }

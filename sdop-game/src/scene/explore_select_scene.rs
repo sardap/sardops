@@ -1,15 +1,18 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     Button, Timestamp, assets,
     date_utils::DurationExt,
-    display::{CENTER_X, CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, Rotation, WIDTH_I32, WrappingMode},
     explore::{Location, LocationHistoryIter, get_location},
     fonts::FONT_VARIABLE_SMALL,
     pet::{definition::PetAnimationSet, render::PetRender},
-    scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
+    scene::{
+        RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs,
+        exploring_post_scene::ExploringPostScene,
+    },
     sounds::{self, SongPlayOptions},
     sprite::Sprite,
 };
@@ -89,7 +92,11 @@ impl Scene for ExploreSelectScene {
                 }
 
                 if args.input.any_pressed() {
-                    output.set_home();
+                    if args.input.pressed(Button::Right) {
+                        output.set(SceneEnum::ExploringPost(ExploringPostScene::new()));
+                    } else {
+                        output.set_home();
+                    }
                     return;
                 }
             }
@@ -146,6 +153,11 @@ impl Scene for ExploreSelectScene {
                         && (args.game_ctx.pet.definition().life_stage.bitmask()
                             & get_location(self.selected_location).ls_mask)
                             > 0
+                        && !args
+                            .game_ctx
+                            .pet
+                            .should_be_sleeping(&(args.timestamp + self.location().length))
+                        && !args.game_ctx.pet.is_ill()
                     {
                         args.game_ctx
                             .explore_system
@@ -169,7 +181,7 @@ impl Scene for ExploreSelectScene {
                 let mut y = 3;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     "COOLING OFF",
                     ComplexRenderOption::new()
                         .with_white()
@@ -180,7 +192,7 @@ impl Scene for ExploreSelectScene {
                 y += 6;
 
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     "FROM GOING TO",
                     ComplexRenderOption::new()
                         .with_white()
@@ -197,14 +209,16 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                y += self.location().cover.size.y as i32 + 3;
+                y += self.location().cover.isize.y + 3;
 
-                let mins = (self.next_explore_time - args.timestamp).as_mins() as i32;
-                let hours = mins / 60;
-                let mins = mins % 60;
-                let str = fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m", hours, mins);
+                let total_secs = (self.next_explore_time - args.timestamp).as_secs() as i32;
+                let hours = total_secs / 3600;
+                let mins = (total_secs % 3600) / 60;
+                let seconds = total_secs % 60;
+                let str =
+                    fixedstr::str_format!(fixedstr::str24, "NEED {}h{}m{}s", hours, mins, seconds);
                 display.render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -215,7 +229,7 @@ impl Scene for ExploreSelectScene {
                 y += 6;
 
                 display.render_image_complex(
-                    (CENTER_X_I32) - (self.pet_render.anime.current_frame().size.x / 2) as i32,
+                    CENTER_X_I32 - (self.pet_render.anime.current_frame().isize.x / 2),
                     y,
                     self.pet_render.image(),
                     ComplexRenderOption::new().with_white(),
@@ -224,8 +238,17 @@ impl Scene for ExploreSelectScene {
             State::Selecting => {
                 let mut y = 0;
                 let location = get_location(self.selected_location);
+                let right_life_stage =
+                    (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
+                let bed_soon = args
+                    .game_ctx
+                    .pet
+                    .should_be_sleeping(&(args.timestamp + self.location().length));
+                let is_ill = args.game_ctx.pet.is_ill();
                 let unlocked = args.game_ctx.inventory.has_item(location.item)
-                    && (args.game_ctx.pet.definition().life_stage.bitmask() & location.ls_mask) > 0;
+                    && right_life_stage
+                    && !bed_soon
+                    && !is_ill;
 
                 // Gotta handle cooldown here
                 display.render_image_complex(
@@ -235,11 +258,11 @@ impl Scene for ExploreSelectScene {
                     ComplexRenderOption::new().with_black().with_white(),
                 );
 
-                y += location.cover.size.y as i32 + 2;
+                y += location.cover.isize.y + 2;
 
                 if unlocked {
                     const SKILL_X_OFFSET: i32 = 2;
-                    const TEXT_X_OFFSET: f32 = 35.;
+                    const TEXT_X_OFFSET: i32 = 35;
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -252,49 +275,37 @@ impl Scene for ExploreSelectScene {
                     let mins = mins % 60;
                     let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32 - 1.),
+                        &IVec2::new(TEXT_X_OFFSET, y - 1),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_LENGTH_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_LENGTH_SYMBOL.isize.y + 1;
 
-                    display.render_image_complex(
-                        SKILL_X_OFFSET,
-                        y,
-                        &assets::IMAGE_SKILL_SYMBOL,
-                        ComplexRenderOption::new().with_black().with_white(),
-                    );
-                    let str = fixedstr::str_format!(
-                        fixedstr::str12,
-                        "{}",
-                        args.game_ctx.pet.explore_skill()
-                    );
-                    display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
-
-                    display.render_image_complex(
-                        SKILL_X_OFFSET,
-                        y,
-                        &assets::IMAGE_CHALLENGE_SYMBOL,
-                        ComplexRenderOption::new().with_black().with_white(),
-                    );
-                    let str = fixedstr::str_format!(fixedstr::str12, "{}", location.difficulty);
-                    display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
-                        &str,
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    {
+                        let delta = args.game_ctx.pet.explore_skill() - location.difficulty;
+                        display.render_image_complex(
+                            SKILL_X_OFFSET,
+                            y,
+                            &assets::IMAGE_SYMBOL_SKILL_GAP,
+                            ComplexRenderOption::new().with_black().with_white(),
+                        );
+                        let str = fixedstr::str_format!(
+                            fixedstr::str12,
+                            "{}{}",
+                            if delta > 0 { "+" } else { "" },
+                            delta
+                        );
+                        display.render_text_complex(
+                            &IVec2::new(TEXT_X_OFFSET, y),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+                    }
 
                     display.render_image_complex(
                         SKILL_X_OFFSET,
@@ -307,26 +318,75 @@ impl Scene for ExploreSelectScene {
                     let mins = mins % 60;
                     let str = fixedstr::str_format!(fixedstr::str24, "{}h{}m", hours, mins);
                     display.render_text_complex(
-                        Vec2::new(TEXT_X_OFFSET, y as f32),
+                        &IVec2::new(TEXT_X_OFFSET, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
                             .with_font(&FONT_VARIABLE_SMALL),
                     );
-                    y += assets::IMAGE_SKILL_SYMBOL.size.y as i32 + 1;
+                    y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+
+                    {
+                        let history = args.game_ctx.pet.explore.get_by_id(self.selected_location);
+                        let percent = if history.runs == 0 || history.successful == 0 {
+                            0
+                        } else {
+                            libm::floorf((history.successful as f32 / history.runs as f32) * 100.)
+                                as i32
+                        };
+                        let str = fixedstr::str_format!(
+                            fixedstr::str32,
+                            "RUNS:{} WIN:{}%",
+                            history.runs,
+                            percent
+                        );
+                        display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 3),
+                            &str,
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += assets::IMAGE_SKILL_SYMBOL.isize.y + 1;
+                    }
 
                     y += 5;
                 } else {
-                    let text_area = display.render_text_complex(
-                        Vec2::new(CENTER_X, y as f32 + 5.),
-                        &"NOT RIGHT LIFE STAGE",
-                        ComplexRenderOption::new()
-                            .with_white()
-                            .with_center()
-                            .with_font_wrapping_x(WIDTH_I32 - 2)
-                            .with_font(&FONT_VARIABLE_SMALL),
-                    );
-                    y += (text_area.y - y) + 10;
+                    if !right_life_stage {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "NOT RIGHT LIFE STAGE",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    } else if bed_soon {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "BEDTIME BEFORE BACK",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    } else {
+                        let text_area = display.render_text_complex(
+                            &IVec2::new(CENTER_X_I32, y + 5),
+                            "DOP IS SICK",
+                            ComplexRenderOption::new()
+                                .with_white()
+                                .with_center()
+                                .with_font_wrapping_x(WrappingMode::WholeWord(WIDTH_I32 - 2))
+                                .with_font(&FONT_VARIABLE_SMALL),
+                        );
+                        y += (text_area.y - y) + 10;
+                    }
                 }
 
                 display.render_image_complex(

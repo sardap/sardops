@@ -3,8 +3,8 @@
         name: "Down the road",
         life_stages: [Baby],
         length: "45m",
-        cooldown: "3h",
-        difficulty: 20,
+        cooldown: "2h",
+        difficulty: 6,
         activities: [
             "Waiting at the lights",
             "staring at the sun",
@@ -16,12 +16,14 @@
             "dodging dog poop",
         ],
         rewards: (
-            money_start: 0,
-            money_end: 0,
+            money_start: 500,
+            money_end: 1000,
             items: [
+                (item: "Telescope", odds: 0.8),
                 (item: "Painting Dude", odds: 0.2),
-                (item: "Map To The Ninch", odds: 0.15),
-
+                (item: "Book The Divine Comedy", odds: 0.5),
+                (item: "Recipe Spinach Risotto", odds: 0.5),
+                (item: "Map To The Ninch", odds: 0.8),
             ]
         ),
     ),
@@ -48,15 +50,16 @@
             items: [
                 (item: "Recipe Office Slop", odds: 0.2),
                 (item: "Book Vic 1981-1992", odds: 0.2),
+                (item: "Book Meditations", odds: 0.2),
             ]
         ),
     ),
     (
         name: "to the ninch",
         life_stages: [Child, Adult],
-        length: "1m",
-        cooldown: "10m",
-        difficulty: 100,
+        length: "1h30m",
+        cooldown: "2h",
+        difficulty: 50,
         activities: [
             "Fighting the traffic",
             "Rolling down the ninch Freeway",
@@ -74,12 +77,13 @@
             "Ohhh pizza",
         ],
         rewards: (
-            money_start: 0,
-            money_end: 0,
+            money_start: 1000,
+            money_end: 1500,
             items: [
-                (item: "Recipe Pizza", odds: 0.2),
-                (item: "Recipe Chips", odds: 0.2),
-                (item: "Fishing Rod", odds: 0.1),
+                (item: "Recipe Pizza", odds: 0.4),
+                (item: "Recipe Chips", odds: 0.4),
+                (item: "Fishing Rod", odds: 0.4),
+                (item: "Book Homers Iliad", odds: 0.4),
                 (item: "Map 1000 steps", odds: 0.8),
             ]
         ),
@@ -89,7 +93,7 @@
         life_stages: [Child, Adult],
         length: "1m",
         cooldown: "10m",
-        difficulty: 100,
+        difficulty: 70,
         activities: [
             "Going up some steps",
             "Waiting for others to pass",
@@ -103,6 +107,7 @@
             money_start: 0,
             money_end: 0,
             items: [
+                (item: "Book Nevile Wran", odds: 0.2),
                 (item: "Map Riding the 109", odds: 0.8),
             ]
         ),
@@ -130,6 +135,7 @@
             items: [
                 (item: "Recipe Bubble Tea", odds: 0.2),
                 (item: "Recipe Meatballs", odds: 0.2),
+                (item: "Book Dracula", odds: 0.2),
                 (item: "Map Flagstaff Station", odds: 0.8),
             ]
         ),
@@ -160,6 +166,27 @@
         ),
     ),
     (
+        name: "Koreana Mart Adelaide",
+        life_stages: [Child, Adult],
+        length: "1m",
+        cooldown: "10m",
+        difficulty: 60,
+        activities: [
+            "Walking down Grote Street",
+            "Beholding Market plaza food court",
+            "Looking around",
+            "Looking at Kimbap",
+        ],
+        rewards: (
+            money_start: 0,
+            money_end: 0,
+            items: [
+                (item: "Recipe Kimbap", odds: 0.2),
+                (item: "Map The malls balls", odds: 0.8),
+            ]
+        ),
+    ),
+    (
         name: "The malls balls",
         life_stages: [Adult],
         length: "1m",
@@ -183,27 +210,6 @@
             items: [
                 (item: "Painting Malls Balls", odds: 0.2),
                 (item: "Recipe Roti Canai", odds: 0.2),
-                (item: "Map Koreana Mart Adelaide", odds: 0.8),
-            ]
-        ),
-    ),
-    (
-        name: "Koreana Mart Adelaide",
-        life_stages: [Child, Adult],
-        length: "1m",
-        cooldown: "10m",
-        difficulty: 100,
-        activities: [
-            "Walking down Grote Street",
-            "Beholding Market plaza food court",
-            "Looking around",
-            "Looking at Kimbap",
-        ],
-        rewards: (
-            money_start: 0,
-            money_end: 0,
-            items: [
-                (item: "Recipe Kimbap", odds: 0.2),
             ]
         ),
     ),
@@ -213,7 +219,7 @@
         life_stages: [Child, Adult],
         length: "1m",
         cooldown: "10m",
-        difficulty: 100,
+        difficulty: 70,
         activities: [
             "Waiting for the bus",
             "Line number 3 is the best",
@@ -257,6 +263,7 @@
             money_end: 0,
             items: [
                 (item: "Recipe Fried Chicken", odds: 0.2),
+                (item: "Book The Art of war", odds: 0.2),
                 (item: "Map Gangnam Style Sculpture", odds: 0.8),
             ]
         ),
@@ -280,6 +287,7 @@
             money_start: 0,
             money_end: 0,
             items: [
+                (item: "Book Homers odyssey", odds: 0.2),
                 (item: "Recipe Gopchang", odds: 0.2),
                 (item: "Map Cyberspace", odds: 0.5),
             ]

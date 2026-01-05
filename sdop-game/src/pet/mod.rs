@@ -1,4 +1,3 @@
-use const_for::const_for;
 use core::time::Duration;
 
 use bincode::{Decode, Encode};
@@ -6,23 +5,22 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use fastrand::Rng;
 use heapless::Vec;
 use strum::EnumCount;
-use strum_macros::{EnumCount, EnumIter};
 
 use crate::{
     Timestamp,
     book::BookHistory,
     death::{DeathCause, get_threshold_odds, passed_threshold_chance},
     explore::{ExploreHistory, ExploreSkill},
-    food::{Food, FoodHistory},
+    food::{FOOD_COFFEE, Food, FoodHistory},
     furniture::{HomeFurnitureKind, HomeLayout},
     game_consts::{
         BREED_ODDS_THRESHOLD, COFFEE_POOP_MODIFER, DEATH_BY_HYPOTHERMIA_THRESHOLD,
         DEATH_BY_ILLNESS_THRESHOLD, DEATH_BY_LIGHTING_STRIKE_ODDS, DEATH_CHECK_INTERVERAL,
         DEATH_STARVE_THRESHOLDS, DEATH_TOXIC_SHOCK_THRESHOLD, EVOLVE_CHECK_INTERVERAL,
-        HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_BABY_ODDS, ILLNESS_BASE_ODDS,
-        ILLNESS_CHILD_ODDS, ILLNESS_SINCE_GAME_DURATION, ILLNESS_SINCE_GAME_ODDS,
-        ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS, OLD_AGE_THRESHOLD, RANDOM_NAMES,
-        SPLACE_LOCATIONS,
+        HEALING_COST_RANGE, HUNGER_LOSS_PER_SECOND, ILLNESS_AUTO_HEAL_ODDS_ADULT,
+        ILLNESS_AUTO_HEAL_ODDS_BABY, ILLNESS_AUTO_HEAL_ODDS_CHILD, ILLNESS_BABY_ODDS,
+        ILLNESS_BASE_ODDS, ILLNESS_CHILD_ODDS, ILLNESS_SINCE_ODDS, ILLNESS_STARVING_ODDS,
+        OLD_AGE_THRESHOLD, RANDOM_NAMES, SPLACE_LOCATIONS,
     },
     items::{Inventory, ItemKind},
     money::Money,
@@ -33,6 +31,7 @@ use crate::{
         PetDefinition, PetDefinitionId,
     },
     poop::{Poop, poop_count},
+    scene::home_scene,
     temperature::TemperatureLevel,
 };
 
@@ -182,8 +181,8 @@ pub fn planet_location_from_upid(upid: UniquePetId) -> (&'static str, u8) {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone, Default)]
 struct PetIllness {
-    since_ilness: Duration,
-    with_ilness: Duration,
+    since_illness: Duration,
+    with_illness: Duration,
     #[cfg_attr(feature = "serde", serde(default))]
     cost: Money,
 }
@@ -292,12 +291,12 @@ impl PetInstance {
 
     pub fn tick_hunger(&mut self, delta: Duration, now: Timestamp, sleep: bool) {
         const GRAMS_LOSS_PER_SECOND: f32 = 0.005;
-        let sleep_modifer = if sleep { 0.4 } else { 1. };
+        let sleep_modifier = if sleep { 0.25 } else { 1. };
         self.extra_weight = (self.extra_weight
-            - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            - GRAMS_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifier)
             .max(0.);
         self.stomach_filled = (self.stomach_filled
-            - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifer)
+            - HUNGER_LOSS_PER_SECOND * delta.as_secs_f32() * sleep_modifier)
             .max(0.);
         if !sleep && self.stomach_filled <= 0. {
             let elapsed = if let StomachMood::Starving { elapsed } = self.stomach_mood {
@@ -376,7 +375,7 @@ impl PetInstance {
                 return;
             }
 
-            if passed_threshold_chance(rng, DEATH_BY_ILLNESS_THRESHOLD, self.illness.with_ilness) {
+            if passed_threshold_chance(rng, DEATH_BY_ILLNESS_THRESHOLD, self.illness.with_illness) {
                 self.should_die = Some(DeathCause::Illness);
                 return;
             }
@@ -409,7 +408,12 @@ impl PetInstance {
         Duration::from_millis(rng.u64(range.start.as_millis() as u64..range.end.as_millis() as u64))
     }
 
-    pub fn should_poop(&mut self, rng: &mut Rng, sleeping: bool) -> bool {
+    pub fn should_poop(
+        &mut self,
+        rng: &mut Rng,
+        sleeping: bool,
+        home_state: home_scene::State,
+    ) -> bool {
         // This is to set it up, I really should write comments for stupid lines of bullshit
         if self.until_poop > POOP_SPAWN_MAGIC_NUMBER {
             self.until_poop = self.get_next_poop_duration(rng);
@@ -417,13 +421,18 @@ impl PetInstance {
 
         let coffees_consumed = self.food_history.consumed_count(&crate::food::FOOD_COFFEE);
 
-        if !sleeping && (coffees_consumed > 0 && self.until_poop <= Duration::ZERO)
-            || (coffees_consumed > 0
-                && self
-                    .until_poop
-                    .checked_sub(COFFEE_POOP_MODIFER)
-                    .unwrap_or_default()
-                    <= Duration::ZERO)
+        if !sleeping
+            && !matches!(
+                home_state,
+                home_scene::State::GoneOut { outing_end_time: _ } | home_scene::State::Exploring,
+            )
+            && (self.until_poop <= Duration::ZERO
+                || (coffees_consumed > 0
+                    && self
+                        .until_poop
+                        .checked_sub(COFFEE_POOP_MODIFER)
+                        .unwrap_or_default()
+                        <= Duration::ZERO))
         {
             self.until_poop = self.get_next_poop_duration(rng);
             return true;
@@ -621,7 +630,7 @@ impl PetInstance {
     }
 
     pub fn is_ill(&self) -> bool {
-        self.illness.with_ilness > Duration::ZERO
+        self.illness.with_illness > Duration::ZERO
     }
 
     pub fn is_starving(&self) -> bool {
@@ -633,22 +642,27 @@ impl PetInstance {
     }
 
     pub fn cure(&mut self) {
-        self.illness.with_ilness = Duration::ZERO;
+        self.illness.with_illness = Duration::ZERO;
     }
 
     pub fn tick_illness(&mut self, rng: &mut fastrand::Rng, delta: Duration) {
-        if self.illness.with_ilness > Duration::ZERO {
-            self.illness.since_ilness = Duration::ZERO;
-            self.illness.with_ilness += delta;
+        if self.illness.with_illness > Duration::ZERO {
+            self.illness.since_illness = Duration::ZERO;
+            self.illness.with_illness += delta;
+            let odds = match self.definition().life_stage {
+                LifeStage::Baby => ILLNESS_AUTO_HEAL_ODDS_BABY,
+                LifeStage::Child => ILLNESS_AUTO_HEAL_ODDS_CHILD,
+                LifeStage::Adult => ILLNESS_AUTO_HEAL_ODDS_ADULT,
+            };
+            if rng.f32() < odds {
+                self.cure();
+            }
         } else {
-            self.illness.since_ilness += delta;
+            self.illness.since_illness += delta;
             let mut odds = ILLNESS_BASE_ODDS;
             let is_starved = matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ });
             if is_starved {
                 odds += ILLNESS_STARVING_ODDS;
-            }
-            if self.since_game > ILLNESS_SINCE_GAME_DURATION {
-                odds += ILLNESS_SINCE_GAME_ODDS;
             }
 
             odds += match self.definition().life_stage {
@@ -657,7 +671,7 @@ impl PetInstance {
                 LifeStage::Adult => 0.,
             };
 
-            odds += get_threshold_odds(ILLNESS_SINCE_ODDS, self.illness.since_ilness);
+            odds += get_threshold_odds(ILLNESS_SINCE_ODDS, self.illness.since_illness);
 
             if self.def_id == PET_SICKO_ID {
                 odds *= 0.5;
@@ -666,11 +680,11 @@ impl PetInstance {
             if rng.f32() < odds {
                 self.illness.cost = (rng.i32(HEALING_COST_RANGE) as f32
                     * match self.definition().life_stage {
-                        LifeStage::Baby => 0.7,
-                        LifeStage::Child => 1.,
-                        LifeStage::Adult => 1.5,
+                        LifeStage::Baby => 0.5,
+                        LifeStage::Child => 0.7,
+                        LifeStage::Adult => 1.0,
                     }) as Money;
-                self.illness.with_ilness = delta;
+                self.illness.with_illness = delta;
             }
         }
     }
@@ -683,9 +697,15 @@ impl PetInstance {
         self.is_sleeping
     }
 
+    pub fn should_be_sleeping(&self, timestamp: &Timestamp) -> bool {
+        self.definition()
+            .should_be_sleeping(timestamp, self.food_history.sick_of(&FOOD_COFFEE));
+        false
+    }
+
     pub fn tick_sleeping(&mut self, timestamp: &Timestamp) {
         if self.is_sleeping || !matches!(self.stomach_mood, StomachMood::Starving { elapsed: _ }) {
-            self.is_sleeping = self.definition().should_be_sleeping(timestamp);
+            self.is_sleeping = self.should_be_sleeping(timestamp);
         }
     }
 }

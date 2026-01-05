@@ -1,6 +1,6 @@
 use chrono::{Datelike, NaiveDate, Weekday};
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
     assets,
@@ -26,11 +26,8 @@ impl CalendarRender {
         self.date = date;
     }
 
-    pub const fn size() -> Vec2 {
-        Vec2::new(
-            assets::IMAGE_CALENDAR.size.x as f32,
-            assets::IMAGE_CALENDAR.size.y as f32,
-        )
+    pub const fn size() -> IVec2 {
+        assets::IMAGE_CALENDAR.isize
     }
 }
 
@@ -46,14 +43,16 @@ impl ComplexRender for CalendarRender {
                 .with_center(),
         );
 
-        let top_left = Vec2::new(
-            self.pos.x - Self::size().x / 2.,
-            self.pos.y - Self::size().y / 2.,
+        const MONTH_OFFSET: IVec2 = IVec2::new(9, 5);
+
+        let top_left = IVec2::new(
+            self.pos.x as i32 - Self::size().x as i32 / 2,
+            self.pos.y as i32 - Self::size().y as i32 / 2,
         );
         // Render month
         let str = str_format!(fixedstr::str4, "{}", self.date.month());
         display.render_text_complex(
-            top_left + Vec2::new(9., 5.),
+            &(top_left + MONTH_OFFSET),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -66,12 +65,12 @@ impl ComplexRender for CalendarRender {
 
         let mut top = NaiveDate::from_ymd_opt(self.date.year(), self.date.month(), 1).unwrap();
 
-        let mut col = top.weekday().days_since(Weekday::Mon) as usize;
+        let mut col = top.weekday().days_since(Weekday::Mon) as i32;
         let mut row = 0;
         while top <= self.date {
             display.render_point(
-                top_left.x as i32 + 3 + (X_OFFSET * col as i32),
-                top_left.y as i32 + 1 + ROWS_Y[row],
+                top_left.x + 2 + (X_OFFSET * col),
+                top_left.y + 1 + ROWS_Y[row],
                 true,
             );
 

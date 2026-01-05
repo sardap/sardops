@@ -1,11 +1,11 @@
 use fixedstr::str_format;
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     Button, assets,
-    display::{CENTER_X, CENTER_X_I32, CENTER_Y, ComplexRenderOption, GameDisplay},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32},
     fonts,
-    geo::Rect,
+    geo::RectIVec2,
     pet::{definition::PetDefinitionId, render::PetRender},
     scene::{RenderArgs, Scene, SceneOutput, SceneTickArgs},
     sprite::Sprite,
@@ -131,8 +131,8 @@ impl Scene for EnterTextScene {
             ComplexRenderOption::new().with_white().with_center(),
         );
 
-        display.render_text_complex(
-            Vec2::new(CENTER_X, 50.),
+        let size = display.render_text_complex(
+            &IVec2::new(CENTER_X_I32, 50),
             &self.display_text,
             ComplexRenderOption::new()
                 .with_white()
@@ -140,19 +140,21 @@ impl Scene for EnterTextScene {
                 .with_font(&fonts::FONT_VARIABLE_SMALL),
         );
 
-        const LETTER_BUFFER_X: f32 = 2.;
-        const LETTER_START_X: f32 = 7.;
-        let mut rect = Rect::new_top_left(Vec2::new(0., CENTER_Y + 5.), Vec2::new(8., 2.));
+        let enter_letter_y: i32 = size.y + 15;
+
+        const LETTER_BUFFER_X: i32 = 2;
+        const LETTER_START_X: i32 = 7;
+        let mut rect = RectIVec2::new_top_left(IVec2::new(0, enter_letter_y + 5), IVec2::new(8, 2));
 
         for i in 0..self.max_len {
-            rect.pos.x = LETTER_START_X + (i as f32 * (rect.size.x + LETTER_BUFFER_X));
-            display.render_rect_solid(rect, true);
+            rect.pos.x = LETTER_START_X + (i as i32 * (rect.size.x + LETTER_BUFFER_X));
+            display.render_rect_solid(&rect, true);
         }
 
         for (i, c) in self.text.chars().enumerate() {
-            let x = LETTER_START_X + (i as f32 * (rect.size.x + LETTER_BUFFER_X));
+            let x = LETTER_START_X + (i as i32 * (rect.size.x as i32 + LETTER_BUFFER_X));
             display.render_text_complex(
-                Vec2::new(x, CENTER_Y),
+                &IVec2::new(x, enter_letter_y),
                 &str_format!(fixedstr::str4, "{}", c),
                 ComplexRenderOption::new()
                     .with_white()
@@ -165,8 +167,8 @@ impl Scene for EnterTextScene {
             State::SelectIndex => {
                 if (self.valid)(self.text) {
                     display.render_image_complex(
-                        CENTER_X as i32,
-                        (CENTER_Y + 30.) as i32,
+                        CENTER_X_I32,
+                        enter_letter_y + 30,
                         &assets::IMAGE_SUBMIT_BUTTON,
                         ComplexRenderOption::new().with_white().with_center(),
                     );
@@ -175,26 +177,43 @@ impl Scene for EnterTextScene {
                 if self.selected_index < self.max_len {
                     display.render_image_center(
                         (LETTER_START_X
-                            + (self.selected_index as f32 * (rect.size.x + LETTER_BUFFER_X)))
-                            as i32
+                            + (self.selected_index as i32 * (rect.size.x + LETTER_BUFFER_X)))
                             - 1,
-                        CENTER_Y as i32 + 15,
+                        enter_letter_y + 15,
                         &assets::IMAGE_NAME_ARROW,
                     );
                 } else {
-                    let rect = Rect::new_center(
-                        Vec2::new(CENTER_X, CENTER_Y + 30.),
-                        assets::IMAGE_SUBMIT_BUTTON.size.as_vec2(),
+                    let rect = RectIVec2::new_center(
+                        IVec2::new(CENTER_X_I32, enter_letter_y + 30),
+                        assets::IMAGE_SUBMIT_BUTTON.isize,
                     )
-                    .grow(4.);
-                    display.render_rect_outline(rect, true);
+                    .grow(4);
+                    display.render_rect_outline(&rect, true);
                 }
             }
             State::SelectChar => {
-                let x =
-                    LETTER_START_X + (self.selected_index as f32 * (rect.size.x + LETTER_BUFFER_X));
+                let x = LETTER_START_X
+                    + (self.selected_index as i32 * (rect.size.x as i32 + LETTER_BUFFER_X));
+
                 display.render_text_complex(
-                    Vec2::new(x, CENTER_Y),
+                    &IVec2::new(x, enter_letter_y - 10),
+                    &str_format!(
+                        fixedstr::str4,
+                        "{}",
+                        if self.char_index > 0 {
+                            ENTERABLE_CHARS.chars().nth(self.char_index - 1).unwrap()
+                        } else {
+                            ENTERABLE_CHARS.chars().last().unwrap()
+                        }
+                    ),
+                    ComplexRenderOption::new()
+                        .with_white()
+                        .with_black()
+                        .with_center(),
+                );
+
+                display.render_text_complex(
+                    &IVec2::new(x, enter_letter_y),
                     &str_format!(
                         fixedstr::str4,
                         "{}",
@@ -205,6 +224,30 @@ impl Scene for EnterTextScene {
                         .with_black()
                         .with_center(),
                 );
+
+                for i in 0..10usize {
+                    let y = enter_letter_y + 12 + (i as i32 * 9);
+
+                    if y > HEIGHT_I32 {
+                        break;
+                    }
+
+                    display.render_text_complex(
+                        &IVec2::new(x, y),
+                        &str_format!(
+                            fixedstr::str4,
+                            "{}",
+                            ENTERABLE_CHARS
+                                .chars()
+                                .nth(self.char_index + (i + 1))
+                                .unwrap_or(' ')
+                        ),
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_black()
+                            .with_center(),
+                    );
+                }
             }
         }
     }

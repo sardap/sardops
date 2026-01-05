@@ -12,7 +12,7 @@ use crate::{
     pet::{LifeStage, Mood, definition::PET_BRAINO_ID},
     scene::{
         SceneTickArgs,
-        home_scene::{PROGRAM_RUN_TIME_RANGE, State},
+        home_scene::{MUSIC_NOTE_SPAWNER, PROGRAM_RUN_TIME_RANGE, STAR_SPAWNER, State},
     },
     tv::TvKind,
 };
@@ -23,22 +23,24 @@ pub fn reset_wonder_end(rng: &mut fastrand::Rng) -> Duration {
 
 #[derive(Debug, Copy, Clone, EnumCount)]
 enum Activity {
-    PlayingComputer = 0,
-    WatchTv = 1,
-    ReadBook = 2,
-    ListenMusic = 3,
-    GoOut = 4,
-    Telescope = 5,
+    Wonder = 0,
+    PlayingComputer = 1,
+    WatchTv = 2,
+    ReadBook = 3,
+    ListenMusic = 4,
+    GoOut = 5,
+    Telescope = 6,
 }
 
 impl Activity {
     pub fn cooldown(&self) -> Duration {
         match self {
+            Activity::Wonder => Duration::ZERO,
             Activity::PlayingComputer => Duration::from_mins(15),
             Activity::WatchTv => Duration::from_mins(15),
-            Activity::ReadBook => Duration::from_mins(10),
+            Activity::ReadBook => Duration::from_hours(2),
             Activity::ListenMusic => Duration::from_mins(10),
-            Activity::GoOut => Duration::from_mins(45),
+            Activity::GoOut => Duration::from_hours(1),
             Activity::Telescope => Duration::from_mins(45),
         }
     }
@@ -88,13 +90,10 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
-    if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
-        && args
-            .game_ctx
-            .pet
-            .book_history
-            .has_book_to_read(&args.game_ctx.inventory)
-    {
+    if args.game_ctx.pet.book_history.has_book_to_read(
+        args.game_ctx.pet.definition().life_stage,
+        &args.game_ctx.inventory,
+    ) {
         add_option(
             &mut options,
             &args.game_ctx.home.activity_history,
@@ -126,7 +125,6 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
-    // This is broken
     if args.game_ctx.pet.definition().life_stage != LifeStage::Baby
         && args.game_ctx.inventory.has_item(ItemKind::Telescope)
         && time_in_range(&args.timestamp.inner().time(), &TELESCOPE_USE_RANGE)
@@ -139,11 +137,21 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
         );
     }
 
+    add_option(
+        &mut options,
+        &args.game_ctx.home.activity_history,
+        &args.timestamp,
+        Activity::Wonder,
+    );
+
     if !options.is_empty() {
         let option = args.game_ctx.rng.choice(options.iter()).cloned().unwrap();
         args.game_ctx.home.activity_history[option as usize] = args.timestamp;
 
         match option {
+            Activity::Wonder => {
+                args.game_ctx.home.change_state(State::Wondering);
+            }
             Activity::PlayingComputer => {
                 args.game_ctx.home.change_state(State::PlayingComputer {
                     watch_end: reset_wonder_end(&mut args.game_ctx.rng),
@@ -177,14 +185,23 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
                 args.game_ctx.home.change_state(State::ReadingBook {
                     book: book_history.get_reading_book(inventory).unwrap_or(
                         book_history
-                            .pick_random_unread_book(&mut args.game_ctx.rng, inventory)
+                            .pick_random_unread_book(
+                                &mut args.game_ctx.rng,
+                                args.game_ctx.pet.definition().life_stage,
+                                inventory,
+                            )
                             .unwrap_or_default(),
                     ),
+                    read_time: Duration::from_secs(args.game_ctx.rng.u64(1200..3600)),
                 });
             }
             Activity::ListenMusic => {
                 args.game_ctx.home.pet_render.pos = CENTER_VEC;
                 args.game_ctx.home.target = CENTER_VEC;
+                args.game_ctx
+                    .home
+                    .particle_system
+                    .add_spawner(MUSIC_NOTE_SPAWNER);
                 args.game_ctx.home.change_state(State::PlayingMp3 {
                     jam_end_time: Duration::from_secs(args.game_ctx.rng.u64(60..300)),
                 });
@@ -196,8 +213,9 @@ pub fn wonder_end(args: &mut SceneTickArgs) {
                 });
             }
             Activity::Telescope => {
+                args.game_ctx.home.particle_system.add_spawner(STAR_SPAWNER);
                 args.game_ctx.home.change_state(State::Telescope {
-                    end_time: Duration::from_mins(args.game_ctx.rng.u64(1..10))
+                    end_time: Duration::from_mins(args.game_ctx.rng.u64(5..20))
                         + Duration::from_secs(args.game_ctx.rng.u64(1..60)),
                 });
             }

@@ -1,7 +1,7 @@
-use glam::Vec2;
+use glam::{IVec2, Vec2};
 
 use crate::{
-    assets::{self, Image},
+    assets::{self},
     display::{ComplexRender, ComplexRenderOption, Rotation},
     furniture::HomeFurnitureLocation,
     math::norm_tau,
@@ -45,8 +45,8 @@ impl InvetroLightRender {
         }
     }
 
-    pub fn size() -> Vec2 {
-        assets::IMAGE_INVETRO_LIGHT.size_vec2()
+    pub fn size() -> IVec2 {
+        assets::IMAGE_INVETRO_LIGHT.isize
     }
 }
 

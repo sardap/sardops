@@ -84,6 +84,18 @@ pub struct FoodHistoryEntry {
     total: u32,
 }
 
+impl FoodHistoryEntry {
+    pub fn first_ate(&self) -> Option<Timestamp> {
+        for i in self.history {
+            if i.is_some() {
+                return i;
+            }
+        }
+
+        None
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Copy, Clone, Default)]
 pub struct FoodHistory {
@@ -107,6 +119,18 @@ impl FoodHistory {
 
     pub fn sick_of(&self, food: &Food) -> bool {
         self.entries[food.id].history[food.max_eat - 1].is_some()
+    }
+
+    pub fn ate_since_time(&self, food: &Food, cutoff: Timestamp) -> bool {
+        for entry in self.entries[food.id].history.iter().rev() {
+            if let Some(entry) = entry
+                && *entry > cutoff
+            {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn consumed_count(&self, food: &Food) -> usize {

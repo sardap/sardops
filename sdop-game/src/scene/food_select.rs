@@ -1,13 +1,13 @@
 use core::time::Duration;
 
-use glam::Vec2;
+use glam::IVec2;
 
 use crate::{
     assets,
-    display::{CENTER_X, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
+    display::{CENTER_X_I32, ComplexRenderOption, GameDisplay, HEIGHT_I32, WIDTH_F32, WIDTH_I32},
     fonts::FONT_VARIABLE_SMALL,
     food::{FOODS, Food, MAX_FOOD_X},
-    geo::Rect,
+    geo::RectIVec2,
     scene::{RenderArgs, Scene, SceneEnum, SceneOutput, SceneTickArgs, eat_scene::EatScene},
     sounds::{SONG_ERROR, SongPlayOptions},
 };
@@ -47,12 +47,19 @@ impl Scene for FoodSelectScene {
             .unwrap_or_default();
 
         if args.input.pressed(crate::Button::Right) {
-            self.current = FOODS
-                .iter()
-                .skip(self.current.id as usize + 1)
-                .filter(|f| args.game_ctx.inventory.has_item(f.item))
-                .next()
-                .unwrap_or(&FOODS[0]);
+            loop {
+                let mut next = self.current.id + 1;
+                if next >= FOODS.len() {
+                    next = FOODS[0].id;
+                }
+
+                if args.game_ctx.inventory.has_item(FOODS[next].item) {
+                    self.current = FOODS[next];
+                    break;
+                }
+
+                self.current = FOODS[next];
+            }
         }
 
         if args.input.pressed(crate::Button::Left) {
@@ -63,16 +70,16 @@ impl Scene for FoodSelectScene {
 
             loop {
                 let next = match self.current.id.checked_sub(1) {
-                    Some(index) => index as usize,
+                    Some(index) => FOODS[index],
                     None => break,
                 };
 
-                if args.game_ctx.inventory.has_item(self.current.item) {
-                    self.current = FOODS[next];
+                if args.game_ctx.inventory.has_item(next.item) {
+                    self.current = next;
                     break;
                 }
 
-                self.current = FOODS[next];
+                self.current = next;
             }
         }
 
@@ -102,7 +109,7 @@ impl Scene for FoodSelectScene {
         let str =
             fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(current_filled * 100.),);
         display.render_text_complex(
-            Vec2::new(CENTER_X, 5.),
+            &IVec2::new(CENTER_X_I32, 5),
             &str,
             ComplexRenderOption::new()
                 .with_white()
@@ -134,7 +141,7 @@ impl Scene for FoodSelectScene {
 
             let text_y_height = display
                 .render_text_complex(
-                    Vec2::new(CENTER_X, y as f32),
+                    &IVec2::new(CENTER_X_I32, y),
                     food.name,
                     ComplexRenderOption::new()
                         .with_white()
@@ -160,7 +167,7 @@ impl Scene for FoodSelectScene {
                 fixedstr::str_format!(fixedstr::str12, "{}%", libm::roundf(fill_percent * 100.),);
             display
                 .render_text_complex(
-                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &IVec2::new(INFO_COL_X, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -176,7 +183,7 @@ impl Scene for FoodSelectScene {
                 libm::roundf((fill_percent - current_filled) * 100.),
             );
             display.render_text_complex(
-                Vec2::new(INFO_COL_X as f32, y as f32),
+                &IVec2::new(INFO_COL_X, y),
                 &str,
                 ComplexRenderOption::new()
                     .with_white()
@@ -192,7 +199,7 @@ impl Scene for FoodSelectScene {
                         (pet.stomach_filled + food.fill_factor) - pet.definition().stomach_size;
                     let str = fixedstr::str_format!(fixedstr::str12, "+{}g", extra as i32);
                     display.render_text_complex(
-                        Vec2::new(INFO_COL_X as f32, y as f32),
+                        &IVec2::new(INFO_COL_X, y),
                         &str,
                         ComplexRenderOption::new()
                             .with_white()
@@ -208,7 +215,7 @@ impl Scene for FoodSelectScene {
                 let str =
                     fixedstr::str_format!(fixedstr::str12, "ate {}/{}", ate_count, food.max_eat);
                 display.render_text_complex(
-                    Vec2::new(INFO_COL_X as f32, y as f32),
+                    &IVec2::new(INFO_COL_X, y),
                     &str,
                     ComplexRenderOption::new()
                         .with_white()
@@ -216,18 +223,6 @@ impl Scene for FoodSelectScene {
                 );
 
                 y += 7;
-            }
-
-            let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
-
-            if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
-                display.render_rect_outline(
-                    Rect::new_top_left(
-                        Vec2::new(1., select_rect_y as f32 - 4.),
-                        Vec2::new(WIDTH_F32 - 3., (y_end - select_rect_y) as f32 + 5.),
-                    ),
-                    true,
-                );
             }
 
             if args.game_ctx.pet.food_history.sick_of(food) {
@@ -248,6 +243,52 @@ impl Scene for FoodSelectScene {
                     select_rect_y + 4,
                     &assets::IMAGE_SICK_OF_LABEL_MASK,
                     ComplexRenderOption::new().with_black(),
+                );
+
+                if let Some(last) = args.game_ctx.pet.food_history.get_entry(food).first_ate() {
+                    let expires = last + food.expire;
+
+                    y += 5;
+
+                    display.render_text_complex(
+                        &IVec2::new(CENTER_X_I32, y),
+                        "EAT IN",
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 7;
+
+                    let total_secs = (expires - args.timestamp).as_secs() as i32;
+                    let hours = total_secs / 3600;
+                    let mins = (total_secs % 3600) / 60;
+                    let seconds = total_secs % 60;
+                    let str =
+                        fixedstr::str_format!(fixedstr::str32, "{}h{}m{}s", hours, mins, seconds);
+                    display.render_text_complex(
+                        &IVec2::new(CENTER_X_I32, y),
+                        &str,
+                        ComplexRenderOption::new()
+                            .with_white()
+                            .with_center()
+                            .with_font(&FONT_VARIABLE_SMALL),
+                    );
+
+                    y += 5;
+                }
+            }
+
+            let y_end = y.max(select_rect_y + food.image.size.y as i32 + 7);
+
+            if (self.current.id == 0 && i == 0) || (self.current.id > 0 && i == selected_index) {
+                display.render_rect_outline(
+                    &RectIVec2::new_top_left(
+                        IVec2::new(1, select_rect_y - 4),
+                        IVec2::new(WIDTH_I32 - 3, (y_end - select_rect_y) + 5),
+                    ),
+                    true,
                 );
             }
 

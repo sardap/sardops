@@ -17,6 +17,11 @@ pub const FONT_VARIABLE_SMALL: Font = Font {
     between_spacing: 1,
 };
 
+pub const FONT_MONOSPACE_TALL: Font = Font {
+    convert: get_char_image_monospace_tall,
+    between_spacing: 1,
+};
+
 pub fn get_char_image_8x8(val: char) -> &'static StaticImage {
     match val.to_ascii_uppercase() {
         ' ' => &assets::IMAGE_ALPHABET_SPACE,
@@ -121,5 +126,23 @@ pub fn get_char_image_small_var(val: char) -> &'static StaticImage {
         '%' => &assets::IMAGE_ALPHA_SMALL_PERCENT,
         '+' => &assets::IMAGE_ALPHA_SMALL_PLUS,
         _ => &assets::IMAGE_ALPHA_SMALL_0,
+    }
+}
+
+fn get_char_image_monospace_tall(val: char) -> &'static StaticImage {
+    match val {
+        ' ' => &assets::IMAGE_ALPHA_TALL_LONG_SPACE,
+        '0' => &assets::IMAGE_ALPHA_TALL_LONG_0,
+        '1' => &assets::IMAGE_ALPHA_TALL_LONG_1,
+        '2' => &assets::IMAGE_ALPHA_TALL_LONG_2,
+        '3' => &assets::IMAGE_ALPHA_TALL_LONG_3,
+        '4' => &assets::IMAGE_ALPHA_TALL_LONG_4,
+        '5' => &assets::IMAGE_ALPHA_TALL_LONG_5,
+        '6' => &assets::IMAGE_ALPHA_TALL_LONG_6,
+        '7' => &assets::IMAGE_ALPHA_TALL_LONG_7,
+        '8' => &assets::IMAGE_ALPHA_TALL_LONG_8,
+        '9' => &assets::IMAGE_ALPHA_TALL_LONG_9,
+        ':' => &assets::IMAGE_ALPHA_TALL_LONG_COLLON,
+        _ => &assets::IMAGE_ALPHA_TALL_LONG_0,
     }
 }

@@ -12,7 +12,6 @@ use crate::{
         enter_date_scene::{self, EnterDateScene},
         enter_text_scene::EnterTextScene,
     },
-    sounds::{SONG_NEW_PET, SongPlayOptions},
 };
 
 #[derive(Clone)]
@@ -53,14 +52,9 @@ impl NewPetScene {
 }
 
 impl Scene for NewPetScene {
-    fn setup(&mut self, args: &mut SceneTickArgs) {
-        args.game_ctx
-            .sound_system
-            .push_song(SONG_NEW_PET, SongPlayOptions::new().with_essential());
-    }
+    fn setup(&mut self, args: &mut SceneTickArgs) {}
 
     fn teardown(&mut self, args: &mut SceneTickArgs) {
-        args.game_ctx.sound_system.clear_song();
         args.game_ctx.pet = PetInstance::default();
         args.game_ctx.pet.parents = self.parents;
         args.game_ctx.pet.upid = if self.upid == 0 {

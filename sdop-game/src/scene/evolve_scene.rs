@@ -41,6 +41,14 @@ impl Sprite for Star {
     fn image(&self) -> &impl crate::assets::Image {
         &assets::IMAGE_EVOLVE_STAR
     }
+
+    fn size_x(&self) -> i32 {
+        assets::IMAGE_EVOLVE_STAR.isize.x
+    }
+
+    fn size_y(&self) -> i32 {
+        assets::IMAGE_EVOLVE_STAR.isize.y
+    }
 }
 
 impl Default for Star {
@@ -123,6 +131,10 @@ impl Scene for EvolveScene {
         args.game_ctx
             .pet
             .evolve(self.to_pet_render.def_id(), args.timestamp);
+
+        args.game_ctx
+            .inventory
+            .add_items(args.game_ctx.pet.definition().life_stage_items());
     }
 
     fn tick(&mut self, args: &mut SceneTickArgs, output: &mut SceneOutput) {
@@ -141,7 +153,7 @@ impl Scene for EvolveScene {
             self.flash_timer = Duration::ZERO;
         }
 
-        if !matches!(self.state, State::Complete) {
+        if !matches!(self.state, State::Complete) && !args.game_ctx.sound_system.get_playing() {
             args.game_ctx.sound_system.push_song(
                 crate::sounds::SONG_EVOLVE,
                 SongPlayOptions::new().with_essential(),
@@ -187,7 +199,6 @@ impl Scene for EvolveScene {
                         if circle.size > 75 {
                             circle.size = 0;
                         }
-                        log::info!("{}", circle.size);
                     }
                 }
             }

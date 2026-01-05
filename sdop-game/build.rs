@@ -2,33 +2,19 @@ use asefile::AsepriteFile;
 use chrono::{Datelike, Days, NaiveDate};
 use convert_case::{Case, Casing};
 use image::{GenericImageView, Rgba};
-use regex::Regex;
-use sdop_common::{ItemCategory, MelodyEntry};
-use serde::{
-    Deserialize, Deserializer, Serialize,
-    de::{self, Visitor},
-};
+use sdop_build_common::*;
+use sdop_common::MelodyEntry;
+use serde::{Deserialize, Serialize};
 use solar_calendar_events::AnnualSolarEvent;
 use std::{
     env,
-    fmt::{self},
     fs::{self},
     path::{Path, PathBuf},
     process::Command,
     str::FromStr,
-    time::Duration,
     vec,
 };
-use strum_macros::{Display, EnumString};
-
-const ASSETS_PATH: &str = "../assets";
-const IMAGES_MISC_PATH: &str = "../assets/images/misc";
-const IMAGES_TILESETS_PATH: &str = "../assets/images/misc/tilesets";
-const PETS_RON_PATH: &str = "../assets/pets.ron";
-const FOODS_RON_PATH: &str = "../assets/foods.ron";
-const ITEMS_RON_PATH: &str = "../assets/items.ron";
-const LOCATIONS_RON_PATH: &str = "../assets/locations.ron";
-const SOUNDS_PATH: &str = "../assets/sounds";
+use strum_macros::Display;
 
 #[derive(Default)]
 struct ContentOut {
@@ -39,6 +25,7 @@ struct ContentOut {
     dates_definitions: String,
     sounds_definitions: String,
     locations_definitions: String,
+    geo_definitions: String,
 }
 
 impl ContentOut {
@@ -51,6 +38,7 @@ impl ContentOut {
         self.sounds_definitions.push_str(&other.sounds_definitions);
         self.locations_definitions
             .push_str(&other.locations_definitions);
+        self.geo_definitions.push_str(&other.geo_definitions);
     }
 }
 
@@ -190,7 +178,7 @@ impl Tileset {
             };
             write_vec_to_contents(target, &data_name, &converted.data);
             target.push_str(&format!(
-                "pub const IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
+                "pub static IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
                 var_name, converted.width, converted.height, data_name
             ));
         }
@@ -231,7 +219,7 @@ fn write_image_base<T: ToString>(
         };
         write_vec_to_contents(target, &data_name, &converted.data);
         target.push_str(&format!(
-            "pub const IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
+            "pub static IMAGE_{}: StaticImage = StaticImage::new({}, {}, {});",
             var_name, converted.width, converted.height, data_name
         ));
         image_names.push(var_name);
@@ -239,7 +227,7 @@ fn write_image_base<T: ToString>(
 
     if let ConvertOuput::Anime(frames) = &output {
         target.push_str(&format!(
-            "pub const FRAMES_{}: [Frame; {}] = [",
+            "pub static FRAMES_{}: [Frame; {}] = [",
             var_name_base,
             frames.len(),
         ));
@@ -418,7 +406,7 @@ fn generate_pet_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         ));
 
         pet_definitions.push_str(&format!(
-            "pub const {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
+            "pub static {}: PetDefinition = PetDefinition::new({}_ID, \"{}\", LifeStage::{}, {:.2}, {:.2}, PetImageSet::new(MaskedFramesSet::new(&assets::FRAMES_{}, &assets::FRAMES_{}_MASK), {}, {})",
             pet_var_name, pet_var_name, template.name, template.life_stage, template.stomach_size, template.base_weight, image_normal_var_name, image_normal_var_name, write_output.width, write_output.height
         ));
 
@@ -511,14 +499,14 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
         write_image(&mut assets, &image_normal_var_name, image_path);
 
         food_definitions.push_str(&format!(
-            "pub const FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{}, {}, Duration::from_secs({}));",
+            "pub static FOOD_{}: Food = Food::new({}, \"{}\", &assets::IMAGE_{}, {:.2}, crate::items::ItemKind::Recipe{}, {}, Duration::from_secs({}));",
             food_var_name, i, template.name, image_normal_var_name, template.fill_factor, template.name.to_case(Case::Pascal), template.max_ate, template.expire.duration.as_secs()
         ));
 
         food_vars.push(image_normal_var_name);
     }
 
-    food_definitions.push_str("pub const FOODS: [&'static Food; FOOD_COUNT] = [");
+    food_definitions.push_str("pub static FOODS: [&'static Food; FOOD_COUNT] = [");
     for var in &food_vars {
         food_definitions.push_str(&format!("&{}, ", var));
     }
@@ -531,31 +519,8 @@ fn generate_food_definitions<P: AsRef<Path>>(path: P) -> ContentOut {
     }
 }
 
-#[derive(Serialize, Deserialize, EnumString, Display)]
-enum RarityEnum {
-    Common,
-    Rare,
-}
-
 fn default_true() -> bool {
     true
-}
-
-#[derive(Serialize, Deserialize)]
-struct ItemTemplate {
-    name: String,
-    category: ItemCategory,
-    cost: i32,
-    rarity: RarityEnum,
-    image: String,
-    unique: bool,
-    desc: String,
-    #[serde(default)]
-    fishing_odds: f32,
-    #[serde(default = "default_true")]
-    in_shop: bool,
-    #[serde(default)]
-    skill: i32,
 }
 
 fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
@@ -671,10 +636,7 @@ fn generate_item_enum<P: AsRef<Path>>(path: P, food_path: P) -> ContentOut {
 
         cost_fn_def.push_str(&format!("Self::{} => {},\n", enum_name, i32::MAX));
 
-        name_fn_def.push_str(&format!(
-            "Self::{} => \"Map to {}\",\n",
-            enum_name, template.name
-        ));
+        name_fn_def.push_str(&format!("Self::{} => \"{}\",\n", enum_name, template.name));
 
         desc_fn.push_str(&format!(
             "Self::{} => \"Find a way to {}\",\n",
@@ -790,7 +752,7 @@ fn generate_dates() -> ContentOut {
     let mut dates_definitions = String::new();
 
     // So lets start at 1970 and go until 2370
-    dates_definitions.push_str("pub const DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
+    dates_definitions.push_str("pub static DYNAMIC_SPECIAL_DAYS: &[&[SpecialDay]] = &[");
 
     for year in 2025..=2100 {
         let mut dates = vec![];
@@ -923,7 +885,7 @@ fn generate_sounds() -> ContentOut {
         }
 
         sounds_def.push_str(&format!(
-            "pub const SONG_{}: Song = Song::new(&[{}], {});",
+            "pub static SONG_{}: Song = Song::new(&[{}], {});",
             song.name.to_case(Case::UpperSnake),
             melody_def,
             song.tempo
@@ -936,114 +898,16 @@ fn generate_sounds() -> ContentOut {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ItemReward {
-    item: String,
-    odds: f32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LocationRewards {
-    money_start: i32,
-    money_end: i32,
-    items: Vec<ItemReward>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct SdopDuration {
-    duration: Duration,
-}
-
-fn parse_duration_string(s: &str) -> Duration {
-    let re = Regex::new(r"(?P<hours>\d+h)?\s*(?P<minutes>\d+m)?\s*(?P<seconds>\d+s)?").unwrap();
-
-    let captures = re.captures(s).unwrap();
-
-    let mut total_duration = Duration::new(0, 0);
-
-    if let Some(m_match) = captures.name("hours") {
-        let val_str = m_match.as_str().trim_end_matches('h');
-        if let Ok(hours) = val_str.parse::<u64>() {
-            total_duration += Duration::from_hours(hours);
-        }
-    }
-
-    if let Some(m_match) = captures.name("minutes") {
-        let val_str = m_match.as_str().trim_end_matches('m');
-        if let Ok(minutes) = val_str.parse::<u64>() {
-            total_duration += Duration::from_mins(minutes);
-        }
-    }
-
-    if let Some(s_match) = captures.name("seconds") {
-        let val_str = s_match.as_str().trim_end_matches('s');
-        if let Ok(seconds) = val_str.parse::<u64>() {
-            total_duration += Duration::from_secs(seconds);
-        }
-    }
-
-    total_duration
-}
-
-struct SdopDurationVisitor;
-
-impl<'de> Visitor<'de> for SdopDurationVisitor {
-    type Value = SdopDuration;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a duration string like '5m 30s', '10m', or '45s'")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(SdopDuration {
-            duration: parse_duration_string(value),
-        })
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        let s = std::str::from_utf8(v).map_err(E::custom)?;
-        self.visit_str(s)
-    }
-}
-
-impl<'de> Deserialize<'de> for SdopDuration {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(SdopDurationVisitor)
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LocationTemplate {
-    pub name: String,
-    pub length: SdopDuration,
-    pub cooldown: SdopDuration,
-    pub difficulty: i32,
-    pub activities: Vec<String>,
-    pub rewards: LocationRewards,
-    #[serde(default = "default_true")]
-    in_shop: bool,
-    life_stages: Vec<sdop_common::LifeStage>,
-}
-
 fn generate_locations() -> ContentOut {
     let locations_path = PathBuf::from_str(LOCATIONS_RON_PATH).unwrap();
 
     let contents = std::fs::read_to_string(locations_path).unwrap();
-    let location_tempaltes: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
+    let location_templates: Vec<LocationTemplate> = ron::from_str(&contents).unwrap();
 
     let mut locations_def = String::new();
     let mut names = Vec::new();
 
-    for (i, entry) in location_tempaltes.iter().enumerate() {
+    for (i, entry) in location_templates.iter().enumerate() {
         let mut rewards = format!(
             "LocationRewards::new({}..{}, &[",
             entry.rewards.money_start, entry.rewards.money_end
@@ -1076,7 +940,7 @@ fn generate_locations() -> ContentOut {
         }
 
         let location_def = &format!(
-            "pub const {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {}, crate::items::ItemKind::Map{}, &[{}]);",
+            "pub static {}: Location = Location::new({}, \"{}\", Duration::from_secs({}), Duration::from_secs({}), {}, {}, {}, {}, crate::items::ItemKind::Map{}, &[{}]);",
             const_name,
             i,
             entry.name,
@@ -1095,7 +959,7 @@ fn generate_locations() -> ContentOut {
         names.push(const_name);
     }
 
-    locations_def.push_str("pub const LOCATIONS: &[&'static Location] = &[");
+    locations_def.push_str("pub static LOCATIONS: &[&'static Location] = &[");
     for name in names {
         locations_def.push('&');
         locations_def.push_str(&name);
@@ -1105,11 +969,183 @@ fn generate_locations() -> ContentOut {
 
     locations_def.push_str(&format!(
         "pub const LOCATION_COUNT: usize = {};",
-        location_tempaltes.len() + 1
+        location_templates.len() + 1
     ));
 
     ContentOut {
         locations_definitions: locations_def,
+        ..Default::default()
+    }
+}
+
+fn generate_geo() -> ContentOut {
+    const TEMPLATE: &'static str = r#"
+const ZERO__*T_REP_UPPER*_: _*T_REP*_ = 0 as _*T_REP*_;
+const TWO__*T_REP_UPPER*_: _*T_REP*_ = 2 as _*T_REP*_;
+const ONE_THOUSAND__*T_REP_UPPER*_: _*T_REP*_ = 1000 as _*T_REP*_;
+
+#[derive(Copy, Clone, Default)]
+pub struct Rect_*V_REP*_ {
+    pub pos: _*V_REP*_,
+    pub size: _*V_REP*_,
+}
+
+impl Rect_*V_REP*_ {
+    pub const fn new() -> Self {
+        Self {
+            pos: _*V_REP*_::new(ZERO__*T_REP_UPPER*_, ZERO__*T_REP_UPPER*_),
+            size: _*V_REP*_::new(ZERO__*T_REP_UPPER*_, ZERO__*T_REP_UPPER*_),
+        }
+    }
+
+    pub const fn new_center(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        Self { pos, size }
+    }
+
+    pub const fn new_top_left(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        // Move pos to center
+        let center_pos = _*V_REP*_::new(pos.x + size.x / TWO__*T_REP_UPPER*_, pos.y + size.y / TWO__*T_REP_UPPER*_);
+
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_left(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        // Move pos to center
+        let center_pos = _*V_REP*_::new(pos.x + size.x / TWO__*T_REP_UPPER*_, pos.y - size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_bottom_right(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        let center_pos = _*V_REP*_::new(pos.x - size.x / TWO__*T_REP_UPPER*_, pos.y - size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn new_top_right(pos: _*V_REP*_, size: _*V_REP*_) -> Self {
+        let center_pos = _*V_REP*_::new(pos.x - size.x / TWO__*T_REP_UPPER*_, pos.y + size.y / TWO__*T_REP_UPPER*_);
+        Self {
+            pos: center_pos,
+            size,
+        }
+    }
+
+    pub const fn pos_top_left(&self) -> _*V_REP*_ {
+        let x_top_left = self.pos.x - self.size.x / TWO__*T_REP_UPPER*_;
+        let y_top_left = self.pos.y - self.size.y / TWO__*T_REP_UPPER*_;
+        _*V_REP*_::new(x_top_left, y_top_left)
+    }
+
+    pub fn random_point_inside(&self, rng: &mut fastrand::Rng) -> _*V_REP*_ {
+        let top_left = self.pos_top_left();
+        _*V_REP*_::new(
+            (rng.i32((self.x() as i32 * 1000)..(self.x2() as i32 * 1000)) as _*T_REP*_) / ONE_THOUSAND__*T_REP_UPPER*_,
+            (rng.i32((self.y() as i32 * 1000)..(self.y2() as i32 * 1000)) as _*T_REP*_) / ONE_THOUSAND__*T_REP_UPPER*_,
+        )
+    }
+
+    pub fn point_inside(&self, pos: &_*V_REP*_) -> bool {
+        pos.x > self.x() && pos.x < self.x2() && pos.y > self.y() && pos.y < self.y2()
+    }
+
+    pub fn overlapping(&self, other: &Self) -> bool {
+        let half_self = self.size / TWO__*T_REP_UPPER*_;
+        let half_other = other.size / TWO__*T_REP_UPPER*_;
+
+        // delta between centers on each axis
+        let delta = (self.pos - other.pos).abs();
+
+        // overlap exists only if both axes satisfy the half-size sum condition
+        delta.x <= (half_self.x + half_other.x) && delta.y <= (half_self.y + half_other.y)
+    }
+
+    pub const fn x(&self) -> _*T_REP*_ {
+        self.pos.x - self.size.x / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn y(&self) -> _*T_REP*_ {
+        self.pos.y - self.size.y / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn x2(&self) -> _*T_REP*_ {
+        self.pos.x + self.size.x / TWO__*T_REP_UPPER*_
+    }
+
+    pub const fn y2(&self) -> _*T_REP*_ {
+        self.pos.y + self.size.y / TWO__*T_REP_UPPER*_
+    }
+
+    #[allow(dead_code)]
+    pub fn shrink(mut self, by: _*T_REP*_) -> Self {
+        self.size.x = (self.size.x - by).max(ZERO__*T_REP_UPPER*_);
+        self.size.y = (self.size.y - by).max(ZERO__*T_REP_UPPER*_);
+
+        self
+    }
+
+    pub const fn grow(mut self, by: _*T_REP*_) -> Self {
+        let mut pos = self.pos_top_left();
+        self.size.x += by;
+        self.size.y += by;
+        pos.x -= by / TWO__*T_REP_UPPER*_;
+        pos.y -= by / TWO__*T_REP_UPPER*_;
+        self.pos = _*V_REP*_::new(pos.x + self.size.x / TWO__*T_REP_UPPER*_, pos.y + self.size.y / TWO__*T_REP_UPPER*_);
+
+        self
+    }
+}
+"#;
+
+    const INTO_TEMPLATE: &'static str = r#"
+impl Into<Rect_*V1_REP*_> for Rect_*V2_REP*_ {
+    fn into(self) -> Rect_*V1_REP*_ {
+        Rect_*V1_REP*_::new_center(
+            _*V1_REP*_::new(self.x() as _*T1_REP*_, self.y() as _*T1_REP*_),
+            _*V1_REP*_::new(self.size.x as _*T1_REP*_, self.size.y as _*T1_REP*_),
+        )
+    }
+}
+"#;
+
+    let mut geo_def = String::new();
+
+    let replace_fn = |t: &str, v: &str| {
+        TEMPLATE
+            .replace("_*T_REP*_", t)
+            .replace("_*V_REP*_", v)
+            .replace("_*T_REP_UPPER*_", &t.to_uppercase())
+    };
+
+    let kinds = &[("f32", "Vec2"), ("i32", "IVec2"), ("i16", "I16Vec2")];
+
+    for (t, v) in kinds {
+        geo_def.push_str(&(replace_fn)(t, v));
+    }
+
+    for (i, (ot, ov)) in kinds.iter().enumerate() {
+        for (j, (_it, iv)) in kinds.iter().enumerate() {
+            if i == j {
+                continue;
+            }
+
+            geo_def.push_str(
+                &INTO_TEMPLATE
+                    .replace("_*V1_REP*_", ov)
+                    .replace("_*V2_REP*_", iv)
+                    .replace("_*T1_REP*_", ot),
+            );
+        }
+    }
+
+    ContentOut {
+        geo_definitions: geo_def,
         ..Default::default()
     }
 }
@@ -1138,6 +1174,7 @@ fn main() {
         Box::new(|| generate_dates()),
         Box::new(|| generate_sounds()),
         Box::new(|| generate_locations()),
+        Box::new(|| generate_geo()),
     ];
 
     for func in gen_fun {
@@ -1157,6 +1194,7 @@ fn main() {
         "dist_locations.rs",
         contents.locations_definitions,
     );
+    write_file(&out_dir, "dist_geo.rs", contents.geo_definitions);
 
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed={}", ASSETS_PATH);
